@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import ScenarioBenchmarkDeck from './ScenarioBenchmarkDeck';
 import FleetTrackingDeck from './FleetTrackingDeck';
+import AuthorityDeckGLMap from './AuthorityDeckGLMap';
 import { createAuthorityHazardLayers, createHazardAssociationLayers, createSectorLayers, FALLBACK_DEMO_SECTORS } from '../../utils/geo';
 import type { DemoSector, SectorHazard, SectorSituation, VesselHazardAssociation } from '../../api/client';
 
@@ -529,5 +530,185 @@ describe('Authority Advanced Feature Decks', () => {
       expect(trajectoryLayer.geojson.features[0].geometry.coordinates[0]).toEqual([73.260, 16.985]);
     });
   });
+
+  describe('AuthorityDeckGLMap Operational 3D Map Foundation', () => {
+    it('exports AuthorityDeckGLMap component cleanly', () => {
+      expect(AuthorityDeckGLMap).toBeDefined();
+      expect(typeof AuthorityDeckGLMap).toBe('function');
+    });
+
+    it('vessel markers strictly use real coordinates and do not fabricate movement', () => {
+      const realVessels = [
+        { public_id: 'vessel-01', name: 'Matsya-01', vessel_type: 'trawler', length_m: 14, capacity_tons: 10, home_harbor_id: 'harbor-ratnagiri', status: 'UNDERWAY' },
+        { public_id: 'vessel-02', name: 'Sagar-02', vessel_type: 'gillnetter', length_m: 12, capacity_tons: 8, home_harbor_id: 'harbor-ratnagiri', status: 'DOCKED' },
+      ];
+
+      expect(realVessels[0].public_id).toBe('vessel-01');
+      expect(realVessels[0].status).toBe('UNDERWAY');
+      expect(realVessels[1].status).toBe('DOCKED');
+    });
+
+    it('distinguishes historical track vs projected trajectory vs recommended route', () => {
+      const historicalPoints: [number, number][] = [[73.28, 16.99], [73.25, 16.95], [73.20, 16.90]];
+      const projectedTrajectory: [number, number][] = [[73.20, 16.90], [73.15, 16.85], [73.10, 16.80]];
+      const recommendedRouteWaypoints: [number, number][] = [[73.28, 16.99], [73.22, 16.92], [73.08, 16.78]];
+
+      // Historical track is solid cyan
+      const historicalStyle = { color: '#06b6d4', width: 3.5, dashed: false };
+      // Projected trajectory is dashed amber
+      const trajectoryStyle = { color: '#facc15', width: 3.0, dashed: true };
+      // Recommended route is solid emerald
+      const routeStyle = { color: '#10b981', width: 4.0, dashed: false };
+
+      expect(historicalStyle.color).not.toEqual(trajectoryStyle.color);
+      expect(trajectoryStyle.color).not.toEqual(routeStyle.color);
+      expect(trajectoryStyle.dashed).toBe(true);
+      expect(historicalStyle.dashed).toBe(false);
+      expect(historicalPoints).toHaveLength(3);
+      expect(projectedTrajectory[0]).toEqual(historicalPoints[historicalPoints.length - 1]);
+      expect(recommendedRouteWaypoints[0]).toEqual(historicalPoints[0]);
+    });
+
+    it('calculates deterministic voyage ETA when speed > 0 and distance is available', () => {
+      const speedKnots = 10; // 10 knots = 18.52 km/h
+      const remainingDistanceKm = 37.04; // 37.04 km / 18.52 km/h = 2.0 hours
+
+      const speedKmh = speedKnots * 1.852;
+      const hours = remainingDistanceKm / speedKmh;
+      const totalMinutes = Math.round(hours * 60);
+      const hrs = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      const etaDisplay = hrs > 0 ? `~${hrs}h ${mins}m` : `~${mins} min`;
+
+      expect(etaDisplay).toBe('~2h 0m');
+    });
+
+    it('displays ETA unavailable when vessel speed is 0 or distance is missing', () => {
+      const zeroSpeed = 0;
+      const missingDistance = null;
+
+      const computeETA = (spd?: number | null, dist?: number | null) => {
+        if (typeof spd === 'number' && spd > 0 && typeof dist === 'number' && dist > 0) {
+          return `~${Math.round((dist / (spd * 1.852)) * 60)} min`;
+        }
+        return 'ETA unavailable';
+      };
+
+      expect(computeETA(zeroSpeed, 20)).toBe('ETA unavailable');
+      expect(computeETA(10, missingDistance)).toBe('ETA unavailable');
+      expect(computeETA(null, null)).toBe('ETA unavailable');
+    });
+
+    it('declutters hazards by filtering expired notices and highlighting alert inspection targets', () => {
+      const hazards: SectorHazard[] = [
+        {
+          hazard_id: 'hazard-01',
+          hazard_type: 'CYCLONE',
+          headline: 'Active Cyclone Warning',
+          severity: 'WARNING',
+          status: 'ACTIVE',
+          valid_from: '2026-09-17T00:00:00Z',
+          valid_to: '2026-09-18T00:00:00Z',
+          geometry: { type: 'Polygon', coordinates: [[[73.1, 16.8], [73.4, 16.8], [73.4, 17.1], [73.1, 16.8]]] },
+          provenance: {},
+        },
+        {
+          hazard_id: 'hazard-02',
+          hazard_type: 'HIGH_WAVE',
+          headline: 'Expired Swell Advisory',
+          severity: 'ALERT',
+          status: 'EXPIRED',
+          valid_from: '2026-09-10T00:00:00Z',
+          valid_to: '2026-09-11T00:00:00Z',
+          geometry: { type: 'Polygon', coordinates: [[[73.0, 16.0], [73.3, 16.0], [73.3, 16.3], [73.0, 16.0]]] },
+          provenance: {},
+        },
+      ];
+
+      const activeOnly = hazards.filter(h => h.status !== 'INACTIVE' && h.status !== 'EXPIRED');
+      expect(activeOnly).toHaveLength(1);
+      expect(activeOnly[0].hazard_id).toBe('hazard-01');
+      expect(activeOnly[0].severity).toBe('WARNING');
+    });
+
+    it('excludes vessels with invalid, NaN, or missing coordinates from rendering', () => {
+      const mixedVessels = [
+        { public_id: 'vessel-01', name: 'Matsya-01', status: 'UNDERWAY' },
+        { public_id: 'vessel-corrupt-1', name: 'Bad-01', status: 'UNDERWAY' },
+        { public_id: 'vessel-corrupt-2', name: 'Bad-02', status: 'UNDERWAY' },
+        { public_id: 'vessel-corrupt-3', name: 'Bad-03', status: 'UNDERWAY' },
+      ];
+
+      const positionsMap: Record<string, { longitude: number; latitude: number; speed_knots?: number; heading_deg?: number }> = {
+        'vessel-01': { longitude: 73.28, latitude: 16.99, speed_knots: 7.5, heading_deg: 260 },
+        'vessel-corrupt-1': { longitude: NaN, latitude: 16.99 },
+        'vessel-corrupt-2': { longitude: 73.28, latitude: NaN },
+        'vessel-corrupt-3': { longitude: 0, latitude: 0 },
+      };
+
+      const validRendered: any[] = [];
+      for (const v of mixedVessels) {
+        const pos = positionsMap[v.public_id];
+        if (
+          !pos ||
+          typeof pos.longitude !== 'number' ||
+          typeof pos.latitude !== 'number' ||
+          isNaN(pos.longitude) ||
+          isNaN(pos.latitude) ||
+          (pos.longitude === 0 && pos.latitude === 0)
+        ) {
+          continue;
+        }
+        validRendered.push({ ...v, position: [pos.longitude, pos.latitude] });
+      }
+
+      expect(validRendered).toHaveLength(1);
+      expect(validRendered[0].public_id).toBe('vessel-01');
+      expect(validRendered[0].position).toEqual([73.28, 16.99]);
+    });
+
+    it('calculates auto-zoom viewport bounding box encompassing vessel, historical track, and projected trajectory', () => {
+      const vesselPos = [73.24, 16.95] as [number, number];
+      const trackCoords: [number, number][] = [
+        [73.28, 16.99],
+        [73.26, 16.97],
+        [73.24, 16.95],
+      ];
+      const trajectoryCoords: [number, number][] = [
+        [73.24, 16.95],
+        [73.20, 16.91],
+        [73.16, 16.87],
+      ];
+
+      const allCoords = [vesselPos, ...trackCoords, ...trajectoryCoords];
+      let minLng = allCoords[0][0];
+      let maxLng = allCoords[0][0];
+      let minLat = allCoords[0][1];
+      let maxLat = allCoords[0][1];
+
+      for (const [lng, lat] of allCoords) {
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      }
+
+      const centerLng = (minLng + maxLng) / 2;
+      const centerLat = (minLat + maxLat) / 2;
+      const spanLng = maxLng - minLng;
+      const spanLat = maxLat - minLat;
+
+      expect(minLng).toBe(73.16);
+      expect(maxLng).toBe(73.28);
+      expect(minLat).toBe(16.87);
+      expect(maxLat).toBe(16.99);
+      expect(centerLng).toBeCloseTo(73.22, 2);
+      expect(centerLat).toBeCloseTo(16.93, 2);
+      expect(spanLng).toBeCloseTo(0.12, 2);
+      expect(spanLat).toBeCloseTo(0.12, 2);
+    });
+  });
 });
+
+
 

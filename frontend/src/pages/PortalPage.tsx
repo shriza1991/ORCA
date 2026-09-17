@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BarChart3,
   Beaker,
+  Box,
   Building2,
   CheckCircle2,
   Compass,
@@ -21,7 +22,7 @@ import {
 import { translateText, type SupportedLanguage } from '../i18n/translations';
 
 interface PortalPageProps {
-  onSelectRole: (role: 'fisher' | 'authority' | 'researcher') => void;
+  onSelectRole: (role: 'fisher' | 'authority' | 'researcher' | 'deckgl-experiment') => void;
   language?: SupportedLanguage;
 }
 
@@ -191,6 +192,77 @@ export default function PortalPage({ onSelectRole, language = 'en' }: PortalPage
               <ArrowRight size={16} />
             </button>
           </article>
+        </section>
+
+        {/* Isolated Experimental Visualization Comparison Banner */}
+        <section
+          style={{
+            marginTop: '24px',
+            padding: '16px 20px',
+            background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+          }}
+          aria-label="Experimental Visualization"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                background: 'rgba(56, 189, 248, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#38bdf8',
+                flexShrink: 0,
+              }}
+            >
+              <Box size={22} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <strong style={{ fontSize: '14px', color: '#f8fafc' }}>
+                  Experimental Visual Benchmark: deck.gl (WebGL2)
+                </strong>
+                <span style={{ fontSize: '10px', background: '#0284c7', color: '#fff', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                  EXPERIMENTAL
+                </span>
+              </div>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                Visually compare deck.gl against production MapLibre with real hazards, PFZ points, corridors, vessel telemetry & Turf.js.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onSelectRole('deckgl-experiment')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              background: '#0284c7',
+              border: 'none',
+              borderRadius: '6px',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
+            }}
+          >
+            <span>Open deck.gl Experiment</span>
+            <ArrowRight size={15} />
+          </button>
         </section>
 
         {/* Footer info badge */}

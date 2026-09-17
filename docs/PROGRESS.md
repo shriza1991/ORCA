@@ -57,6 +57,22 @@
 - Excluded informational national boundaries from deterministic restricted zone hazard checks in `geo_restrictions.py`.
 - Added multilingual translation mappings for national water boundary layers in Hindi and Marathi.
 
+### P0-8M — Production 3D Maps for Authority and Researcher Dashboards
+- Established unified WebGL2 Deck.gl 3D map foundation (`DeckGLMapFoundation.tsx`) with Tactical 3D (52° pitch), High Orbit (20° pitch), and 2D Flat camera presets, high-performance GPU memoization, and zero 60-FPS React state loop overhead.
+- Authority Dashboard: Integrated `AuthorityDeckGLMap.tsx` as the primary operational command visualization with rotated vessel craft markers, illuminated tactical beacon for selected vessel, distinct historical tracks (`#06b6d4`), projected trajectories (`#facc15`), and recommended routes (`#10b981`), decluttered translucent hazards, and deterministic ETA telemetry (with explicit "ETA unavailable" fallback).
+- Researcher Dashboard: Upgraded `PFZSpatialMap.tsx` (3D chlorophyll column encoding), `HazardSpatialMap.tsx` (3D severity-extruded translucent polygons), `EOGridSpatialMap.tsx` (5×5 satellite grid points with continuous metric coloring), and `QueryWorkbench.tsx` (spatial vector layer responses).
+- Fisher Dashboard: Left `FisherPage.tsx` and MapLibre `MapView.tsx` 100% untouched to preserve the simple mariner operational interface.
+- Verified zero TypeScript errors (`tsc --noEmit`), full test pass (227 tests in 15 suites), and clean production bundle (`vite build`).
+
+### P0-8O — Authority & Researcher 3D Map Regression Fixes
+- **Indian Landmass & Coastlines Restored**: Integrated synchronized MapLibre CartoDB dark-matter basemap under DeckGL in `DeckGLMapFoundation.tsx`, bringing authentic coastal geography, state borders, and bathymetry into view at 60 FPS.
+- **Authority Fleet Surveillance Vessel Rendering**: Fixed data flow by fetching canonical vessel positions via `getDemoVesselReplay` in `AuthorityDeckGLMap.tsx`. Rendered verified vessels with heading-oriented nautical craft chevrons, speed labels, and illuminated beacons while strictly excluding missing/invalid coordinates without defaulting to sector center.
+- **Auto-Zoom & Dynamic Viewport Calculation**: Implemented bounding box camera focusing for selected vessels (encompassing vessel coordinate + track + trajectory) and selected hazard bulletins with sensible operational padding.
+- **Projected Trajectory & Route Separation**: Solidified strict visual hierarchy distinguishing historical tracks (solid cyan `#06b6d4`), projected trajectories (dashed amber `#facc15`), recommended routes (solid emerald `#10b981`), and candidate routes (`#64748b`).
+- **Deterministic ETA Telemetry**: Calculated remaining voyage duration strictly from speed and route distance, providing an honest "ETA unavailable" fallback.
+- **Researcher Hazard Bidirectional Selection**: Restored list <-> map hazard selection with auto-focus bounding box and gold highlight (`#facc15`).
+- **Testing & Verification**: 230 tests passing across 15 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build.
+
 ### P0-8L — Fleet Surveillance Accurate Route Corridors with Start & Destination Terminals
 - Parameterized route alternatives endpoint (`/api/v1/demo/routes/alternatives`) with `vessel_id` to contextualize navigation corridors directly to the active fleet craft.
 - Updated `MockRouteExposureEngine` to connect authentic multi-waypoint navigation corridors (Safest Inshore, Balanced, Direct) from the vessel's specific home harbor/departure coordinates to its specific trip destination/fishing bank.
@@ -288,6 +304,22 @@
   - Formatted concise, high-contrast HTML popup cards for departure station, PFZ candidate, marine hazard, and recommended route without researcher-style QC/provenance/diagnostics.
   - Added camera reset / fit bounds action button (`Focus` icon) in `MissionMapBrief`.
 - **Validation**: 5 dedicated tests in `fisher-map.test.ts` (207 total frontend tests passing across 13 suites), 101 backend domain/contract tests passing, and clean `tsc && vite build` bundle.
+
+### P0-24 — deck.gl Visual Experiment & Spatial Analytics
+- Added isolated experimental deck.gl component (`DeckGLMarineMap.tsx`) and evaluation command view (`DeckGLExperimentView.tsx`) to visually benchmark WebGL2-accelerated geospatial rendering against production MapLibre.
+- Rendered authentic SAMUDRA data layers without fabricating coordinates:
+  - **Marine/Hazard Polygons**: GeoJSON layer with severity-coded translucent styling and optional 3D extrusion (2500m / 1800m / 1200m prisms).
+  - **PFZ Candidate Points**: ScatterplotLayer + TextLayer with animated radial pulse effects and rank `#1`/`#2` indicators.
+  - **Recommended Route & Alternative Corridors**: High-visibility cyan primary path (`[6, 182, 212]`, 5px) and subdued candidate lines.
+  - **Vessel Telemetry**: Amber pulsing vessel marker with speed/heading telemetry and replay scrubber.
+  - **National Water Boundaries**: UNCLOS EEZ and 12 NM territorial water boundaries.
+- Integrated Turf.js spatial calculation utilities (`spatial-analytics.ts`):
+  - Geodesic distance & initial bearing.
+  - Cross-track distance (point-to-route error).
+  - Point-in-polygon containment (`isPointInHazardPolygon`).
+  - Route-hazard intersection collision detection (`findRouteHazardIntersections`).
+- Preserved production Fisher, Authority, and Researcher MapLibre map views completely untouched.
+- Added 11 dedicated automated tests in `spatial-analytics.test.ts` and `deckgl-experiment.test.ts` (218 total frontend tests passing across 15 suites), full typecheck (`tsc --noEmit`), and clean production build.
 
 ---
 

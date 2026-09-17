@@ -1,9 +1,9 @@
-import { useEffect, useRef, useMemo } from 'react';
-import maplibregl from 'maplibre-gl';
-import { AlertTriangle, Info, Navigation, ShieldAlert } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { GeoJsonLayer } from '@deck.gl/layers';
+import type { MapViewState, PickingInfo } from '@deck.gl/core';
+import { AlertTriangle } from 'lucide-react';
+import DeckGLMapFoundation, { DEFAULT_VIEW_STATE } from '../map/DeckGLMapFoundation';
 import type { HazardBulletin } from '../../api/researcher-client';
-
-const MAP_STYLE_DARK = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
 export interface HazardSpatialMapProps {
   hazards: HazardBulletin[];
@@ -176,397 +176,243 @@ export function buildHazardGeoJSON(hazards: HazardBulletin[]): GeoJSON.FeatureCo
 }
 
 export default function HazardSpatialMap({
-  hazards,
+  hazards = [],
   selectedHazardId,
   onSelectHazard,
   loading = false,
 }: HazardSpatialMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const popupRef = useRef<maplibregl.Popup | null>(null);
-  const isLoadedRef = useRef(false);
-
   const geojson = useMemo(() => buildHazardGeoJSON(hazards), [hazards]);
-  const hasValidPolygons = geojson.features.length > 0;
 
-  // Initialize MapLibre
-  useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+  // Derive initial geographic center from loaded hazards or Konkan coastline
+  const initialMapCenter = useMemo<[number, number]>(() => {
+    if (geojson.features.length === 0) return [73.28, 16.99];
+    let sumLng = 0;
+    let sumLat = 0;
+    let count = 0;
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: MAP_STYLE_DARK,
-      center: [73.0, 16.5], // Default initial center
-      zoom: 7,
-      attributionControl: false,
-    });
-
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
-
-    const resizeObserver = new ResizeObserver(() => {
-      map.resize();
-    });
-    resizeObserver.observe(containerRef.current);
-
-    map.on('load', () => {
-      isLoadedRef.current = true;
-
-      // Source
-      map.addSource('hazard-polygons-source', {
-        type: 'geojson',
-        data: geojson,
-      });
-
-      // Layer: Polygon Fill (color mapped by severity; lower opacity for expired)
-      map.addLayer({
-        id: 'hazards-fill',
-        type: 'fill',
-        source: 'hazard-polygons-source',
-        paint: {
-          'fill-color': [
-            'match',
-            ['get', 'severity'],
-            'WARNING',
-            '#ef4444',
-            'ALERT',
-            '#f97316',
-            'WATCH',
-            '#f59e0b',
-            'ADVISORY',
-            '#38bdf8',
-            'NORMAL',
-            '#64748b',
-            /* default / unknown */
-            '#94a3b8',
-          ],
-          'fill-opacity': [
-            'case',
-            ['==', ['get', 'status'], 'EXPIRED'],
-            0.08,
-            0.28,
-          ],
-        },
-      });
-
-      // Layer: Active / Planned Hazard Outlines (solid line)
-      map.addLayer({
-        id: 'hazards-outline-active',
-        type: 'line',
-        source: 'hazard-polygons-source',
-        filter: ['!=', ['get', 'status'], 'EXPIRED'],
-        paint: {
-          'line-color': [
-            'match',
-            ['get', 'severity'],
-            'WARNING',
-            '#ef4444',
-            'ALERT',
-            '#f97316',
-            'WATCH',
-            '#f59e0b',
-            'ADVISORY',
-            '#38bdf8',
-            'NORMAL',
-            '#64748b',
-            '#94a3b8',
-          ],
-          'line-width': 2.2,
-          'line-opacity': 0.9,
-        },
-      });
-
-      // Layer: Expired Hazard Outlines (dashed line)
-      map.addLayer({
-        id: 'hazards-outline-expired',
-        type: 'line',
-        source: 'hazard-polygons-source',
-        filter: ['==', ['get', 'status'], 'EXPIRED'],
-        paint: {
-          'line-color': '#94a3b8',
-          'line-width': 1.4,
-          'line-opacity': 0.45,
-          'line-dasharray': [3, 3],
-        },
-      });
-
-      // Layer: Selected Polygon Highlight
-      map.addLayer({
-        id: 'hazards-outline-selected',
-        type: 'line',
-        source: 'hazard-polygons-source',
-        filter: ['==', ['get', 'public_id'], selectedHazardId || ''],
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': 3.5,
-          'line-opacity': 1.0,
-        },
-      });
-
-      // Layer: Event Type label
-      map.addLayer({
-        id: 'hazards-symbol-label',
-        type: 'symbol',
-        source: 'hazard-polygons-source',
-        layout: {
-          'text-field': ['get', 'event_type'],
-          'text-size': 11,
-          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-          'text-anchor': 'center',
-          'text-allow-overlap': false,
-        },
-        paint: {
-          'text-color': '#f8fafc',
-          'text-halo-color': '#0f172a',
-          'text-halo-width': 2,
-        },
-      });
-
-      // Interactivity: Click on hazard polygon
-      map.on('click', 'hazards-fill', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const feature = e.features[0];
-        const props = feature.properties as any;
-
-        const hazardId = props.public_id;
-        if (onSelectHazard) {
-          onSelectHazard(hazardId);
+    for (const f of geojson.features) {
+      const geom = f.geometry;
+      if (geom.type === 'Polygon' && Array.isArray(geom.coordinates[0])) {
+        for (const pt of geom.coordinates[0]) {
+          sumLng += pt[0];
+          sumLat += pt[1];
+          count += 1;
         }
-
-        renderPopup(e.lngLat, props, map);
-      });
-
-      map.on('mouseenter', 'hazards-fill', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-
-      map.on('mouseleave', 'hazards-fill', () => {
-        map.getCanvas().style.cursor = '';
-      });
-
-      // Fit bounds initially
-      fitMapToBounds(map, geojson);
-    });
-
-    mapRef.current = map;
-
-    return () => {
-      resizeObserver.disconnect();
-      if (popupRef.current) {
-        popupRef.current.remove();
       }
-      map.remove();
-      mapRef.current = null;
-      isLoadedRef.current = false;
+    }
+
+    return count > 0 ? [sumLng / count, sumLat / count] : [73.28, 16.99];
+  }, [geojson]);
+
+  const [viewState, setViewState] = useState<MapViewState>(() => ({
+    ...DEFAULT_VIEW_STATE,
+    longitude: initialMapCenter[0],
+    latitude: initialMapCenter[1],
+    zoom: 8.5,
+    pitch: 48,
+    bearing: -15,
+  }));
+
+  // Auto-focus camera on selected hazard bulletin
+  useEffect(() => {
+    if (!selectedHazardId) return;
+
+    const targetFeature = geojson.features.find(
+      (f) => f.properties?.public_id === selectedHazardId,
+    );
+    if (!targetFeature) return;
+
+    const coords: [number, number][] = [];
+    const geom = targetFeature.geometry;
+
+    if (geom.type === 'Polygon' && Array.isArray(geom.coordinates[0])) {
+      coords.push(...(geom.coordinates[0] as [number, number][]));
+    } else if (geom.type === 'MultiPolygon' && Array.isArray(geom.coordinates)) {
+      for (const poly of geom.coordinates) {
+        if (Array.isArray(poly[0])) coords.push(...(poly[0] as [number, number][]));
+      }
+    }
+
+    if (coords.length === 0) return;
+
+    let minLng = coords[0][0];
+    let maxLng = coords[0][0];
+    let minLat = coords[0][1];
+    let maxLat = coords[0][1];
+
+    for (const [lng, lat] of coords) {
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }
+
+    const centerLng = (minLng + maxLng) / 2;
+    const centerLat = (minLat + maxLat) / 2;
+    const spanLng = Math.max(0.04, maxLng - minLng);
+    const spanLat = Math.max(0.04, maxLat - minLat);
+    const maxSpan = Math.max(spanLng, spanLat);
+
+    let zoom = 10.2;
+    if (maxSpan > 0.8) zoom = 8.6;
+    else if (maxSpan > 0.4) zoom = 9.4;
+    else if (maxSpan > 0.15) zoom = 10.0;
+    else zoom = 10.8;
+
+    setViewState((prev) => ({
+      ...prev,
+      longitude: centerLng,
+      latitude: centerLat,
+      zoom,
+      transitionDuration: 600,
+    }));
+  }, [selectedHazardId, geojson]);
+
+  // Deck.gl 3D Layers
+  const layers = useMemo(() => {
+    if (geojson.features.length === 0) return [];
+
+    return [
+      new GeoJsonLayer({
+        id: 'researcher-hazards-3d',
+        data: geojson,
+        pickable: true,
+        stroked: true,
+        filled: true,
+        extruded: true,
+        wireframe: true,
+        lineWidthMinPixels: 2,
+        getElevation: (f: any) => {
+          const isSelected = f.properties?.public_id === selectedHazardId;
+          const sev = (f.properties?.severity || '').toUpperCase();
+          if (isSelected) return 2600;
+          if (sev === 'CRITICAL' || sev === 'WARNING') return 2000;
+          if (sev === 'ALERT') return 1400;
+          if (sev === 'WATCH') return 800;
+          return 500;
+        },
+        getLineColor: (f: any) => {
+          const isSelected = f.properties?.public_id === selectedHazardId;
+          if (isSelected) return [250, 204, 21, 255]; // Bright Gold
+          if (f.properties?.is_expired) return [100, 116, 139, 140]; // Slate expired
+          const sev = (f.properties?.severity || '').toUpperCase();
+          if (sev === 'CRITICAL' || sev === 'WARNING') return [239, 68, 68, 230]; // Red
+          if (sev === 'ALERT') return [249, 115, 22, 210]; // Orange
+          return [234, 179, 8, 190]; // Yellow
+        },
+        getFillColor: (f: any) => {
+          const isSelected = f.properties?.public_id === selectedHazardId;
+          if (isSelected) return [250, 204, 21, 60];
+          if (f.properties?.is_expired) return [100, 116, 139, 20];
+          const sev = (f.properties?.severity || '').toUpperCase();
+          if (sev === 'CRITICAL' || sev === 'WARNING') return [239, 68, 68, 35];
+          if (sev === 'ALERT') return [249, 115, 22, 28];
+          return [234, 179, 8, 22];
+        },
+        getLineWidth: (f: any) => (f.properties?.public_id === selectedHazardId ? 4 : 2),
+      }),
+    ];
+  }, [geojson, selectedHazardId]);
+
+  // Tooltip
+  const getTooltip = useCallback((info: PickingInfo) => {
+    if (!info.picked || !info.object) return null;
+    const p = info.object.properties || info.object;
+    return {
+      html: `
+        <div style="padding: 8px 12px; font-family: ui-sans-serif, system-ui; background: rgba(15, 23, 42, 0.96); border: 1px solid #ef4444; border-radius: 6px; color: #f8fafc; font-size: 12px; line-height: 1.4; box-shadow: 0 4px 14px rgba(0,0,0,0.6);">
+          <div style="font-weight: 700; color: #ef4444; display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+            ⚠️ ${p.event_type || 'Marine Hazard'}
+          </div>
+          <div style="font-weight: 600; color: #fff; font-size: 11px;">${p.headline || 'Active Hazard Bulletin'}</div>
+          <div style="color: #cbd5e1; font-size: 11px; margin-top: 3px;">
+            Severity: <strong style="color: #facc15;">${p.severity || 'UNKNOWN'}</strong> · Status: <strong>${p.status || 'ACTIVE'}</strong>
+          </div>
+          <div style="color: #cbd5e1; font-size: 11px; margin-top: 2px;">
+            Affected Area: <strong>${p.affected_area || 'Coastal Zone'}</strong>
+          </div>
+          <div style="color: #94a3b8; font-size: 10px; margin-top: 3px;">
+            Valid: ${p.issued_at ? new Date(p.issued_at).toLocaleDateString() : '—'} → ${p.valid_until ? new Date(p.valid_until).toLocaleDateString() : '—'} · Source: ${p.source || 'IMD / INCOIS'}
+          </div>
+        </div>
+      `,
+      style: { zIndex: '1000' },
     };
   }, []);
 
-  // Update GeoJSON data when hazards change
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !isLoadedRef.current) return;
-
-    const source = map.getSource('hazard-polygons-source') as maplibregl.GeoJSONSource | undefined;
-    if (source && typeof source.setData === 'function') {
-      source.setData(geojson);
-    }
-
-    fitMapToBounds(map, geojson);
-  }, [geojson]);
-
-  // Update selected hazard highlight and camera
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !isLoadedRef.current) return;
-
-    if (map.getLayer('hazards-outline-selected')) {
-      map.setFilter('hazards-outline-selected', ['==', ['get', 'public_id'], selectedHazardId || '']);
-    }
-
-    if (selectedHazardId) {
-      const selectedFeature = geojson.features.find(
-        (f) => f.properties?.public_id === selectedHazardId
-      );
-      if (selectedFeature) {
-        const coords = getFeatureCoordinates(selectedFeature);
-        if (coords.length > 0) {
-          const bounds = new maplibregl.LngLatBounds();
-          coords.forEach((pt) => bounds.extend(pt));
-          map.fitBounds(bounds, {
-            padding: { top: 60, bottom: 60, left: 60, right: 60 },
-            maxZoom: 9.5,
-            duration: 700,
-          });
-
-          // Open popup at center of polygon
-          const center = bounds.getCenter();
-          renderPopup(center, selectedFeature.properties, map);
-        }
+  const handleClick = useCallback(
+    (info: PickingInfo) => {
+      if (info.picked && info.object?.properties?.public_id && onSelectHazard) {
+        onSelectHazard(info.object.properties.public_id);
       }
-    }
-  }, [selectedHazardId, geojson]);
-
-  function getFeatureCoordinates(feature: GeoJSON.Feature): [number, number][] {
-    const coords: [number, number][] = [];
-    if (feature.geometry.type === 'Polygon') {
-      const poly = feature.geometry as GeoJSON.Polygon;
-      poly.coordinates.forEach((ring) => {
-        ring.forEach((pt) => coords.push(pt as [number, number]));
-      });
-    } else if (feature.geometry.type === 'MultiPolygon') {
-      const mpoly = feature.geometry as GeoJSON.MultiPolygon;
-      mpoly.coordinates.forEach((poly) => {
-        poly.forEach((ring) => {
-          ring.forEach((pt) => coords.push(pt as [number, number]));
-        });
-      });
-    }
-    return coords;
-  }
-
-  // Popup renderer
-  function renderPopup(
-    lngLat: maplibregl.LngLatLike,
-    props: any,
-    map: maplibregl.Map
-  ) {
-    if (popupRef.current) {
-      popupRef.current.remove();
-    }
-
-    const eventType = props.event_type || 'HAZARD';
-    const severity = props.severity || 'UNKNOWN';
-    const status = props.status || 'ACTIVE';
-    const isExpired = status === 'EXPIRED';
-    const headline = props.headline || 'Marine Hazard Alert';
-    const source = props.source || 'IMD Coastal Bulletin';
-    const affectedArea = props.affected_area || '—';
-    const qc = props.qc_status || 'VALID';
-    const issuedAt = props.issued_at ? new Date(props.issued_at).toLocaleString() : '—';
-    const validUntil = props.valid_until ? new Date(props.valid_until).toLocaleString() : '—';
-
-    const htmlContent = `
-      <div class="hazard-map-popup">
-        <div class="hazard-popup-header">
-          <span class="hazard-popup-type">${eventType}</span>
-          <span class="hazard-popup-severity ${severity.toLowerCase()}">${severity}</span>
-          <span class="hazard-popup-status ${isExpired ? 'expired' : 'active'}">${status}</span>
-        </div>
-        <div class="hazard-popup-headline">${headline}</div>
-        <div class="hazard-popup-grid">
-          <div class="hazard-popup-metric">
-            <span class="hazard-popup-label">Valid Period</span>
-            <span class="hazard-popup-val mono">${issuedAt} → ${validUntil}</span>
-          </div>
-          <div class="hazard-popup-metric">
-            <span class="hazard-popup-label">Affected Area</span>
-            <span class="hazard-popup-val">${affectedArea}</span>
-          </div>
-          <div class="hazard-popup-metric">
-            <span class="hazard-popup-label">QC Status</span>
-            <span class="hazard-popup-val badge-qc ${qc.toLowerCase()}">${qc}</span>
-          </div>
-          <div class="hazard-popup-metric">
-            <span class="hazard-popup-label">Source</span>
-            <span class="hazard-popup-val">${source}</span>
-          </div>
-        </div>
-        ${props.description ? `<div class="hazard-popup-desc">${props.description}</div>` : ''}
-      </div>
-    `;
-
-    const popup = new maplibregl.Popup({
-      offset: 12,
-      closeButton: true,
-      closeOnClick: false,
-      className: 'hazard-spatial-popup-wrapper',
-    })
-      .setLngLat(lngLat)
-      .setHTML(htmlContent)
-      .addTo(map);
-
-    popupRef.current = popup;
-  }
-
-  // Bounds fitting helper
-  function fitMapToBounds(map: maplibregl.Map, fc: GeoJSON.FeatureCollection) {
-    if (fc.features.length === 0) return;
-
-    const bounds = new maplibregl.LngLatBounds();
-    fc.features.forEach((feat) => {
-      const coords = getFeatureCoordinates(feat);
-      coords.forEach((coord) => bounds.extend(coord));
-    });
-
-    if (!bounds.isEmpty()) {
-      map.fitBounds(bounds, {
-        padding: { top: 40, bottom: 40, left: 40, right: 40 },
-        maxZoom: 9.5,
-        duration: 800,
-      });
-    }
-  }
+    },
+    [onSelectHazard],
+  );
 
   return (
-    <div className="researcher-hazard-map-wrapper" data-testid="hazard-spatial-map">
-      <div className="researcher-hazard-map-header">
-        <div className="researcher-hazard-map-title">
-          <ShieldAlert size={15} className="researcher-hazard-map-icon" />
-          <span>Observed / Advisory Hazard Polygons</span>
-          <span className="researcher-hazard-count-badge">
-            {geojson.features.length} Polygons
-          </span>
-        </div>
-        <div className="researcher-hazard-legend">
-          <div className="hazard-legend-group">
-            <span className="hazard-legend-item">
-              <span className="hazard-legend-line solid" /> Active / Planned
-            </span>
-            <span className="hazard-legend-item">
-              <span className="hazard-legend-line dashed" /> Expired (Historical)
-            </span>
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '380px' }}>
+      <DeckGLMapFoundation
+        layers={layers}
+        viewState={viewState}
+        onViewStateChange={setViewState}
+        getTooltip={getTooltip}
+        onClick={handleClick}
+        topOverlay={
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(15, 23, 42, 0.88)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              color: '#f8fafc',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={14} style={{ color: '#ef4444' }} />
+              <span style={{ fontSize: '12px', fontWeight: 700 }}>Hazard Bulletin 3D Spatial Zones</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>({geojson.features.length} Bulletins)</span>
+            </div>
+            {loading && <span style={{ fontSize: '11px', color: '#38bdf8' }}>Loading hazards...</span>}
           </div>
-          <div className="hazard-legend-group">
-            <span className="hazard-legend-item">
-              <span className="hazard-legend-dot warning" /> Warning
-            </span>
-            <span className="hazard-legend-item">
-              <span className="hazard-legend-dot alert" /> Alert
-            </span>
-            <span className="hazard-legend-item">
-              <span className="hazard-legend-dot watch" /> Watch
-            </span>
-            <span className="hazard-legend-item">
-              <span className="hazard-legend-dot advisory" /> Advisory
-            </span>
+        }
+        bottomOverlay={
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              background: 'rgba(15, 23, 42, 0.9)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(51, 65, 85, 0.6)',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              color: '#cbd5e1',
+              fontSize: '11px',
+              maxWidth: '540px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '2px', background: '#ef4444', display: 'inline-block' }} />
+              <span>Critical / Warning</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '2px', background: '#f97316', display: 'inline-block' }} />
+              <span>Alert</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '2px', background: '#eab308', display: 'inline-block' }} />
+              <span>Watch</span>
+            </div>
+            <div style={{ borderLeft: '1px solid #334155', paddingLeft: '8px', color: '#94a3b8', fontSize: '10px' }}>
+              Extrusion: Severity threat tier
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="researcher-hazard-map-canvas-wrap">
-        <div ref={containerRef} className="researcher-hazard-map-canvas" />
-
-        {/* Empty State Overlay */}
-        {!loading && !hasValidPolygons && (
-          <div className="researcher-hazard-empty-overlay">
-            <AlertTriangle size={20} className="hazard-empty-icon" />
-            <span>No spatial hazard polygons available for rendering.</span>
-          </div>
-        )}
-
-        {/* Loading Overlay */}
-        {loading && (
-          <div className="researcher-hazard-empty-overlay">
-            <Navigation size={20} className="researcher-spinner" />
-            <span>Loading hazard polygons…</span>
-          </div>
-        )}
-      </div>
-
-      <div className="researcher-hazard-map-footer">
-        <Info size={12} />
-        <span>Synthetic hazard polygons · source-faithful demonstration data</span>
-      </div>
+        }
+      />
     </div>
   );
 }
