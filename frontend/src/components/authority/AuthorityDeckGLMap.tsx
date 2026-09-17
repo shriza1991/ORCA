@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { GeoJsonLayer, ScatterplotLayer, PathLayer, TextLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, ScatterplotLayer, PathLayer, TextLayer, ColumnLayer, IconLayer } from '@deck.gl/layers';
+import { FlyToInterpolator } from '@deck.gl/core';
 import type { MapViewState, PickingInfo } from '@deck.gl/core';
 import {
   Ship,
@@ -20,6 +21,23 @@ import {
   type VesselHazardOperationalAlert,
 } from '../../api/client';
 import type { SupportedLanguage } from '../../i18n/translations';
+
+// Sleek, compact naval craft SVG icons with heading orientation
+const VESSEL_ICON_GOLD = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <polygon points="16,2 22,10 20,27 16,24 12,27 10,10" fill="#f59e0b" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="16" cy="13" r="2.2" fill="#ffffff"/>
+  <circle cx="16" cy="13" r="1.1" fill="#0f172a"/>
+</svg>
+`)}`;
+
+const VESSEL_ICON_CYAN = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <polygon points="16,2 22,10 20,27 16,24 12,27 10,10" fill="#0ea5e9" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="16" cy="13" r="2.2" fill="#ffffff"/>
+  <circle cx="16" cy="13" r="1.1" fill="#0f172a"/>
+</svg>
+`)}`;
 
 export interface AuthorityDeckGLMapProps {
   activeSector: DemoSector;
@@ -44,7 +62,7 @@ export default function AuthorityDeckGLMap({
   sectors: _sectors = [],
   baseLayers = [],
   sectorHazards = [],
-  hazardAssociations: _hazardAssociations = [],
+  hazardAssociations = [],
   selectedOperationalAlert,
   vessels = [],
   selectedVesselId,
@@ -69,13 +87,26 @@ export default function AuthorityDeckGLMap({
     Record<string, { longitude: number; latitude: number; speed_knots?: number; heading_deg?: number; timestamp?: string }>
   >({});
 
-  // Auto-focus on active sector change
+  // Lightweight pulse ticker for blinking active hazard and vessel searchlight aura
+  const [pulseTick, setPulseTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPulseTick((t) => (t + 1) % 120);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Smooth cinematic camera swoop zoom-out and zoom-in on active sector/region change
   useEffect(() => {
     setViewState((prev) => ({
       ...prev,
       longitude: activeSector.center[0],
       latitude: activeSector.center[1],
       zoom: activeSector.zoom || 8.8,
+      pitch: 52,
+      bearing: -18,
+      transitionDuration: 1400,
+      transitionInterpolator: new FlyToInterpolator(),
     }));
   }, [activeSector]);
 
@@ -181,7 +212,7 @@ export default function AuthorityDeckGLMap({
     return [];
   }, [trajectoryLayer]);
 
-  // Auto-focus camera on vessel selection fitting its position, historical track & projected trajectory
+  // Auto-focus camera on vessel selection fitting its position & sector context
   useEffect(() => {
     if (!selectedVesselId) return;
 
@@ -225,7 +256,6 @@ export default function AuthorityDeckGLMap({
     const spanLat = Math.max(0.03, maxLat - minLat);
     const maxSpan = Math.max(spanLng, spanLat);
 
-    // Sensible zoom level retaining nearby operational sector context
     let zoom = 10.6;
     if (maxSpan > 0.4) zoom = 9.4;
     else if (maxSpan > 0.2) zoom = 10.0;
@@ -237,15 +267,26 @@ export default function AuthorityDeckGLMap({
       longitude: centerLng,
       latitude: centerLat,
       zoom,
-      transitionDuration: 600,
+      transitionDuration: 800,
+      transitionInterpolator: new FlyToInterpolator(),
     }));
-  }, [
-    selectedVesselId,
-    activeReplayInfo?.currentPos?.longitude,
-    activeReplayInfo?.currentPos?.latitude,
-    activeTrajectoryCoords,
-    vesselPositionsMap,
-  ]);
+  }, [selectedVesselId]);
+
+  // Active hazard IDs associated with selected vessel or selected operational alert
+  const activeHazardIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (selectedOperationalAlert?.hazard_id) {
+      ids.add(selectedOperationalAlert.hazard_id);
+    }
+    if (selectedVesselId && hazardAssociations.length > 0) {
+      for (const ha of hazardAssociations) {
+        if (ha.vessel_id === selectedVesselId) {
+          ids.add(ha.hazard_id);
+        }
+      }
+    }
+    return ids;
+  }, [selectedOperationalAlert, selectedVesselId, hazardAssociations]);
 
   // Calculate deterministic ETA or report unavailable
   const voyageStats = useMemo(() => {
@@ -296,7 +337,7 @@ export default function AuthorityDeckGLMap({
   const deckLayers = useMemo(() => {
     const layers: any[] = [];
 
-    // 1. Maritime National Boundaries & Base Geofences (Subtle background guide)
+    // 1. Maritime National Boundaries & Base Geofences (Decluttered: transparent fill)
     if (baseLayers.length > 0) {
       const boundaryFeatures = baseLayers.flatMap((l) => {
         if (!l.geojson) return [];
@@ -312,27 +353,21 @@ export default function AuthorityDeckGLMap({
             data: { type: 'FeatureCollection', features: boundaryFeatures },
             pickable: true,
             stroked: true,
-            filled: true,
-            lineWidthMinPixels: 1.5,
+            filled: false,
+            lineWidthMinPixels: 1,
             getLineColor: (f: any) => {
               const polyType = (f.properties?.polygon_type || '').toUpperCase();
-              if (polyType === 'EEZ_BOUNDARY') return [56, 189, 248, 120];
-              if (polyType === 'TERRITORIAL_WATERS') return [14, 165, 233, 160];
-              return [100, 116, 139, 90];
+              if (polyType === 'EEZ_BOUNDARY') return [56, 189, 248, 80];
+              if (polyType === 'TERRITORIAL_WATERS') return [14, 165, 233, 100];
+              return [100, 116, 139, 60];
             },
-            getFillColor: (f: any) => {
-              const polyType = (f.properties?.polygon_type || '').toUpperCase();
-              if (polyType === 'EEZ_BOUNDARY') return [56, 189, 248, 8];
-              if (polyType === 'TERRITORIAL_WATERS') return [14, 165, 233, 14];
-              return [100, 116, 139, 10];
-            },
-            getLineWidth: 1.5,
+            getLineWidth: 1,
           }),
         );
       }
     }
 
-    // 2. Active Sector Boundary & Radar Station
+    // 2. Active Sector Boundary & Radar Station (Transparent fill so ocean/map stays visible)
     if (activeSector && activeSector.polygon) {
       layers.push(
         new GeoJsonLayer({
@@ -344,12 +379,11 @@ export default function AuthorityDeckGLMap({
           },
           pickable: false,
           stroked: true,
-          filled: true,
+          filled: false,
           extruded: false,
-          lineWidthMinPixels: 2.5,
-          getLineColor: [168, 85, 247, 220], // Purple boundary
-          getFillColor: [168, 85, 247, 18],
-          getLineWidth: 2.5,
+          lineWidthMinPixels: 1.5,
+          getLineColor: [168, 85, 247, 160], // Subtle purple border line
+          getLineWidth: 1.5,
         }),
       );
 
@@ -365,20 +399,20 @@ export default function AuthorityDeckGLMap({
           getLineColor: [255, 255, 255, 255],
           lineWidthMinPixels: 2,
           stroked: true,
-          radiusMinPixels: 8,
-          radiusMaxPixels: 18,
+          radiusMinPixels: 7,
+          radiusMaxPixels: 16,
         }),
       );
     }
 
-    // 3. Operational Hazard Polygons (Restrained, Decluttered, Translucent)
+    // 3. Operational Hazard Polygons: ONLY significantly blink the active hazard area where the vessel is located
     if (sectorHazards.length > 0) {
       const activeHazards = sectorHazards.filter(
         (h) => h.status !== 'INACTIVE' && h.status !== 'EXPIRED',
       );
 
       const hazardFeatures = activeHazards.map((h) => {
-        const isAlertSelected = selectedOperationalAlert?.hazard_id === h.hazard_id;
+        const isAlertSelected = activeHazardIds.has(h.hazard_id);
         return {
           type: 'Feature' as const,
           geometry: h.geometry,
@@ -389,6 +423,10 @@ export default function AuthorityDeckGLMap({
         };
       });
 
+      // Smooth blink alpha for the active hazard where the vessel is
+      const blinkFillAlpha = Math.round(35 + 25 * Math.sin(pulseTick * 0.15));
+      const blinkLineAlpha = Math.round(180 + 75 * Math.sin(pulseTick * 0.15));
+
       layers.push(
         new GeoJsonLayer({
           id: 'authority-sector-hazards',
@@ -396,20 +434,22 @@ export default function AuthorityDeckGLMap({
           pickable: true,
           stroked: true,
           filled: true,
-          lineWidthMinPixels: 2,
+          lineWidthMinPixels: 1.5,
           getLineColor: (f: any) => {
-            if (f.properties?.is_alert_selected) return [250, 204, 21, 240]; // Bright Gold
-            if (f.properties?.severity === 'WARNING') return [239, 68, 68, 220]; // Red
-            if (f.properties?.severity === 'ALERT') return [249, 115, 22, 200]; // Orange
-            return [234, 179, 8, 180]; // Yellow
+            if (f.properties?.is_alert_selected) {
+              return [250, 204, 21, blinkLineAlpha]; // Glowing blinking gold
+            }
+            if (f.properties?.severity === 'WARNING') return [239, 68, 68, 60];
+            if (f.properties?.severity === 'ALERT') return [249, 115, 22, 50];
+            return [234, 179, 8, 40];
           },
           getFillColor: (f: any) => {
-            if (f.properties?.is_alert_selected) return [250, 204, 21, 45];
-            if (f.properties?.severity === 'WARNING') return [239, 68, 68, 30];
-            if (f.properties?.severity === 'ALERT') return [249, 115, 22, 25];
-            return [234, 179, 8, 20];
+            if (f.properties?.is_alert_selected) {
+              return [250, 204, 21, blinkFillAlpha]; // Dynamic blinking fill only for active hazard
+            }
+            return [0, 0, 0, 0]; // Zero fill for non-active hazards
           },
-          getLineWidth: (f: any) => (f.properties?.is_alert_selected ? 4 : 2),
+          getLineWidth: (f: any) => (f.properties?.is_alert_selected ? 4 : 1.5),
         }),
       );
     }
@@ -446,20 +486,21 @@ export default function AuthorityDeckGLMap({
       }
     }
 
-    // 5. Selected Vessel Historical Track (Solid Cyan Path strictly through actual past coordinates)
+    // 5. Selected Vessel Historical Wake Trail (Glowing Amber Trail matching experiment)
     if (activeReplayInfo?.trackCoords && activeReplayInfo.trackCoords.length >= 2) {
+      const elevatedTrail = activeReplayInfo.trackCoords.map((p) => [p[0], p[1], 200]);
       layers.push(
         new PathLayer({
-          id: 'authority-vessel-historical-track',
+          id: 'authority-vessel-historical-wake-trail',
           data: [
             {
-              path: activeReplayInfo.trackCoords,
+              path: elevatedTrail,
               name: `Historical Track (${selectedVesselId})`,
             },
           ],
           getPath: (d: any) => d.path,
-          getColor: [6, 182, 212, 240], // Bright Cyan
-          getWidth: 3.5,
+          getColor: [245, 158, 11, 220], // Amber glowing trail
+          getWidth: 4,
           widthMinPixels: 3,
           widthMaxPixels: 6,
           capRounded: true,
@@ -478,14 +519,14 @@ export default function AuthorityDeckGLMap({
           pickable: false,
           getPosition: (d: any) => d.position,
           getRadius: 200,
-          getFillColor: [6, 182, 212, 180],
+          getFillColor: [245, 158, 11, 160],
           radiusMinPixels: 3,
           radiusMaxPixels: 6,
         }),
       );
     }
 
-    // 6. Selected Vessel Projected Trajectory (Amber Dashed / Distinct Forward Projection)
+    // 6. Selected Vessel Projected Trajectory (Cyan Forward Projection)
     if (activeTrajectoryCoords && activeTrajectoryCoords.length >= 2) {
       layers.push(
         new PathLayer({
@@ -497,7 +538,7 @@ export default function AuthorityDeckGLMap({
             },
           ],
           getPath: (d: any) => d.path,
-          getColor: [250, 204, 21, 230], // Amber Gold
+          getColor: [6, 182, 212, 230], // Cyan
           getWidth: 3,
           widthMinPixels: 2.5,
           widthMaxPixels: 5,
@@ -507,7 +548,7 @@ export default function AuthorityDeckGLMap({
       );
     }
 
-    // 7. Active Vessels & Nautical Craft Markers (Strictly from real coordinates, rotated along heading)
+    // 7. Active Monitored Vessels & 3D Searchlight Beacon (Matching experiment)
     if (vessels.length > 0) {
       const vesselData: Array<{
         public_id: string;
@@ -527,7 +568,7 @@ export default function AuthorityDeckGLMap({
             ? activeReplayInfo.currentPos
             : vesselPositionsMap[v.public_id];
 
-        // Exclude invalid, missing, or zero coordinates strictly (do not default to sector center)
+        // Exclude invalid, missing, or zero coordinates strictly
         if (
           !pos ||
           typeof pos.longitude !== 'number' ||
@@ -552,22 +593,38 @@ export default function AuthorityDeckGLMap({
       }
 
       if (vesselData.length > 0) {
-        // Vessel Tactical Illuminated Halo (for Selected Vessel)
         const selectedVessels = vesselData.filter((v) => v.isSelected);
+
+        // 3D Searchlight / Beacon Column for Selected Vessel (Streamlined)
         if (selectedVessels.length > 0) {
           layers.push(
+            new ColumnLayer({
+              id: 'authority-vessel-3d-beacon',
+              data: selectedVessels,
+              diskResolution: 18,
+              radius: 350,
+              extruded: true,
+              wireframe: true,
+              getPosition: (d: any) => d.position,
+              getElevation: 2500,
+              getFillColor: [245, 158, 11, 80],
+              getLineColor: [251, 191, 36, 210],
+              lineWidthMinPixels: 1.5,
+            }),
+          );
+
+          // Vessel Glowing Pulse Aura (Restrained & Sleek)
+          const auraRadius = 900 + 300 * Math.sin(pulseTick * 0.15);
+          layers.push(
             new ScatterplotLayer({
-              id: 'authority-selected-vessel-beacon',
+              id: 'authority-vessel-pulse-aura',
               data: selectedVessels,
               pickable: false,
               getPosition: (d: any) => d.position,
-              getRadius: 1600,
-              getFillColor: [245, 158, 11, 60], // Amber glow
-              getLineColor: [250, 204, 21, 230],
-              stroked: true,
-              lineWidthMinPixels: 2,
-              radiusMinPixels: 18,
-              radiusMaxPixels: 38,
+              getRadius: () => auraRadius,
+              getFillColor: [245, 158, 11, 45],
+              radiusMinPixels: 10,
+              radiusMaxPixels: 22,
             }),
           );
         }
@@ -575,7 +632,7 @@ export default function AuthorityDeckGLMap({
         // Nautical Vessel Heading Chevrons / Vectors
         const vesselVectorPaths = vesselData.map((v) => {
           const rad = (v.heading * Math.PI) / 180;
-          const lenDeg = 0.015;
+          const lenDeg = 0.012;
           const latRad = (v.position[1] * Math.PI) / 180;
           const tipLng = v.position[0] + (lenDeg * Math.sin(rad)) / Math.max(Math.cos(latRad), 0.1);
           const tipLat = v.position[1] + lenDeg * Math.cos(rad);
@@ -590,50 +647,79 @@ export default function AuthorityDeckGLMap({
             id: 'authority-vessel-heading-vectors',
             data: vesselVectorPaths,
             getPath: (d: any) => d.path,
-            getColor: (d: any) => (d.isSelected ? [250, 204, 21, 255] : [56, 189, 248, 180]),
-            getWidth: (d: any) => (d.isSelected ? 3.5 : 2),
-            widthMinPixels: 2,
-            widthMaxPixels: 5,
+            getColor: (d: any) => (d.isSelected ? [250, 204, 21, 230] : [56, 189, 248, 160]),
+            getWidth: (d: any) => (d.isSelected ? 2.5 : 1.5),
+            widthMinPixels: 1.5,
+            widthMaxPixels: 4,
           }),
         );
 
-        // Core Vessel Craft Marker
+        // Sleek & Compact Nautical Vessel Craft Markers (IconLayer)
         layers.push(
-          new ScatterplotLayer({
-            id: 'authority-vessels-core',
+          new IconLayer({
+            id: 'authority-vessels-craft-icons',
             data: vesselData,
             pickable: true,
-            getPosition: (d: any) => d.position,
-            getRadius: (d: any) => (d.isSelected ? 900 : 600),
-            getFillColor: (d: any) => (d.isSelected ? [245, 158, 11, 255] : [14, 165, 233, 220]),
-            getLineColor: [255, 255, 255, 240],
-            stroked: true,
-            lineWidthMinPixels: 2,
-            radiusMinPixels: 7,
-            radiusMaxPixels: 14,
+            getPosition: (d: any) => [d.position[0], d.position[1], d.isSelected ? 200 : 0],
+            getIcon: (d: any) => ({
+              url: d.isSelected ? VESSEL_ICON_GOLD : VESSEL_ICON_CYAN,
+              width: 32,
+              height: 32,
+              anchorX: 16,
+              anchorY: 16,
+            }),
+            getSize: (d: any) => (d.isSelected ? 22 : 16),
+            sizeUnits: 'pixels',
+            sizeMinPixels: 12,
+            sizeMaxPixels: 24,
+            getAngle: (d: any) => 360 - d.heading,
           }),
         );
 
-        // Vessel Identity Labels
-        layers.push(
-          new TextLayer({
-            id: 'authority-vessels-labels',
-            data: vesselData,
-            pickable: false,
-            getPosition: (d: any) => d.position,
-            getText: (d: any) => `${d.name || d.public_id} (${d.speed != null ? `${d.speed.toFixed(1)} kn` : '—'})`,
-            getSize: 12,
-            getColor: (d: any) => (d.isSelected ? [255, 255, 255, 255] : [203, 213, 225, 220]),
-            getAngle: 0,
-            getTextAnchor: 'start',
-            getAlignmentBaseline: 'center',
-            getPixelOffset: [14, 0],
-            fontFamily: 'ui-sans-serif, system-ui, -apple-system',
-            fontWeight: 'bold',
-            outlineWidth: 3,
-            outlineColor: [15, 23, 42, 240],
-          }),
-        );
+        // Floating 3D Telemetry Label for Selected Vessel
+        if (selectedVessels.length > 0) {
+          layers.push(
+            new TextLayer({
+              id: 'authority-vessel-3d-telemetry-label',
+              data: selectedVessels,
+              pickable: false,
+              getPosition: (d: any) => [d.position[0], d.position[1], 3200],
+              getText: (d: any) => `${d.name || d.public_id} · ${d.speed != null ? `${d.speed.toFixed(1)} kn` : '—'}`,
+              getSize: 12,
+              getColor: [255, 255, 255, 255],
+              fontFamily: 'ui-sans-serif, system-ui, -apple-system',
+              fontWeight: 'bold',
+              outlineWidth: 3,
+              outlineColor: [15, 23, 42, 230],
+              getTextAnchor: 'middle',
+              getAlignmentBaseline: 'bottom',
+            }),
+          );
+        }
+
+        // Vessel Identity Labels for unselected vessels
+        const unselectedVessels = vesselData.filter((v) => !v.isSelected);
+        if (unselectedVessels.length > 0) {
+          layers.push(
+            new TextLayer({
+              id: 'authority-vessels-labels',
+              data: unselectedVessels,
+              pickable: false,
+              getPosition: (d: any) => d.position,
+              getText: (d: any) => `${d.name || d.public_id} (${d.speed != null ? `${d.speed.toFixed(1)} kn` : '—'})`,
+              getSize: 12,
+              getColor: [203, 213, 225, 220],
+              getAngle: 0,
+              getTextAnchor: 'start',
+              getAlignmentBaseline: 'center',
+              getPixelOffset: [14, 0],
+              fontFamily: 'ui-sans-serif, system-ui, -apple-system',
+              fontWeight: 'bold',
+              outlineWidth: 3,
+              outlineColor: [15, 23, 42, 240],
+            }),
+          );
+        }
       }
     }
 
@@ -642,13 +728,14 @@ export default function AuthorityDeckGLMap({
     baseLayers,
     activeSector,
     sectorHazards,
-    selectedOperationalAlert,
+    activeHazardIds,
     sectorRouteLayers,
     activeReplayInfo,
     activeTrajectoryCoords,
     vessels,
     selectedVesselId,
     vesselPositionsMap,
+    pulseTick,
   ]);
 
   // HUD Tooltip

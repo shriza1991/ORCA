@@ -9,6 +9,8 @@ import {
   ChevronRight,
   Activity,
   X,
+  Layers,
+  ChevronDown,
 } from 'lucide-react';
 import DeckGLMapFoundation from '../map/DeckGLMapFoundation';
 import type { EOGridCell } from '../../api/researcher-client';
@@ -528,21 +530,50 @@ export default function EOGridSpatialMap({
           </div>
         )}
 
-        {/* Metric Selector Tabs */}
-        <div className="eo-metric-tabs" role="tablist" aria-label="Select spatial observation metric">
-          {EO_SPATIAL_METRICS.map((m) => (
-            <button
-              key={m.key}
-              type="button"
-              role="tab"
-              aria-selected={selectedMetric === m.key}
-              className={`eo-metric-tab ${selectedMetric === m.key ? 'active' : ''}`}
-              onClick={() => setSelectedMetric(m.key)}
-              title={m.description}
+        {/* Metric Selector Dropdown */}
+        <div className="eo-metric-dropdown-container" data-testid="eo-metric-dropdown-container" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <label htmlFor="eo-metric-select" style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+            <Layers size={13} style={{ color: '#0284c7' }} />
+            <span>Metric:</span>
+          </label>
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <select
+              id="eo-metric-select"
+              value={selectedMetric}
+              onChange={(e) => setSelectedMetric(e.target.value as EOMetricKey)}
+              className="eo-metric-select"
+              aria-label="Select spatial observation metric"
+              style={{
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                background: 'rgba(15, 23, 42, 0.95)',
+                color: '#f8fafc',
+                border: '1px solid rgba(2, 132, 199, 0.6)',
+                borderRadius: '6px',
+                padding: '5px 28px 5px 10px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                outline: 'none',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+              }}
             >
-              {m.shortName} ({m.unit})
-            </button>
-          ))}
+              {EO_SPATIAL_METRICS.map((m) => (
+                <option key={m.key} value={m.key} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                  {m.label} ({m.shortName} · {m.unit})
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={13}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                pointerEvents: 'none',
+                color: '#38bdf8',
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -583,10 +614,56 @@ export default function EOGridSpatialMap({
       <div className="eo-spatial-map-wrapper" style={{ height: '380px', position: 'relative' }}>
         <DeckGLMapFoundation
           layers={layers}
-          initialCenter={[72.96, 16.6]}
-          initialZoom={7.8}
+          initialCenter={[72.20, 16.60]}
+          initialZoom={7.9}
           getTooltip={getTooltip}
           onClick={handleClick}
+          bottomOverlay={
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                background: 'rgba(15, 23, 42, 0.92)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(51, 65, 85, 0.6)',
+                borderRadius: '6px',
+                padding: '5px 12px',
+                color: '#cbd5e1',
+                fontSize: '11px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 600, color: '#f8fafc' }}>
+                  {activeMetricConfig.shortName} Scale:
+                </span>
+                {selectedMetric === 'sst_celsius' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: '#3b82f6', fontSize: '10px' }}>26°C (Cool)</span>
+                    <span style={{ width: '45px', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, #3b82f6, #f59e0b, #ef4444)', display: 'inline-block' }} />
+                    <span style={{ color: '#ef4444', fontSize: '10px' }}>32°C (Warm)</span>
+                  </div>
+                )}
+                {selectedMetric === 'chlorophyll_a_mg_m3' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: '#065f46', fontSize: '10px' }}>0.2 (Low)</span>
+                    <span style={{ width: '45px', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, #065f46, #10b981, #6ee7b7)', display: 'inline-block' }} />
+                    <span style={{ color: '#34d399', fontSize: '10px' }}>3.0+ (High)</span>
+                  </div>
+                )}
+                {selectedMetric === 'cloud_cover_pct' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: '#0284c7', fontSize: '10px' }}>0% (Clear)</span>
+                    <span style={{ width: '45px', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, #0284c7, #64748b, #94a3b8)', display: 'inline-block' }} />
+                    <span style={{ color: '#94a3b8', fontSize: '10px' }}>100% (Overcast)</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ borderLeft: '1px solid #334155', paddingLeft: '8px', color: '#94a3b8', fontSize: '10px' }}>
+                Open Arabian Sea 5×5 Offshore Grid
+              </div>
+            </div>
+          }
         />
 
         {/* Selected Cell Inspect Drawer */}

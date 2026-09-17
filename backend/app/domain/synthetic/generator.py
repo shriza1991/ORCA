@@ -340,10 +340,10 @@ def generate_marine_observations() -> List[Dict[str, Any]]:
 
 
 def generate_eo_grid_cells() -> List[Dict[str, Any]]:
-    """25 grid cells per day across 14 daily time slices (350 records total) matching MOSDAC/ISRO Oceansat OCM."""
+    """25 grid cells per day across 14 daily time slices (350 records total) matching MOSDAC/ISRO Oceansat OCM strictly in the open Arabian Sea."""
     eo_records = []
     lats = [16.0 + i * 0.3 for i in range(5)]
-    lons = [72.4 + j * 0.28 for j in range(5)]
+    lons = [71.7 + j * 0.25 for j in range(5)]
 
     for day_offset in range(-13, 1):
         obs_date = REFERENCE_TIME + timedelta(days=day_offset)

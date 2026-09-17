@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { GeoJsonLayer } from '@deck.gl/layers';
+import { FlyToInterpolator } from '@deck.gl/core';
 import type { MapViewState, PickingInfo } from '@deck.gl/core';
 import { AlertTriangle } from 'lucide-react';
 import DeckGLMapFoundation, { DEFAULT_VIEW_STATE } from '../map/DeckGLMapFoundation';
@@ -213,6 +214,15 @@ export default function HazardSpatialMap({
     bearing: -15,
   }));
 
+  // Pulse ticker for blinking selected hazard
+  const [pulseTick, setPulseTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPulseTick((t) => (t + 1) % 120);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
   // Auto-focus camera on selected hazard bulletin
   useEffect(() => {
     if (!selectedHazardId) return;
@@ -264,13 +274,18 @@ export default function HazardSpatialMap({
       longitude: centerLng,
       latitude: centerLat,
       zoom,
-      transitionDuration: 600,
+      transitionDuration: 1000,
+      transitionInterpolator: new FlyToInterpolator(),
     }));
   }, [selectedHazardId, geojson]);
 
   // Deck.gl 3D Layers
   const layers = useMemo(() => {
     if (geojson.features.length === 0) return [];
+
+    // Smooth blink alpha for selected hazard
+    const blinkFillAlpha = Math.round(55 + 35 * Math.sin(pulseTick * 0.15));
+    const blinkLineAlpha = Math.round(180 + 75 * Math.sin(pulseTick * 0.15));
 
     return [
       new GeoJsonLayer({
@@ -285,7 +300,7 @@ export default function HazardSpatialMap({
         getElevation: (f: any) => {
           const isSelected = f.properties?.public_id === selectedHazardId;
           const sev = (f.properties?.severity || '').toUpperCase();
-          if (isSelected) return 2600;
+          if (isSelected) return 2800;
           if (sev === 'CRITICAL' || sev === 'WARNING') return 2000;
           if (sev === 'ALERT') return 1400;
           if (sev === 'WATCH') return 800;
@@ -293,26 +308,26 @@ export default function HazardSpatialMap({
         },
         getLineColor: (f: any) => {
           const isSelected = f.properties?.public_id === selectedHazardId;
-          if (isSelected) return [250, 204, 21, 255]; // Bright Gold
+          if (isSelected) return [250, 204, 21, blinkLineAlpha]; // Glowing blinking gold
           if (f.properties?.is_expired) return [100, 116, 139, 140]; // Slate expired
           const sev = (f.properties?.severity || '').toUpperCase();
-          if (sev === 'CRITICAL' || sev === 'WARNING') return [239, 68, 68, 230]; // Red
-          if (sev === 'ALERT') return [249, 115, 22, 210]; // Orange
-          return [234, 179, 8, 190]; // Yellow
+          if (sev === 'CRITICAL' || sev === 'WARNING') return [239, 68, 68, 230]; // Red intact
+          if (sev === 'ALERT') return [249, 115, 22, 210]; // Orange intact
+          return [234, 179, 8, 190]; // Yellow intact
         },
         getFillColor: (f: any) => {
           const isSelected = f.properties?.public_id === selectedHazardId;
-          if (isSelected) return [250, 204, 21, 60];
+          if (isSelected) return [250, 204, 21, blinkFillAlpha]; // Dynamic blinking fill
           if (f.properties?.is_expired) return [100, 116, 139, 20];
           const sev = (f.properties?.severity || '').toUpperCase();
-          if (sev === 'CRITICAL' || sev === 'WARNING') return [239, 68, 68, 35];
-          if (sev === 'ALERT') return [249, 115, 22, 28];
-          return [234, 179, 8, 22];
+          if (sev === 'CRITICAL' || sev === 'WARNING') return [239, 68, 68, 35]; // Red intact
+          if (sev === 'ALERT') return [249, 115, 22, 28]; // Orange intact
+          return [234, 179, 8, 22]; // Yellow intact
         },
-        getLineWidth: (f: any) => (f.properties?.public_id === selectedHazardId ? 4 : 2),
+        getLineWidth: (f: any) => (f.properties?.public_id === selectedHazardId ? 4.5 : 2),
       }),
     ];
-  }, [geojson, selectedHazardId]);
+  }, [geojson, selectedHazardId, pulseTick]);
 
   // Tooltip
   const getTooltip = useCallback((info: PickingInfo) => {

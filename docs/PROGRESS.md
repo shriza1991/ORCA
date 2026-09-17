@@ -73,6 +73,27 @@
 - **Researcher Hazard Bidirectional Selection**: Restored list <-> map hazard selection with auto-focus bounding box and gold highlight (`#facc15`).
 - **Testing & Verification**: 230 tests passing across 15 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build.
 
+### P0-8P — Authority 3D Live Vessel Tracking, FlyTo Sector Transitions & Hazard Decluttering
+- **Backend Fallback Fix**: Fixed `get_demo_vessels` and `get_demo_vessel_replay` in `backend/app/api/v1/routes.py` to correctly fall back to synthetic fixtures when the database is connected but unseeded (`if items: return [...]`), restoring the monitored vessels list and live replay playback.
+- **Cinematic FlyTo Sector Transitions**: Added `FlyToInterpolator` with 1400ms duration to `AuthorityDeckGLMap.tsx` so switching surveillance sectors/regions automatically zooms out smoothly from the previous region and swoops into the selected region.
+- **Rich 3D Live Vessel Tracking**: Ported the complete 3D vessel tracking system to Authority Dashboard:
+  - 3D Amber Searchlight Beacon (`ColumnLayer`, elevation 3000m, radius 500m)
+  - Dynamic Glowing Pulse Aura (`ScatterplotLayer` with real-time sinusoidal radius oscillation)
+  - Real-time Glowing Amber Wake Trail (`PathLayer`, elevated at 200m)
+  - 3D Floating Telemetry Label (`TextLayer`, elevation 3200m)
+- **Sector Map Decluttering & Focused Hazard Blinking**:
+  - Removed all opaque sector boundary fills and base geofence fills (`getFillColor: [0, 0, 0, 0]`), preserving ocean and shoreline clarity.
+  - Non-active hazards are rendered as clean, thin outlines without color fill.
+  - Only the specific hazard area where the vessel is actively located (or the selected operational alert) significantly blinks and pulses with a vivid glowing gold warning fill and bold border.
+
+### P0-8Q — Researcher Hazard Selection Blinking & Compact Vessel Craft Icons
+- **Researcher Hazard Selection Pulsing & Blinking**: Integrated 60-FPS sinusoidal pulsing ticker (`pulseTick`) and `FlyToInterpolator` in `HazardSpatialMap.tsx`. When a hazard is clicked in the list, its 3D polygon significantly blinks with dynamic glowing gold fill (`[250, 204, 21, alpha]`) and a bold 4.5px border while all other hazard polygons remain fully intact with their respective severity color tiers.
+- **Sleek & Compact Nautical Vessel Craft Icons**: Replaced oversized circular scatterplot markers with precision-designed vector AIS vessel craft SVG icons (`IconLayer` in `AuthorityDeckGLMap.tsx` and `DeckGLMarineMap.tsx`) rotated along the vessel's actual navigation heading, with scaled down (12–24px) craft dimensions and refined beacon beam.
+
+### P0-8R — Ocean-Strict 5×5 EO Grid Positioning & Dropdown Metric Selection
+- **Strictly Oceanic EO Grid Coordinates**: Updated 5×5 satellite Earth Observation grid coordinate generator in `backend/app/domain/synthetic/generator.py` (`lons = [71.70, 71.95, 72.20, 72.45, 72.70]`) and exported updated fixtures so that 100% of the 25 grid cells are strictly located in the open Arabian Sea with ~35–80 km offshore clearance from the Konkan coastline, completely eliminating any grid cell overlap on land.
+- **Dropdown Observation Metric Selector**: Replaced header metric tabs in `EOGridSpatialMap.tsx` with a custom-styled dropdown select menu (`SST (°C)`, `Chlorophyll-a (mg/m³)`, `Cloud Cover (%)`). Selecting any metric instantly updates point values, dynamic continuous color ramps (thermal SST, oceanic chlorophyll, cloud fraction), summary statistics (Min, Mean, Max), cell inspect drawers, and bottom overlay legend.
+
 ### P0-8L — Fleet Surveillance Accurate Route Corridors with Start & Destination Terminals
 - Parameterized route alternatives endpoint (`/api/v1/demo/routes/alternatives`) with `vessel_id` to contextualize navigation corridors directly to the active fleet craft.
 - Updated `MockRouteExposureEngine` to connect authentic multi-waypoint navigation corridors (Safest Inshore, Balanced, Direct) from the vessel's specific home harbor/departure coordinates to its specific trip destination/fishing bank.

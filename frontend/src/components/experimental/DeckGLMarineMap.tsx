@@ -1,12 +1,20 @@
 import { useState, useMemo, useCallback } from 'react';
 import DeckGL from '@deck.gl/react';
-import { GeoJsonLayer, ScatterplotLayer, PathLayer, TextLayer, ColumnLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, ScatterplotLayer, PathLayer, TextLayer, ColumnLayer, IconLayer } from '@deck.gl/layers';
 import type { PickingInfo, MapViewState } from '@deck.gl/core';
 import type { MapLayer } from '../../types/contracts';
 import type { PFZCandidate, HazardBulletin, HarborData } from '../../api/researcher-client';
 import type { EvaluatedRouteItem, VesselPosition } from '../../api/client';
 import { buildPFZGeoJSON } from '../researcher/PFZSpatialMap';
 import { buildHazardGeoJSON } from '../researcher/HazardSpatialMap';
+
+const VESSEL_ICON_GOLD = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <polygon points="16,2 22,10 20,27 16,24 12,27 10,10" fill="#f59e0b" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="16" cy="13" r="2.2" fill="#ffffff"/>
+  <circle cx="16" cy="13" r="1.1" fill="#0f172a"/>
+</svg>
+`)}`;
 
 export interface DeckGLMarineMapProps {
   baseLayers?: MapLayer[];
@@ -360,34 +368,39 @@ export default function DeckGLMarineMap({
         );
       }
 
-      // Vessel glowing aura
+      // Vessel glowing aura (Restrained & Sleek)
       layers.push(
         new ScatterplotLayer({
           id: 'vessel-pulse-aura',
           data: vesselData,
           pickable: false,
           getPosition: (d: any) => d.position,
-          getRadius: () => 1800,
-          getFillColor: [245, 158, 11, 55],
-          radiusMinPixels: 16,
-          radiusMaxPixels: 35,
+          getRadius: () => 1000,
+          getFillColor: [245, 158, 11, 45],
+          radiusMinPixels: 10,
+          radiusMaxPixels: 22,
         }),
       );
 
-      // Vessel craft center marker
+      // Sleek & Compact Nautical Vessel Craft Marker (IconLayer)
       layers.push(
-        new ScatterplotLayer({
+        new IconLayer({
           id: 'vessel-core-point',
           data: vesselData,
           pickable: true,
           getPosition: (d: any) => (enable3DExtrusion ? [d.position[0], d.position[1], 200] : d.position),
-          getRadius: 700,
-          getFillColor: [245, 158, 11, 245],
-          getLineColor: [255, 255, 255, 255],
-          stroked: true,
-          lineWidthMinPixels: 2.5,
-          radiusMinPixels: 8,
-          radiusMaxPixels: 18,
+          getIcon: () => ({
+            url: VESSEL_ICON_GOLD,
+            width: 32,
+            height: 32,
+            anchorX: 16,
+            anchorY: 16,
+          }),
+          getSize: () => 22,
+          sizeUnits: 'pixels',
+          sizeMinPixels: 12,
+          sizeMaxPixels: 24,
+          getAngle: (d: any) => 360 - (d.heading_deg || 0),
         }),
       );
 
