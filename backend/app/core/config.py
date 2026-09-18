@@ -61,8 +61,10 @@ class Settings(BaseSettings):
     SARVAM_API_KEY: str = ""
 
     # LLM Settings
+    GROQ_API_KEY: str = ""
     LLM_PROVIDER: str = "openai"
     LLM_MODEL: str = "gpt-4o-mini"
+    LLM_MODE: str = "auto"  # auto | deterministic | fake | provider
     LLM_API_KEY: str = ""
     LLM_BASE_URL: str = "https://api.openai.com/v1"
     LLM_TEMPERATURE: float = 0.1

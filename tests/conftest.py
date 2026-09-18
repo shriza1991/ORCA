@@ -24,6 +24,11 @@ from backend.app.main import app  # noqa: E402
 # Force in-memory store for all agent evaluations so they don't require Postgres
 memory_manager.set_store(InMemoryConversationStore())
 
+from backend.app.core.config import settings  # noqa: E402
+# Guarantee hermetic offline test execution by default
+settings.GROQ_API_KEY = ""
+settings.LLM_API_KEY = ""
+
 from backend.app.agents.integrations.mocks import register_m2_contract_mocks  # noqa: E402
 from backend.app.agents.tools import tool_registry  # noqa: E402
 
@@ -31,8 +36,21 @@ from backend.app.agents.tools import tool_registry  # noqa: E402
 register_m2_contract_mocks(tool_registry, override=True)
 
 
+@pytest.fixture(autouse=True)
+def reset_test_state():
+    """Reset in-memory state and tool mocks between tests to prevent inter-test contamination."""
+    if hasattr(memory_manager.store, "clear"):
+        memory_manager.store.clear()
+    register_m2_contract_mocks(tool_registry, override=True)
+    yield
+    if hasattr(memory_manager.store, "clear"):
+        memory_manager.store.clear()
+    register_m2_contract_mocks(tool_registry, override=True)
+
+
 @pytest.fixture
 def client():
     """Returns FastAPI synchronous TestClient."""
     with TestClient(app) as test_client:
         yield test_client
+

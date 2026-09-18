@@ -97,7 +97,9 @@ class RunRepository(BaseRepository):
         # Ensure conversation thread exists for FK constraint
         conv_repo = ConversationRepository(self.session)
         if not conv_repo.get_by_thread_id(thread_id):
-            conv_repo.create(thread_id=thread_id, context_json={})
+            from backend.app.agents.memory import ThreadContext
+            initial_context = ThreadContext(thread_id=thread_id).model_dump(mode="json")
+            conv_repo.create(thread_id=thread_id, context_json=initial_context)
 
         run = Run(
             thread_id=thread_id,

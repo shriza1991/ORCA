@@ -235,7 +235,46 @@ End-to-end consistency from synthetic fixture -> INCOIS adapter -> ObservationBu
 Owner: Dev 2 / Dev 4 (Integration & Marine Domain)
 Date: 2026-09-14
 
+## D022 — Real Groq LLM Integration with Sandboxed Invariants and Deterministic Safety Gate
+Status: ACCEPTED
+
+Decision:
+1. Integrate real Groq LLM provider (`llama-3.3-70b-versatile`) into SAMUDRA runtime (`POST /api/v1/chat`) via `LLM_MODE="auto"`, while maintaining 100% offline fallback when `GROQ_API_KEY` is not provided.
+2. The LLM is restricted to understanding intent/entities and fluent multilingual explanation synthesis; it NEVER evaluates marine conditions, risk categories, route geometry, or hazard alerts.
+3. Strict safety invariance: `RecommendationStatus` (`GO`, `CAUTION`, `NO_GO`, `UNKNOWN`) is computed solely by deterministic domain engines (`DeterministicRiskEngine`, `RouteExposureEngine`, `GeospatialHazardEngine`). Any LLM draft attempting to alter this status is automatically overridden and intercepted.
+4. Hallucinated citation gate: Responses from LLM are cross-referenced against authoritative evidence IDs collected during the run; any ungrounded citations (`[EV-...]`) are redacted before delivery.
+5. Sandboxed prompt boundary: User messages are wrapped in `<user_query>` tags and sanitized to prevent prompt injection or system prompt overrides.
+
+Reason:
+Provides natural language interaction in English, Hindi, and Marathi without compromising maritime safety-critical guarantees and operational truth.
+
+Impact:
+Enables true conversational UX with zero hallucinated marine risk, transparent evidence citations, and seamless offline operation.
+
+Owner: Dev 3 (Agent Orchestration & Explainability)
+Date: 2026-09-18
+
+## D023 — Groq Model Availability, Analytical Explanation Routing, and ThreadContext Initialization
+Status: ACCEPTED
+
+Decision:
+1. Configure `qwen/qwen3.8-27b` as the active default/recommended Groq model for SAMUDRA runtime, replacing `llama-3.3-70b-versatile` which returned HTTP 404 `model_not_found` for project keys. Retain full environment override via `LLM_MODEL`.
+2. Correct `ANALYTICAL_EXPLANATION` supervisor capability routing from unregistered `"explanation_context"` to real, existing deterministic capabilities: `["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]` (and `"geospatial_hazard"` if geofence present). The response composer uses deterministic facts and risk assessment as ground truth for LLM analytical narrative.
+3. Fix conversation thread context initialization in `RunRepository.create()` to store `ThreadContext(thread_id=thread_id).model_dump(mode="json")` instead of an empty `{}` dictionary, eliminating Pydantic `thread_id Field required` validation warnings.
+4. Strengthen offline test isolation in `tests/conftest.py` with an autouse fixture resetting `memory_manager.store` and contract mocks between tests.
+
+Reason:
+Fixes runtime failures preventing real Groq model execution, eliminates supervisor abort on analytical/explanation briefings, and prevents memory initialization errors while maintaining all safety-critical invariants.
+
+Impact:
+Enables real Groq generation for situational and briefing queries without compromising deterministic safety authority.
+
+Owner: Dev 3 (Agent Orchestration & Explainability)
+Date: 2026-09-18
+
 ## Decision template
+
+
 ### D0XX — <title>
 Status: PROPOSED / ACCEPTED / REJECTED
 Decision:

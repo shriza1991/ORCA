@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import json
 import logging
+import re
 from typing import Any, Dict, List, Optional, Type, TypeVar
 import httpx
 from pydantic import BaseModel, Field
@@ -214,6 +215,35 @@ class FakeLLMProvider(LLMProvider):
                 "synthesized_text": self.canned_text,
                 "key_factors_cited": [],
                 "language": "en",
+            })
+
+        if schema_key == "IntentExtractionResult":
+            # Provide sensible fallback for mock tests that test downstream response composition
+            user_text = ""
+            for m in messages:
+                if getattr(m, "role", None) == MessageRole.USER:
+                    user_text = m.content
+            from backend.app.agents.intent import IntentCategory
+            msg_l = user_text.lower()
+            if any(k in msg_l for k in ["safe", "safety", "sail", "depart", "leave", "fish"]):
+                canned_intent = IntentCategory.SAFETY
+            elif any(k in msg_l for k in ["pfz", "matsya"]):
+                canned_intent = IntentCategory.PFZ
+            elif any(k in msg_l for k in ["hazard", "storm", "cyclone", "restricted", "geofence"]):
+                canned_intent = IntentCategory.HAZARDS
+            elif any(k in msg_l for k in ["route", "passage"]):
+                canned_intent = IntentCategory.ROUTE
+            elif any(k in msg_l for k in ["why", "explain", "reason"]):
+                canned_intent = IntentCategory.ANALYTICAL_EXPLANATION
+            else:
+                canned_intent = IntentCategory.SAFETY
+            from backend.app.agents.intent import detect_language
+            detected_lang = detect_language(user_text)
+            return response_schema.model_validate({
+                "intent": canned_intent,
+                "confidence": 0.95,
+                "detected_language": detected_lang,
+                "entities": {"origin_harbor": "Ratnagiri" if "ratnagiri" in msg_l else None},
             })
 
         # Fallback: construct default model instance if fields allow defaults
@@ -443,28 +473,180 @@ class OpenAILLMProvider(LLMProvider):
                 data = res.json()
 
             raw_text = data["choices"][0]["message"]["content"]
-            return response_schema.model_validate_json(raw_text)
+            return extract_and_parse_json(raw_text, response_schema)
         except httpx.TimeoutException as exc:
             raise TimeoutError(f"OpenAI structured call timed out: {exc}") from exc
         except Exception as exc:
             raise RuntimeError(f"OpenAI structured output failed: {exc}") from exc
 
 
+def extract_and_parse_json(raw_text: str, response_schema: Type[T]) -> T:
+    """Defensively parses JSON from LLM output, handling markdown fences and raw text.
+
+    1. Removes any ```json ... ``` or ``` ... ``` markdown fences.
+    2. Searches for outermost balanced JSON object {...} if surrounded by text.
+    3. Validates against the target Pydantic schema.
+    """
+    if not raw_text or not raw_text.strip():
+        raise ValueError("Empty response received from LLM")
+
+    cleaned = raw_text.strip()
+    # Strip markdown code fences if present
+    if cleaned.startswith("```"):
+        fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned, re.IGNORECASE)
+        if fence_match:
+            cleaned = fence_match.group(1).strip()
+
+    # Try direct validation
+    try:
+        return response_schema.model_validate_json(cleaned)
+    except Exception:
+        # Search for first { to last }
+        first_brace = cleaned.find("{")
+        last_brace = cleaned.rfind("}")
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            json_substr = cleaned[first_brace : last_brace + 1]
+            return response_schema.model_validate_json(json_substr)
+        raise
+
+
 # =============================================================================
-# 6. Factory Function
+# 6. Groq Cloud LLM Provider (Ultra-Low Latency Inference)
+# =============================================================================
+
+class GroqLLMProvider(LLMProvider):
+    """Groq Cloud LLM provider via OpenAI-compatible REST API.
+
+    Optimized for low-latency inference using Llama 3 / Mixtral models on Groq LPUs.
+    Uses json_object response format and strict JSON parsing for high reliability.
+    """
+
+    def __init__(
+        self,
+        api_key: str = "",
+        base_url: str = "https://api.groq.com/openai/v1",
+        model_name: str = "qwen/qwen3.8-27b",
+        timeout_seconds: float = 25.0,
+    ) -> None:
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self._model_name = model_name
+        self.default_timeout = timeout_seconds
+
+    @property
+    def provider_name(self) -> str:
+        return "groq"
+
+    @property
+    def model_name(self) -> str:
+        return self._model_name
+
+    def generate(
+        self,
+        messages: List[LLMMessage],
+        temperature: float = 0.1,
+        max_tokens: int = 1024,
+        timeout_seconds: Optional[float] = None,
+    ) -> LLMResponse:
+        url = f"{self.base_url}/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        payload = {
+            "model": self._model_name,
+            "messages": [{"role": m.role.value, "content": m.content} for m in messages],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        timeout = timeout_seconds or self.default_timeout
+
+        try:
+            with httpx.Client(timeout=timeout) as client:
+                res = client.post(url, headers=headers, json=payload)
+                res.raise_for_status()
+                data = res.json()
+
+            choice = data["choices"][0]
+            content = choice["message"]["content"]
+            usage_data = data.get("usage", {})
+
+            return LLMResponse(
+                content=content,
+                token_usage=TokenUsage(
+                    prompt_tokens=usage_data.get("prompt_tokens", 0),
+                    completion_tokens=usage_data.get("completion_tokens", 0),
+                    total_tokens=usage_data.get("total_tokens", 0),
+                ),
+                finish_reason=choice.get("finish_reason", "stop"),
+                raw_response=data,
+            )
+        except httpx.TimeoutException as exc:
+            raise TimeoutError(f"Groq request timed out after {timeout}s: {exc}") from exc
+        except Exception as exc:
+            raise RuntimeError(f"Groq API call failed: {exc}") from exc
+
+    def generate_structured(
+        self,
+        messages: List[LLMMessage],
+        response_schema: Type[T],
+        temperature: float = 0.0,
+        timeout_seconds: Optional[float] = None,
+    ) -> T:
+        url = f"{self.base_url}/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        schema_json = json.dumps(response_schema.model_json_schema(), ensure_ascii=False)
+        schema_instruction = (
+            f"You must return ONLY a single, valid JSON object conforming exactly to this JSON schema:\n"
+            f"{schema_json}\n"
+            "Do NOT include any markdown code formatting, backticks, comments, or conversational text outside the JSON object."
+        )
+
+        augmented_messages = [
+            LLMMessage(role=MessageRole.SYSTEM, content=schema_instruction)
+        ] + list(messages)
+
+        payload = {
+            "model": self._model_name,
+            "messages": [{"role": m.role.value, "content": m.content} for m in augmented_messages],
+            "temperature": temperature,
+            "response_format": {"type": "json_object"},
+        }
+        timeout = timeout_seconds or self.default_timeout
+
+        try:
+            with httpx.Client(timeout=timeout) as client:
+                res = client.post(url, headers=headers, json=payload)
+                res.raise_for_status()
+                data = res.json()
+
+            raw_text = data["choices"][0]["message"]["content"]
+            return extract_and_parse_json(raw_text, response_schema)
+        except httpx.TimeoutException as exc:
+            raise TimeoutError(f"Groq structured call timed out: {exc}") from exc
+        except Exception as exc:
+            raise RuntimeError(f"Groq structured output failed: {exc}") from exc
+
+
+# =============================================================================
+# 7. Factory Function
 # =============================================================================
 
 def get_llm_provider(provider_type: Optional[str] = None) -> Optional[LLMProvider]:
     """Instantiates the configured LLM provider or returns None for deterministic mode.
 
     Args:
-        provider_type: Optional explicit provider ('fake' | 'ollama' | 'openai' | 'none').
+        provider_type: Optional explicit provider ('groq' | 'fake' | 'ollama' | 'openai' | 'none').
                       Defaults to settings.LLM_PROVIDER if omitted.
 
     Returns:
         LLMProvider instance or None if configured for deterministic fallback.
     """
     choice = (provider_type or settings.LLM_PROVIDER or "").lower().strip()
+    placeholder_keys = {"", "your_llm_api_key_here", "your_groq_api_key_here", "placeholder", "mock"}
 
     if choice == "fake":
         return FakeLLMProvider()
@@ -474,8 +656,20 @@ def get_llm_provider(provider_type: Optional[str] = None) -> Optional[LLMProvide
             model_name=settings.LLM_MODEL or "llama3",
             timeout_seconds=float(settings.LLM_REQUEST_TIMEOUT_SECONDS or 10.0),
         )
+    elif choice == "groq" or (choice == "openai" and bool(settings.GROQ_API_KEY) and not settings.LLM_API_KEY):
+        api_key = settings.GROQ_API_KEY or settings.LLM_API_KEY or ""
+        if not api_key or api_key.strip() in placeholder_keys or api_key.startswith("your_"):
+            logger.info("LLM_PROVIDER is 'groq' but GROQ_API_KEY is empty or placeholder; using deterministic fallback.")
+            return None
+        base_url = settings.LLM_BASE_URL if "groq.com" in (settings.LLM_BASE_URL or "") else "https://api.groq.com/openai/v1"
+        model_name = settings.LLM_MODEL if settings.LLM_MODEL and settings.LLM_MODEL != "gpt-4o-mini" else "qwen/qwen3.8-27b"
+        return GroqLLMProvider(
+            api_key=api_key,
+            base_url=base_url,
+            model_name=model_name,
+            timeout_seconds=float(settings.LLM_REQUEST_TIMEOUT_SECONDS or 25.0),
+        )
     elif choice == "openai":
-        placeholder_keys = {"", "your_llm_api_key_here", "placeholder", "mock"}
         if not settings.LLM_API_KEY or settings.LLM_API_KEY.strip() in placeholder_keys or settings.LLM_API_KEY.startswith("your_"):
             # No API key provided, fall back cleanly to deterministic without error
             logger.info("LLM_PROVIDER is 'openai' but LLM_API_KEY is empty or placeholder; using deterministic fallback.")

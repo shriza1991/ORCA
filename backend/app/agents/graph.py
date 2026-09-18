@@ -25,9 +25,12 @@ All data is strictly tagged as M1_DEMO_DATA / SIMULATED.
 
 from datetime import datetime, timezone
 from enum import Enum
+import json
+import re
 import time
 from typing import Any, Dict, List, Optional
 import uuid
+
 
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
@@ -74,6 +77,7 @@ from backend.app.contracts.chat import (
     Recommendation,
     RecommendationStatus,
 )
+from backend.app.core.config import settings
 from backend.app.domain.map_layers import generate_map_layers
 from backend.app.prompts import load_prompt
 
@@ -336,20 +340,22 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
                 LLMMessage(role=MessageRole.SYSTEM, content=system_prompt),
                 LLMMessage(role=MessageRole.USER, content=sanitized_input),
             ]
+            intent_timeout = float(settings.LLM_REQUEST_TIMEOUT_SECONDS or 15.0)
             extraction = llm_provider.generate_structured(
                 messages=messages,
                 response_schema=IntentExtractionResult,
                 temperature=0.0,
-                timeout_seconds=5.0,
+                timeout_seconds=intent_timeout,
             )
 
-            # Strict IntentCategory boundary validation
+            # Strict IntentCategory boundary validation with alias normalization
             if isinstance(extraction.intent, IntentCategory):
                 validated_intent = extraction.intent.value
             elif extraction.intent in [c.value for c in IntentCategory]:
                 validated_intent = extraction.intent
             else:
-                raise ValueError(f"Extracted intent '{extraction.intent}' is not an approved IntentCategory.")
+                from backend.app.agents.intent import normalize_intent
+                validated_intent = normalize_intent(str(extraction.intent)).value
 
             # M9: Deterministic normalization & canonicalization of LLM output
             thread_ctx = memory_manager.load_context(thread_id)
@@ -732,7 +738,21 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
             else:
                 required_capabilities = ["hazard_search"]
         elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
-            required_capabilities = ["explanation_context"]
+            if has_geofence:
+                required_capabilities = [
+                    "marine_conditions",
+                    "weather_conditions",
+                    "hazard_search",
+                    "geospatial_hazard",
+                    "risk_evaluation",
+                ]
+            else:
+                required_capabilities = [
+                    "marine_conditions",
+                    "weather_conditions",
+                    "hazard_search",
+                    "risk_evaluation",
+                ]
 
         # 2. Capability availability check
         unavailable = tool_registry.get_unavailable_capabilities(required_capabilities)
@@ -810,10 +830,8 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
             tools = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_conditions"]
-        elif intent_val in [IntentCategory.HAZARDS.value, IntentCategory.ROUTE.value]:
-            tools = _enforce_dependency_order(required_capabilities)  # Handles both; required_capabilities already set above
-        elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
-            tools = ["explanation_context"]
+        elif intent_val in [IntentCategory.HAZARDS.value, IntentCategory.ROUTE.value, IntentCategory.ANALYTICAL_EXPLANATION.value]:
+            tools = _enforce_dependency_order(required_capabilities)  # Handles hazards, route, and analytical explanation
         else:
             tools = []
 
@@ -1865,23 +1883,38 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
             )
 
     elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
-        answer = (
-            f"[M1 DEMO DATA] Risk Analysis Explanation:\n"
-            f"The passage was flagged with restricted caution because the path traverses a shallow coral reef "
-            f"buffer zone (RESTRICTED-REEF-ZONE-4).\n\n"
-            f"Supporting Evidence:\n- {evidence_names}\n\n"
-            f"Notice: Simulated demonstration explanation."
-        )
-        recommendation = Recommendation(
-            status=RecommendationStatus.CAUTION,
-            summary="Hazard caution due to environmental buffer proximity.",
-            decisive_factors=["Reef buffer zone intersection"],
-            next_action="Reroute clear of restricted reef boundary.",
-        )
-        confidence = Confidence(
-            level=ConfidenceLevel.MEDIUM,
-            reasons=["Simulated geofence buffer check"],
-        )
+        rec = state.get("risk_assessment")
+        if rec:
+            recommendation = rec
+            answer = (
+                f"[{rec.status.value}] Operational Situation Analysis & Explanation for {harbor}:\n\n"
+                f"{rec.summary}\n\n"
+                f"Decisive Factors:\n" + "\n".join(f"- {f}" for f in rec.decisive_factors) + "\n\n"
+                f"Recommended Action: {rec.next_action}\n\n"
+                f"Supporting Evidence:\n- {evidence_names}"
+            )
+            confidence = state.get("confidence") or Confidence(
+                level=ConfidenceLevel.HIGH,
+                reasons=["Authoritative observation bundle evaluated against craft operating thresholds."],
+            )
+        else:
+            answer = (
+                f"[M1 DEMO DATA] Risk Analysis Explanation:\n"
+                f"The passage was flagged with restricted caution because the path traverses a shallow coral reef "
+                f"buffer zone (RESTRICTED-REEF-ZONE-4).\n\n"
+                f"Supporting Evidence:\n- {evidence_names}\n\n"
+                f"Notice: Simulated demonstration explanation."
+            )
+            recommendation = Recommendation(
+                status=RecommendationStatus.CAUTION,
+                summary="Hazard caution due to environmental buffer proximity.",
+                decisive_factors=["Reef buffer zone intersection"],
+                next_action="Reroute clear of restricted reef boundary.",
+            )
+            confidence = Confidence(
+                level=ConfidenceLevel.MEDIUM,
+                reasons=["Simulated geofence buffer check"],
+            )
 
     else:
         answer = f"[M1 DEMO DATA] Processed query for intent '{intent_val}'."
@@ -1937,6 +1970,7 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                 observations=state.get("observations", {}),
                 evidence_items=evidence_summary,
                 evidence_sources=[ev.source_name for ev in evidence],
+                user_message=state.get("user_message", ""),
             )
 
             messages = [
@@ -1946,11 +1980,12 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                     content=sandboxed_content,
                 ),
             ]
+            composer_timeout = float(settings.LLM_REQUEST_TIMEOUT_SECONDS or 15.0)
             draft = llm_provider.generate_structured(
                 messages=messages,
                 response_schema=LLMResponseDraft,
                 temperature=0.1,
-                timeout_seconds=5.0,
+                timeout_seconds=composer_timeout,
             )
 
             # Security Audit 1: Safety tampering check
@@ -2017,6 +2052,21 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                     status_header = f"[{req_status}]"
                     if not synthesized.startswith(status_header):
                         synthesized = f"{status_header} {synthesized}"
+
+                    # Security Audit 4.5: Ensure cited evidence tags actually exist in supplied evidence
+                    valid_ev_ids = {ev.evidence_id for ev in evidence if getattr(ev, "evidence_id", None)}
+                    cited_tags = re.findall(r"\[(EV[-_A-Za-z0-9]+)\]", synthesized)
+                    hallucinated_ids = [tag for tag in cited_tags if tag not in valid_ev_ids]
+                    if hallucinated_ids:
+                        for hid in hallucinated_ids:
+                            synthesized = synthesized.replace(f"[{hid}]", "")
+                        trace = _append_trace(
+                            state.get("trace"),
+                            node_name="Response Composer",
+                            action=f"Redacted hallucinated evidence ID(s) not in registry: {', '.join(hallucinated_ids)}",
+                            status="sanitized",
+                        )
+
                     answer = synthesized
                     trace = _append_trace(
                         state.get("trace"),
@@ -2287,7 +2337,7 @@ def run_orca_graph(
     elif llm_mode == "fake":
         from backend.app.agents.llm import FakeLLMProvider
         active_provider = llm_provider if llm_provider is not None else FakeLLMProvider()
-    elif llm_mode == "auto":
+    elif llm_mode in ("auto", "provider"):
         active_provider = llm_provider if llm_provider is not None else get_llm_provider()
     else:
         active_provider = llm_provider

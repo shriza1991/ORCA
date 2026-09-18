@@ -410,6 +410,7 @@ class PromptInjectionGuard:
         observations: Dict[str, Any],
         evidence_items: List[Dict[str, Any]],
         evidence_sources: List[str],
+        user_message: Optional[str] = None,
     ) -> str:
         """Builds a strictly partitioned, delimited prompt context enforcing untrusted data boundaries."""
         structured_context = {
@@ -425,8 +426,24 @@ class PromptInjectionGuard:
         sanitized_obs = PromptInjectionGuard.sanitize_external_data_for_prompt(observations)
         sanitized_ev = json.dumps(evidence_items, ensure_ascii=False, default=str)
 
+        user_query_block = ""
+        if user_message:
+            # Strip xml tags and sanitize untrusted user text
+            clean_query = re.sub(
+                r"<\/?(?:user_query|context_data|evidence_context|system)[^>]*>",
+                "",
+                user_message,
+                flags=re.IGNORECASE,
+            ).strip()
+            user_query_block = (
+                "<user_query>\n"
+                f"{clean_query}\n"
+                "</user_query>\n\n"
+            )
+
         return (
             "<context_data>\n"
+            f"{user_query_block}"
             f"AUTHORITATIVE DETERMINISTIC EVALUATION:\n{json.dumps(structured_context, ensure_ascii=False, indent=2)}\n\n"
             f"{sanitized_obs}\n\n"
             "<evidence_context>\n"
