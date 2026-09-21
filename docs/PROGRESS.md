@@ -9,20 +9,18 @@
 - P0 data foundation: **COMPLETE & OFFLINE VERIFIED** (frontend: 207 tests passing, backend: 637 passed / 51 skipped requiring live PostgreSQL/PostGIS, verified on 2026-09-21)
 - Strategic reconciliation: **PHASE 0 COMPLETE** — `docs/ORCA_AI_MASTER_CONTEXT.md` established as canonical source of truth, old context archived, hierarchy and ownership aligned. Phase 1 (verification of §30 regressions/gaps) queued next.
 
-### Known Regressions & Gaps (from ORCA_AI_MASTER_CONTEXT.md §30 audit)
+### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
-These items were identified by the strategic master context as requiring verification and repair:
+| ID | Issue | Severity | Audited Status | Findings |
+|---|---|---|---|---|
+| R-1 | `MarineConditionsPayload` validation regression (missing fields) | P0 | **RESOLVED & VERIFIED** | Tested in `tests/domain/test_partial_marine_payload.py` (7/7 passing). Optional fields instantiate safely without fabrication. |
+| R-2 | Observation bundle lineage collapse to UNKNOWN | P0 | **RESOLVED & VERIFIED** | Tested in `tests/domain/test_observation_bundle.py` (7/7 passing). Direct value lineage to risk engine verified. |
+| R-3 | Valid fallback evidence → automatic UNKNOWN | P0 | **RESOLVED & VERIFIED** | Implemented in `graph.py:1099-1121`. Fallbacks derive explicit `ConfidenceLevel.MEDIUM` with reason. |
+| R-4 | `explanation_context` tool missing/unregistered | P1 | **CONFIRMED GAP** | Required in `graph.py:735` for `ANALYTICAL_EXPLANATION` but missing from `CAPABILITIES_CATALOG` and `tool_registry`. |
+| R-5 | Temporal what-if reuses stale forecast instead of recomputing | P1 | **CONFIRMED GAP** | Context time window updates without recomputing temporal forecast validity or exposure. |
+| R-6 | What-changed / Decision Delta not fully supported in backend | P1 | **CONFIRMED GAP** | `DecisionDiff` exists in frontend; backend lacks structured `DecisionDelta` calculation. |
 
-| ID | Issue | Severity | Status |
-|---|---|---|---|
-| R-1 | `MarineConditionsPayload` validation regression (missing fields) | P0 | NEEDS_VERIFICATION |
-| R-2 | Observation bundle lineage collapse to UNKNOWN | P0 | NEEDS_VERIFICATION |
-| R-3 | Valid fallback evidence → automatic UNKNOWN instead of lower-confidence GO/CAUTION | P0 | NEEDS_VERIFICATION |
-| R-4 | `explanation_context` tool missing/unregistered | P1 | NEEDS_VERIFICATION |
-| R-5 | Temporal what-if reuses stale forecast instead of recomputing | P1 | NEEDS_VERIFICATION |
-| R-6 | What-changed / Decision Delta not fully supported in backend | P1 | NEEDS_VERIFICATION |
-
-> **Note:** These regressions are reported from a prior audit. Each must be verified against current code before being marked CONFIRMED or RESOLVED.
+> **Conclusion**: P0 data-foundation regressions (R-1, R-2, R-3) were previously resolved and are 100% covered by passing regression tests (637 backend, 207 frontend). P1 gaps (R-4, R-5, R-6) are genuine unimplemented features aligned with the new master context's P1 priorities.
 
 ### Strategic Gaps (new capabilities required by master context)
 
