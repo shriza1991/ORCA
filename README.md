@@ -24,10 +24,11 @@ ORCA bridges the gap between sophisticated Earth Observation datasets (ISRO MOSD
 
 Before making any modifications or assuming feature states, review the canonical project documentation:
 
-1. [docs/ORCA_MASTER_CONTEXT.md](file:///d:/Projects/SAMUDRA/docs/ORCA_MASTER_CONTEXT.md) — Comprehensive, audited system architecture, data models, safety principles, and operational invariants.
-2. [docs/ORCA_IMPLEMENTATION_PLAN.md](file:///d:/Projects/SAMUDRA/docs/ORCA_IMPLEMENTATION_PLAN.md) — Canonical development roadmap, team workstreams (A–F), and task priorities.
-3. [docs/SAFETY.md](file:///d:/Projects/SAMUDRA/docs/SAFETY.md) — Deterministic risk thresholds, craft limits, and safety hard-stops.
-4. [docs/API_CONTRACTS.md](file:///d:/Projects/SAMUDRA/docs/API_CONTRACTS.md) — Canonical Pydantic schemas (`ChatRequest`, `ChatResponse`, `VoiceChatResponse`).
+1. [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) — Strategic and architectural source of truth. Mission-intelligence positioning, MissionState, evidence model, decision object, priorities (P0/P1/P2), and implementation direction.
+2. [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) — Canonical development roadmap and phased implementation plan.
+3. [docs/SAFETY.md](docs/SAFETY.md) — Deterministic risk thresholds, craft limits, and safety hard-stops.
+4. [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) — Canonical Pydantic schemas (`ChatRequest`, `ChatResponse`, `VoiceChatResponse`).
+5. [AGENTS.md](AGENTS.md) — AI agent entry rules, source of truth priority, and development guardrails.
 
 ---
 

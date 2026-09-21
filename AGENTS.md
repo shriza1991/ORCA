@@ -7,7 +7,7 @@ Before changing anything, every AI agent MUST read:
 1. `AGENTS.md`
 2. `SKILLS.md`
 3. `README.md`
-4. `docs/ORCA_MASTER_CONTEXT.md`
+4. `docs/ORCA_AI_MASTER_CONTEXT.md`
 5. The relevant canonical contract:
    - `docs/API_CONTRACTS.md`
    - `docs/CANONICAL_DATA_CONTRACTS.md`
@@ -27,7 +27,7 @@ Priority order:
 2. `docs/API_CONTRACTS.md`
 3. `docs/CANONICAL_DATA_CONTRACTS.md`
 4. `docs/SAFETY.md`
-5. `docs/ORCA_MASTER_CONTEXT.md`
+5. `docs/ORCA_AI_MASTER_CONTEXT.md`
 6. `docs/SPECS.md`
 7. `docs/IMPLEMENTATION_PLAN.md`
 8. `docs/PROGRESS.md`

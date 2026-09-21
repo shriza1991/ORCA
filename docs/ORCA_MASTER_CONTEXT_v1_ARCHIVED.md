@@ -1,3 +1,13 @@
+> **⚠️ ARCHIVED DOCUMENT — SUPERSEDED**
+> 
+> This document has been superseded by `docs/ORCA_AI_MASTER_CONTEXT.md` as of 2026-09-21.
+> It is preserved as a historical reference of the initial project baseline.
+> Do NOT use this document as the source of truth for architecture, priorities, or contracts.
+> 
+> **Current strategic source of truth:** [`docs/ORCA_AI_MASTER_CONTEXT.md`](ORCA_AI_MASTER_CONTEXT.md)
+
+---
+
 # ORCA Master Context: Canonical System Specification
 
 > **SIH 2026 Problem Statement:** PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents  

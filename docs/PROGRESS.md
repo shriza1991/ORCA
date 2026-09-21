@@ -5,8 +5,35 @@
 ## Current Release & Workstream State
 - Current version: `v0.1.0-p0-data-foundation`
 - Active branch: `main`
-- Current milestone: **P0 Marine Data & API Integration Foundation**
-- Completion status: **COMPLETE & OFFLINE VERIFIED**
+- Current milestone: **Strategic Reconciliation (Phase 0 Complete)**
+- P0 data foundation: **COMPLETE & OFFLINE VERIFIED** (frontend: 207 tests passing, backend: 637 passed / 51 skipped requiring live PostgreSQL/PostGIS, verified on 2026-09-21)
+- Strategic reconciliation: **PHASE 0 COMPLETE** — `docs/ORCA_AI_MASTER_CONTEXT.md` established as canonical source of truth, old context archived, hierarchy and ownership aligned. Phase 1 (verification of §30 regressions/gaps) queued next.
+
+### Known Regressions & Gaps (from ORCA_AI_MASTER_CONTEXT.md §30 audit)
+
+These items were identified by the strategic master context as requiring verification and repair:
+
+| ID | Issue | Severity | Status |
+|---|---|---|---|
+| R-1 | `MarineConditionsPayload` validation regression (missing fields) | P0 | NEEDS_VERIFICATION |
+| R-2 | Observation bundle lineage collapse to UNKNOWN | P0 | NEEDS_VERIFICATION |
+| R-3 | Valid fallback evidence → automatic UNKNOWN instead of lower-confidence GO/CAUTION | P0 | NEEDS_VERIFICATION |
+| R-4 | `explanation_context` tool missing/unregistered | P1 | NEEDS_VERIFICATION |
+| R-5 | Temporal what-if reuses stale forecast instead of recomputing | P1 | NEEDS_VERIFICATION |
+| R-6 | What-changed / Decision Delta not fully supported in backend | P1 | NEEDS_VERIFICATION |
+
+> **Note:** These regressions are reported from a prior audit. Each must be verified against current code before being marked CONFIRMED or RESOLVED.
+
+### Strategic Gaps (new capabilities required by master context)
+
+| ID | Capability | Priority | Status |
+|---|---|---|---|
+| G-1 | Canonical `MissionState` schema | P0 | NOT_STARTED |
+| G-2 | `Source Registry` (machine-readable source capabilities) | P1 | NOT_STARTED |
+| G-3 | `ExplanationEngine` (FACT→INFERENCE→CONSTRAINT→DECISION) | P1 | NOT_STARTED |
+| G-4 | `Decision Delta` backend computation | P1 | NOT_STARTED |
+| G-5 | Source conflict resolution policy | P1 | NOT_STARTED |
+| G-6 | Hard constraint ordering (safety→legal→vessel→operational) | P0 | PARTIAL (risk engine has thresholds, no explicit ordering) |
 
 ### P0-7 — Authority chat sector context
 - Authority chat now sends the active canonical sector `public_id` per request.

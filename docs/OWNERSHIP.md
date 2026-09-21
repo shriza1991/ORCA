@@ -3,21 +3,25 @@
 ## Branch model
 - `main` — release-ready production
 - `develop` — continuous integration
-- `team/frontend` — M1
-- `team/backend` — M2
-- `team/agents` — M3
-- `team/domain` — M4
+- Feature/fix branches — per task
 
 Flow:
-`team/* -> develop -> main`
+`feature/* -> develop -> main`
 
-## M1 — Frontend / Experience
+## Conceptual Responsibility Areas
+
+The team maps to 6 conceptual ownership areas defined in `docs/ORCA_AI_MASTER_CONTEXT.md` §34.
+One team member may own multiple areas.
+
+### P1 — Frontend / UX
 Owns:
 - `frontend/**`
 - frontend tests
 - API client
+- mission-first decision UI
 - map/recommendation/evidence/trace UI
 - voice UX
+- What-if / Decision Delta UI
 - localization
 
 Does not own:
@@ -26,13 +30,19 @@ Does not own:
 - LangGraph routing
 - raw provider calls
 
-## M2 — Backend / Platform / Data
+### P2 — Backend / API / Orchestrator
 Owns:
 - `backend/app/api/**`
 - `backend/app/contracts/**`
 - `backend/app/connectors/**`
 - `backend/app/repositories/**`
 - `backend/app/core/**`
+- MissionState canonical schema
+- planner / orchestration contracts
+- intent classification
+- source registry
+- runtime modes
+- integration contracts
 - migrations/deployment config
 
 Does not own:
@@ -40,46 +50,76 @@ Does not own:
 - domain mathematics
 - frontend implementation
 
-## M3 — Agents / AI / Orchestration
+### P3 — Marine Data / Connectors
 Owns:
-- `backend/app/agents/**`
-- `backend/app/prompts/**`
-- LLM provider gateway
-- memory orchestration
-- planning/intent/localization
-- evidence-aware response composition
+- connector adapters (INCOIS, IMD, Open-Meteo, etc.)
+- cached-real fixtures
+- source provenance metadata
+- data mode classification
+- timestamp / validity / quality normalization
 
 Does not own:
-- geospatial math
-- deterministic safety thresholds
-- raw external HTTP connectors
+- API routing
+- frontend
+- agent orchestration
 
-## M4 — Marine / GIS / Risk
+### P4 — GIS / Spatial / Temporal
 Owns:
-- `backend/app/domain/**`
+- `backend/app/domain/**` (geometry, geofencing, trajectory)
 - `backend/app/tools/**`
 - `data/fixtures/**`
 - domain/scenario tests
+- temporal window selection
+- route exposure calculations
+- alternative generation
+- time-dependent route cost
 
 Does not own:
 - FastAPI routes
 - frontend
 - LLM prompt design
-- direct external provider adapters
 
-## Shared/coordinated
-- docs/API_CONTRACTS.md
-- docs/CANONICAL_DATA_CONTRACTS.md
-- docs/SAFETY.md
+### P5 — Decision / Evidence
+Owns:
+- deterministic risk engine
+- hard constraint ordering (safety → legal → vessel → operational)
+- confidence derivation
+- ExplanationEngine
+- Decision Object / Decision Delta
+- source conflict resolution
+- evaluation benchmarks
+
+Does not own:
+- connector HTTP calls
+- frontend rendering
+- voice pipeline
+
+### P6 — Voice / Integration
+Owns:
+- STT / TTS services
+- language continuity across turns
+- voice mission updates
+- future low-bandwidth channel adapters
+
+Does not own:
+- mission reasoning logic
+- deterministic safety calculations
+- map rendering
+
+## Shared / Coordinated
+- `docs/ORCA_AI_MASTER_CONTEXT.md`
+- `docs/API_CONTRACTS.md`
+- `docs/CANONICAL_DATA_CONTRACTS.md`
+- `docs/SAFETY.md`
 - frontend shared contract types
 - root CI/deployment files
 
-Shared change:
-1. identify
-2. record decision
-3. update contract
-4. update consumers
-5. test
-6. merge to develop
+Shared change protocol:
+1. Identify affected areas
+2. Record decision in `docs/DECISIONS.md`
+3. Update contract
+4. Update consumers
+5. Test
+6. Merge to develop
 
-No silent cross-workstream modifications.
+No silent cross-area modifications.

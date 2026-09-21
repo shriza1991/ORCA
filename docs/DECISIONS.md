@@ -235,6 +235,34 @@ End-to-end consistency from synthetic fixture -> INCOIS adapter -> ObservationBu
 Owner: Dev 2 / Dev 4 (Integration & Marine Domain)
 Date: 2026-09-14
 
+## D022 — Strategic Reconciliation: ORCA_AI_MASTER_CONTEXT.md as Canonical Strategic Source of Truth
+Status: ACCEPTED
+
+Decision:
+The new `docs/ORCA_AI_MASTER_CONTEXT.md` (2579 lines) supersedes the old `docs/ORCA_MASTER_CONTEXT.md` (222 lines, now archived as `ORCA_MASTER_CONTEXT_v1_ARCHIVED.md`) as the sole strategic and architectural source of truth for ORCA.
+
+Key changes from this reconciliation:
+1. Document authority hierarchy established: Code+Tests → ORCA_AI_MASTER_CONTEXT.md → SAFETY.md → API_CONTRACTS.md → IMPLEMENTATION_PLAN.md → PROGRESS.md → DECISIONS.md
+2. AGENTS.md updated to reference new master context
+3. OWNERSHIP.md updated from 4-member (M1-M4) to 6-role (P1-P6) conceptual model
+4. IMPLEMENTATION_PLAN.md reconciled with new P0/P1/P2 priority tiers
+5. PROGRESS.md updated with honest regression/gap tables from §30 audit
+6. Decision terminology mapping documented: current `NO_GO` ≡ new context's `AVOID`; `RESTRICTED` is a subtype. Code retains existing terms; equivalence is documented.
+
+Reason:
+Multiple AI sessions were reading different documents and gradually diverging the project's architecture. A single authoritative context prevents architecture drift.
+
+Alternatives:
+- Merge old and new contexts into one document (rejected: new context is comprehensive and intentionally supersedes)
+- Keep both as co-equal (rejected: creates exactly the contradiction this reconciliation solves)
+
+Impact:
+All AI agents now read `docs/ORCA_AI_MASTER_CONTEXT.md` as their first strategic reference.
+PROGRESS.md now honestly tracks regressions (R-1 through R-6) and gaps (G-1 through G-6) identified by the master context audit.
+
+Owner: All
+Date: 2026-09-21
+
 ## Decision template
 ### D0XX — <title>
 Status: PROPOSED / ACCEPTED / REJECTED
