@@ -1,41 +1,83 @@
 :root {
   /* =========================================================================
-     LIGHT THEME (Default)
-     Clean, high-contrast, accessible marine palette
+     LIGHT THEME (Coastal Day)
+     Clean, high-contrast, accessible marine palette inspired by coastal charts
      ========================================================================= */
   --color-bg-primary: #ffffff;
   --color-bg-secondary: #f8fafc;
   --color-bg-tertiary: #f1f5f9;
   --color-bg-surface: #e2e8f0;
+  --color-bg-elevated: #ffffff;
+  --color-card-bg: #ffffff;
+  
   --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
   --color-border-hover: #cbd5e1;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
-  --color-text-dim: #94a3b8;
+  --color-border-focus: #0284c7;
+  
+  --color-text-primary: #091325;
+  --color-text-secondary: #1e293b;
+  --color-text-muted: #475569;
+  --color-text-dim: #64748b;
+  
+  /* Oceanic Cyan & Phosphor Accent */
   --color-accent: #0284c7;
   --color-accent-hover: #0369a1;
+  --color-accent-active: #075985;
   --color-accent-text: #ffffff;
-  --color-accent-subtle: rgba(2, 132, 199, 0.1);
-  --color-accent-border: rgba(2, 132, 199, 0.25);
+  --color-accent-subtle: rgba(2, 132, 199, 0.08);
+  --color-accent-border: rgba(2, 132, 199, 0.22);
+  --color-accent-glow: rgba(2, 132, 199, 0.15);
+  
+  /* Marine Teal Supporting */
+  --color-teal: #0d9488;
+  --color-teal-subtle: rgba(13, 148, 136, 0.08);
+  --color-teal-border: rgba(13, 148, 136, 0.25);
 
-  /* Status Colors (Light Mode - vibrant text with soft tinted backgrounds) */
+  /* Status Colors (Light Mode — high contrast, WCAG AAA compliant) */
   --color-go: #15803d;
+  --color-go-hover: #166534;
+  --color-go-text: #14532d;
   --color-go-bg: #f0fdf4;
+  --color-go-border: #86efac;
+  --glow-go: rgba(22, 163, 74, 0.18);
+  
   --color-caution: #b45309;
+  --color-caution-hover: #92400e;
+  --color-caution-text: #78350f;
   --color-caution-bg: #fffbeb;
-  --color-no-go: #b91c1c;
-  --color-no-go-bg: #fef2f2;
+  --color-caution-border: #fcd34d;
+  --glow-caution: rgba(217, 119, 6, 0.18);
+  
+  --color-no-go: #be123c;
+  --color-no-go-hover: #9f1239;
+  --color-no-go-text: #881337;
+  --color-no-go-bg: #fff1f2;
+  --color-no-go-border: #fda4af;
+  --glow-no-go: rgba(225, 29, 72, 0.18);
+  
   --color-unknown: #6d28d9;
+  --color-unknown-hover: #5b21b6;
+  --color-unknown-text: #4c1d95;
   --color-unknown-bg: #f5f3ff;
+  --color-unknown-border: #c4b5fd;
+  --glow-unknown: rgba(124, 58, 237, 0.18);
+  
   --color-informational: #0284c7;
   --color-informational-bg: #f0f9ff;
+  --color-informational-border: #bae6fd;
+
+  /* Glassmorphism & Elevation */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.8);
+  --glass-blur: blur(12px);
 
   /* Elevation Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-drawer: -4px 0 24px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.09), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+  --shadow-drawer: -4px 0 28px rgba(15, 23, 42, 0.14);
 
   /* Spacing */
   --space-xs: 4px;
@@ -44,21 +86,26 @@
   --space-lg: 16px;
   --space-xl: 20px;
   --space-2xl: 24px;
+  --space-3xl: 32px;
 
   /* Typography */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-size-xs: 11px;
   --font-size-sm: 12px;
   --font-size-base: 13px;
   --font-size-md: 14px;
   --font-size-lg: 16px;
-  --font-size-xl: 20px;
-  --font-size-2xl: 24px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+  --font-size-3xl: 28px;
 
   /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
   /* Layout */
@@ -66,45 +113,90 @@
   --header-height: 60px;
 
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 350ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ===========================================================================
-   DARK THEME (Optional toggle)
+   DARK THEME (Abyssal Ocean)
+   Deep maritime navy, glowing phosphors, tactical chart contrast
    =========================================================================== */
 [data-theme="dark"] {
-  --color-bg-primary: #0b1329;
-  --color-bg-secondary: #0f172a;
-  --color-bg-tertiary: #1e293b;
-  --color-bg-surface: #020617;
-  --color-border: #1e293b;
-  --color-border-hover: #334155;
+  --color-bg-primary: #070d18;
+  --color-bg-secondary: #0c1527;
+  --color-bg-tertiary: #131f37;
+  --color-bg-surface: #040810;
+  --color-bg-elevated: #15223c;
+  --color-card-bg: #0f1a30;
+
+  --color-border: #1a2a4a;
+  --color-border-subtle: #111e35;
+  --color-border-hover: #2d4370;
+  --color-border-focus: #38bdf8;
+
   --color-text-primary: #f8fafc;
-  --color-text-secondary: #e2e8f0;
+  --color-text-secondary: #cbd5e1;
   --color-text-muted: #94a3b8;
   --color-text-dim: #64748b;
+
+  /* Oceanic Cyan & Phosphor Accent */
   --color-accent: #38bdf8;
   --color-accent-hover: #0ea5e9;
-  --color-accent-text: #0b1329;
-  --color-accent-subtle: rgba(56, 189, 248, 0.15);
+  --color-accent-active: #0284c7;
+  --color-accent-text: #070d18;
+  --color-accent-subtle: rgba(56, 189, 248, 0.12);
   --color-accent-border: rgba(56, 189, 248, 0.3);
+  --color-accent-glow: rgba(56, 189, 248, 0.25);
 
-  /* Status Colors */
-  --color-go: #22c55e;
-  --color-go-bg: #052e16;
-  --color-caution: #eab308;
-  --color-caution-bg: #422006;
-  --color-no-go: #ef4444;
-  --color-no-go-bg: #450a0a;
+  /* Marine Teal Supporting */
+  --color-teal: #2dd4bf;
+  --color-teal-subtle: rgba(45, 212, 191, 0.12);
+  --color-teal-border: rgba(45, 212, 191, 0.3);
+
+  /* Status Colors (Dark Mode — glowing indicators on dark sea) */
+  --color-go: #10b981;
+  --color-go-hover: #34d399;
+  --color-go-text: #6ee7b7;
+  --color-go-bg: #05261a;
+  --color-go-border: #047857;
+  --glow-go: rgba(16, 185, 129, 0.25);
+
+  --color-caution: #f59e0b;
+  --color-caution-hover: #fbbf24;
+  --color-caution-text: #fde68a;
+  --color-caution-bg: #291804;
+  --color-caution-border: #b45309;
+  --glow-caution: rgba(245, 158, 11, 0.25);
+
+  --color-no-go: #f43f5e;
+  --color-no-go-hover: #fb7185;
+  --color-no-go-text: #fecdd3;
+  --color-no-go-bg: #2d0612;
+  --color-no-go-border: #be123c;
+  --glow-no-go: rgba(244, 63, 94, 0.25);
+
   --color-unknown: #a78bfa;
-  --color-unknown-bg: #1e1b4b;
-  --color-informational: #38bdf8;
-  --color-informational-bg: #082f49;
+  --color-unknown-hover: #c4b5fd;
+  --color-unknown-text: #ddd6fe;
+  --color-unknown-bg: #1e1338;
+  --color-unknown-border: #6d28d9;
+  --glow-unknown: rgba(167, 139, 250, 0.25);
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  --shadow-drawer: -4px 0 24px rgba(0, 0, 0, 0.5);
+  --color-informational: #38bdf8;
+  --color-informational-bg: #0c2340;
+  --color-informational-border: #0369a1;
+
+  /* Glassmorphism & Elevation */
+  --glass-bg: rgba(12, 21, 39, 0.85);
+  --glass-border: rgba(56, 189, 248, 0.15);
+  --glass-blur: blur(14px);
+
+  /* Elevation Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+  --shadow-drawer: -4px 0 32px rgba(0, 0, 0, 0.7);
 }
+
