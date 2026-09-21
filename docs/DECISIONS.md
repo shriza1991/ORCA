@@ -272,8 +272,26 @@ Enables real Groq generation for situational and briefing queries without compro
 Owner: Dev 3 (Agent Orchestration & Explainability)
 Date: 2026-09-18
 
-## Decision template
+## D024 — Operational Provider Mode Registration and Data-Unavailability Semantics
+Status: ACCEPTED
 
+Decision:
+1. Operational provider mode (`LIVE`, `HYBRID`) explicitly isolates and prevents registration of mock engines (`MockPFZRankingEngine`, `MockRouteExposureEngine`, `MockGeospatialHazardEngine`).
+2. Dev 4 deterministic engines (`DeterministicPFZRankingEngine`, `DeterministicGeospatialEngine`, `DeterministicRiskEngine`) are unconditionally registered through established `ProviderToolAdapter` wrappers. Route capability is marked explicitly unavailable in operational mode until a real route evaluator is built.
+3. Replace fabricated fallback payload data (e.g., IMD "NORMAL/no warning", INCOIS "SAFE/CACHED_REAL") with explicit "UNKNOWN", "UNAVAILABLE", or "DEGRADED" representations when authoritative live endpoints fail or keys are absent. 
+4. The Risk Engine preserves existing "NO_GO" precedence for verified severe hazards (e.g. active cyclones, severe squalls) even when other secondary telemetry is missing or stale. Missing or degraded telemetry alone correctly returns "UNKNOWN", but never forces a "GO" or "CAUTION".
+5. SVAS capability dynamic availability is updated according to operational mode; if the API key is absent in LIVE/HYBRID mode, `svas_advisory` is set as unavailable.
+
+Reason:
+To prevent demonstration artifacts and fabricated safe-harbor telemetry from leaking into production provider paths and causing silent failures or false assurances.
+
+Impact:
+Guarantees explicit system degradation behavior on upstream provider failure. Enforces true separation between demonstration mocks and real operational deterministic evaluation logic.
+
+Owner: Dev 2 / Dev 4 (Integration & Backend Platform)
+Date: 2026-09-21
+
+## Decision template
 
 ### D0XX — <title>
 Status: PROPOSED / ACCEPTED / REJECTED
