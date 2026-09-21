@@ -25,9 +25,56 @@ import {
   Eye,
 } from 'lucide-react';
 import { useChat, type ChatMessage } from '../../hooks/useChat';
-import MapView from '../map/MapView';
+import DeckGLMapFoundation from '../map/DeckGLMapFoundation';
+import { GeoJsonLayer } from '@deck.gl/layers';
 import type { MapLayer, AgentTraceItem } from '../../types/contracts';
 import { CANONICAL_DATA_MODE_LABEL, CANONICAL_DATA_MODE_TOOLTIP } from '../../api/researcher-client';
+
+function parseHexOrRgb(colorStr?: string, defaultAlpha = 200): [number, number, number, number] {
+  if (!colorStr) return [56, 189, 248, defaultAlpha];
+  if (colorStr.startsWith('#')) {
+    const hex = colorStr.replace('#', '');
+    if (hex.length === 6) {
+      return [
+        parseInt(hex.slice(0, 2), 16),
+        parseInt(hex.slice(2, 4), 16),
+        parseInt(hex.slice(4, 6), 16),
+        defaultAlpha,
+      ];
+    }
+  }
+  return [56, 189, 248, defaultAlpha];
+}
+
+function QueryResponseDeckGLMap({ layers }: { layers: MapLayer[] }) {
+  const deckLayers = (layers || []).map((l, idx) => {
+    const color = parseHexOrRgb(l.style?.color, 230);
+    const fillColor = parseHexOrRgb(l.style?.color, Math.round((l.style?.opacity ?? 0.25) * 255));
+    return new GeoJsonLayer({
+      id: `query-response-layer-${l.layer_id || idx}`,
+      data: l.geojson as any,
+      pickable: true,
+      stroked: true,
+      filled: true,
+      lineWidthMinPixels: l.style?.line_width ?? 2,
+      pointRadiusMinPixels: l.style?.circle_radius ?? 6,
+      getLineColor: color,
+      getFillColor: fillColor,
+      getLineWidth: l.style?.line_width ?? 2,
+    });
+  });
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '320px', borderRadius: '6px', overflow: 'hidden' }}>
+      <DeckGLMapFoundation
+        layers={deckLayers}
+        initialCenter={[73.28, 16.99]}
+        initialZoom={7.8}
+        showCameraPresets={true}
+      />
+    </div>
+  );
+}
 
 export const RESEARCH_PROMPTS = [
   {
@@ -609,11 +656,7 @@ export default function QueryWorkbench() {
                                 </div>
 
                                 <div className="query-map-view-container">
-                                  <MapView
-                                    layers={resp.map_layers}
-                                    theme="dark"
-                                    zoom={7.5}
-                                  />
+                                  <QueryResponseDeckGLMap layers={resp.map_layers} />
                                 </div>
                               </div>
                             )}

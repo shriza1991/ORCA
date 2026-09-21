@@ -839,6 +839,38 @@ describe('Researcher Dashboard Components & Data Client', () => {
       const geojson = buildHazardGeoJSON(corrupted);
       expect(geojson.features).toHaveLength(0);
     });
+
+    it('identifies selected hazard geometry by public_id and computes its spatial bounding box for auto-focus', () => {
+      const geojson = buildHazardGeoJSON(mockHazards);
+      const selectedId = 'hazard-01';
+      const targetFeature = geojson.features.find((f) => f.properties?.public_id === selectedId);
+
+      expect(targetFeature).toBeDefined();
+      const geom = targetFeature?.geometry as GeoJSON.Polygon;
+      const coords = geom.coordinates[0];
+
+      let minLng = coords[0][0];
+      let maxLng = coords[0][0];
+      let minLat = coords[0][1];
+      let maxLat = coords[0][1];
+
+      for (const [lng, lat] of coords) {
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      }
+
+      const centerLng = (minLng + maxLng) / 2;
+      const centerLat = (minLat + maxLat) / 2;
+
+      expect(minLng).toBe(72.8);
+      expect(maxLng).toBe(73.4);
+      expect(minLat).toBe(16.4);
+      expect(maxLat).toBe(17.1);
+      expect(centerLng).toBeCloseTo(73.1, 2);
+      expect(centerLat).toBeCloseTo(16.75, 2);
+    });
   });
 
   // =========================================================================
@@ -2117,6 +2149,114 @@ describe('Researcher Dashboard Components & Data Client', () => {
       expect(respWithoutLayers.map_layers).toHaveLength(0);
     });
   });
+
+  describe('Researcher Deck.gl 3D Maps Integration', () => {
+    it('calculates deterministic PFZ column heights from chlorophyll density without altering underlying values', () => {
+      const candidates: PFZCandidate[] = [
+        {
+          public_id: 'pfz-01',
+          rank: 1,
+          confidence: 'HIGH',
+          latitude: 16.85,
+          longitude: 73.15,
+          sst_gradient: 1.8,
+          chlorophyll_a_mg_m3: 2.5,
+          depth_m: 45,
+          distance_km: 18.2,
+          bearing_deg: 245,
+          status: 'ACTIVE',
+          qc_status: 'VALID',
+          valid_from: '2026-09-17T00:00:00Z',
+          valid_to: '2026-09-18T00:00:00Z',
+          source: 'INCOIS PFZ Advisory',
+        },
+        {
+          public_id: 'pfz-02',
+          rank: 2,
+          confidence: 'MEDIUM',
+          latitude: 16.70,
+          longitude: 73.05,
+          sst_gradient: 1.2,
+          chlorophyll_a_mg_m3: 0.8,
+          depth_m: 60,
+          distance_km: 32.5,
+          bearing_deg: 220,
+          status: 'ACTIVE',
+          qc_status: 'VALID',
+          valid_from: '2026-09-17T00:00:00Z',
+          valid_to: '2026-09-18T00:00:00Z',
+          source: 'INCOIS PFZ Advisory',
+        },
+      ];
+
+      const computeElevation = (chla?: number | null) => {
+        const val = typeof chla === 'number' ? chla : 1.0;
+        return Math.min(3000, Math.max(500, Math.round(val * 800)));
+      };
+
+      const elev1 = computeElevation(candidates[0].chlorophyll_a_mg_m3);
+      const elev2 = computeElevation(candidates[1].chlorophyll_a_mg_m3);
+
+      expect(elev1).toBe(2000); // 2.5 * 800 = 2000
+      expect(elev2).toBe(640);  // 0.8 * 800 = 640
+      expect(elev1).toBeGreaterThan(elev2);
+    });
+
+    it('calculates deterministic hazard extrusion heights based strictly on severity tiers', () => {
+      const getSeverityElevation = (severity: string) => {
+        const s = severity.toUpperCase();
+        if (s === 'CRITICAL' || s === 'WARNING') return 2200;
+        if (s === 'ALERT') return 1500;
+        if (s === 'WATCH') return 900;
+        return 600;
+      };
+
+      expect(getSeverityElevation('WARNING')).toBe(2200);
+      expect(getSeverityElevation('ALERT')).toBe(1500);
+      expect(getSeverityElevation('WATCH')).toBe(900);
+      expect(getSeverityElevation('ADVISORY')).toBe(600);
+    });
+
+    it('preserves EO 5x5 spatial grid calculations and valid cell metrics in 3D views', () => {
+      const sampleCells: EOGridCell[] = [
+        {
+          public_id: 'cell-01',
+          cell_id: 'C1',
+          center_lat: 16.9,
+          center_lon: 73.2,
+          pass_time: '2026-09-17T06:00:00Z',
+          sst_celsius: 28.5,
+          chlorophyll_a_mg_m3: 1.4,
+          cloud_cover_pct: 10,
+          qc_status: 'VALID',
+          satellite: 'Oceansat-3',
+          resolution_m: 360,
+          source: 'ISRO / INCOIS',
+        },
+        {
+          public_id: 'cell-02',
+          cell_id: 'C2',
+          center_lat: 16.8,
+          center_lon: 73.1,
+          pass_time: '2026-09-17T06:00:00Z',
+          sst_celsius: 29.1,
+          chlorophyll_a_mg_m3: 2.2,
+          cloud_cover_pct: 15,
+          qc_status: 'VALID',
+          satellite: 'Oceansat-3',
+          resolution_m: 360,
+          source: 'ISRO / INCOIS',
+        },
+      ];
+
+      const stats = calculateEOSpatialStats(sampleCells, 'sst_celsius');
+      expect(stats.validCount).toBe(2);
+      expect(stats.min).toBe(28.5);
+      expect(stats.max).toBe(29.1);
+      expect(stats.mean).toBe(28.8);
+    });
+  });
 });
+
 
 

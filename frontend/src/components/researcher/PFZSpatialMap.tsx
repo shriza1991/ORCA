@@ -1,11 +1,11 @@
-import { useEffect, useRef, useMemo } from 'react';
-import maplibregl from 'maplibre-gl';
-import { MapPin, Info, AlertTriangle, Navigation } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { ColumnLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
+import type { MapViewState, PickingInfo } from '@deck.gl/core';
+import { Fish } from 'lucide-react';
+import DeckGLMapFoundation, { DEFAULT_VIEW_STATE } from '../map/DeckGLMapFoundation';
 import type { PFZCandidate } from '../../api/researcher-client';
 
-const MAP_STYLE_DARK = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
-
-interface PFZSpatialMapProps {
+export interface PFZSpatialMapProps {
   candidates: PFZCandidate[];
   selectedCandidateId?: string | null;
   onSelectCandidate?: (candidateId: string) => void;
@@ -28,7 +28,7 @@ export function buildPFZGeoJSON(candidates: PFZCandidate[]): GeoJSON.FeatureColl
         c.latitude >= -90 &&
         c.latitude <= 90 &&
         c.longitude >= -180 &&
-        c.longitude <= 180
+        c.longitude <= 180,
     )
     .map((c) => ({
       type: 'Feature' as const,
@@ -60,345 +60,244 @@ export function buildPFZGeoJSON(candidates: PFZCandidate[]): GeoJSON.FeatureColl
 }
 
 export default function PFZSpatialMap({
-  candidates,
+  candidates = [],
   selectedCandidateId,
   onSelectCandidate,
   loading = false,
 }: PFZSpatialMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const popupRef = useRef<maplibregl.Popup | null>(null);
-  const isLoadedRef = useRef(false);
+  const validCandidates = useMemo(() => {
+    return (candidates || []).filter(
+      (c) =>
+        typeof c.latitude === 'number' &&
+        typeof c.longitude === 'number' &&
+        !isNaN(c.latitude) &&
+        !isNaN(c.longitude) &&
+        (c.latitude !== 0 || c.longitude !== 0) &&
+        c.latitude >= -90 &&
+        c.latitude <= 90 &&
+        c.longitude >= -180 &&
+        c.longitude <= 180,
+    );
+  }, [candidates]);
 
-  const geojson = useMemo(() => buildPFZGeoJSON(candidates), [candidates]);
-  const hasValidCoordinates = geojson.features.length > 0;
+  // Compute map center from candidates or fallback to Konkan coast
+  const mapCenter = useMemo<[number, number]>(() => {
+    if (validCandidates.length === 0) return [73.28, 16.99];
+    const avgLng = validCandidates.reduce((sum, c) => sum + c.longitude, 0) / validCandidates.length;
+    const avgLat = validCandidates.reduce((sum, c) => sum + c.latitude, 0) / validCandidates.length;
+    return [avgLng, avgLat];
+  }, [validCandidates]);
 
-  // Initialize MapLibre
+  const [viewState, setViewState] = useState<MapViewState>(() => ({
+    ...DEFAULT_VIEW_STATE,
+    longitude: mapCenter[0],
+    latitude: mapCenter[1],
+    zoom: 8.6,
+    pitch: 52,
+    bearing: -18,
+  }));
+
+  // Auto-focus camera on selected candidate
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    if (!selectedCandidateId) return;
+    const target = validCandidates.find((c) => c.public_id === selectedCandidateId);
+    if (!target) return;
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: MAP_STYLE_DARK,
-      center: [73.0, 16.5], // Central Konkan coast fallback
-      zoom: 7,
-      attributionControl: false,
+    setViewState((prev) => ({
+      ...prev,
+      longitude: target.longitude,
+      latitude: target.latitude,
+      zoom: 10.4,
+      transitionDuration: 600,
+    }));
+  }, [selectedCandidateId, validCandidates]);
+
+  // Transform candidates into Deck.gl data points
+  const pfzData = useMemo(() => {
+    return validCandidates.map((c) => {
+      const isSelected = c.public_id === selectedCandidateId;
+      // Deterministic elevation: 500m baseline + (chl-a * 800m), capped at 3000m
+      const chla = typeof c.chlorophyll_a_mg_m3 === 'number' ? c.chlorophyll_a_mg_m3 : 1.0;
+      const elevation = Math.min(3000, Math.max(500, Math.round(chla * 800)));
+
+      let colorRgb = [16, 185, 129]; // High: Emerald
+      if (c.confidence === 'MEDIUM') colorRgb = [6, 182, 212]; // Medium: Cyan
+      else if (c.confidence === 'LOW') colorRgb = [245, 158, 11]; // Low: Amber
+
+      return {
+        ...c,
+        position: [c.longitude, c.latitude] as [number, number],
+        elevation,
+        colorRgb,
+        isSelected,
+      };
     });
+  }, [validCandidates, selectedCandidateId]);
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+  // Deck.gl 3D Layers
+  const layers = useMemo(() => {
+    if (pfzData.length === 0) return [];
 
-    const resizeObserver = new ResizeObserver(() => {
-      map.resize();
-    });
-    resizeObserver.observe(containerRef.current);
+    const result: any[] = [];
 
-    map.on('load', () => {
-      isLoadedRef.current = true;
+    // 1. 3D Volumetric Chlorophyll Columns
+    result.push(
+      new ColumnLayer({
+        id: 'pfz-3d-columns',
+        data: pfzData,
+        diskResolution: 18,
+        radius: 650,
+        extruded: true,
+        pickable: true,
+        elevationScale: 1,
+        getPosition: (d: any) => d.position,
+        getElevation: (d: any) => d.elevation,
+        getFillColor: (d: any) => [d.colorRgb[0], d.colorRgb[1], d.colorRgb[2], d.isSelected ? 230 : 160],
+        getLineColor: (d: any) => (d.isSelected ? [250, 204, 21, 255] : [255, 255, 255, 200]),
+        lineWidthMinPixels: 1.5,
+        stroked: true,
+        wireframe: true,
+      }),
+    );
 
-      // Source
-      map.addSource('pfz-candidates-source', {
-        type: 'geojson',
-        data: geojson,
-      });
+    // 2. Base Glowing Halos
+    result.push(
+      new ScatterplotLayer({
+        id: 'pfz-base-halos',
+        data: pfzData,
+        pickable: false,
+        getPosition: (d: any) => d.position,
+        getRadius: (d: any) => (d.isSelected ? 1800 : 1200),
+        getFillColor: (d: any) => [d.colorRgb[0], d.colorRgb[1], d.colorRgb[2], d.isSelected ? 70 : 40],
+        getLineColor: (d: any) => (d.isSelected ? [250, 204, 21, 230] : [d.colorRgb[0], d.colorRgb[1], d.colorRgb[2], 120]),
+        stroked: true,
+        lineWidthMinPixels: 1.5,
+        radiusMinPixels: 14,
+        radiusMaxPixels: 35,
+      }),
+    );
 
-      // Layer: Glow/halo
-      map.addLayer({
-        id: 'pfz-candidates-glow',
-        type: 'circle',
-        source: 'pfz-candidates-source',
-        paint: {
-          'circle-radius': 15,
-          'circle-color': '#10b981',
-          'circle-opacity': 0.25,
-        },
-      });
+    // 3. Floating Rank Label
+    result.push(
+      new TextLayer({
+        id: 'pfz-rank-labels',
+        data: pfzData,
+        pickable: false,
+        getPosition: (d: any) => [d.position[0], d.position[1], d.elevation + 200],
+        getText: (d: any) => `#${d.rank || 1} (${d.confidence || 'PFZ'})`,
+        getSize: 12,
+        getColor: [255, 255, 255, 255],
+        getAngle: 0,
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'bottom',
+        fontFamily: 'ui-sans-serif, system-ui, -apple-system',
+        fontWeight: 'bold',
+        outlineWidth: 3,
+        outlineColor: [15, 23, 42, 240],
+      }),
+    );
 
-      // Layer: Main marker circle
-      map.addLayer({
-        id: 'pfz-candidates-circle',
-        type: 'circle',
-        source: 'pfz-candidates-source',
-        paint: {
-          'circle-radius': 9,
-          'circle-color': [
-            'case',
-            ['==', ['get', 'confidence'], 'HIGH'],
-            '#10b981',
-            ['==', ['get', 'confidence'], 'MEDIUM'],
-            '#06b6d4',
-            '#f59e0b',
-          ],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff',
-        },
-      });
+    return result;
+  }, [pfzData]);
 
-      // Layer: Selected candidate highlight ring
-      map.addLayer({
-        id: 'pfz-candidate-selected-ring',
-        type: 'circle',
-        source: 'pfz-candidates-source',
-        filter: ['==', ['get', 'public_id'], selectedCandidateId || ''],
-        paint: {
-          'circle-radius': 19,
-          'circle-color': 'transparent',
-          'circle-stroke-width': 3,
-          'circle-stroke-color': '#38bdf8',
-          'circle-stroke-opacity': 0.9,
-        },
-      });
-
-      // Layer: Rank symbol text
-      map.addLayer({
-        id: 'pfz-candidates-label',
-        type: 'symbol',
-        source: 'pfz-candidates-source',
-        layout: {
-          'text-field': ['concat', '#', ['to-string', ['get', 'rank']]],
-          'text-size': 10,
-          'text-offset': [0, 1.8],
-          'text-anchor': 'top',
-          'text-allow-overlap': true,
-        },
-        paint: {
-          'text-color': '#e2e8f0',
-          'text-halo-color': '#0f172a',
-          'text-halo-width': 1.5,
-        },
-      });
-
-      // Interactivity
-      map.on('click', 'pfz-candidates-circle', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const feature = e.features[0];
-        const props = feature.properties as any;
-        const geom = feature.geometry as GeoJSON.Point;
-
-        const coords = geom.coordinates.slice() as [number, number];
-
-        // Ensure popup displays over clicked feature
-        while (Math.abs(e.lngLat.lng - coords[0]) > 180) {
-          coords[0] += e.lngLat.lng > coords[0] ? 360 : -360;
-        }
-
-        const candId = props.public_id;
-        if (onSelectCandidate) {
-          onSelectCandidate(candId);
-        }
-
-        renderPopup(coords, props, map);
-      });
-
-      map.on('mouseenter', 'pfz-candidates-circle', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-
-      map.on('mouseleave', 'pfz-candidates-circle', () => {
-        map.getCanvas().style.cursor = '';
-      });
-
-      // Fit bounds initially
-      fitMapToBounds(map, geojson);
-    });
-
-    mapRef.current = map;
-
-    return () => {
-      resizeObserver.disconnect();
-      if (popupRef.current) {
-        popupRef.current.remove();
-      }
-      map.remove();
-      mapRef.current = null;
-      isLoadedRef.current = false;
+  // Tooltip formatter
+  const getTooltip = useCallback((info: PickingInfo) => {
+    if (!info.picked || !info.object) return null;
+    const p = info.object;
+    return {
+      html: `
+        <div style="padding: 8px 12px; font-family: ui-sans-serif, system-ui; background: rgba(15, 23, 42, 0.96); border: 1px solid #10b981; border-radius: 6px; color: #f8fafc; font-size: 12px; line-height: 1.4; box-shadow: 0 4px 14px rgba(0,0,0,0.6);">
+          <div style="font-weight: 700; color: #10b981; display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+            🐟 Potential Fishing Zone #${p.rank || 1}
+          </div>
+          <div style="color: #cbd5e1; font-size: 11px;">Confidence: <strong style="color: #34d399;">${p.confidence || 'HIGH'}</strong> · Status: <strong>${p.status || 'ACTIVE'}</strong></div>
+          <div style="color: #cbd5e1; font-size: 11px; margin-top: 2px;">
+            SST Gradient: <strong>${p.sst_gradient ?? '—'}</strong> · Chl-a: <strong>${p.chlorophyll_a_mg_m3 != null ? `${p.chlorophyll_a_mg_m3} mg/m³` : '—'}</strong>
+          </div>
+          <div style="color: #cbd5e1; font-size: 11px; margin-top: 2px;">
+            Distance: <strong>${p.distance_km != null ? `${p.distance_km} km` : '—'}</strong> · Bearing: <strong>${p.bearing_deg ?? '—'}°</strong>${p.depth_m != null ? ` · Depth: <strong>${p.depth_m}m</strong>` : ''}
+          </div>
+          <div style="color: #94a3b8; font-size: 10px; margin-top: 3px;">Source: ${p.source || 'INCOIS PFZ Advisory'} · QC: ${p.qc_status || 'VALID'}</div>
+        </div>
+      `,
+      style: { zIndex: '1000' },
     };
   }, []);
 
-  // Update GeoJSON data when candidates change
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !isLoadedRef.current) return;
-
-    const source = map.getSource('pfz-candidates-source') as maplibregl.GeoJSONSource | undefined;
-    if (source && typeof source.setData === 'function') {
-      source.setData(geojson);
-    }
-
-    fitMapToBounds(map, geojson);
-  }, [geojson]);
-
-  // Update selected candidate highlight ring and camera
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !isLoadedRef.current) return;
-
-    if (map.getLayer('pfz-candidate-selected-ring')) {
-      map.setFilter('pfz-candidate-selected-ring', ['==', ['get', 'public_id'], selectedCandidateId || '']);
-    }
-
-    if (selectedCandidateId) {
-      const selected = candidates.find((c) => c.public_id === selectedCandidateId);
-      if (selected && typeof selected.latitude === 'number' && typeof selected.longitude === 'number') {
-        map.flyTo({
-          center: [selected.longitude, selected.latitude],
-          zoom: Math.max(map.getZoom(), 8.8),
-          duration: 700,
-          essential: true,
-        });
-
-        // Open popup for selected
-        renderPopup([selected.longitude, selected.latitude], selected, map);
+  const handleClick = useCallback(
+    (info: PickingInfo) => {
+      if (info.picked && info.object?.public_id && onSelectCandidate) {
+        onSelectCandidate(info.object.public_id);
       }
-    }
-  }, [selectedCandidateId, candidates]);
-
-  // Popup renderer
-  function renderPopup(coords: [number, number], props: any, map: maplibregl.Map) {
-    if (popupRef.current) {
-      popupRef.current.remove();
-    }
-
-    const sstGradientText =
-      props.sst_gradient !== null && props.sst_gradient !== undefined
-        ? Number(props.sst_gradient).toFixed(2)
-        : '—';
-    const chlaText =
-      props.chlorophyll_a_mg_m3 !== null && props.chlorophyll_a_mg_m3 !== undefined
-        ? `${Number(props.chlorophyll_a_mg_m3).toFixed(2)} mg/m³`
-        : '—';
-    const depthText =
-      props.depth_m !== null && props.depth_m !== undefined ? `${Number(props.depth_m).toFixed(1)} m` : '—';
-    const distanceText =
-      props.distance_km !== null && props.distance_km !== undefined
-        ? `${Number(props.distance_km).toFixed(1)} km`
-        : '—';
-    const bearingText =
-      props.bearing_deg !== null && props.bearing_deg !== undefined ? `${props.bearing_deg}°` : '—';
-    const confidenceText = props.confidence || 'UNKNOWN';
-    const qcText = props.qc_status || 'VALID';
-    const statusText = props.status || 'ACTIVE';
-
-    const htmlContent = `
-      <div class="pfz-map-popup">
-        <div class="pfz-popup-header">
-          <span class="pfz-popup-rank">#${props.rank || '—'}</span>
-          <strong class="pfz-popup-title">${props.public_id || 'PFZ Candidate'}</strong>
-          <span class="pfz-popup-conf ${confidenceText.toLowerCase()}">${confidenceText}</span>
-        </div>
-        <div class="pfz-popup-coords">
-          ${coords[1].toFixed(4)}° N, ${coords[0].toFixed(4)}° E
-        </div>
-        <div class="pfz-popup-grid">
-          <div class="pfz-popup-metric">
-            <span class="pfz-popup-label">SST Gradient</span>
-            <span class="pfz-popup-val mono">${sstGradientText}</span>
-          </div>
-          <div class="pfz-popup-metric">
-            <span class="pfz-popup-label">Chlorophyll-a</span>
-            <span class="pfz-popup-val mono">${chlaText}</span>
-          </div>
-          <div class="pfz-popup-metric">
-            <span class="pfz-popup-label">Depth</span>
-            <span class="pfz-popup-val mono">${depthText}</span>
-          </div>
-          <div class="pfz-popup-metric">
-            <span class="pfz-popup-label">Distance / Bearing</span>
-            <span class="pfz-popup-val mono">${distanceText} · ${bearingText}</span>
-          </div>
-          <div class="pfz-popup-metric">
-            <span class="pfz-popup-label">QC Status</span>
-            <span class="pfz-popup-val badge-qc ${qcText.toLowerCase()}">${qcText}</span>
-          </div>
-          <div class="pfz-popup-metric">
-            <span class="pfz-popup-label">Status</span>
-            <span class="pfz-popup-val badge-status">${statusText}</span>
-          </div>
-        </div>
-        <div class="pfz-popup-footer">
-          <span>Source: ${props.source || 'INCOIS PFZ Advisory'}</span>
-        </div>
-      </div>
-    `;
-
-    const popup = new maplibregl.Popup({
-      offset: 14,
-      closeButton: true,
-      closeOnClick: false,
-      className: 'pfz-spatial-popup-wrapper',
-    })
-      .setLngLat(coords)
-      .setHTML(htmlContent)
-      .addTo(map);
-
-    popupRef.current = popup;
-  }
-
-  // Bounds fitting helper
-  function fitMapToBounds(map: maplibregl.Map, fc: GeoJSON.FeatureCollection) {
-    if (fc.features.length === 0) return;
-
-    if (fc.features.length === 1) {
-      const coord = (fc.features[0].geometry as GeoJSON.Point).coordinates as [number, number];
-      map.flyTo({ center: coord, zoom: 8.5, duration: 800 });
-      return;
-    }
-
-    const bounds = new maplibregl.LngLatBounds();
-    fc.features.forEach((feat) => {
-      const coord = (feat.geometry as GeoJSON.Point).coordinates as [number, number];
-      bounds.extend(coord);
-    });
-
-    map.fitBounds(bounds, {
-      padding: { top: 40, bottom: 40, left: 40, right: 40 },
-      maxZoom: 10,
-      duration: 800,
-    });
-  }
+    },
+    [onSelectCandidate],
+  );
 
   return (
-    <div className="researcher-pfz-map-wrapper" data-testid="pfz-spatial-map">
-      <div className="researcher-pfz-map-header">
-        <div className="researcher-pfz-map-title">
-          <MapPin size={15} className="researcher-pfz-map-icon" />
-          <span>PFZ Candidate Spatial Distribution</span>
-          <span className="researcher-pfz-count-badge">{geojson.features.length} Candidates</span>
-        </div>
-        <div className="researcher-pfz-legend">
-          <span className="pfz-legend-item">
-            <span className="pfz-legend-dot high" /> High Confidence
-          </span>
-          <span className="pfz-legend-item">
-            <span className="pfz-legend-dot medium" /> Medium Confidence
-          </span>
-        </div>
-      </div>
-
-      <div className="researcher-pfz-map-canvas-wrap">
-        <div ref={containerRef} className="researcher-pfz-map-canvas" />
-
-        {/* Empty State Overlay */}
-        {!loading && !hasValidCoordinates && (
-          <div className="researcher-pfz-empty-overlay">
-            <AlertTriangle size={20} className="pfz-empty-icon" />
-            <span>No valid PFZ advisory candidate coordinates available for spatial plotting.</span>
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '380px' }}>
+      <DeckGLMapFoundation
+        layers={layers}
+        viewState={viewState}
+        onViewStateChange={setViewState}
+        getTooltip={getTooltip}
+        onClick={handleClick}
+        topOverlay={
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(15, 23, 42, 0.88)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              color: '#f8fafc',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Fish size={14} style={{ color: '#10b981' }} />
+              <span style={{ fontSize: '12px', fontWeight: 700 }}>PFZ Advisory 3D Analysis</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>({validCandidates.length} Active Candidates)</span>
+            </div>
+            {loading && <span style={{ fontSize: '11px', color: '#38bdf8' }}>Loading telemetry...</span>}
           </div>
-        )}
-
-        {/* Loading Overlay */}
-        {loading && (
-          <div className="researcher-pfz-empty-overlay">
-            <Navigation size={20} className="researcher-spinner" />
-            <span>Loading PFZ candidate coordinates…</span>
+        }
+        bottomOverlay={
+          /* Scientific Legend HUD */
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              background: 'rgba(15, 23, 42, 0.9)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(51, 65, 85, 0.6)',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              color: '#cbd5e1',
+              fontSize: '11px',
+              maxWidth: '540px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              <span>High Conf</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#06b6d4', display: 'inline-block' }} />
+              <span>Medium Conf</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+              <span>Low Conf</span>
+            </div>
+            <div style={{ borderLeft: '1px solid #334155', paddingLeft: '8px', color: '#94a3b8', fontSize: '10px' }}>
+              Column height: Chlorophyll-a density (mg/m³)
+            </div>
           </div>
-        )}
-      </div>
-
-      <div className="researcher-pfz-map-footer">
-        <Info size={12} />
-        <span>INCOIS PFZ-style candidate data · synthetic snapshot</span>
-      </div>
+        }
+      />
     </div>
   );
 }

@@ -282,10 +282,11 @@ class AgentRunService:
             logger.debug("Database run tracking unavailable (service offline): %s", exc)
 
         logger.info(
-            "AgentRunService: run_id=%s conversation_id=%s data_mode=%s tool_mode=provider",
+            "AgentRunService: run_id=%s conversation_id=%s data_mode=%s tool_mode=provider llm_mode=%s",
             run_id,
             conversation_id,
             self.data_mode,
+            settings.LLM_MODE,
         )
 
         _run = partial(
@@ -294,7 +295,7 @@ class AgentRunService:
             thread_id=conversation_id,
             user_context=user_context or {},
             tool_mode="provider",  # Use registered providers
-            llm_mode="deterministic",  # No LLM provider key required
+            llm_mode=settings.LLM_MODE,  # Config-driven dispatch (auto | deterministic | fake | provider)
         )
 
         try:

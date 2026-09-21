@@ -4,7 +4,7 @@
  * Fetches from /api/v1/demo/* endpoints with in-memory mock fallback.
  */
 
-const API_BASE = '/api/v1';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
 
 export const CANONICAL_DATA_MODE_LABEL = 'DATA MODE: SYNTHETIC DEMO / SNAPSHOT';
 export const CANONICAL_DATA_MODE_TOOLTIP =

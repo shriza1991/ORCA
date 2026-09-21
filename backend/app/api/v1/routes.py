@@ -1070,7 +1070,8 @@ def get_demo_vessels(
         with SessionLocal() as session:
             repo = SyntheticDemoRepository(session)
             items = repo.get_vessels(namespace=namespace, harbor_id=effective_harbor)
-            return [_model_to_dict(item) for item in items]
+            if items:
+                return [_model_to_dict(item) for item in items]
     except Exception as exc:
         logger.debug("Database get_demo_vessels failed (service offline): %s", exc)
     records = _get_synthetic_records("vessels", namespace=namespace)
@@ -1495,7 +1496,8 @@ def get_demo_vessel_replay(
         with SessionLocal() as session:
             repo = SyntheticDemoRepository(session)
             items = repo.get_vessel_replay(namespace=namespace, vessel_id=vessel_id)
-            return [_model_to_dict(item) for item in items]
+            if items:
+                return [_model_to_dict(item) for item in items]
     except Exception as exc:
         logger.debug("Database get_demo_vessel_replay failed (service offline): %s", exc)
     records = _get_synthetic_records("replay_positions", namespace=namespace)

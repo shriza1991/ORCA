@@ -82,6 +82,43 @@
 - Excluded informational national boundaries from deterministic restricted zone hazard checks in `geo_restrictions.py`.
 - Added multilingual translation mappings for national water boundary layers in Hindi and Marathi.
 
+### P0-8M — Production 3D Maps for Authority and Researcher Dashboards
+- Established unified WebGL2 Deck.gl 3D map foundation (`DeckGLMapFoundation.tsx`) with Tactical 3D (52° pitch), High Orbit (20° pitch), and 2D Flat camera presets, high-performance GPU memoization, and zero 60-FPS React state loop overhead.
+- Authority Dashboard: Integrated `AuthorityDeckGLMap.tsx` as the primary operational command visualization with rotated vessel craft markers, illuminated tactical beacon for selected vessel, distinct historical tracks (`#06b6d4`), projected trajectories (`#facc15`), and recommended routes (`#10b981`), decluttered translucent hazards, and deterministic ETA telemetry (with explicit "ETA unavailable" fallback).
+- Researcher Dashboard: Upgraded `PFZSpatialMap.tsx` (3D chlorophyll column encoding), `HazardSpatialMap.tsx` (3D severity-extruded translucent polygons), `EOGridSpatialMap.tsx` (5×5 satellite grid points with continuous metric coloring), and `QueryWorkbench.tsx` (spatial vector layer responses).
+- Fisher Dashboard: Left `FisherPage.tsx` and MapLibre `MapView.tsx` 100% untouched to preserve the simple mariner operational interface.
+- Verified zero TypeScript errors (`tsc --noEmit`), full test pass (227 tests in 15 suites), and clean production bundle (`vite build`).
+
+### P0-8O — Authority & Researcher 3D Map Regression Fixes
+- **Indian Landmass & Coastlines Restored**: Integrated synchronized MapLibre CartoDB dark-matter basemap under DeckGL in `DeckGLMapFoundation.tsx`, bringing authentic coastal geography, state borders, and bathymetry into view at 60 FPS.
+- **Authority Fleet Surveillance Vessel Rendering**: Fixed data flow by fetching canonical vessel positions via `getDemoVesselReplay` in `AuthorityDeckGLMap.tsx`. Rendered verified vessels with heading-oriented nautical craft chevrons, speed labels, and illuminated beacons while strictly excluding missing/invalid coordinates without defaulting to sector center.
+- **Auto-Zoom & Dynamic Viewport Calculation**: Implemented bounding box camera focusing for selected vessels (encompassing vessel coordinate + track + trajectory) and selected hazard bulletins with sensible operational padding.
+- **Projected Trajectory & Route Separation**: Solidified strict visual hierarchy distinguishing historical tracks (solid cyan `#06b6d4`), projected trajectories (dashed amber `#facc15`), recommended routes (solid emerald `#10b981`), and candidate routes (`#64748b`).
+- **Deterministic ETA Telemetry**: Calculated remaining voyage duration strictly from speed and route distance, providing an honest "ETA unavailable" fallback.
+- **Researcher Hazard Bidirectional Selection**: Restored list <-> map hazard selection with auto-focus bounding box and gold highlight (`#facc15`).
+- **Testing & Verification**: 230 tests passing across 15 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build.
+
+### P0-8P — Authority 3D Live Vessel Tracking, FlyTo Sector Transitions & Hazard Decluttering
+- **Backend Fallback Fix**: Fixed `get_demo_vessels` and `get_demo_vessel_replay` in `backend/app/api/v1/routes.py` to correctly fall back to synthetic fixtures when the database is connected but unseeded (`if items: return [...]`), restoring the monitored vessels list and live replay playback.
+- **Cinematic FlyTo Sector Transitions**: Added `FlyToInterpolator` with 1400ms duration to `AuthorityDeckGLMap.tsx` so switching surveillance sectors/regions automatically zooms out smoothly from the previous region and swoops into the selected region.
+- **Rich 3D Live Vessel Tracking**: Ported the complete 3D vessel tracking system to Authority Dashboard:
+  - 3D Amber Searchlight Beacon (`ColumnLayer`, elevation 3000m, radius 500m)
+  - Dynamic Glowing Pulse Aura (`ScatterplotLayer` with real-time sinusoidal radius oscillation)
+  - Real-time Glowing Amber Wake Trail (`PathLayer`, elevated at 200m)
+  - 3D Floating Telemetry Label (`TextLayer`, elevation 3200m)
+- **Sector Map Decluttering & Focused Hazard Blinking**:
+  - Removed all opaque sector boundary fills and base geofence fills (`getFillColor: [0, 0, 0, 0]`), preserving ocean and shoreline clarity.
+  - Non-active hazards are rendered as clean, thin outlines without color fill.
+  - Only the specific hazard area where the vessel is actively located (or the selected operational alert) significantly blinks and pulses with a vivid glowing gold warning fill and bold border.
+
+### P0-8Q — Researcher Hazard Selection Blinking & Compact Vessel Craft Icons
+- **Researcher Hazard Selection Pulsing & Blinking**: Integrated 60-FPS sinusoidal pulsing ticker (`pulseTick`) and `FlyToInterpolator` in `HazardSpatialMap.tsx`. When a hazard is clicked in the list, its 3D polygon significantly blinks with dynamic glowing gold fill (`[250, 204, 21, alpha]`) and a bold 4.5px border while all other hazard polygons remain fully intact with their respective severity color tiers.
+- **Sleek & Compact Nautical Vessel Craft Icons**: Replaced oversized circular scatterplot markers with precision-designed vector AIS vessel craft SVG icons (`IconLayer` in `AuthorityDeckGLMap.tsx` and `DeckGLMarineMap.tsx`) rotated along the vessel's actual navigation heading, with scaled down (12–24px) craft dimensions and refined beacon beam.
+
+### P0-8R — Ocean-Strict 5×5 EO Grid Positioning & Dropdown Metric Selection
+- **Strictly Oceanic EO Grid Coordinates**: Updated 5×5 satellite Earth Observation grid coordinate generator in `backend/app/domain/synthetic/generator.py` (`lons = [71.70, 71.95, 72.20, 72.45, 72.70]`) and exported updated fixtures so that 100% of the 25 grid cells are strictly located in the open Arabian Sea with ~35–80 km offshore clearance from the Konkan coastline, completely eliminating any grid cell overlap on land.
+- **Dropdown Observation Metric Selector**: Replaced header metric tabs in `EOGridSpatialMap.tsx` with a custom-styled dropdown select menu (`SST (°C)`, `Chlorophyll-a (mg/m³)`, `Cloud Cover (%)`). Selecting any metric instantly updates point values, dynamic continuous color ramps (thermal SST, oceanic chlorophyll, cloud fraction), summary statistics (Min, Mean, Max), cell inspect drawers, and bottom overlay legend.
+
 ### P0-8L — Fleet Surveillance Accurate Route Corridors with Start & Destination Terminals
 - Parameterized route alternatives endpoint (`/api/v1/demo/routes/alternatives`) with `vessel_id` to contextualize navigation corridors directly to the active fleet craft.
 - Updated `MockRouteExposureEngine` to connect authentic multi-waypoint navigation corridors (Safest Inshore, Balanced, Direct) from the vessel's specific home harbor/departure coordinates to its specific trip destination/fishing bank.
@@ -314,9 +351,41 @@
   - Added camera reset / fit bounds action button (`Focus` icon) in `MissionMapBrief`.
 - **Validation**: 5 dedicated tests in `fisher-map.test.ts` (207 total frontend tests passing across 13 suites), 101 backend domain/contract tests passing, and clean `tsc && vite build` bundle.
 
+### P0-24 — deck.gl Visual Experiment & Spatial Analytics
+- Added isolated experimental deck.gl component (`DeckGLMarineMap.tsx`) and evaluation command view (`DeckGLExperimentView.tsx`) to visually benchmark WebGL2-accelerated geospatial rendering against production MapLibre.
+- Rendered authentic SAMUDRA data layers without fabricating coordinates:
+  - **Marine/Hazard Polygons**: GeoJSON layer with severity-coded translucent styling and optional 3D extrusion (2500m / 1800m / 1200m prisms).
+  - **PFZ Candidate Points**: ScatterplotLayer + TextLayer with animated radial pulse effects and rank `#1`/`#2` indicators.
+  - **Recommended Route & Alternative Corridors**: High-visibility cyan primary path (`[6, 182, 212]`, 5px) and subdued candidate lines.
+  - **Vessel Telemetry**: Amber pulsing vessel marker with speed/heading telemetry and replay scrubber.
+  - **National Water Boundaries**: UNCLOS EEZ and 12 NM territorial water boundaries.
+- Integrated Turf.js spatial calculation utilities (`spatial-analytics.ts`):
+  - Geodesic distance & initial bearing.
+  - Cross-track distance (point-to-route error).
+  - Point-in-polygon containment (`isPointInHazardPolygon`).
+  - Route-hazard intersection collision detection (`findRouteHazardIntersections`).
+- Preserved production Fisher, Authority, and Researcher MapLibre map views completely untouched.
+- Added 11 dedicated automated tests in `spatial-analytics.test.ts` and `deckgl-experiment.test.ts` (218 total frontend tests passing across 15 suites), full typecheck (`tsc --noEmit`), and clean production build.
+
+### P0-25 — Real LLM Provider Integration (Groq LLaMA 3.3 70B & Multi-turn Natural Language)
+- Integrated real Groq LLM provider (`GroqLLMProvider`) using `llama-3.3-70b-versatile` with structured JSON mode and text generation capabilities.
+- Wired runtime `POST /api/v1/chat` to resolve active LLM provider under `LLM_MODE="auto"` while retaining 100% deterministic fallback when `GROQ_API_KEY` is omitted or API calls encounter timeouts/errors.
+- Propagated raw user query safely through sandboxed prompt context (`<user_query>`) into intent extraction (`intent_locale_node`) and grounded response synthesis (`response_composer_node`).
+- Enforced hard deterministic safety gates:
+  - Recommendation status (`GO` / `CAUTION` / `NO_GO` / `UNKNOWN`) evaluated solely by deterministic marine engines (`DeterministicRiskEngine`, `RouteExposureEngine`, `GeospatialHazardEngine`); LLM drafts cannot alter status.
+  - Hallucinated citation gate: Any `[EV-...]` token generated by LLM not present in authoritative evidence list is automatically redacted from the synthesized answer.
+  - Prompt injection defense: Sandboxed delimiters and keyword sanitization prevent user prompt manipulation of system parameters or safety ratings.
+- Added comprehensive unit and integration test suite (`test_groq_llm_integration.py` with 17 passing tests; 388/388 passing in `tests/agent_eval/`, 84/84 passing in `tests/integration/`, 74/74 passing in `tests/domain/`).
+- Resolved Groq runtime model availability: Updated default and example configuration to `qwen/qwen3.8-27b` (replacing 404-returning `llama-3.3-70b-versatile`) while preserving environment overrides.
+- Resolved `ANALYTICAL_EXPLANATION` capability routing: Supervisor planner now routes analytical queries to `marine_conditions`, `weather_conditions`, `hazard_search`, and `risk_evaluation` instead of unregistered `explanation_context`, preventing missing-capability aborts.
+- Resolved `ThreadContext` initialization: `RunRepository.create()` now initializes `context_json` with valid `ThreadContext(thread_id=thread_id).model_dump(mode="json")`, resolving Pydantic validation warnings.
+- Real Groq smoke test verified: Model authentication, HTTP communication, structured intent extraction, and response composition verified against live Groq endpoint with `qwen/qwen3.8-27b`.
+
+
 ---
 
 ## P0 Marine Data Providers Status Board
+
 
 | Provider / Feed | Protocol / Implementation | Data Mode | Status | Tests | Live Verification State | Blocker / Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |

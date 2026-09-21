@@ -9,7 +9,7 @@ import {
   Ship,
 } from 'lucide-react';
 import ChatPanel from '../components/chat/ChatPanel';
-import MapView from '../components/map/MapView';
+import AuthorityDeckGLMap from '../components/authority/AuthorityDeckGLMap';
 import EvidenceCard from '../components/evidence/EvidenceCard';
 import AgentTimeline from '../components/trace/AgentTimeline';
 import ScenarioBenchmarkDeck from '../components/authority/ScenarioBenchmarkDeck';
@@ -22,20 +22,18 @@ import {
   getDemoSectorHazardAssociations,
   getDemoSectorSituation,
   getDemoRouteAlternatives,
+  getDemoVessels,
   type DemoSector,
+  type DemoVessel,
   type SectorHazard,
   type VesselHazardAssociation,
   type VesselHazardOperationalAlert,
   type SectorSituation,
 } from '../api/client';
 import {
-  createSectorLayers,
-  createAuthorityHazardLayers,
-  createHazardAssociationLayers,
   createAuthorityRouteLayers,
   FALLBACK_DEMO_SECTORS,
   fetchAndFormatBaseLayers,
-  filterLayersBySectorPolygon,
 } from '../utils/geo';
 import { translateText } from '../i18n/translations';
 
@@ -58,7 +56,7 @@ export type AuthorityTab = 'terminal' | 'fleet' | 'benchmarks' | 'audit';
  */
 export default function AuthorityPage({
   chat,
-  theme,
+  theme: _theme,
   mobileView,
   onOpenEvidence,
   onBack,
@@ -79,6 +77,7 @@ export default function AuthorityPage({
   const [hazardAssociations, setHazardAssociations] = useState<VesselHazardAssociation[]>([]);
   const [sectorRouteLayers, setSectorRouteLayers] = useState<MapLayer[]>([]);
   const [selectedOperationalAlert, setSelectedOperationalAlert] = useState<VesselHazardOperationalAlert | null>(null);
+  const [sectorVessels, setSectorVessels] = useState<DemoVessel[]>([]);
 
   useEffect(() => {
     fetchAndFormatBaseLayers().then(setBaseLayers);
@@ -153,6 +152,14 @@ export default function AuthorityPage({
         if (isCurrent) setHazardError('Hazard data unavailable');
       });
 
+    getDemoVessels(activeSector.public_id)
+      .then((data) => {
+        if (isCurrent) setSectorVessels(data);
+      })
+      .catch(() => {
+        if (isCurrent) setSectorVessels([]);
+      });
+
     return () => {
       isCurrent = false;
     };
@@ -204,47 +211,6 @@ export default function AuthorityPage({
       controller.abort();
     };
   }, [activeSector.public_id, selectedVesselId]);
-
-  // Combine official base boundaries + sector polygon + replay trajectory + active query layers
-  const authorityLayers = useMemo(() => {
-    const sectorLayers = createSectorLayers(activeSector, sectors);
-    const hazardLayers = createAuthorityHazardLayers(sectorHazards, selectedOperationalAlert?.hazard_id);
-    const associationLayers = createHazardAssociationLayers(hazardAssociations, selectedOperationalAlert);
-    const responseLayers = authorityActiveResponse?.map_layers ?? [];
-    const activeReplay = (selectedVesselId && replayLayer) ? [replayLayer] : [];
-    const activeTrajectory = (selectedVesselId && trajectoryLayer) ? [trajectoryLayer] : [];
-    const hasResponseRoutes = responseLayers.some(
-      (l) => l.layer_id === 'layer_recommended_route' || l.layer_id === 'layer_candidate_routes'
-    );
-    const routeLayersToInclude = (hasResponseRoutes || !selectedVesselId) ? [] : sectorRouteLayers;
-    // Filter base layers to only show geofences/restrictions near the active sector
-    const regionBaseLayers = filterLayersBySectorPolygon(baseLayers, activeSector.polygon, 1.0);
-    // Filter response layers to only show those inside or near the active sector
-    const regionResponseLayers = filterLayersBySectorPolygon(responseLayers, activeSector.polygon, 1.0);
-
-    return [
-      ...regionBaseLayers,
-      ...sectorLayers,
-      ...hazardLayers,
-      ...associationLayers,
-      ...routeLayersToInclude,
-      ...activeReplay,
-      ...activeTrajectory,
-      ...regionResponseLayers,
-    ];
-  }, [
-    baseLayers,
-    activeSector,
-    sectors,
-    selectedVesselId,
-    sectorHazards,
-    hazardAssociations,
-    sectorRouteLayers,
-    replayLayer,
-    trajectoryLayer,
-    selectedOperationalAlert,
-    authorityActiveResponse?.map_layers,
-  ]);
 
   const evidenceList = useMemo(() => {
     if (authorityActiveResponse?.evidence && authorityActiveResponse.evidence.length > 0) {
@@ -417,14 +383,22 @@ export default function AuthorityPage({
               />
             </aside>
 
-            {/* Right: Reused MapView with live coastal polygons */}
+            {/* Right: Authority 3D Operational Command Map */}
             <div className="authority-map-pane">
               {hazardError && <p className="authority-empty-note" role="status">{hazardError}</p>}
-              <MapView
-                layers={authorityLayers}
-                theme={theme}
-                center={activeSector.center}
-                zoom={activeSector.zoom}
+              <AuthorityDeckGLMap
+                activeSector={activeSector}
+                sectors={sectors}
+                baseLayers={baseLayers}
+                sectorHazards={sectorHazards}
+                hazardAssociations={hazardAssociations}
+                selectedOperationalAlert={selectedOperationalAlert}
+                vessels={sectorVessels}
+                selectedVesselId={selectedVesselId}
+                onSelectVessel={setSelectedVesselId}
+                replayLayer={replayLayer}
+                trajectoryLayer={trajectoryLayer}
+                sectorRouteLayers={sectorRouteLayers}
                 language={chat.language}
               />
             </div>
@@ -454,11 +428,19 @@ export default function AuthorityPage({
               />
             </aside>
             <div className="authority-map-pane">
-              <MapView
-                layers={authorityLayers}
-                theme={theme}
-                center={activeSector.center}
-                zoom={activeSector.zoom}
+              <AuthorityDeckGLMap
+                activeSector={activeSector}
+                sectors={sectors}
+                baseLayers={baseLayers}
+                sectorHazards={sectorHazards}
+                hazardAssociations={hazardAssociations}
+                selectedOperationalAlert={selectedOperationalAlert}
+                vessels={sectorVessels}
+                selectedVesselId={selectedVesselId}
+                onSelectVessel={setSelectedVesselId}
+                replayLayer={replayLayer}
+                trajectoryLayer={trajectoryLayer}
+                sectorRouteLayers={sectorRouteLayers}
                 language={chat.language}
               />
             </div>
