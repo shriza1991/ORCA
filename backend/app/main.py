@@ -73,14 +73,16 @@ def create_app() -> FastAPI:
     from backend.app.connectors.imd_weather import ImdWeatherConnector
     from backend.app.connectors.incois import IncoisOceanStateConnector
     from backend.app.connectors.manager import ConnectorManager
-    from backend.app.connectors.registration import register_dev2_provider_tools
+    from backend.app.connectors.registration import register_dev2_provider_tools, register_dev4_operational_engines
     from backend.app.connectors.snapshot import SnapshotConnector
+    from backend.app.connectors.modes import DataMode
 
     snapshot_connector = SnapshotConnector()
     marine_live = IncoisOceanStateConnector()
     weather_live = ImdWeatherConnector()
     hazard_live = ImdHazardConnector()
     pfz_live = marine_live
+    svas_live = marine_live
 
     manager = ConnectorManager(
         None,
@@ -89,9 +91,14 @@ def create_app() -> FastAPI:
         weather_live=weather_live,
         hazard_live=hazard_live,
         pfz_live=pfz_live,
+        svas_live=svas_live,
     )
     register_dev2_provider_tools(tool_registry, manager)
-    register_m2_contract_mocks(tool_registry, override=False)
+    
+    if manager.current_mode in (DataMode.LIVE, DataMode.HYBRID):
+        register_dev4_operational_engines(tool_registry, manager)
+    else:
+        register_m2_contract_mocks(tool_registry, override=False)
 
     @app.get("/", tags=["System"])
     async def root():

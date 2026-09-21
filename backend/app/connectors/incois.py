@@ -216,13 +216,13 @@ class IncoisOceanStateConnector(BaseLiveConnector):
             return SVASAdvisoryPayload(
                 harbor=harbor,
                 craft_profile=craft_profile,
-                advisory_status="SAFE",
-                safety_index=2.1,
-                capsizing_risk="LOW",
-                warning_statement="Simulated SVAS baseline: favorable coastal operating conditions.",
+                advisory_status="UNKNOWN",
+                safety_index=None,
+                capsizing_risk="UNKNOWN",
+                warning_statement="Live SVAS advisory unavailable in snapshot.",
                 issued_at=now_utc.isoformat(),
-                valid_to=valid_to,
-                source_name="INCOIS SVAS (SNAPSHOT_REDIRECT)",
+                valid_to=(now_utc - timedelta(seconds=1)).isoformat(),
+                source_name="INCOIS SVAS (UNAVAILABLE — SNAPSHOT_REDIRECT)",
                 source_url=self.SVAS_SOURCE_URL,
             )
 
@@ -232,17 +232,17 @@ class IncoisOceanStateConnector(BaseLiveConnector):
             except Exception as exc:
                 logger.warning("INCOIS SVAS live fetch failed (%s). Returning CACHED_REAL fallback.", exc)
 
-        # In HYBRID / LIVE without active SVAS key: return CACHED_REAL / LIMITED advisory
+        # In HYBRID / LIVE without active SVAS key: return UNAVAILABLE
         return SVASAdvisoryPayload(
             harbor=harbor,
             craft_profile=craft_profile,
-            advisory_status="SAFE",
-            safety_index=2.5,
-            capsizing_risk="LOW",
-            warning_statement="Operational conditions normal. Maintain coastal VHF watch.",
+            advisory_status="UNKNOWN",
+            safety_index=None,
+            capsizing_risk="UNKNOWN",
+            warning_statement="Live SVAS advisory unavailable.",
             issued_at=now_utc.isoformat(),
-            valid_to=valid_to,
-            source_name="INCOIS SVAS (CACHED_REAL — live unavailable)",
+            valid_to=(now_utc - timedelta(seconds=1)).isoformat(),
+            source_name="INCOIS SVAS (UNAVAILABLE — live unavailable)",
             source_url=self.SVAS_SOURCE_URL,
         )
 

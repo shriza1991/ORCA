@@ -239,20 +239,6 @@ class DeterministicRiskEngine:
             decisive_factors.append("Missing, degraded, or expired sensor telemetry (validity window exceeded).")
             warnings.append("DEGRADED_DATA: Stale, degraded, or incomplete telemetry received.")
 
-            return RiskAssessmentPayload(
-                status=RecommendationStatus.UNKNOWN,
-                summary="Sensor, forecast, or hazard bulletin data are expired, degraded, or incomplete. Safe departure evaluation cannot be completed.",
-                decisive_factors=decisive_factors,
-                non_decisive_factors=non_decisive_factors,
-                threshold_comparisons=threshold_checks,
-                recommended_action="Hold departure. Verify with port authorities before navigating.",
-                confidence_level=ConfidenceLevel.LOW,
-                confidence_reasons=["Sensor telemetry validity window expired, degraded, or data feed missing"],
-                provenance=provenance_list,
-                evidence_ids=evidence_ids,
-                warnings=warnings,
-            )
-
         # ---------------------------------------------------------------------
         # 2. Severe Hazard / Cyclone Bulletin Check
         # ---------------------------------------------------------------------
@@ -278,92 +264,94 @@ class DeterministicRiskEngine:
         # ---------------------------------------------------------------------
         # 3. Wave Height Check
         # ---------------------------------------------------------------------
-        wave_h = marine.significant_wave_height_m
-        wave_impact = "SAFE"
-        wave_exceeded = False
+        if marine and marine.significant_wave_height_m is not None:
+            wave_h = marine.significant_wave_height_m
+            wave_impact = "SAFE"
+            wave_exceeded = False
 
-        if wave_h > limits["wave_nogo_m"]:
-            wave_impact = "NO_GO_TRIGGER"
-            wave_exceeded = True
-            decisive_factors.append(
-                f"Significant wave height {wave_h:.1f}m exceeds safety ceiling ({limits['wave_nogo_m']:.1f}m for {craft_profile})."
-            )
-        elif wave_h >= limits["wave_caution_m"]:
-            wave_impact = "CAUTION_TRIGGER"
-            wave_exceeded = True
-            decisive_factors.append(
-                f"Moderate wave height {wave_h:.1f}m requires caution ({limits['wave_caution_m']:.1f}m - {limits['wave_nogo_m']:.1f}m limit)."
-            )
-        else:
-            non_decisive_factors.append(f"Wave height {wave_h:.1f}m is within safe operating limits (< {limits['wave_caution_m']:.1f}m).")
+            if wave_h > limits["wave_nogo_m"]:
+                wave_impact = "NO_GO_TRIGGER"
+                wave_exceeded = True
+                decisive_factors.append(
+                    f"Significant wave height {wave_h:.1f}m exceeds safety ceiling ({limits['wave_nogo_m']:.1f}m for {craft_profile})."
+                )
+            elif wave_h >= limits["wave_caution_m"]:
+                wave_impact = "CAUTION_TRIGGER"
+                wave_exceeded = True
+                decisive_factors.append(
+                    f"Moderate wave height {wave_h:.1f}m requires caution ({limits['wave_caution_m']:.1f}m - {limits['wave_nogo_m']:.1f}m limit)."
+                )
+            else:
+                non_decisive_factors.append(f"Wave height {wave_h:.1f}m is within safe operating limits (< {limits['wave_caution_m']:.1f}m).")
 
-        threshold_checks.append(
-            ThresholdComparison(
-                metric_name="significant_wave_height_m",
-                observed_value=wave_h,
-                threshold_value=limits["wave_nogo_m"] if wave_h >= limits["wave_caution_m"] else limits["wave_caution_m"],
-                operator=">" if wave_h > limits["wave_nogo_m"] else ">=",
-                unit="meters",
-                exceeded=wave_exceeded,
-                impact=wave_impact,
-                description=f"Significant wave height {wave_h:.1f}m compared against {craft_profile} ceiling ({limits['wave_nogo_m']:.1f}m).",
+            threshold_checks.append(
+                ThresholdComparison(
+                    metric_name="significant_wave_height_m",
+                    observed_value=wave_h,
+                    threshold_value=limits["wave_nogo_m"] if wave_h >= limits["wave_caution_m"] else limits["wave_caution_m"],
+                    operator=">" if wave_h > limits["wave_nogo_m"] else ">=",
+                    unit="meters",
+                    exceeded=wave_exceeded,
+                    impact=wave_impact,
+                    description=f"Significant wave height {wave_h:.1f}m compared against {craft_profile} ceiling ({limits['wave_nogo_m']:.1f}m).",
+                )
             )
-        )
 
         # ---------------------------------------------------------------------
         # 4. Wind Speed & Gust Check
         # ---------------------------------------------------------------------
-        wind_spd = weather.wind_speed_knots
-        wind_impact = "SAFE"
-        wind_exceeded = False
+        if weather and weather.wind_speed_knots is not None:
+            wind_spd = weather.wind_speed_knots
+            wind_impact = "SAFE"
+            wind_exceeded = False
 
-        if wind_spd > limits["wind_nogo_knots"]:
-            wind_impact = "NO_GO_TRIGGER"
-            wind_exceeded = True
-            decisive_factors.append(
-                f"Sustained wind {wind_spd:.1f} kt exceeds gale ceiling ({limits['wind_nogo_knots']:.1f} kt)."
-            )
-        elif wind_spd >= limits["wind_caution_knots"]:
-            wind_impact = "CAUTION_TRIGGER"
-            wind_exceeded = True
-            decisive_factors.append(
-                f"Elevated sustained wind {wind_spd:.1f} kt ({limits['wind_caution_knots']:.1f} kt caution threshold)."
-            )
-        else:
-            non_decisive_factors.append(f"Sustained wind {wind_spd:.1f} kt is within calm operating range.")
-
-        threshold_checks.append(
-            ThresholdComparison(
-                metric_name="wind_speed_knots",
-                observed_value=wind_spd,
-                threshold_value=limits["wind_nogo_knots"] if wind_spd >= limits["wind_caution_knots"] else limits["wind_caution_knots"],
-                operator=">" if wind_spd > limits["wind_nogo_knots"] else ">=",
-                unit="knots",
-                exceeded=wind_exceeded,
-                impact=wind_impact,
-                description=f"Sustained wind {wind_spd:.1f} kt compared against {craft_profile} limit.",
-            )
-        )
-
-        # Wind Gusts
-        if weather.wind_gust_knots is not None:
-            gust = weather.wind_gust_knots
-            if gust >= limits["gust_nogo_knots"]:
-                decisive_factors.append(f"Peak wind gusts {gust:.1f} kt exceed {limits['gust_nogo_knots']:.1f} kt limit.")
-                threshold_checks.append(
-                    ThresholdComparison(
-                        metric_name="wind_gust_knots",
-                        observed_value=gust,
-                        threshold_value=limits["gust_nogo_knots"],
-                        operator=">=",
-                        unit="knots",
-                        exceeded=True,
-                        impact="NO_GO_TRIGGER",
-                        description=f"Wind gusts {gust:.1f} kt breach maximum safe threshold.",
-                    )
+            if wind_spd > limits["wind_nogo_knots"]:
+                wind_impact = "NO_GO_TRIGGER"
+                wind_exceeded = True
+                decisive_factors.append(
+                    f"Sustained wind {wind_spd:.1f} kt exceeds gale ceiling ({limits['wind_nogo_knots']:.1f} kt)."
+                )
+            elif wind_spd >= limits["wind_caution_knots"]:
+                wind_impact = "CAUTION_TRIGGER"
+                wind_exceeded = True
+                decisive_factors.append(
+                    f"Elevated sustained wind {wind_spd:.1f} kt ({limits['wind_caution_knots']:.1f} kt caution threshold)."
                 )
             else:
-                non_decisive_factors.append(f"Wind gusts {gust:.1f} kt within safe gust envelope.")
+                non_decisive_factors.append(f"Sustained wind {wind_spd:.1f} kt is within calm operating range.")
+
+            threshold_checks.append(
+                ThresholdComparison(
+                    metric_name="wind_speed_knots",
+                    observed_value=wind_spd,
+                    threshold_value=limits["wind_nogo_knots"] if wind_spd >= limits["wind_caution_knots"] else limits["wind_caution_knots"],
+                    operator=">" if wind_spd > limits["wind_nogo_knots"] else ">=",
+                    unit="knots",
+                    exceeded=wind_exceeded,
+                    impact=wind_impact,
+                    description=f"Sustained wind {wind_spd:.1f} kt compared against {craft_profile} limit.",
+                )
+            )
+
+            # Wind Gusts
+            if weather.wind_gust_knots is not None:
+                gust = weather.wind_gust_knots
+                if gust >= limits["gust_nogo_knots"]:
+                    decisive_factors.append(f"Peak wind gusts {gust:.1f} kt exceed {limits['gust_nogo_knots']:.1f} kt limit.")
+                    threshold_checks.append(
+                        ThresholdComparison(
+                            metric_name="wind_gust_knots",
+                            observed_value=gust,
+                            threshold_value=limits["gust_nogo_knots"],
+                            operator=">=",
+                            unit="knots",
+                            exceeded=True,
+                            impact="NO_GO_TRIGGER",
+                            description=f"Wind gusts {gust:.1f} kt breach maximum safe threshold.",
+                        )
+                    )
+                else:
+                    non_decisive_factors.append(f"Wind gusts {gust:.1f} kt within safe gust envelope.")
 
         # Squall Alert
         if squall_alert and not cyclone_active:
@@ -389,12 +377,20 @@ class DeterministicRiskEngine:
 
         if has_nogo:
             status = RecommendationStatus.NO_GO
-            summary = f"Severe marine conditions detected ({wave_h:.1f}m waves, {wind_spd:.1f} kt wind) exceeding {craft_profile} safety ceiling."
+            summary = f"Severe marine conditions or hazards detected exceeding {craft_profile} safety ceiling."
             action = "Remain moored in port. Do not navigate under any circumstances."
             conf_reasons = ["Deterministic safety ceiling exceeded by official observations"]
+            if is_data_degraded:
+                warnings.append("Note: Secondary telemetry is also missing or degraded, but NO_GO prohibition takes precedence.")
+        elif is_data_degraded:
+            status = RecommendationStatus.UNKNOWN
+            summary = "Sensor, forecast, or hazard bulletin data are expired, degraded, or incomplete. Safe departure evaluation cannot be completed."
+            action = "Hold departure. Verify with port authorities before navigating."
+            conf_reasons = ["Sensor telemetry validity window expired, degraded, or data feed missing"]
+            confidence_level = ConfidenceLevel.LOW
         elif has_caution:
             status = RecommendationStatus.CAUTION
-            summary = f"Moderate marine conditions ({wave_h:.1f}m waves, {wind_spd:.1f} kt wind) require operational caution for {craft_profile}."
+            summary = f"Moderate marine conditions require operational caution for {craft_profile}."
             action = "Operate with caution within 5 nm of coastline. Maintain continuous VHF watch."
             conf_reasons = ["Conditions near threshold boundaries — operational caution enforced"]
             warnings.append("Moderate sea state requires continuous vigilance.")
@@ -402,10 +398,16 @@ class DeterministicRiskEngine:
             status = RecommendationStatus.GO
             summary = "Conditions are calm and safe for coastal voyage departure."
             action = "Proceed with planned voyage under standard safety protocols."
-            decisive_factors.append(f"Significant wave height {wave_h:.1f}m is calm (< {limits['wave_caution_m']:.1f}m).")
-            decisive_factors.append(f"Sustained wind {wind_spd:.1f} kt is favorable.")
+            
+            wave_str = f"{marine.significant_wave_height_m:.1f}m" if (marine and marine.significant_wave_height_m is not None) else "calm"
+            wind_str = f"{weather.wind_speed_knots:.1f} kt" if (weather and weather.wind_speed_knots is not None) else "calm"
+            
+            decisive_factors.append(f"Significant wave height {wave_str} is calm (< {limits['wave_caution_m']:.1f}m).")
+            decisive_factors.append(f"Sustained wind {wind_str} is favorable.")
             decisive_factors.append("No active severe weather bulletins.")
             conf_reasons = ["All environmental parameters strictly within safe operating envelope"]
+
+        confidence_level = ConfidenceLevel.LOW if is_data_degraded else ConfidenceLevel.HIGH
 
         return RiskAssessmentPayload(
             status=status,
@@ -414,7 +416,7 @@ class DeterministicRiskEngine:
             non_decisive_factors=non_decisive_factors,
             threshold_comparisons=threshold_checks,
             recommended_action=action,
-            confidence_level=ConfidenceLevel.HIGH,
+            confidence_level=confidence_level,
             confidence_reasons=conf_reasons,
             provenance=provenance_list,
             evidence_ids=evidence_ids,

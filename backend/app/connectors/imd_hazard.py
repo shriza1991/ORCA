@@ -118,17 +118,17 @@ class ImdHazardConnector(BaseLiveConnector):
 
     @staticmethod
     def _make_normal_payload(harbor: str, reason: str) -> HazardBulletinPayload:
-        """Return NORMAL hazard bulletin payload used on live data failure."""
+        """Return UNKNOWN hazard bulletin payload used on live data failure."""
         now_utc = datetime.now(UTC)
         return HazardBulletinPayload(
             harbor=harbor,
             cyclone_warning_active=False,
             squall_alert=False,
             bulletin_id=None,
-            severity="NORMAL",
-            headline=f"No active hazard (live bulletin unavailable — {reason})",
+            severity="UNKNOWN",
+            headline=f"Hazard bulletin unavailable ({reason})",
             valid_from=now_utc.isoformat(),
-            valid_to=(now_utc + timedelta(hours=24)).isoformat(),
-            source_name=f"IMD Cyclone Warning Division (DEGRADED — {reason})",
+            valid_to=(now_utc - timedelta(seconds=1)).isoformat(),
+            source_name=f"IMD Cyclone Warning Division (UNAVAILABLE — {reason})",
             source_url=None,
         )
