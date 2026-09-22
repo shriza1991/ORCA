@@ -381,6 +381,13 @@ None
 - Persists all executed trip assessments and their inputs to PostgreSQL using `TripAssessmentRecord` for analytics and audit trails.
 - LangGraph graph structure simplified to use `trip_assessment` instead of duplicating component tool calls; `specialist_tools_node` automatically parses standard outputs.
 
+### P0-27 — What-If Simulator & Chat Assessment Integration
+- Integrated the What-If Simulator directly into the `FisherDecisionSurface` for seamless exploratory alternative evaluations.
+- Enhanced `useChat` to pass structured, offset-calculated `departure_time`, `return_time`, and `parent_assessment_id` across the API boundary into `UserContext`.
+- Refactored `SPECIALIST_TOOLS` node in LangGraph to natively invoke `AssessmentService.assess_trip()` for what-if scenarios, strictly utilizing the deterministic risk boundaries instead of a disconnected risk engine mock.
+- Engineered a deterministic comparison block inside `RESPONSE_COMPOSER` that fetches the baseline assessment and mathematically highlights changes to the safety verdict (e.g. CAUTION -> GO) without relying on hallucinatory LLM outputs.
+- Synchronized frontend application context updates (explicit adoption) to correctly trigger deterministic baseline recalculations across the whole dashboard.
+
 ---
 
 ## P0 Marine Data Providers Status Board

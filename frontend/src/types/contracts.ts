@@ -18,6 +18,7 @@ export interface UserContext {
   departure_time?: string;
   return_time?: string;
   language_preference?: 'auto' | 'en' | 'hi' | 'mr' | 'ta';
+  parent_assessment_id?: string;
 }
 
 export interface ChatRequest {
@@ -114,6 +115,7 @@ export interface AgentTraceItem {
 export interface ChatResponse {
   run_id: string;
   conversation_id: string;
+  assessment_id?: string;
   language: string;
   intent: string;
   answer: string;

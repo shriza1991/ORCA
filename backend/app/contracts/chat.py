@@ -42,6 +42,15 @@ class UserContext(BaseModel):
     language_preference: Optional[str] = Field(
         "auto", description="Preferred response language ISO code: auto | en | hi | mr | ta"
     )
+    parent_assessment_id: Optional[str] = Field(
+        None, description="Optional baseline assessment ID for what-if comparisons"
+    )
+    departure_time: Optional[str] = Field(
+        None, description="Structured planned departure time (ISO-8601 UTC)"
+    )
+    return_time: Optional[str] = Field(
+        None, description="Structured planned return time (ISO-8601 UTC)"
+    )
 
 
 class ChatRequest(BaseModel):
@@ -198,8 +207,9 @@ class AgentTraceItem(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    run_id: str = Field(..., description="Unique execution run UUID for telemetry")
-    conversation_id: str = Field(..., description="Session conversation UUID")
+    run_id: str = Field(..., description="Unique orchestration run ID")
+    conversation_id: str = Field(..., description="Client session UUID mapping to message thread")
+    assessment_id: Optional[str] = Field(None, description="Unique identifier for the generated assessment if applicable")
     language: str = Field("en", description="Detected/responded ISO language code")
     intent: str = Field(..., description="Classified query intent category")
     answer: str = Field(

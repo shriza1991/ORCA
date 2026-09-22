@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import MapView from '../components/map/MapView';
 import GuidedTripSetup from '../components/fisher/GuidedTripSetup';
 import FisherDecisionSurface from '../components/fisher/FisherDecisionSurface';
+import WhatIfSimulator from '../components/mission/WhatIfSimulator';
 import OceanDetails from '../components/fisher/OceanDetails';
 import PFZDetails from '../components/fisher/PFZDetails';
 import type { useChat } from '../hooks/useChat';
@@ -137,6 +138,16 @@ export default function FisherPage({
               language={chat.language}
               onOpenVoyageSettings={() => setSidebarTab('voyage')}
               onViewMap={onViewMap}
+            />
+
+            <WhatIfSimulator
+              currentContext={chat.missionContext}
+              currentStatus={assessment?.decision?.status || 'UNKNOWN'}
+              language={chat.language}
+              isLoading={chat.isLoading}
+              activeDiff={chat.activeDiff}
+              onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)}
+              onApplyContext={(newCtx) => chat.setMissionContext(newCtx)}
             />
 
             <PFZDetails assessment={assessment} language={chat.language} />
