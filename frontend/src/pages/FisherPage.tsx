@@ -12,6 +12,9 @@ import { useTripAssessment } from '../hooks/useTripAssessment';
 import { useAlerts } from '../hooks/useAlerts';
 import FisherAlertPanel from '../components/fisher/FisherAlertPanel';
 import { useSpokenGuidance } from '../hooks/useSpokenGuidance';
+import { useGeolocation } from '../hooks/useGeolocation';
+import { useGeofence } from '../hooks/useGeofence';
+import LocationWarningsOverlay from '../components/map/LocationWarningsOverlay';
 
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
@@ -41,6 +44,14 @@ export default function FisherPage({
   const { data: assessment, isLoading, error, assessTrip } = useTripAssessment();
   const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
   const { speak } = useSpokenGuidance({ language: chat.language });
+
+  const { status: geoStatus, location, isTracking, startTracking, stopTracking } = useGeolocation();
+  const { alerts: geofenceAlerts } = useGeofence(location, geoStatus, baseLayers); // We can use effectiveLayers, but baseLayers have the hazards/restrictions
+
+  const handleToggleLocation = () => {
+    if (isTracking) stopTracking();
+    else startTracking();
+  };
 
   // 1. Fetch base geofences & boundaries
   useEffect(() => {
@@ -134,7 +145,12 @@ export default function FisherPage({
         )}
       </div>
 
-      <div className="fisher-map-column">
+      <div className="fisher-map-column" style={{ position: 'relative' }}>
+        <LocationWarningsOverlay 
+          status={geoStatus} 
+          alerts={geofenceAlerts} 
+          language={chat.language} 
+        />
         <MapView
           layers={effectiveLayers}
           theme={theme}
@@ -144,6 +160,10 @@ export default function FisherPage({
           customPopupRenderer={formatFishermanPopup}
           layerAvailability={layerAvailability}
           hideAdvancedControls={true}
+          liveLocation={location}
+          liveLocationStatus={geoStatus}
+          isTrackingLocation={isTracking}
+          onToggleLocation={handleToggleLocation}
         />
       </div>
     </main>
