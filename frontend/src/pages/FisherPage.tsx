@@ -9,6 +9,9 @@ import type { MapLayer } from '../types/contracts';
 import { getHarborCoordinates, fetchAndFormatBaseLayers } from '../utils/geo';
 import { mergeFisherLayers, formatFishermanPopup } from '../utils/fisher-map';
 import { useTripAssessment } from '../hooks/useTripAssessment';
+import { useAlerts } from '../hooks/useAlerts';
+import FisherAlertPanel from '../components/fisher/FisherAlertPanel';
+import { useSpokenGuidance } from '../hooks/useSpokenGuidance';
 
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
@@ -36,6 +39,8 @@ export default function FisherPage({
   const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage'>('decision');
 
   const { data: assessment, isLoading, error, assessTrip } = useTripAssessment();
+  const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
+  const { speak } = useSpokenGuidance({ language: chat.language });
 
   // 1. Fetch base geofences & boundaries
   useEffect(() => {
@@ -54,6 +59,14 @@ export default function FisherPage({
       language_preference: chat.language,
       data_mode: 'HYBRID',
     });
+    
+    registerTrip({
+      origin_harbor: chat.missionContext.origin_harbor || 'Ratnagiri',
+      craft_profile: chat.missionContext.craft_profile || 'motorized_boat',
+      departure_time: chat.missionContext.departure_time,
+      return_time: chat.missionContext.return_time,
+      language: chat.language,
+    });
   }, [
     chat.missionContext.origin_harbor,
     chat.missionContext.craft_profile,
@@ -61,6 +74,7 @@ export default function FisherPage({
     chat.missionContext.return_time,
     chat.language,
     assessTrip,
+    registerTrip,
   ]);
 
   const effectiveLayers = useMemo(() => {
@@ -98,6 +112,13 @@ export default function FisherPage({
           </div>
         ) : (
           <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <FisherAlertPanel 
+              alerts={alerts} 
+              language={chat.language} 
+              onAcknowledge={acknowledgeAlert} 
+              onReplay={(text) => speak(text)} 
+            />
+
             <FisherDecisionSurface
               assessment={assessment}
               isLoading={isLoading}

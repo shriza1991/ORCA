@@ -104,6 +104,42 @@ class ConnectorStatus(Base):
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
+class SavedTripSubscription(Base):
+    __tablename__ = "saved_trip_subscriptions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    public_id = Column(String, unique=True, index=True, nullable=False, default=lambda: str(uuid.uuid4()))
+    origin_harbor = Column(String, nullable=False, index=True)
+    craft_profile = Column(String, nullable=False)
+    departure_time = Column(DateTime(timezone=True), nullable=True)
+    return_time = Column(DateTime(timezone=True), nullable=True)
+    language = Column(String, default="en", nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
+
+
+class ActionableAlert(Base):
+    __tablename__ = "actionable_alerts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("saved_trip_subscriptions.id", ondelete="CASCADE"), nullable=False, index=True)
+    assessment_id = Column(String, nullable=True)
+    alert_type = Column(String, nullable=False)
+    severity = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    recommended_action = Column(String, nullable=False)
+    geometry_geojson = Column(JSONB, nullable=True)
+    valid_from = Column(DateTime(timezone=True), nullable=True)
+    valid_to = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String, default="ACTIVE", nullable=False, index=True)
+    is_acknowledged = Column(Boolean, default=False, nullable=False)
+    identity_hash = Column(String, nullable=False, unique=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
+
+
 class TripAssessmentRecord(Base):
     __tablename__ = "trip_assessments"
 

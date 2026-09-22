@@ -5,6 +5,7 @@ Owned by Dev 2 (Backend Platform Lead).
 
 import logging
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +22,10 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from backend.app.core.worker import alert_monitor_loop
+    task = asyncio.create_task(alert_monitor_loop(interval_seconds=60))
     yield
+    task.cancel()
     connector_http_client.close()
 
 
