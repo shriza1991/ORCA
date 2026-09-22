@@ -223,6 +223,109 @@ def register_dev4_operational_engines(
     registry.register_tool(risk_def, handle_risk, override=True)
     registry.set_capability_availability("risk_evaluation", True)
 
+    # 2A. Trip Assessment Pipeline (Unified Dashboard/Chat)
+    trip_cap = CAPABILITIES_CATALOG["trip_assessment"]
+    trip_def = ToolDefinition(
+        name="trip_assessment",
+        description=trip_cap.description,
+        parameters=[
+            ToolParameter(name="origin_harbor", type_name="str", description="Departure harbor", required=False),
+            ToolParameter(name="coordinates", type_name="list", description="[lon, lat]", required=False),
+            ToolParameter(name="craft_profile", type_name="str", description="Vessel class", required=False, default="motorized_boat"),
+            ToolParameter(name="departure_time", type_name="str", description="Departure time ISO or offset", required=False),
+            ToolParameter(name="destination_id", type_name="str", description="Optional destination", required=False),
+            ToolParameter(name="data_mode", type_name="str", description="Data mode", required=False),
+        ],
+        category="risk",
+        owner=ToolOwner.DEV2,
+        capability="trip_assessment",
+        required_context_fields=trip_cap.required_context_fields,
+        dependencies=trip_cap.dependencies,
+        requires_evidence=trip_cap.requires_evidence,
+        is_available=True,
+    )
+    def handle_trip_assessment(**kwargs: Any) -> Any:
+        from backend.app.services.assessment_service import AssessmentService
+        from backend.app.contracts.assessment import TripAssessmentRequest
+        from backend.app.agents.contracts import ToolResult, ToolStatus
+        from backend.app.contracts.chat import Confidence, ConfidenceLevel
+        
+        request = TripAssessmentRequest(
+            origin_harbor=kwargs.get("origin_harbor"),
+            coordinates=kwargs.get("coordinates"),
+            craft_profile=kwargs.get("craft_profile", "motorized_boat"),
+            departure_time=kwargs.get("departure_time"),
+            destination_id=kwargs.get("destination_id"),
+            data_mode=kwargs.get("data_mode") or connector_manager.current_mode.value,
+        )
+        
+        try:
+            response = AssessmentService.assess_trip(request)
+            data = {
+                "source_type": "ASSESSMENT_PIPELINE",
+                "recommendation": response.decision.model_dump() if not isinstance(response.decision, str) else {"status": response.decision},
+                "conditions": response.conditions.model_dump() if response.conditions else {},
+            }
+            if not isinstance(response.decision, str):
+                pass
+            else:
+                data["recommendation"] = {
+                    "status": response.decision,
+                    "summary": "Unified trip assessment completed.",
+                    "decisive_factors": ["Pipeline execution"],
+                    "next_action": "Check local sources.",
+                }
+            
+            # The actual Recommendation uses RecommendationStatus, the `response.decision` is a RecommendationStatus enum.
+            from backend.app.contracts.chat import Recommendation, RecommendationStatus
+            rec_obj = Recommendation(
+                status=response.decision,
+                summary=f"Unified trip assessment: {response.decision.value}",
+                decisive_factors=["Pipeline execution"],
+                next_action="See full details."
+            )
+            data["recommendation"] = rec_obj.model_dump()
+
+            confidence = Confidence(
+                level=ConfidenceLevel.MEDIUM,
+                reasons=["Generated from Unified Pipeline"],
+            )
+            data["confidence"] = confidence.model_dump()
+            
+            # Extract evidence properly
+            from backend.app.contracts.chat import EvidenceItem
+            evidence_items = []
+            for ev in response.evidence:
+                if isinstance(ev, dict):
+                    evidence_items.append(
+                        EvidenceItem(
+                            source_name="Unified Assessment Pipeline",
+                            metric_name=ev.get("issue", "risk_factor"),
+                            metric_value=ev.get("details", ""),
+                        )
+                    )
+            
+            warnings = [a.get("message", "") for a in response.alerts if isinstance(a, dict)]
+
+            return ToolResult(
+                status=ToolStatus.OK,
+                data=data,
+                evidence=evidence_items,
+                warnings=warnings,
+            )
+        except Exception as exc:
+            from backend.app.contracts.tools import ToolErrorCode
+            return ToolResult(
+                status=ToolStatus.FAILED,
+                data={},
+                evidence=[],
+                warnings=[f"Trip assessment failed: {str(exc)}"],
+                error_code=ToolErrorCode.UPSTREAM_FAILURE.value,
+            )
+
+    registry.register_tool(trip_def, handle_trip_assessment, override=True)
+    registry.set_capability_availability("trip_assessment", True)
+
     # 3. Geospatial Hazard
     geo_cap = CAPABILITIES_CATALOG["geospatial_hazard"]
     geo_def = ToolDefinition(

@@ -104,6 +104,18 @@ class ConnectorStatus(Base):
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
+class TripAssessmentRecord(Base):
+    __tablename__ = "trip_assessments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    assessed_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    origin_harbor = Column(String, nullable=True, index=True)
+    craft_profile = Column(String, nullable=False)
+    decision = Column(String, nullable=False, index=True)
+    evidence_json = Column(JSONB, nullable=False, default={})
+    is_durable = Column(Boolean, default=True, nullable=False)
+
+
 # =============================================================================
 # SYNTHETIC DEMO DATASET MODELS (SAMUDRA_DEMO_V1)
 # =============================================================================

@@ -57,6 +57,14 @@ class ImdWeatherNormalizer:
             except Exception:
                 valid_to = "2030-01-01T00:00:00Z"
 
+        # Distinguish file-import from synthetic
+        _bulletin_id = source_record.get("bulletin_id")
+        _access_method = source_record.get("_source_documentation", {}).get("access_method")
+        if _bulletin_id or _access_method == "FILE_IMPORT":
+            source_label = f"IMD Coastal Weather Bulletin (FILE_IMPORT — {_bulletin_id or 'dated bulletin'})"
+        else:
+            source_label = "IMD Coastal Weather Bulletin (SYNTHETIC)"
+
         return WeatherConditionsPayload(
             harbor=harbor,
             wind_speed_knots=wind_speed,
@@ -65,7 +73,7 @@ class ImdWeatherNormalizer:
             visibility_km=visibility,
             observed_at=obs_time,
             valid_to=valid_to,
-            source_name="IMD Coastal Weather Bulletin (SYNTHETIC)",
+            source_name=source_label,
             source_url="https://mausam.imd.gov.in",
         )
 
@@ -109,15 +117,23 @@ class ImdHazardNormalizer:
         elif not valid_to:
             valid_to = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
 
+        # Distinguish file-import from synthetic
+        _bulletin_id = source_bulletin.get("bulletin_id") or source_bulletin.get("public_id")
+        _access_method = source_bulletin.get("_source_documentation", {}).get("access_method")
+        if _bulletin_id or _access_method == "FILE_IMPORT":
+            source_label = f"IMD Cyclone Warning Division (FILE_IMPORT — {_bulletin_id or 'dated bulletin'})"
+        else:
+            source_label = "IMD Cyclone Warning Division (SYNTHETIC)"
+
         return HazardBulletinPayload(
             harbor=harbor,
             cyclone_warning_active=bool(cyclone_active),
             squall_alert=bool(squall_active),
-            bulletin_id=source_bulletin.get("bulletin_id", source_bulletin.get("public_id")),
+            bulletin_id=_bulletin_id,
             severity=severity,
             headline=source_bulletin.get("headline", f"Marine Weather Advisory - {harbor}"),
             valid_from=str(valid_from),
             valid_to=str(valid_to),
-            source_name="IMD Cyclone Warning Division (SYNTHETIC)",
+            source_name=source_label,
             source_url="https://rsmcnewdelhi.imd.gov.in",
         )

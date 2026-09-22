@@ -92,6 +92,7 @@ class DeterministicRiskEngine:
         bundle: Optional[ObservationBundle] = None,
         data_mode: str = "SNAPSHOT",
         reference_time: Optional[datetime | str] = None,
+        return_time: Optional[datetime | str] = None,
     ) -> RiskAssessmentPayload:
         """Computes a deterministic, explainable safety decision from domain observations."""
         if bundle is not None:
@@ -123,6 +124,14 @@ class DeterministicRiskEngine:
         else:
             now_utc = datetime.now(UTC)
 
+        window_end_utc = now_utc
+        if return_time is not None:
+            if isinstance(return_time, str):
+                ret_dt = datetime.fromisoformat(return_time.replace("Z", "+00:00"))
+            else:
+                ret_dt = return_time
+            window_end_utc = ret_dt if ret_dt.tzinfo is not None else ret_dt.replace(tzinfo=timezone.utc)
+
         # ---------------------------------------------------------------------
         # 1. Provenance & Stale / Missing Data Validation
         # ---------------------------------------------------------------------
@@ -138,6 +147,9 @@ class DeterministicRiskEngine:
                     if marine_vt.tzinfo is None:
                         marine_vt = marine_vt.replace(tzinfo=timezone.utc)
                     if marine_vt < now_utc:
+                        marine_stale = True
+                    elif marine_vt < window_end_utc:
+                        warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Marine forecast expires before planned return.")
                         marine_stale = True
                 except Exception:
                     pass
@@ -165,6 +177,9 @@ class DeterministicRiskEngine:
                         weather_vt = weather_vt.replace(tzinfo=timezone.utc)
                     if weather_vt < now_utc:
                         weather_stale = True
+                    elif weather_vt < window_end_utc:
+                        warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Weather forecast expires before planned return.")
+                        weather_stale = True
                 except Exception:
                     pass
 
@@ -190,6 +205,9 @@ class DeterministicRiskEngine:
                     if hazard_vt.tzinfo is None:
                         hazard_vt = hazard_vt.replace(tzinfo=timezone.utc)
                     if hazard_vt < now_utc:
+                        hazard_stale = True
+                    elif hazard_vt < window_end_utc:
+                        warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Hazard bulletin expires before planned return.")
                         hazard_stale = True
                 except Exception:
                     pass
@@ -432,6 +450,7 @@ def evaluate_deterministic_risk(
     bundle: Optional[ObservationBundle] = None,
     data_mode: str = "SNAPSHOT",
     reference_time: Optional[datetime | str] = None,
+    return_time: Optional[datetime | str] = None,
 ) -> RiskAssessmentPayload:
     """Convenience helper to evaluate risk through the deterministic engine."""
     return DeterministicRiskEngine.evaluate(
@@ -442,4 +461,5 @@ def evaluate_deterministic_risk(
         bundle=bundle,
         data_mode=data_mode,
         reference_time=reference_time,
+        return_time=return_time,
     )

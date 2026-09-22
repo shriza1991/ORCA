@@ -19,6 +19,7 @@ from backend.app.agents.integrations.contracts import ToolInvocationContext
 try:
     from backend.app.db.session import SessionLocal
     from sqlalchemy.orm import Session
+    from backend.app.db.repositories import AssessmentRepository
     DB_AVAILABLE = True
 except ImportError:
     DB_AVAILABLE = False
@@ -99,14 +100,14 @@ class AssessmentService:
             alerts = [{"message": "Cannot assess due to missing data. Check source status."}]
         else:
             try:
-                # Assuming the risk engine evaluates the window including return time implicitly or explicitly
-                # We map the ref_time to departure_time or now
+                # Passing both departure_time (ref_time) and return_time to the risk engine to evaluate the trip window
                 ref_time = request.departure_time or now_iso
                 risk_payload = DeterministicRiskEngine.evaluate(
                     context=ctx,
                     bundle=bundle,
                     data_mode=request.data_mode,
-                    reference_time=ref_time
+                    reference_time=ref_time,
+                    return_time=request.return_time
                 )
                 
                 decision = risk_payload.status # RecommendationStatus type
@@ -117,17 +118,35 @@ class AssessmentService:
                 decision = RecommendationStatus.UNKNOWN
                 evidence = [{"issue": "Evaluation Error", "details": str(e)}]
                 alerts = [{"message": "Internal evaluation error occurred."}]
+
+        # PFZ Evaluation
+        pfz_candidates = []
+        if request.destination_id or True: # Evaluate if we can
+            try:
+                pfz_raw = data_service.get_pfz_raw_advisories(ctx)
+                if pfz_raw and pfz_raw.features:
+                    from backend.app.domain.pfz import DeterministicPFZRankingEngine
+                    pfz_engine = DeterministicPFZRankingEngine()
+                    pfz_ranking = pfz_engine.rank_pfz_candidates(ctx, pfz_raw.features)
+                    pfz_candidates = [c.model_dump() for c in pfz_ranking.ranked_candidates]
+            except Exception as e:
+                logger.warning(f"Failed to fetch/rank PFZ candidates: {e}")
+                source_status.append(AssessmentSourceStatus(provider_name="PFZ", status="FAILED", error_message=str(e)))
                 
         # 5. Persist where possible
         is_durable = False
         if DB_AVAILABLE:
             try:
-                # Stub for persistence logic - would use SessionLocal
-                # with SessionLocal() as db:
-                #     repo = AssessmentRepository(db)
-                #     repo.create(...)
-                # For now, mark as false until DB schema is strictly bound
-                is_durable = False
+                with SessionLocal() as db:
+                    repo = AssessmentRepository(db)
+                    repo.create(
+                        assessed_at=now_iso,
+                        origin_harbor=request.origin_harbor,
+                        craft_profile=request.craft_profile,
+                        decision=decision.value,
+                        evidence_json={"alerts": alerts, "evidence": evidence}
+                    )
+                is_durable = True
             except Exception as e:
                 logger.warning(f"Failed to persist assessment: {e}")
 
@@ -144,7 +163,7 @@ class AssessmentService:
             decision=decision,
             conditions=bundle,
             alerts=alerts,
-            pfz_candidates=[], # Future extension from PFZ service
+            pfz_candidates=pfz_candidates,
             route_candidates=[], # Future extension from Geospatial service
             map_layers={}, 
             evidence=evidence,

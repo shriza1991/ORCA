@@ -373,6 +373,13 @@ None
 - Resolved `ThreadContext` initialization: `RunRepository.create()` now initializes `context_json` with valid `ThreadContext(thread_id=thread_id).model_dump(mode="json")`, resolving Pydantic validation warnings.
 - Real Groq smoke test verified: Model authentication, HTTP communication, structured intent extraction, and response composition verified against live Groq endpoint with `qwen/qwen3.8-27b`.
 
+### P0-26 — Unified Trip Assessment Pipeline
+- Designed and implemented a single, unified `AssessmentService` pipeline consumed by both the conversational interface (LangGraph) and the Fisher dashboard (`POST /api/v1/trip-assessments`).
+- Created robust typed models mapping four explicit decision states (`GO`, `CAUTION`, `NO_GO`, `UNKNOWN`) based on verifiable data availability.
+- Orchestrates the full lifecycle: `MarineConditionsProvider`, `WeatherConditionsProvider`, `HazardBulletinsProvider`, `PFZSourceDataProvider` and `GeospatialHazardEngine` are aggregated into an `ObservationBundle`.
+- Evaluates full trip windows using `return_time` vs `valid_to` boundaries, rejecting queries with expired or out-of-range observation data.
+- Persists all executed trip assessments and their inputs to PostgreSQL using `TripAssessmentRecord` for analytics and audit trails.
+- LangGraph graph structure simplified to use `trip_assessment` instead of duplicating component tool calls; `specialist_tools_node` automatically parses standard outputs.
 
 ---
 

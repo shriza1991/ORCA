@@ -33,6 +33,7 @@ from backend.app.db.models import (
     MapLayer,
     Run,
     RunStatus,
+    TripAssessmentRecord,
 )
 
 
@@ -263,6 +264,35 @@ class ConnectorStatusRepository(BaseRepository):
             self.session.commit()
             self.session.refresh(status)
             return status
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise
+
+
+class AssessmentRepository(BaseRepository):
+    def create(
+        self,
+        assessed_at: str,
+        origin_harbor: str | None,
+        craft_profile: str,
+        decision: str,
+        evidence_json: dict,
+    ) -> TripAssessmentRecord:
+        from datetime import datetime
+        dt = datetime.fromisoformat(assessed_at.replace("Z", "+00:00"))
+        record = TripAssessmentRecord(
+            assessed_at=dt,
+            origin_harbor=origin_harbor,
+            craft_profile=craft_profile,
+            decision=decision,
+            evidence_json=evidence_json,
+            is_durable=True,
+        )
+        self.session.add(record)
+        try:
+            self.session.commit()
+            self.session.refresh(record)
+            return record
         except SQLAlchemyError:
             self.session.rollback()
             raise

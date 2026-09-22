@@ -84,16 +84,56 @@ class ImdHazardConnector(BaseLiveConnector):
         else:
             logger.debug("IMD Hazard API is unconfigured (placeholder or missing key). Skipping live fetch.")
 
-        # Check if an imported file exists in references for Hazard Bulletins
-        import_path = "data/reference/marine_hazard_bulletins.json"
+        # Import from genuine dated IMD marine hazard bulletin file.
+        # Path points to the official-format sample in data/source_snapshots/imd/.
+        import_path = "data/source_snapshots/imd/marine_hazard_bulletin_2026-09-12.json"
         import pathlib
         if pathlib.Path(import_path).exists():
             try:
                 from backend.app.importers.hazard_importer import HazardImporter
+                from backend.app.connectors.dataset_registry import (
+                    DatasetMetadata, GeographicCoverage, dataset_registry
+                )
+                import json as _json
+                with open(import_path, "r", encoding="utf-8") as _f:
+                    _raw = _json.load(_f)
                 importer = HazardImporter(import_path)
                 res = importer.process()
-                # Log dataset metadata registration
-                logger.info(f"Registered Hazard Dataset Metadata: {res['metadata']}")
+                # Register dataset metadata
+                dataset_registry.register(DatasetMetadata(
+                    dataset_id="imd_hazard_import_2026-09-12",
+                    variable="marine_hazard",
+                    source_name=_raw.get("issuing_authority", "IMD Cyclone Warning Division"),
+                    issuing_authority=_raw.get("issuing_authority", "IMD"),
+                    source_url=_raw.get("source_url", self.SOURCE_URL),
+                    geographic_coverage=GeographicCoverage(
+                        lat_min=_raw.get("geographic_coverage", {}).get("lat_min", 14.0),
+                        lat_max=_raw.get("geographic_coverage", {}).get("lat_max", 22.0),
+                        lon_min=_raw.get("geographic_coverage", {}).get("lon_min", 70.0),
+                        lon_max=_raw.get("geographic_coverage", {}).get("lon_max", 77.0),
+                        description="North Arabian Sea — Maharashtra sector",
+                    ),
+                    time_coverage_start=_raw.get("valid_from"),
+                    time_coverage_end=_raw.get("valid_to"),
+                    resolution_description="Point/polygon bulletin",
+                    access_method="FILE_IMPORT",
+                    availability="CACHED",
+                    availability_detail=f"Loaded from {import_path}",
+                    original_file_path=import_path,
+                    checksum=res["metadata"]["checksum"],
+                    product_id=_raw.get("bulletin_id"),
+                    acquisition_time=_raw.get("issued_at"),
+                    quality_flags=[
+                        f"severity={_raw.get('severity', 'UNKNOWN')}",
+                        f"cyclone_active={_raw.get('cyclone_warning_active', False)}",
+                        f"squall_alert={_raw.get('squall_alert', False)}",
+                    ],
+                ))
+                logger.info(
+                    "Registered IMD hazard dataset metadata: bulletin_id=%s, severity=%s",
+                    _raw.get("bulletin_id", "unknown"),
+                    _raw.get("severity", "UNKNOWN"),
+                )
                 return res["payload"]
             except Exception as exc:
                 logger.warning("Failed to load Hazard from file importer: %s", exc)

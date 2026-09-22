@@ -96,11 +96,18 @@ class IncoisOSFNormalizer:
 
         # QC flag evaluation
         qc_flag = source_record.get("qc_flag", 0)
-        source_label = "INCOIS Ocean State Forecast (SYNTHETIC)"
+        # Distinguish file-import records from synthetic demo data.
+        # Records with an explicit product_id or issuing_authority field are file-imported.
+        _product_id = source_record.get("product_id") or source_record.get("bulletin_id")
+        _access_method = source_record.get("access_method", "SYNTHETIC")
+        if _product_id or _access_method == "FILE_IMPORT":
+            source_label = f"INCOIS Ocean State Forecast (FILE_IMPORT — {_product_id or 'dated bulletin'})"
+        else:
+            source_label = "INCOIS Ocean State Forecast (SYNTHETIC)"
         if qc_flag == 1 or source_record.get("qc_status") == "DEGRADED_QC_WARNING":
-            source_label = "INCOIS Ocean State Forecast (SYNTHETIC - DEGRADED_QC)"
+            source_label += " [DEGRADED_QC]"
         elif qc_flag == 9 or source_record.get("qc_status") == "STALE":
-            source_label = "INCOIS Ocean State Forecast (SYNTHETIC - STALE)"
+            source_label += " [STALE]"
 
         return MarineConditionsPayload(
             harbor=harbor,
@@ -152,10 +159,18 @@ class IncoisPFZNormalizer:
         bulletin_date = source_bulletin.get("bulletin_date") or source_bulletin.get("valid_from") or datetime.now(timezone.utc).isoformat()
         valid_to = source_bulletin.get("valid_to") or (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
 
+        # Carry product_id for traceability when file-imported
+        _product_id = source_bulletin.get("product_id") or source_bulletin.get("bulletin_id")
+        _access_method = source_bulletin.get("_source_documentation", {}).get("access_method")
+        if _product_id or _access_method == "FILE_IMPORT":
+            source_label = f"INCOIS PFZ Mission (FILE_IMPORT — {_product_id or 'dated bulletin'})"
+        else:
+            source_label = "INCOIS PFZ Mission (SYNTHETIC)"
+
         return PFZSourceDataPayload(
             features=features,
             bulletin_date=bulletin_date,
             valid_to=valid_to,
-            source_name="INCOIS PFZ Mission (SYNTHETIC)",
+            source_name=source_label,
             source_url="https://incois.gov.in/portal/pfz",
         )

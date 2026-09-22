@@ -701,7 +701,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
 
         required_capabilities: List[str] = []
         if intent_val == IntentCategory.SAFETY.value:
-            required_capabilities = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
+            required_capabilities = ["trip_assessment"]
         elif intent_val == IntentCategory.PFZ.value:
             required_capabilities = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.CONDITIONS.value:
@@ -827,7 +827,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         if intent_val == IntentCategory.PFZ.value:
             tools = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.SAFETY.value:
-            tools = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
+            tools = ["trip_assessment"]
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_conditions"]
         elif intent_val in [IntentCategory.HAZARDS.value, IntentCategory.ROUTE.value, IntentCategory.ANALYTICAL_EXPLANATION.value]:
@@ -840,7 +840,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         if intent_val == IntentCategory.PFZ.value:
             tools = ["pfz_stub"]
         elif intent_val == IntentCategory.SAFETY.value:
-            tools = ["marine_stub", "weather_stub", "risk_stub"]
+            tools = ["trip_assessment_stub"]
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_stub"]
         elif intent_val == IntentCategory.HAZARDS.value:
@@ -975,6 +975,15 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
             coords = state.get("location", {}).get("coordinates") or _get_harbor_coordinates(harbor)
             if coords:
                 params["coordinates"] = coords
+        elif tool_name == "trip_assessment":
+            params = {
+                "origin_harbor": harbor,
+                "craft_profile": craft_type,
+                "departure_time": state.get("time_window", {}).get("departure_time"),
+                "coordinates": state.get("location", {}).get("coordinates"),
+                "destination_id": destination,
+                "data_mode": state.get("tool_mode", "demo")
+            }
         elif tool_name == "risk_stub":
             # Pass collected marine observations into risk engine
             wave_m = observations.get("significant_wave_height_m", 1.8)
@@ -1079,7 +1088,7 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
         if result.status == ToolStatus.FAILED:
             failed_tools.add(tool_name)
             collected_warnings.extend(result.warnings)
-            if tool_name in ["risk_stub", "risk_evaluation"] or (
+            if tool_name in ["risk_stub", "risk_evaluation", "trip_assessment"] or (
                 state.get("intent") == IntentCategory.SAFETY.value
                 and tool_name in ["marine_conditions", "weather_conditions", "marine_stub", "weather_stub"]
             ):

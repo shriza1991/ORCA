@@ -179,16 +179,56 @@ class IncoisOceanStateConnector(BaseLiveConnector):
         else:
              logger.debug("INCOIS API is unconfigured (placeholder or missing key). Skipping live fetch for PFZ.")
 
-        # Check if an imported file exists in references for PFZ
-        import_path = "data/reference/pfz_advisories.json"
+        # Import from genuine dated PFZ bulletin file.
+        # Path points to the official-format sample in data/source_snapshots/incois/.
+        import_path = "data/source_snapshots/incois/pfz_bulletin_2026-09-12.json"
         import pathlib
         if pathlib.Path(import_path).exists():
              try:
                  from backend.app.importers.pfz_importer import PfzImporter
+                 from backend.app.connectors.dataset_registry import (
+                     DatasetMetadata, GeographicCoverage, dataset_registry
+                 )
+                 import json as _json
+                 # Read raw to extract product metadata before normalizing
+                 with open(import_path, "r", encoding="utf-8") as _f:
+                     _raw = _json.load(_f)
                  importer = PfzImporter(import_path)
                  res = importer.process()
-                 # Log dataset metadata registration
-                 logger.info(f"Registered PFZ Dataset Metadata: {res['metadata']}")
+                 # Register dataset metadata for downstream discoverability
+                 dataset_registry.register(DatasetMetadata(
+                     dataset_id="incois_pfz_import_2026-09-12",
+                     variable="pfz_zones",
+                     source_name=_raw.get("issuing_authority", "INCOIS PFZ"),
+                     issuing_authority=_raw.get("issuing_authority", "INCOIS"),
+                     source_url=self.PFZ_SOURCE_URL,
+                     geographic_coverage=GeographicCoverage(
+                         lat_min=_raw.get("geographic_coverage", {}).get("lat_min", 14.5),
+                         lat_max=_raw.get("geographic_coverage", {}).get("lat_max", 20.0),
+                         lon_min=_raw.get("geographic_coverage", {}).get("lon_min", 71.0),
+                         lon_max=_raw.get("geographic_coverage", {}).get("lon_max", 74.5),
+                         description="Maharashtra Konkan Coast",
+                     ),
+                     time_coverage_start=_raw.get("valid_from"),
+                     time_coverage_end=_raw.get("valid_to"),
+                     resolution_description=f"{_raw.get('resolution_km', 4)} km",
+                     access_method="FILE_IMPORT",
+                     availability="CACHED",
+                     availability_detail=f"Loaded from {import_path}",
+                     original_file_path=import_path,
+                     checksum=res["metadata"]["checksum"],
+                     product_id=_raw.get("product_id"),
+                     acquisition_time=_raw.get("bulletin_date"),
+                     quality_flags=[
+                         f"quarantined_records={res['metadata']['quarantined_records']}",
+                         f"valid_features={len(res['payload'].features)}",
+                     ],
+                 ))
+                 logger.info(
+                     "Registered INCOIS PFZ dataset metadata: product_id=%s, features=%d",
+                     _raw.get("product_id", "unknown"),
+                     len(res["payload"].features),
+                 )
                  return res["payload"]
              except Exception as exc:
                  logger.warning("Failed to load PFZ from file importer: %s", exc)
