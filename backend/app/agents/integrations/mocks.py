@@ -267,6 +267,9 @@ class MockRouteExposureEngine:
         context: ToolInvocationContext,
         marine: MarineConditionsPayload,
         destination: str,
+        weather: Optional[Any] = None,
+        hazard: Optional[Any] = None,
+        geospatial_engine: Optional[Any] = None,
         dest_coords: Optional[List[float]] = None,
         base_waypoints: Optional[List[List[float]]] = None,
     ) -> RouteExposurePayload:

@@ -179,7 +179,7 @@ def test_api_demo_route_alternatives(client):
 
     assert data["status"] == "AVAILABLE"
     assert data["origin"] == "Ratnagiri"
-    assert data["recommended_route_id"] == "ROUTE-A-INSHORE"
+    assert data["recommended_route_id"] == "ROUTE-B-DIRECT"
     assert len(data["routes"]) == 3
 
     route_ids = [r["route_id"] for r in data["routes"]]

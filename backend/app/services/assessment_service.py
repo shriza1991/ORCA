@@ -133,6 +133,28 @@ class AssessmentService:
                 logger.warning(f"Failed to fetch/rank PFZ candidates: {e}")
                 source_status.append(AssessmentSourceStatus(provider_name="PFZ", status="FAILED", error_message=str(e)))
                 
+        # Routes Evaluation
+        route_candidates = []
+        if marine and weather:
+            try:
+                from backend.app.domain.route_engine import DeterministicRouteExposureEngine
+                from backend.app.domain.geo_restrictions import DeterministicGeospatialEngine
+                
+                route_engine = DeterministicRouteExposureEngine()
+                geo_engine = DeterministicGeospatialEngine()
+                route_payload = route_engine.evaluate_routes(
+                    context=ctx,
+                    marine=marine,
+                    destination=request.destination_id or "Outer Bank",
+                    weather=weather,
+                    hazard=hazard,
+                    geospatial_engine=geo_engine,
+                    dest_coords=request.coordinates, # Usually origin coords are passed via context, dest_coords here is an approximation
+                )
+                route_candidates = [r.model_dump() for r in route_payload.routes]
+            except Exception as e:
+                logger.warning(f"Failed to evaluate route candidates: {e}")
+                
         # 5. Persist where possible
         is_durable = False
         if DB_AVAILABLE:
@@ -164,7 +186,7 @@ class AssessmentService:
             conditions=bundle,
             alerts=alerts,
             pfz_candidates=pfz_candidates,
-            route_candidates=[], # Future extension from Geospatial service
+            route_candidates=route_candidates, 
             map_layers={}, 
             evidence=evidence,
             source_status=source_status,
