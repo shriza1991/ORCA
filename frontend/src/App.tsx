@@ -110,6 +110,7 @@ export default function App() {
           onStartCall={() => setIsCallModalOpen(true)}
           onOpenEvidence={() => setIsDrawerOpen(true)}
           onBack={handleBack}
+          onViewMap={() => setMobileView('map')}
         />
       ) : portal === 'authority' ? (
         <AuthorityPage

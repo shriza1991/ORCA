@@ -15,6 +15,8 @@ export interface UserContext {
   origin_harbor?: string;
   coordinates?: [number, number]; // [lon, lat]
   craft_profile?: 'traditional_non_motorized' | 'motorized_boat' | 'mechanized_trawler';
+  departure_time?: string;
+  return_time?: string;
   language_preference?: 'auto' | 'en' | 'hi' | 'mr' | 'ta';
 }
 

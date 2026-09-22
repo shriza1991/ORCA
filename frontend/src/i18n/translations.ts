@@ -55,6 +55,9 @@ export interface LocaleContent {
   logoutBtn: string;
   listenBtn: string;
   stopAudioBtn: string;
+  hearTheUpdate: string;
+  planMyTrip: string;
+  viewTheMap: string;
 }
 
 
@@ -70,11 +73,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     agentsReasoning: 'Agents analyzing ocean models and safety criteria...',
     viewEvidenceBtn: (count: number) => `📋 View ${count} verified evidence source${count > 1 ? 's' : ''}`,
     statusLabels: {
-      GO: 'GO — Safe / Favorable Conditions',
-      CAUTION: 'CAUTION — Elevated Marine Risk',
-      NO_GO: 'NO-GO — Hazardous Departure Advised Against',
-      UNKNOWN: 'UNKNOWN — Missing or Stale Critical Data',
-      INFORMATIONAL: 'INFORMATIONAL — Advisory Only',
+      GO: 'Within assessed limits',
+      CAUTION: 'Be careful',
+      NO_GO: 'Do not depart',
+      UNKNOWN: 'Information unavailable',
+      INFORMATIONAL: 'Advisory Only',
     },
     confidenceLabels: {
       HIGH: 'High Confidence',
@@ -91,8 +94,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     prompts: [
       {
         id: 'pfz',
-        label: '🐟 Nearest PFZ Ground',
-        query: 'Where is the nearest Potential Fishing Zone today from Ratnagiri?',
+        label: '🐟 Nearest Suggested Fishing Area',
+        query: 'Where is the nearest suggested fishing area today from Ratnagiri?',
       },
       {
         id: 'safety',
@@ -101,7 +104,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
       },
       {
         id: 'hazard',
-        label: '⚠️ Hazard & Geofence Alert',
+        label: '⚠️ Restricted Area & Hazard Alert',
         query: 'Any cyclone, lightning or restricted-water risk on this trip?',
       },
       {
@@ -139,6 +142,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     logoutBtn: 'Logout',
     listenBtn: 'Listen',
     stopAudioBtn: 'Stop',
+    hearTheUpdate: 'Hear the update',
+    planMyTrip: 'Plan my trip',
+    viewTheMap: 'View the map',
   },
   hi: {
     appTagline: 'स्मार्ट स्वायत्त सागरी समझ, निर्णय और जोखिम सहायक',
@@ -151,11 +157,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     agentsReasoning: 'एजेंट समुद्री डेटा और सुरक्षा मानकों का विश्लेषण कर रहे हैं...',
     viewEvidenceBtn: (count: number) => `📋 ${count} सत्यापित साक्ष्य स्रोत देखें`,
     statusLabels: {
-      GO: 'सुरक्षित (GO) — प्रस्थान अनुकूल व सुरक्षित',
-      CAUTION: 'सावधानी (CAUTION) — बढ़ा हुआ समुद्री जोखिम',
-      NO_GO: 'असुरक्षित (NO-GO) — प्रस्थान न करने की सख्त सलाह',
-      UNKNOWN: 'अज्ञात (UNKNOWN) — महत्वपूर्ण डेटा अनुपलब्ध',
-      INFORMATIONAL: 'सूचनात्मक (INFORMATIONAL) — केवल परामर्श',
+      GO: 'प्रस्थान सुरक्षित है',
+      CAUTION: 'सावधान रहें',
+      NO_GO: 'प्रस्थान न करें',
+      UNKNOWN: 'जानकारी अनुपलब्ध है',
+      INFORMATIONAL: 'सूचनात्मक — केवल परामर्श',
     },
     confidenceLabels: {
       HIGH: 'उच्च आत्मविश्वास',
@@ -220,6 +226,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     logoutBtn: 'लॉग आउट',
     listenBtn: 'सुनें',
     stopAudioBtn: 'रोकें',
+    hearTheUpdate: 'अपडेट सुनें',
+    planMyTrip: 'मेरी यात्रा की योजना बनाएं',
+    viewTheMap: 'मानचित्र देखें',
   },
   mr: {
     appTagline: 'स्मार्ट स्वायत्त सागरी आकलन, निर्णय आणि जोखीम सहाय्यक',
@@ -232,11 +241,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     agentsReasoning: 'एजंट सागरी परिस्थिती आणि सुरक्षितता नियमांचे विश्लेषण करत आहेत...',
     viewEvidenceBtn: (count: number) => `📋 ${count} पडताळलेले अधिकृत पुरावे पहा`,
     statusLabels: {
-      GO: 'सुरक्षित (GO) — समुद्रात जाणे अनुकूल व सुरक्षित',
-      CAUTION: 'सावधगिरी (CAUTION) — वाढलेला सागरी धोका, दक्षता बाळगा',
-      NO_GO: 'धोकादायक (NO-GO) — समुद्रात न जाण्याचा स्पष्ट सल्ला',
-      UNKNOWN: 'अज्ञात (UNKNOWN) — आवश्यक माहिती किंवा अंदाज उपलब्ध नाही',
-      INFORMATIONAL: 'माहितीपूर्ण (INFORMATIONAL) — केवळ मार्गदर्शक माहिती',
+      GO: 'प्रस्थान सुरक्षित आहे',
+      CAUTION: 'काळजी घ्या',
+      NO_GO: 'प्रस्थान करू नका',
+      UNKNOWN: 'माहिती उपलब्ध नाही',
+      INFORMATIONAL: 'माहितीपूर्ण — केवळ मार्गदर्शन',
     },
     confidenceLabels: {
       HIGH: 'उच्च विश्वासार्हता',
@@ -298,9 +307,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     callDetectedLanguage: 'ओळखलेली भाषा',
     callSubtitleUser: 'तुम्ही',
     callSubtitleSamudra: 'समुद्र (SAMUDRA)',
-    logoutBtn: 'लॉग आउट',
+    logoutBtn: 'लॉग आउट करा',
     listenBtn: 'ऐका',
-    stopAudioBtn: 'थांबवा',
+    stopAudioBtn: 'थांबा',
+    hearTheUpdate: 'अपडेट ऐका',
+    planMyTrip: 'माझ्या सहलीचे नियोजन करा',
+    viewTheMap: 'नकाशा पहा',
   },
 };
 

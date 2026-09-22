@@ -6,7 +6,7 @@ import type { OperationalMode } from '../../types/mission';
 import LayerManager from './LayerManager';
 import MissionMapBrief from './MissionMapBrief';
 import { Layers } from 'lucide-react';
-import type { SupportedLanguage } from '../../i18n/translations';
+import { translateText, type SupportedLanguage } from '../../i18n/translations';
 
 /** Initial fallback center (Indian coastal waters) */
 const INITIAL_CENTER: [number, number] = [73.28, 16.99];
@@ -30,6 +30,7 @@ interface MapViewProps {
     routes?: 'AVAILABLE' | 'UNAVAILABLE' | 'EMPTY';
     hazards?: 'AVAILABLE' | 'UNAVAILABLE' | 'EMPTY';
   };
+  hideAdvancedControls?: boolean;
 }
 
 export default function MapView({
@@ -42,6 +43,7 @@ export default function MapView({
   onResetView,
   resetViewTrigger,
   layerAvailability,
+  hideAdvancedControls = false,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -720,16 +722,30 @@ export default function MapView({
     <section className="map-view" aria-label="Geospatial map viewport">
       <div ref={containerRef} className="map-container" />
 
-      <MissionMapBrief
-        layers={layers}
-        selectedMode={selectedCorridorMode}
-        onModeChange={setSelectedCorridorMode}
-        language={language}
-        onResetView={onResetView || handleResetView}
-        layerAvailability={layerAvailability}
-      />
+      {!hideAdvancedControls && (
+        <MissionMapBrief
+          layers={layers}
+          selectedMode={selectedCorridorMode}
+          onModeChange={setSelectedCorridorMode}
+          language={language}
+          onResetView={onResetView || handleResetView}
+          layerAvailability={layerAvailability}
+        />
+      )}
 
-      {layers.length > 0 && (
+      {hideAdvancedControls && (
+        <div className="fisher-simple-map-controls" style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            onClick={onResetView || handleResetView}
+            style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'white', color: '#0f172a', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+          >
+            <Layers size={24} />
+            {translateText('Show my trip', language) || 'Show my trip'}
+          </button>
+        </div>
+      )}
+
+      {layers.length > 0 && !hideAdvancedControls && (
         <Popover.Root open={showLayerPanel} onOpenChange={setShowLayerPanel}>
           <Popover.Trigger asChild>
             <button
