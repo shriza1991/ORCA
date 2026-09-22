@@ -36,6 +36,9 @@
 - MissionMapBrief and MapView dynamic layer rendering updated with candidate switching, real metric display, and honest empty/unavailable handling without hardcoded operational route geometry.
 
 ### P0-8H — Simultaneous route alternatives visualization without clutter
+- Established verifiable data ingest pipelines (`importers/`) covering INCOIS PFZ, IMD Hazards, and native NetCDF satellite handling (`xarray`).
+- Integrated offline reference fallbacks safely bypassing unconfigured API endpoints without brittle scraping.
+- Created Unified Trip Assessment Pipeline (`POST /api/v1/trip-assessments`), aligning Fisher dashboard and conversational interface decision logic (using `AssessmentService`).
 - Established visual hierarchy for route comparison: selected candidate rendered prominently as solid cyan line (`line_width: 4`, `opacity: 0.95`, `#06b6d4`), while non-selected alternatives render simultaneously as thin, dashed lines (`line_width: 2.5`, `line_dasharray: [3, 3]`, `opacity: 0.50`, `#38bdf8`).
 - Integrated dynamic sector route fetching in `AuthorityPage` with request cancellation and stale-state clearing on sector switch.
 - Stabilized map camera bounds to prevent abrupt jumping/refitting during Safest / Balanced / Direct corridor switching.
@@ -161,6 +164,20 @@
 - Handled edge cases: multi-candidate dynamic bounds auto-fitting, single candidate centering, invalid coordinate filtering, and explicit empty state.
 - Compact map provenance caption: `INCOIS PFZ-style candidate data · synthetic snapshot`.
 - Validated with 7 automated unit & feature transformation tests (119 total frontend tests passing) and clean `tsc && vite build`.
+
+## Phase 2: Data Grounding & Provider Alignment (Current)
+
+### Completed
+- Contract alignment for `MarineConditionsPayload`: Added `wave_direction_deg` and `freshness_flags`.
+- Refactored `OpenMeteoConnector`: Fixed trip-window alignment, km/h to knots conversion, added precise forecast hour extraction.
+- Refactored `SnapshotConnector` and `DataService`: Removed clock-invented timestamps. 
+- Synced test baselines in `SYNTHETIC` and `SNAPSHOT` data modes to deterministic scenario anchor times (`2026-09-12T06:00:00+00:00`) rather than fabricating time from `now_utc`.
+- Repaired corrupted provider tests (`test_imd.py`, `test_incois.py`) and updated `test_open_meteo.py` mocks.
+- `IncoisOSFNormalizer` updated to correctly derive a 6-hour `valid_to` window deterministically from `observation_time` instead of from the current clock.
+- **Verification:** 100% pass on regression suite (148 tests).
+
+### Blockers
+None
 
 ### P0-15 — Hazard Spatial Polygon Visualization in Researcher Lab
 - Implemented `HazardSpatialMap.tsx` reusing MapLibre GL conventions and dark basemap styling for spatial exploration of observed/advisory hazard polygons.

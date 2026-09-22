@@ -76,11 +76,27 @@ class ImdHazardConnector(BaseLiveConnector):
         if self.data_mode == "SNAPSHOT":
             return self._make_normal_payload(harbor, "SNAPSHOT_REDIRECT")
 
-        if self.data_mode in ("LIVE", "HYBRID") and settings.IMD_API_KEY:
+        if self.data_mode in ("LIVE", "HYBRID") and settings.IMD_API_KEY and "placeholder" not in settings.IMD_API_BASE_URL.lower():
             try:
                 return self._fetch_imd_hazard(harbor, context)
             except Exception as exc:
-                logger.warning("IMD hazard live fetch failed (%s). Returning NORMAL.", exc)
+                logger.warning("IMD Hazard live fetch failed (%s).", exc)
+        else:
+            logger.debug("IMD Hazard API is unconfigured (placeholder or missing key). Skipping live fetch.")
+
+        # Check if an imported file exists in references for Hazard Bulletins
+        import_path = "data/reference/marine_hazard_bulletins.json"
+        import pathlib
+        if pathlib.Path(import_path).exists():
+            try:
+                from backend.app.importers.hazard_importer import HazardImporter
+                importer = HazardImporter(import_path)
+                res = importer.process()
+                # Log dataset metadata registration
+                logger.info(f"Registered Hazard Dataset Metadata: {res['metadata']}")
+                return res["payload"]
+            except Exception as exc:
+                logger.warning("Failed to load Hazard from file importer: %s", exc)
 
         # Key absent or HYBRID fallback: return NORMAL (conservative default)
         return self._make_normal_payload(harbor, "LIVE_UNAVAILABLE")

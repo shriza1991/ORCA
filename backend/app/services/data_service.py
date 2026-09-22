@@ -11,9 +11,16 @@ data requests to the correct provider based on DATA_MODE:
              SnapshotConnector embedded defaults. Never raises.
   SNAPSHOT → Always serve from SnapshotConnector fixture files. Never
              makes external HTTP calls. Guaranteed reproducible.
+  SYNTHETIC → Serve deterministic synthetic scenario data for CI/demos.
+              Uses fixture-derived timestamps; never invents from now_utc.
 
 Dev 3 wires tool calls through this service so the agent graph is always
 DATA_MODE-aware without knowing about connector implementation details.
+
+Routing authority (D005 / D024):
+  DataService is the SOLE routing layer for agent tool calls.  Do not
+  add a third routing tier.  ConnectorManager serves the registration.py
+  provider-adapter path only (live provider registration + health tracking).
 
 Design decisions:
 - DataService is stateless and instantiated once per process as a singleton.
@@ -22,6 +29,8 @@ Design decisions:
   dispatches polymorphically.
 - Stale/DEGRADED payloads are returned with explicit labels in source_name;
   the orchestrator (Dev 3) is responsible for surfacing warnings to the user.
+- No observation timestamp is ever fabricated from the current clock.
+  Missing timestamps are returned as None and labelled UNAVAILABLE.
 """
 
 from __future__ import annotations
@@ -81,7 +90,14 @@ class DataService:
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
             logger.debug("DataService: %s mode — marine conditions from fixture.", self.data_mode)
-            return self._snapshot.get_marine_conditions(context)
+            _ctx = context
+            if self.data_mode in ("SNAPSHOT", "SYNTHETIC") and not getattr(context, "departure_time", None):
+                # In SYNTHETIC/SNAPSHOT mode without an explicit departure_time, pin to the
+                # scenario anchor date so _select_record picks the correct
+                # 2026-09-12 fixture record. Never uses now_utc.
+                _SYNTHETIC_SCENARIO_ANCHOR = "2026-09-12T06:00:00+00:00"
+                _ctx = context.model_copy(update={"departure_time": _SYNTHETIC_SCENARIO_ANCHOR})
+            return self._snapshot.get_marine_conditions(_ctx)
 
         try:
             payload = self._incois.get_marine_conditions(context)
@@ -96,18 +112,31 @@ class DataService:
     # ------------------------------------------------------------------
 
     def get_weather_conditions(self, context: ToolInvocationContext) -> WeatherConditionsPayload:
-        """Route to the appropriate weather connector based on DATA_MODE."""
+        """Route to the appropriate weather connector based on DATA_MODE.
+
+        SYNTHETIC → Deterministic fixture values. observed_at is derived from
+                    context.departure_time when provided; otherwise None.
+                    Never uses now_utc for observation timestamps.
+        SNAPSHOT  → SnapshotConnector fixture. On failure, returns an explicit
+                    SNAPSHOT_UNAVAILABLE payload (no invented timestamps).
+        LIVE/HYBRID → ImdWeatherConnector with Open-Meteo fallback.
+        """
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.imd import ImdWeatherNormalizer
+            # Use the requested departure time if available.
+            # Fall back to the SYNTHETIC scenario's pinned reference time so
+            # deterministic test baselines remain reproducible. Never use now_utc.
+            _SYNTHETIC_SCENARIO_ANCHOR = "2026-09-12T06:00:00+00:00"
+            dep = getattr(context, "departure_time", None) or _SYNTHETIC_SCENARIO_ANCHOR
             raw = {
                 "harbor": harbor,
                 "wind_speed_knots": 12.0,
                 "gust_speed_knots": 16.0,
                 "wind_direction_deg": 230.0,
                 "visibility_km": 10.0,
-                "observed_at": "2026-09-12T06:00:00Z",
-                "valid_to": "2026-09-12T18:00:00Z",
+                "observed_at": dep,
+                "valid_to": None,             # No fabricated expiry
             }
             return ImdWeatherNormalizer.normalize(raw)
 
@@ -116,12 +145,23 @@ class DataService:
             try:
                 return self._snapshot.get_weather_conditions(context)
             except Exception as exc:
-                logger.warning("DataService: snapshot load failed (%s). Using in-memory dataset.", exc)
-                from backend.app.domain.marine_dataset import get_weather_record
-
-                raw = get_weather_record(harbor)
-                raw["harbor"] = harbor
-                return WeatherConditionsPayload(**raw)
+                # Do NOT fall back to marine_dataset which invents timestamps.
+                # Return an explicit unavailable payload instead.
+                logger.warning(
+                    "DataService: SNAPSHOT weather load failed (%s). "
+                    "Returning SNAPSHOT_UNAVAILABLE payload.", exc
+                )
+                return WeatherConditionsPayload(
+                    harbor=harbor,
+                    wind_speed_knots=None,
+                    wind_gust_knots=None,
+                    wind_direction_deg=None,
+                    visibility_km=None,
+                    observed_at=None,
+                    valid_to=None,
+                    source_name="IMD Coastal Weather Bulletin (SNAPSHOT_UNAVAILABLE)",
+                    source_url=None,
+                )
 
         try:
             payload = self._imd_weather.get_weather_conditions(context)
@@ -132,12 +172,21 @@ class DataService:
             try:
                 return self._snapshot.get_weather_conditions(context)
             except Exception as snap_exc:
-                logger.warning("DataService: snapshot load failed (%s). Using in-memory dataset.", snap_exc)
-                from backend.app.domain.marine_dataset import get_weather_record
-
-                raw = get_weather_record(harbor)
-                raw["harbor"] = harbor
-                return WeatherConditionsPayload(**raw)
+                logger.warning(
+                    "DataService: snapshot weather load failed (%s). "
+                    "Returning SNAPSHOT_UNAVAILABLE payload.", snap_exc
+                )
+                return WeatherConditionsPayload(
+                    harbor=harbor,
+                    wind_speed_knots=None,
+                    wind_gust_knots=None,
+                    wind_direction_deg=None,
+                    visibility_km=None,
+                    observed_at=None,
+                    valid_to=None,
+                    source_name="IMD Coastal Weather Bulletin (SNAPSHOT_UNAVAILABLE)",
+                    source_url=None,
+                )
 
     # ------------------------------------------------------------------
     # Hazard Bulletins
@@ -149,17 +198,25 @@ class DataService:
         Safety invariant: stale hazard data is NEVER silently treated as GO.
         The ImdHazardConnector already returns severity=NORMAL on failure,
         and the snapshot contains explicitly labelled fixture data.
+
+        On SNAPSHOT/fallback failure, returns severity=UNKNOWN rather than
+        falling back to marine_dataset which invents timestamps.
         """
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.imd import ImdHazardNormalizer
+            # Use the requested departure time if available.
+            # Fall back to the SYNTHETIC scenario's pinned reference time so
+            # deterministic test baselines remain reproducible. Never use now_utc.
+            _SYNTHETIC_SCENARIO_ANCHOR = "2026-09-12T06:00:00+00:00"
+            dep = getattr(context, "departure_time", None) or _SYNTHETIC_SCENARIO_ANCHOR
             raw = {
-                "bulletin_id": "IMD-CWB-2026-09-12-01",
+                "bulletin_id": "IMD-CWB-SYNTHETIC-01",
                 "severity": "NORMAL",
                 "event_type": "NONE",
                 "headline": "No active marine weather warnings for coastal Maharashtra.",
-                "valid_from": "2026-09-12T06:00:00Z",
-                "valid_to": "2026-09-13T06:00:00Z",
+                "valid_from": dep,
+                "valid_to": None,      # No fabricated expiry
                 "status": "ACTIVE",
                 "geometry": {
                     "type": "Polygon",
@@ -183,12 +240,22 @@ class DataService:
             try:
                 return self._snapshot.get_hazard_bulletin(context)
             except Exception as exc:
-                logger.warning("DataService: snapshot load failed (%s). Using in-memory dataset.", exc)
-                from backend.app.domain.marine_dataset import get_hazard_record
-
-                raw = get_hazard_record(harbor)
-                raw["harbor"] = harbor
-                return HazardBulletinPayload(**raw)
+                # Do NOT fall back to marine_dataset which invents timestamps.
+                logger.warning(
+                    "DataService: SNAPSHOT hazard load failed (%s). "
+                    "Returning SNAPSHOT_UNAVAILABLE payload.", exc
+                )
+                return HazardBulletinPayload(
+                    harbor=harbor,
+                    cyclone_warning_active=False,
+                    squall_alert=False,
+                    severity="UNKNOWN",
+                    headline="Hazard bulletin unavailable (snapshot load failed).",
+                    valid_from=None,
+                    valid_to=None,
+                    source_name="IMD Cyclone Warning Division (SNAPSHOT_UNAVAILABLE)",
+                    source_url=None,
+                )
 
         try:
             payload = self._imd_hazard.get_hazard_bulletin(context)
@@ -201,12 +268,21 @@ class DataService:
             try:
                 return self._snapshot.get_hazard_bulletin(context)
             except Exception as snap_exc:
-                logger.warning("DataService: snapshot load failed (%s). Using in-memory dataset.", snap_exc)
-                from backend.app.domain.marine_dataset import get_hazard_record
-
-                raw = get_hazard_record(harbor)
-                raw["harbor"] = harbor
-                return HazardBulletinPayload(**raw)
+                logger.warning(
+                    "DataService: snapshot hazard load failed (%s). "
+                    "Returning SNAPSHOT_UNAVAILABLE payload.", snap_exc
+                )
+                return HazardBulletinPayload(
+                    harbor=harbor,
+                    cyclone_warning_active=False,
+                    squall_alert=False,
+                    severity="UNKNOWN",
+                    headline="Hazard bulletin unavailable (all sources failed).",
+                    valid_from=None,
+                    valid_to=None,
+                    source_name="IMD Cyclone Warning Division (SNAPSHOT_UNAVAILABLE)",
+                    source_url=None,
+                )
 
     # ------------------------------------------------------------------
     # PFZ Raw Advisories

@@ -67,10 +67,30 @@ class IncoisOSFNormalizer:
         valid_to = source_record.get("valid_to_utc") or source_record.get("valid_to")
         if isinstance(valid_to, datetime):
             valid_to = valid_to.isoformat()
+        # Derive a sensible valid_to when absent or degenerate (≤ obs_time).
+        # INCOIS OSF publishes hourly bulletins; each hour's data is valid for 6 h.
+        # Use obs_time + 6h — computed from the record's own timestamp, not from now_utc.
+        _derive_valid_to = False
         if not valid_to:
+            _derive_valid_to = True
+        else:
+            try:
+                _vt_dt = datetime.fromisoformat(str(valid_to).replace("Z", "+00:00"))
+                _obs_dt = datetime.fromisoformat(obs_time.replace("Z", "+00:00"))
+                if _vt_dt.tzinfo is None:
+                    _vt_dt = _vt_dt.replace(tzinfo=timezone.utc)
+                if _obs_dt.tzinfo is None:
+                    _obs_dt = _obs_dt.replace(tzinfo=timezone.utc)
+                if _vt_dt <= _obs_dt:
+                    # Degenerate window (valid_to == obs_time or in the past relative to obs)
+                    _derive_valid_to = True
+            except Exception:
+                pass
+
+        if _derive_valid_to:
             try:
                 dt = datetime.fromisoformat(obs_time.replace("Z", "+00:00"))
-                valid_to = (dt + timedelta(hours=24)).isoformat()
+                valid_to = (dt + timedelta(hours=6)).isoformat()
             except Exception:
                 valid_to = "2030-01-01T00:00:00Z"
 

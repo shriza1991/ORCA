@@ -39,6 +39,7 @@ from backend.app.agents.integrations.dev2 import (
 )
 from backend.app.connectors.base import BaseLiveConnector
 from backend.app.connectors.open_meteo import OpenMeteoConnector
+from backend.app.connectors.health import SourceHealth, SourceHealthStatus
 from backend.app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -91,14 +92,17 @@ class IncoisOceanStateConnector(BaseLiveConnector):
             return self._make_degraded_marine_payload(harbor, "SNAPSHOT_REDIRECT")
 
         if self.data_mode in ("LIVE", "HYBRID"):
-            # Attempt live INCOIS endpoint
-            if settings.INCOIS_API_KEY:
+            # Attempt live INCOIS endpoint if configured properly
+            is_placeholder = "placeholder" in self.OSF_SOURCE_URL.lower() or "placeholder" in settings.INCOIS_API_BASE_URL.lower()
+            if settings.INCOIS_API_KEY and not is_placeholder:
                 try:
                     return self._fetch_incois_marine(harbor, context)
                 except Exception as exc:
                     logger.warning(
                         "INCOIS OSF live fetch failed (%s), falling back to Open-Meteo.", exc
                     )
+            else:
+                 logger.debug("INCOIS API is unconfigured (placeholder or missing key). Skipping live fetch.")
 
             # Fall back to Open-Meteo
             return self._fallback.get_marine_conditions(context)
@@ -167,11 +171,27 @@ class IncoisOceanStateConnector(BaseLiveConnector):
                 source_url=self.PFZ_SOURCE_URL,
             )
 
-        if settings.INCOIS_API_KEY:
+        if settings.INCOIS_API_KEY and "placeholder" not in settings.INCOIS_API_BASE_URL.lower():
             try:
                 return self._fetch_incois_pfz(context)
             except Exception as exc:
                 logger.warning("INCOIS PFZ live fetch failed (%s).", exc)
+        else:
+             logger.debug("INCOIS API is unconfigured (placeholder or missing key). Skipping live fetch for PFZ.")
+
+        # Check if an imported file exists in references for PFZ
+        import_path = "data/reference/pfz_advisories.json"
+        import pathlib
+        if pathlib.Path(import_path).exists():
+             try:
+                 from backend.app.importers.pfz_importer import PfzImporter
+                 importer = PfzImporter(import_path)
+                 res = importer.process()
+                 # Log dataset metadata registration
+                 logger.info(f"Registered PFZ Dataset Metadata: {res['metadata']}")
+                 return res["payload"]
+             except Exception as exc:
+                 logger.warning("Failed to load PFZ from file importer: %s", exc)
 
         # Return empty advisory set; Dev 4 will handle absence gracefully
         return PFZSourceDataPayload(
@@ -226,11 +246,13 @@ class IncoisOceanStateConnector(BaseLiveConnector):
                 source_url=self.SVAS_SOURCE_URL,
             )
 
-        if settings.INCOIS_API_KEY:
+        if settings.INCOIS_API_KEY and "placeholder" not in settings.INCOIS_API_BASE_URL.lower():
             try:
                 return self._fetch_incois_svas(harbor, craft_profile, context)
             except Exception as exc:
                 logger.warning("INCOIS SVAS live fetch failed (%s). Returning CACHED_REAL fallback.", exc)
+        else:
+            logger.debug("INCOIS API is unconfigured (placeholder or missing key). Skipping live fetch for SVAS.")
 
         # In HYBRID / LIVE without active SVAS key: return UNAVAILABLE
         return SVASAdvisoryPayload(

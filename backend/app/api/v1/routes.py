@@ -52,9 +52,12 @@ from backend.app.services.tts_service import (
     synthesize_speech,
 )
 
+from backend.app.api.v1.assessments import router as assessments_router
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1")
+router.include_router(assessments_router)
 
 
 
