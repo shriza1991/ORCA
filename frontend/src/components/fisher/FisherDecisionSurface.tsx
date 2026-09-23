@@ -242,7 +242,9 @@ export default function FisherDecisionSurface({
     } else {
       let textToSpeak = `${currentCfg.label}. ${explanation}.`;
       if (hasActiveHazard) {
-        textToSpeak += ` Alert: ${hazardVal} affects your planned trip. Do not depart.`;
+        const alertPrefix = translateText('Alert', language);
+        const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
+        textToSpeak += ` ${alertPrefix}: ${hazardVal} ${affectsSuffix}`;
       }
       speak(textToSpeak);
     }

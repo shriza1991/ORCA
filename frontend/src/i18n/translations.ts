@@ -336,6 +336,31 @@ interface TranslationEntry {
 }
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
+  {
+    en: 'Alert',
+    hi: 'अलर्ट',
+    mr: 'इशारा',
+  },
+  {
+    en: 'affects your planned trip. Do not depart.',
+    hi: 'आपकी यात्रा को प्रभावित करता है। प्रस्थान न करें।',
+    mr: 'तुमच्या नियोजित प्रवासावर परिणाम करतो. निघू नका.',
+  },
+  {
+    en: 'Conditions are within safe operating limits.',
+    hi: 'स्थितियां सुरक्षित परिचालन सीमा के भीतर हैं।',
+    mr: 'स्थिती सुरक्षित ऑपरेटिंग मर्यादेत आहे.',
+  },
+  {
+    en: 'Conditions exceed safety limits.',
+    hi: 'स्थितियां सुरक्षा सीमा से अधिक हैं।',
+    mr: 'स्थिती सुरक्षिततेच्या मर्यादेपेक्षा जास्त आहे.',
+  },
+  {
+    en: 'A safety recommendation is not available from the current evidence.',
+    hi: 'वर्तमान साक्ष्य से सुरक्षा अनुशंसा उपलब्ध नहीं है।',
+    mr: 'सध्याच्या पुराव्यावरून सुरक्षिततेची शिफारस उपलब्ध नाही.',
+  },
   // Sample Prompts
   {
     en: 'Where is the nearest Potential Fishing Zone today from Ratnagiri?',
