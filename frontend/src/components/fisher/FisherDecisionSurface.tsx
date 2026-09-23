@@ -121,57 +121,112 @@ export function getFisherExplanation(
   return translateText('No operational summary available.', language);
 }
 
+/**
+ * Safe numeric formatter — returns null for null/undefined/NaN/empty.
+ */
+function safeNum(v: unknown): number | null {
+  if (v === null || v === undefined || v === '' || v === '—') return null;
+  const n = typeof v === 'number' ? v : parseFloat(String(v));
+  return isNaN(n) ? null : n;
+}
+
+/**
+ * Mines the evidence[] array for a named metric value.
+ * Used when conditions.measurements is empty (HYBRID fallback path).
+ */
+function evidenceVal(
+  evidence: Record<string, any>[],
+  metricName: string
+): number | null {
+  for (const e of evidence || []) {
+    if (
+      e.metric_name === metricName &&
+      e.impact !== 'UNKNOWN_TRIGGER'
+    ) {
+      return safeNum(e.observed_value);
+    }
+  }
+  return null;
+}
+
 export function extractFisherConditions(response: TripAssessmentResponse | null): FisherConditions {
   if (!response) {
-    return {
-      waves: '—',
-      wind: '—',
-      visibility: '—',
-      tide: '—',
-      hazard: '—',
-      isForecast: false,
-    };
+    return { waves: '—', wind: '—', visibility: '—', tide: '—', hazard: '—', isForecast: false };
   }
 
   const measurements = response.conditions?.measurements || {};
+  const evidence: Record<string, any>[] = response.evidence || [];
   const isForecast = !!measurements.is_forecast;
 
-  const extractVal = (key: string) => {
-    const m = measurements[key];
-    if (m && m.value !== undefined && m.value !== null) {
-      const v = typeof m.value === 'number' ? m.value.toFixed(1) : m.value;
-      return `${v} ${m.unit || ''}`.trim();
+  /** Try measurements object first, then fall back to evidence array. */
+  const resolveMetric = (
+    measurementKeys: string[],
+    evidenceKeys: string[],
+    unit: string
+  ): string => {
+    // 1. Try measurements map
+    for (const key of measurementKeys) {
+      const m = measurements[key];
+      const n = safeNum(m?.value ?? m);
+      if (n !== null) return `${n.toFixed(1)} ${m?.unit || unit}`.trim();
+    }
+    // 2. Fall back to evidence array (contains real Open-Meteo values)
+    for (const key of evidenceKeys) {
+      const n = evidenceVal(evidence, key);
+      if (n !== null) return `${n.toFixed(1)} ${unit}`;
     }
     return '—';
   };
 
-  const waveVal = extractVal('wave_height') !== '—' ? extractVal('wave_height') : extractVal('significant_wave_height');
-  const windVal = extractVal('wind_speed');
-  const visVal = extractVal('visibility');
-  const tideVal = extractVal('tide') !== '—' ? extractVal('tide') : (measurements.tide_schedule ? 'Available' : 'Unavailable');
+  const waveVal = resolveMetric(
+    ['wave_height', 'significant_wave_height'],
+    ['significant_wave_height_m'],
+    'm'
+  );
+
+  const windVal = resolveMetric(
+    ['wind_speed', 'wind_speed_knots'],
+    ['wind_speed_knots'],
+    'kt'
+  );
+
+  // Visibility: not in evidence array today — show '—' (no data) rather than 'N/A'
+  const visRaw = (() => {
+    for (const key of ['visibility', 'visibility_km']) {
+      const m = measurements[key];
+      const n = safeNum(m?.value ?? m);
+      if (n !== null) return `${n.toFixed(1)} ${m?.unit || 'km'}`.trim();
+    }
+    return '—';
+  })();
+
+  // Tide: not wired to live data yet — show 'Not available' rather than just a dash
+  const tideVal = (() => {
+    for (const key of ['tide', 'tide_level', 'tide_height_m']) {
+      const m = measurements[key];
+      const n = safeNum(m?.value ?? m);
+      if (n !== null) return `${n.toFixed(1)} ${m?.unit || 'm'}`.trim();
+    }
+    if (measurements.tide_schedule) return 'Available';
+    return 'Not available';
+  })();
 
   let hazardVal = '—';
   if (response.alerts && response.alerts.length > 0) {
-    // Pick highest severity alert that affects trip
     const highestAlert = response.alerts.find(a => a.affects_trip) || response.alerts[0];
     hazardVal = highestAlert.title || (highestAlert as any).message || '—';
   } else {
-    const status = response.decision?.status;
-    if (status === 'GO') {
-      hazardVal = 'No Active Hazards';
-    } else if (status === 'UNKNOWN') {
-      hazardVal = 'Status Unknown';
-    } else if (status === 'CAUTION') {
-      hazardVal = 'Elevated Hazard';
-    } else if (status === 'NO_GO') {
-      hazardVal = 'Hazard Alert';
-    }
+    const status = (response.decision as any)?.status;
+    if (status === 'GO') hazardVal = 'No Active Hazards';
+    else if (status === 'UNKNOWN') hazardVal = 'Status Unknown';
+    else if (status === 'CAUTION') hazardVal = 'Elevated Hazard';
+    else if (status === 'NO_GO') hazardVal = 'Hazard Alert';
   }
 
   return {
-    waves: waveVal || '—',
-    wind: windVal || '—',
-    visibility: visVal || '—',
+    waves: waveVal,
+    wind: windVal,
+    visibility: visRaw,
     tide: tideVal,
     hazard: hazardVal,
     isForecast,
@@ -259,19 +314,34 @@ export default function FisherDecisionSurface({
     >
       <div className={`fisher-decision-card ${currentCfg.bgClass}`} data-testid={currentCfg.testId}>
         {/* Connectivity / Data Status Indicator */}
-        <div className="connectivity-strip" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-          {isOffline ? (
-            <span className="badge badge-error" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <AlertTriangle size={12} />
-              {isExpired ? (t.statusLabels?.['EXPIRED'] || 'Expired Cache') : (t.statusLabels?.['CACHED'] || 'Offline Cached')}
-            </span>
-          ) : (
-            <span className="badge badge-success" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span className="pulse-dot" style={{ width: 6, height: 6, backgroundColor: 'currentColor', borderRadius: '50%' }}></span>
-              {t.statusLabels?.['LIVE'] || 'Live Data'}
-            </span>
-          )}
-        </div>
+        {(() => {
+          const isDegraded = assessment?.alerts?.some(
+            (a: any) =>
+              (a.message || a.title || '').includes('DEGRADED_DATA') ||
+              (a.message || a.title || '').includes('Stale') ||
+              (a.message || a.title || '').includes('incomplete telemetry')
+          );
+          return (
+            <div className="connectivity-strip" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+              {isOffline ? (
+                <span className="badge badge-error" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <AlertTriangle size={12} />
+                  {isExpired ? (t.statusLabels?.['EXPIRED'] || 'Expired Cache') : (t.statusLabels?.['CACHED'] || 'Offline Cached')}
+                </span>
+              ) : isDegraded ? (
+                <span className="badge badge-warning" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px', color: '#92400e', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: '4px', padding: '2px 6px' }}>
+                  <AlertTriangle size={12} />
+                  {t.statusLabels?.['PARTIAL'] || 'Partial Data'}
+                </span>
+              ) : (
+                <span className="badge badge-success" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="pulse-dot" style={{ width: 6, height: 6, backgroundColor: 'currentColor', borderRadius: '50%' }}></span>
+                  {t.statusLabels?.['LIVE'] || 'Live Data'}
+                </span>
+              )}
+            </div>
+          );
+        })()}
 
         <div className="decision-card-badge-row">
           <div className="decision-badge" style={{ padding: '16px', gap: '12px' }}>
