@@ -78,6 +78,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
       NO_GO: 'Do not depart',
       UNKNOWN: 'Information unavailable',
       INFORMATIONAL: 'Advisory Only',
+      LIVE: 'Live Data',
+      CACHED: 'Offline Cached',
+      EXPIRED: 'Expired Cache',
     },
     confidenceLabels: {
       HIGH: 'High Confidence',
@@ -162,6 +165,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
       NO_GO: 'प्रस्थान न करें',
       UNKNOWN: 'जानकारी अनुपलब्ध है',
       INFORMATIONAL: 'सूचनात्मक — केवल परामर्श',
+      LIVE: 'लाइव डेटा',
+      CACHED: 'ऑफ़लाइन सहेजा गया',
+      EXPIRED: 'समय सीमा समाप्त',
     },
     confidenceLabels: {
       HIGH: 'उच्च आत्मविश्वास',
@@ -246,6 +252,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
       NO_GO: 'प्रस्थान करू नका',
       UNKNOWN: 'माहिती उपलब्ध नाही',
       INFORMATIONAL: 'माहितीपूर्ण — केवळ मार्गदर्शन',
+      LIVE: 'थेट डेटा',
+      CACHED: 'ऑफलाइन जतन केले',
+      EXPIRED: 'कालबाह्य',
     },
     confidenceLabels: {
       HIGH: 'उच्च विश्वासार्हता',

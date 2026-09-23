@@ -40,6 +40,8 @@ export interface FisherDecisionSurfaceProps {
   language?: SupportedLanguage;
   onOpenVoyageSettings?: () => void;
   onViewMap?: () => void;
+  isOffline?: boolean;
+  isExpired?: boolean;
 }
 
 export function getFisherDecisionStatus(
@@ -167,7 +169,10 @@ export default function FisherDecisionSurface({
   language = 'en',
   onOpenVoyageSettings,
   onViewMap,
+  isOffline = false,
+  isExpired = false,
 }: FisherDecisionSurfaceProps) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const status = getFisherDecisionStatus(assessment, error);
   const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
   const conditions = extractFisherConditions(isLoading || error ? null : assessment);
@@ -234,6 +239,21 @@ export default function FisherDecisionSurface({
       data-testid="fisher-decision-surface"
     >
       <div className={`fisher-decision-card ${currentCfg.bgClass}`} data-testid={currentCfg.testId}>
+        {/* Connectivity / Data Status Indicator */}
+        <div className="connectivity-strip" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          {isOffline ? (
+            <span className="badge badge-error" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <AlertTriangle size={12} />
+              {isExpired ? (t.statusLabels?.['EXPIRED'] || 'Expired Cache') : (t.statusLabels?.['CACHED'] || 'Offline Cached')}
+            </span>
+          ) : (
+            <span className="badge badge-success" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="pulse-dot" style={{ width: 6, height: 6, backgroundColor: 'currentColor', borderRadius: '50%' }}></span>
+              {t.statusLabels?.['LIVE'] || 'Live Data'}
+            </span>
+          )}
+        </div>
+
         <div className="decision-card-badge-row">
           <div className="decision-badge" style={{ padding: '16px', gap: '12px' }}>
             {currentCfg.icon}
