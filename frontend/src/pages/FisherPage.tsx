@@ -37,7 +37,6 @@ export default function FisherPage({
   mobileView: _mobileView,
   onStartCall,
   onOpenEvidence,
-  onBack,
   onViewMap,
 }: FisherPageProps) {
   const originHarbor = chat.missionContext.origin_harbor || 'Ratnagiri';
@@ -252,9 +251,9 @@ export default function FisherPage({
                   onApplyContext={(newCtx) => chat.setMissionContext(newCtx)}
                 />
 
-                <PFZDetails assessment={assessment} language={chat.language} />
-                <OceanDetails assessment={assessment} language={chat.language} />
-                <TripPlanDetails assessment={assessment} language={chat.language} />
+                <PFZDetails assessment={assessment || undefined} language={chat.language} />
+                <OceanDetails assessment={assessment || undefined} language={chat.language} />
+                <TripPlanDetails assessment={assessment || undefined} language={chat.language} />
               </>
             )}
           </div>

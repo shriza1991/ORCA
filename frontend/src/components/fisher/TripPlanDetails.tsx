@@ -8,8 +8,21 @@ interface TripPlanDetailsProps {
 }
 
 export default function TripPlanDetails({ assessment, language }: TripPlanDetailsProps) {
+  const title = translateText('Trip Plan & Estimates', language);
+
   if (!assessment || !assessment.route_candidates || assessment.route_candidates.length === 0) {
-    return null;
+    return (
+      <div style={{ marginTop: '16px', background: '#f8fafc', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+        <div style={{ background: '#f8fafc', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <RouteIcon size={18} color="#3b82f6" /> {title}
+          </h3>
+        </div>
+        <div style={{ padding: '16px', color: '#64748b' }}>
+          No route estimates available for this trip. Check your data connection.
+        </div>
+      </div>
+    );
   }
 
   const primaryRoute = assessment.route_candidates[0];
@@ -110,7 +123,7 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
 
         {assessment.alerts && assessment.alerts.length > 0 && (
           <div style={{ padding: '12px', background: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', fontSize: '0.9rem', color: '#991b1b', lineHeight: '1.4', marginTop: '12px' }}>
-            <strong>⚠️ Early Warning:</strong> {assessment.alerts[0].description || assessment.alerts[0].title || assessment.alerts[0].message || 'Weather anomalies detected along the route.'}
+            <strong>⚠️ Early Warning:</strong> {assessment.alerts[0].description || assessment.alerts[0].title || (assessment.alerts[0] as any).message || 'Weather anomalies detected along the route.'}
           </div>
         )}
       </div>
