@@ -701,7 +701,10 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
 
         required_capabilities: List[str] = []
         if intent_val == IntentCategory.SAFETY.value:
-            required_capabilities = ["trip_assessment"]
+            if tool_mode == "contract_mock" or not tool_registry.is_capability_available("trip_assessment"):
+                required_capabilities = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
+            else:
+                required_capabilities = ["trip_assessment"]
         elif intent_val == IntentCategory.PFZ.value:
             required_capabilities = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.CONDITIONS.value:
@@ -827,7 +830,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         if intent_val == IntentCategory.PFZ.value:
             tools = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.SAFETY.value:
-            tools = ["trip_assessment"]
+            tools = _enforce_dependency_order(required_capabilities)
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_conditions"]
         elif intent_val in [IntentCategory.HAZARDS.value, IntentCategory.ROUTE.value, IntentCategory.ANALYTICAL_EXPLANATION.value]:
@@ -840,7 +843,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         if intent_val == IntentCategory.PFZ.value:
             tools = ["pfz_stub"]
         elif intent_val == IntentCategory.SAFETY.value:
-            tools = ["trip_assessment_stub"]
+            tools = ["marine_stub", "weather_stub", "risk_stub"]
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_stub"]
         elif intent_val == IntentCategory.HAZARDS.value:
@@ -1094,10 +1097,31 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
                 req = TripAssessmentRequest(**params)
                 assessment_response = AssessmentService.assess_trip(req)
                 
+                rec_status = assessment_response.decision
+                dec_status = rec_status.value if hasattr(rec_status, "value") else str(rec_status)
+                summary_map = {
+                    "GO": f"Conditions off {harbor or 'harbor'} are within safe operational limits for {craft_type}.",
+                    "CAUTION": f"Marginal conditions detected off {harbor or 'harbor'}. Exercise heightened vigilance.",
+                    "NO_GO": f"Unsafe conditions detected off {harbor or 'harbor'}. Hold departure.",
+                    "UNKNOWN": f"Critical marine/weather data unavailable off {harbor or 'harbor'}. Cannot recommend departure.",
+                }
+                action_map = {
+                    "GO": "Safe to depart. Maintain standard watch and monitor VHF.",
+                    "CAUTION": "Exercise caution. Restrict distance offshore and inspect safety equipment.",
+                    "NO_GO": "Hold departure. Await updated coastal bulletins from authorities.",
+                    "UNKNOWN": "Hold departure and verify local port authority advisories.",
+                }
+                rec_dict = {
+                    "status": dec_status,
+                    "summary": summary_map.get(dec_status, f"Operational evaluation: {dec_status}."),
+                    "decisive_factors": [a.get("message", "") for a in (assessment_response.alerts or []) if a.get("message")] or [f"Assessed status: {dec_status}"],
+                    "next_action": action_map.get(dec_status, "Verify port warnings before departure."),
+                }
+                
                 result_data = {
                     "source_type": "REAL_ASSESSMENT",
                     "assessment_id": assessment_response.assessment_id,
-                    "recommendation": assessment_response.decision.model_dump(),
+                    "recommendation": rec_dict,
                     "confidence": {"level": "MEDIUM", "reasons": ["Generated from deterministic trip assessment service"]},
                     "conditions": assessment_response.conditions.model_dump() if assessment_response.conditions else None,
                 }

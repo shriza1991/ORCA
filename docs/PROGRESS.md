@@ -388,7 +388,19 @@ None
 - Engineered a deterministic comparison block inside `RESPONSE_COMPOSER` that fetches the baseline assessment and mathematically highlights changes to the safety verdict (e.g. CAUTION -> GO) without relying on hallucinatory LLM outputs.
 - Synchronized frontend application context updates (explicit adoption) to correctly trigger deterministic baseline recalculations across the whole dashboard.
 
+### P0-28 — Repository Governance, Audit, Unification & Multi-AI Protocol
+- Established canonical strategic truth: Created and synchronized `docs/ORCA_AI_MASTER_CONTEXT.md` defining the inviolable cognitive flow (`ASK → PLAN → DISCOVER → REASON → DECIDE → EXPLAIN → SIMULATE → ADAPT`) and core architectural invariants.
+- Streamlined `AGENTS.md` at repository root into a high-leverage entrypoint enforcing mandatory preflight reading, deterministic safety authority, epistemic data honesty (missing evidence != zero risk, unknown != safe, mock != live), and automatic documentation maintenance.
+- Documented key architectural decisions in `docs/DECISIONS.md`:
+  - `D025`: Supervisor capability DAG and specialist tool result reconciliation.
+  - `D026`: Deterministic date string parsing and DB offline resilience.
+  - `D027`: Multi-AI collaborative governance protocol and canonical documentation standard.
+- Unified domain risk engine: Hardened natural language date/time parsing in `backend/app/domain/risk_engine.py` to prevent `ValueError` crashes on colloquial time expressions.
+- Hardened database persistence in `backend/app/services/assessment_service.py` to ensure graceful fallback when PostgreSQL is offline.
+- Verified test suite: `pytest tests/agent_eval/` (387 passed, 1 skipped), frontend Vitest (224 passed across 16 test suites, zero TypeScript errors).
+
 ---
+
 
 ## P0 Marine Data Providers Status Board
 

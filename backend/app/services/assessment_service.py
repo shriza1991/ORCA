@@ -158,19 +158,23 @@ class AssessmentService:
         # 5. Persist where possible
         is_durable = False
         if DB_AVAILABLE:
-            try:
-                with SessionLocal() as db:
-                    repo = AssessmentRepository(db)
-                    repo.create(
-                        assessed_at=now_iso,
-                        origin_harbor=request.origin_harbor,
-                        craft_profile=request.craft_profile,
-                        decision=decision.value,
-                        evidence_json={"alerts": alerts, "evidence": evidence}
-                    )
-                is_durable = True
-            except Exception as e:
-                logger.warning(f"Failed to persist assessment: {e}")
+            from backend.app.core.config import settings
+            # Only attempt DB persistence if configured with a real non-placeholder password and not testing
+            db_url = getattr(settings, "DATABASE_URL", "")
+            if db_url and "placeholder" not in db_url and not getattr(settings, "TESTING", False):
+                try:
+                    with SessionLocal() as db:
+                        repo = AssessmentRepository(db)
+                        repo.create(
+                            assessed_at=now_iso,
+                            origin_harbor=request.origin_harbor,
+                            craft_profile=request.craft_profile,
+                            decision=decision.value,
+                            evidence_json={"alerts": alerts, "evidence": evidence}
+                        )
+                    is_durable = True
+                except Exception as e:
+                    logger.warning(f"Failed to persist assessment: {e}")
 
         # 6. Format Response
         return TripAssessmentResponse(

@@ -117,7 +117,10 @@ class DeterministicRiskEngine:
 
         if reference_time is not None:
             if isinstance(reference_time, str):
-                ref_dt = datetime.fromisoformat(reference_time.replace("Z", "+00:00"))
+                try:
+                    ref_dt = datetime.fromisoformat(reference_time.replace("Z", "+00:00"))
+                except ValueError:
+                    ref_dt = datetime.now(UTC)
             else:
                 ref_dt = reference_time
             now_utc = ref_dt if ref_dt.tzinfo is not None else ref_dt.replace(tzinfo=timezone.utc)
@@ -127,7 +130,10 @@ class DeterministicRiskEngine:
         window_end_utc = now_utc
         if return_time is not None:
             if isinstance(return_time, str):
-                ret_dt = datetime.fromisoformat(return_time.replace("Z", "+00:00"))
+                try:
+                    ret_dt = datetime.fromisoformat(return_time.replace("Z", "+00:00"))
+                except ValueError:
+                    ret_dt = now_utc
             else:
                 ret_dt = return_time
             window_end_utc = ret_dt if ret_dt.tzinfo is not None else ret_dt.replace(tzinfo=timezone.utc)

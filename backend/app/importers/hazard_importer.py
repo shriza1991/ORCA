@@ -82,6 +82,11 @@ class HazardImporter(BaseImporter):
 
         checksum = self._generate_checksum()
 
+        # Mark source documentation as FILE_IMPORT
+        if "_source_documentation" not in record:
+            record["_source_documentation"] = {}
+        record["_source_documentation"]["access_method"] = "FILE_IMPORT"
+
         # Normalize: pass full record to normalizer for field mapping
         normalized = ImdHazardNormalizer.normalize(record)
 

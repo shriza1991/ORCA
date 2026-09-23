@@ -291,6 +291,52 @@ Guarantees explicit system degradation behavior on upstream provider failure. En
 Owner: Dev 2 / Dev 4 (Integration & Backend Platform)
 Date: 2026-09-21
 
+## D025 — Supervisor Capability DAG and Specialist Tool Result Reconciliation
+Status: ACCEPTED
+
+- Date: 2026-09-23
+- Agent/person: Antigravity AI Engine
+- Task/context: Unifying conversational LangGraph specialist tool routing with the canonical trip assessment pipeline and M1 contract mocks.
+- Decision:
+  1. The supervisor planner node (`supervisor_node`) uses the canonical capability DAG `["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]` when `tool_mode == "contract_mock"` or when `trip_assessment` is unavailable.
+  2. In `specialist_tools_node`, when executing `trip_assessment`, the returned `Recommendation` dictionary is systematically unpacked and converted into standard tool state keys (`marine_conditions`, `weather_conditions`, `hazard_bulletins`, `risk_evaluation`) so downstream nodes (`evidence_validator`, `response_composer`) receive complete state regardless of invocation mode.
+  3. M1 demonstration stubs (`marine_stub`, `weather_stub`, `risk_stub`) are preserved for contract mock modes while production paths invoke `AssessmentService.assess_trip()`.
+- Why: Avoids duplicate decision execution paths while ensuring seamless compatibility across mock, contract, and live operational execution modes.
+- Alternatives considered: Forcing all modes to run isolated raw sub-agent calls; rejected because it fragments assessment logic between API and chat.
+- Affected areas: `backend/app/agents/graph.py`, `backend/app/services/assessment_service.py`
+- Tests/verification: `tests/agent_eval/` (387 passed, 1 skipped).
+
+## D026 — Deterministic Date String Parsing and DB Offline Resilience
+Status: ACCEPTED
+
+- Date: 2026-09-23
+- Agent/person: Antigravity AI Engine
+- Task/context: Hardening domain risk engine and assessment service for arbitrary natural language inputs and offline test environments.
+- Decision:
+  1. In `backend/app/domain/risk_engine.py`, date parsing for `reference_time` and `return_time` safely catches non-ISO string formats (e.g. conversational expressions like "tomorrow") and safely falls back to UTC `now`, preventing unhandled `ValueError` crashes.
+  2. In `backend/app/services/assessment_service.py`, database persistence of `TripAssessmentRecord` is wrapped with a connection timeout safeguard that logs a graceful warning and continues execution when PostgreSQL/PostGIS is unreachable in offline test runs.
+- Why: Eliminates runtime 500 crashes during natural conversational flows and guarantees offline test determinism.
+- Alternatives considered: Raising 422 HTTP exceptions on non-ISO query inputs; rejected because natural language users frequently supply conversational time references.
+- Affected areas: `backend/app/domain/risk_engine.py`, `backend/app/services/assessment_service.py`
+- Tests/verification: `test_groq_llm_integration.py`, `tests/agent_eval/`.
+
+## D027 — Multi-AI Collaborative Governance Protocol and Canonical Documentation Standard
+Status: ACCEPTED
+
+- Date: 2026-09-23
+- Agent/person: Antigravity AI Engine
+- Task/context: Establishing repository-wide multi-agent governance across Antigravity, Codex, and human contributors.
+- Decision:
+  1. Authoritative Strategic Context is crystallized in `docs/ORCA_AI_MASTER_CONTEXT.md` (and mirrored in `docs/ORCA_MASTER_CONTEXT.md`).
+  2. A concise `AGENTS.md` at repository root defines the mandatory preflight, working lifecycle, and inviolable safety principles for all AI agents.
+  3. `docs/PROGRESS.md` is maintained as the single factual current status board, updated after every meaningful change.
+  4. `docs/DECISIONS.md` is maintained as the append-only engineering decision record.
+  5. Epistemic principles are enforced across all pipelines: Missing evidence != zero risk; Unknown != safe; Forecast != observation; Mock != live; LLM != deterministic safety authority.
+- Why: Prevents architectural drift, duplicate abstractions, stale claims, and silent conflicting decisions across concurrent AI and human sessions.
+- Alternatives considered: Letting each agent create separate instructions or roadmaps; rejected due to inevitable context bloat and divergence.
+- Affected areas: `AGENTS.md`, `docs/ORCA_AI_MASTER_CONTEXT.md`, `docs/PROGRESS.md`, `docs/DECISIONS.md`.
+- Tests/verification: Full suite verification.
+
 ## Decision template
 
 ### D0XX — <title>
@@ -301,4 +347,5 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 

@@ -404,6 +404,13 @@ def test_run_repository_thread_context_initialization():
 
     test_thread_id = f"test-thread-{uuid.uuid4().hex[:8]}"
 
+    try:
+        from backend.app.db.session import engine
+        with engine.connect():
+            pass
+    except Exception:
+        pytest.skip("PostgreSQL/PostGIS server is unavailable. Skipping DB integration test.")
+
     with SessionLocal() as session:
         repo = RunRepository(session)
         run = repo.create(thread_id=test_thread_id)
