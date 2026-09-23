@@ -553,6 +553,12 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
         "fishing tomorrow", "should i", "surakshit", "suraksha", "jaau ka", "jao ka",
     ]):
         intent = IntentCategory.SAFETY
+    elif any(k in msg_lower for k in ["what changed", "what's the difference", "compare with previous", "काय बदलले", "क्या बदला", "decision delta"]):
+        intent = IntentCategory.WHAT_CHANGED
+    elif any(k in msg_lower for k in ["what if", "if i leave at", "suppose i leave", "जार मी", "अगर मैं"]):
+        intent = IntentCategory.WHAT_IF
+    elif any(k in msg_lower for k in ["alternative", "alternate time", "different time", "paryayi", "पर्यायी", "वैकल्पिक"]):
+        intent = IntentCategory.ALTERNATIVE
     elif any(k in msg_lower for k in ["why", "explain", "risky", "reason", "कारण", "क्यों", "kaaran", "kyon"]):
         intent = IntentCategory.ANALYTICAL_EXPLANATION
     elif any(k in msg_lower for k in ["wave", "swell", "current", "condition", "sea state", "समुद्र", "लाटा", "लहरें", "lata", "lahre", "samudra", "darya"]):
@@ -571,6 +577,8 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
             IntentCategory.HAZARDS,
             IntentCategory.ROUTE,
             IntentCategory.CONDITIONS,
+            IntentCategory.WHAT_IF,
+            IntentCategory.ANALYTICAL_EXPLANATION,
         ]:
             if explicit_harbor or dep_time or any(w in msg_lower for w in continuation_markers):
                 intent = thread_ctx.last_intent
@@ -740,7 +748,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
                 required_capabilities = ["hazard_search", "geospatial_hazard"]
             else:
                 required_capabilities = ["hazard_search"]
-        elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
+        elif intent_val in (IntentCategory.ANALYTICAL_EXPLANATION.value, IntentCategory.WHAT_CHANGED.value):
             if has_geofence:
                 required_capabilities = [
                     "marine_conditions",
@@ -756,6 +764,13 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
                     "hazard_search",
                     "risk_evaluation",
                 ]
+        elif intent_val in (IntentCategory.WHAT_IF.value, IntentCategory.ALTERNATIVE.value):
+            required_capabilities = [
+                "marine_conditions",
+                "weather_conditions",
+                "hazard_search",
+                "risk_evaluation",
+            ]
 
         # 2. Capability availability check
         unavailable = tool_registry.get_unavailable_capabilities(required_capabilities)
@@ -833,8 +848,15 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
             tools = _enforce_dependency_order(required_capabilities)
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_conditions"]
-        elif intent_val in [IntentCategory.HAZARDS.value, IntentCategory.ROUTE.value, IntentCategory.ANALYTICAL_EXPLANATION.value]:
-            tools = _enforce_dependency_order(required_capabilities)  # Handles hazards, route, and analytical explanation
+        elif intent_val in [
+            IntentCategory.HAZARDS.value,
+            IntentCategory.ROUTE.value,
+            IntentCategory.ANALYTICAL_EXPLANATION.value,
+            IntentCategory.WHAT_CHANGED.value,
+            IntentCategory.WHAT_IF.value,
+            IntentCategory.ALTERNATIVE.value,
+        ]:
+            tools = _enforce_dependency_order(required_capabilities)
         else:
             tools = []
 
@@ -1388,6 +1410,7 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
 
     intent_val = state.get("intent", IntentCategory.UNSUPPORTED.value)
     harbor = state.get("origin_harbor") or state.get("location", {}).get("harbor", "Ratnagiri")
+    thread_id = state.get("thread_id")
     evidence = state.get("evidence", [])
     evidence_names = ", ".join(set(ev.source_name for ev in evidence)) or "No external evidence required"
     lang = state.get("language", "en")
@@ -1974,13 +1997,19 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
 
     elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
         rec = state.get("risk_assessment")
+        craft = state.get("user_profile", {}).get("craft_profile", "motorized_boat")
         if rec:
             recommendation = rec
+            # Format canonical 5-step causal explanation (P1-2)
+            facts_list = rec.decisive_factors or [rec.summary]
+            facts_formatted = "\n".join(f"  • {f}" for f in facts_list)
             answer = (
-                f"[{rec.status.value}] Operational Situation Analysis & Explanation for {harbor}:\n\n"
-                f"{rec.summary}\n\n"
-                f"Decisive Factors:\n" + "\n".join(f"- {f}" for f in rec.decisive_factors) + "\n\n"
-                f"Recommended Action: {rec.next_action}\n\n"
+                f"[{rec.status.value}] Grounded Operational Explanation for {harbor}:\n\n"
+                f"1. [FACT / EVIDENCE]:\n{facts_formatted}\n\n"
+                f"2. [RELATION / INFERENCE]: Observed sea-state conditions directly govern vessel stability and navigation risk.\n\n"
+                f"3. [CONSTRAINT]: Evaluated against safety limits for vessel type '{craft}'.\n\n"
+                f"4. [DECISION]: Recommendation verdict is {rec.status.value}.\n\n"
+                f"5. [ACTIONABLE DIRECTIVE]: {rec.next_action}\n\n"
                 f"Supporting Evidence:\n- {evidence_names}"
             )
             confidence = state.get("confidence") or Confidence(
@@ -2005,6 +2034,53 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                 level=ConfidenceLevel.MEDIUM,
                 reasons=["Simulated geofence buffer check"],
             )
+
+    elif intent_val == IntentCategory.WHAT_CHANGED.value:
+        rec = state.get("risk_assessment")
+        obs = state.get("observations", {})
+        baseline = obs.get("baseline_recommendation")
+        if not baseline and thread_id:
+            saved_ctx = memory_manager.load_context(thread_id)
+            baseline = saved_ctx.metadata.get("last_risk_assessment")
+
+        if rec and baseline:
+            base_status_val = baseline.get("status") if isinstance(baseline, dict) else getattr(baseline, "status", None)
+            base_status = base_status_val.value if hasattr(base_status_val, "value") else str(base_status_val)
+            changed = base_status != rec.status.value
+            answer = (
+                f"[DECISION DELTA] Mission Comparison for {harbor}:\n\n"
+                f"- Original Decision: {base_status}\n"
+                f"- New Decision: {rec.status.value}\n"
+                f"- Status Changed: {'Yes' if changed else 'No (Conditions remain within same threshold band)'}\n"
+                f"- Decisive Factors: {'; '.join(rec.decisive_factors)}\n\n"
+                f"Actionable Directive: {rec.next_action}\n\n"
+                f"Supporting Evidence:\n- {evidence_names}"
+            )
+            recommendation = rec
+            confidence = state.get("confidence") or Confidence(
+                level=ConfidenceLevel.HIGH,
+                reasons=["Computed deterministic decision delta between baseline and modified mission"],
+            )
+        elif rec:
+            recommendation = rec
+            answer = (
+                f"[DECISION DELTA] Current Evaluated Status for {harbor}: {rec.status.value}.\n\n"
+                f"{rec.summary}\n\n"
+                f"Actionable Directive: {rec.next_action}"
+            )
+            confidence = state.get("confidence") or Confidence(
+                level=ConfidenceLevel.HIGH,
+                reasons=["Current operational evaluation state"],
+            )
+        else:
+            answer = f"[DECISION DELTA] No previous mission baseline found in conversation thread for {harbor} to compare against."
+            recommendation = Recommendation(
+                status=RecommendationStatus.INFORMATIONAL,
+                summary=f"No previous mission baseline available for {harbor}.",
+                decisive_factors=[],
+                next_action="Run initial safety check first.",
+            )
+            confidence = Confidence(level=ConfidenceLevel.MEDIUM, reasons=["No baseline found"])
 
     else:
         answer = f"[M1 DEMO DATA] Processed query for intent '{intent_val}'."
@@ -2224,6 +2300,20 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
     eval_state = dict(state)
     eval_state["risk_assessment"] = recommendation
     map_layers = generate_map_layers(eval_state)
+
+    # Persist latest operational assessment in thread metadata for multi-turn what-changed comparisons
+    if thread_id and recommendation.status != RecommendationStatus.UNKNOWN and recommendation.status != RecommendationStatus.INFORMATIONAL:
+        try:
+            persisted_ctx = memory_manager.load_context(thread_id)
+            persisted_ctx.metadata["last_risk_assessment"] = {
+                "status": recommendation.status.value,
+                "summary": recommendation.summary,
+                "decisive_factors": recommendation.decisive_factors,
+                "next_action": recommendation.next_action,
+            }
+            memory_manager.save_context(persisted_ctx)
+        except Exception as e:
+            logger.debug(f"Failed to persist assessment in thread context: {e}")
 
     return {
         "response": answer,

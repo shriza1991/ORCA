@@ -54,6 +54,21 @@ class IntentCategory(str, Enum):
     Example: 'Why is Route B flagged as CAUTION despite lower wind?'
     """
 
+    WHY = "ANALYTICAL_EXPLANATION"
+    """Canonical alias for explanatory 'Why?' queries grounded in deterministic causal evidence."""
+
+    WHAT_IF = "WHAT_IF"
+    """Counterfactual scenario simulation (e.g. 'What if I leave at 11?', 'What if craft is mechanized trawler?')."""
+
+    WHAT_CHANGED = "WHAT_CHANGED"
+    """Decision delta queries comparing simulated or alternative plan against baseline."""
+
+    ALTERNATIVE = "ALTERNATIVE"
+    """Queries requesting safe alternative departure times, return deadlines, or navigation corridors."""
+
+    ALERT_IMPACT = "ALERT_IMPACT"
+    """Queries asking how active bulletins or newly issued hazard alerts impact an ongoing/planned trip."""
+
     UNSUPPORTED = "UNSUPPORTED"
     """Out-of-domain, non-marine, or irrelevant queries outside SAMUDRA's purview.
     Example: 'What is the stock price of Tata Motors?' or 'Write a poem about fish.'
@@ -74,6 +89,14 @@ INTENT_ALIAS_MAP: Dict[str, IntentCategory] = {
     "SAFER_ROUTE": IntentCategory.ROUTE,
     "ANALYTICAL_EXPLANATION": IntentCategory.ANALYTICAL_EXPLANATION,
     "EXPLANATION": IntentCategory.ANALYTICAL_EXPLANATION,
+    "WHY": IntentCategory.ANALYTICAL_EXPLANATION,
+    "WHAT_IF": IntentCategory.WHAT_IF,
+    "SIMULATION": IntentCategory.WHAT_IF,
+    "WHAT_CHANGED": IntentCategory.WHAT_CHANGED,
+    "DECISION_DELTA": IntentCategory.WHAT_CHANGED,
+    "ALTERNATIVE": IntentCategory.ALTERNATIVE,
+    "SAFER_ALTERNATIVE": IntentCategory.ALTERNATIVE,
+    "ALERT_IMPACT": IntentCategory.ALERT_IMPACT,
     "GENERAL_INFORMATIONAL": IntentCategory.CONDITIONS,
     "INFORMATIONAL": IntentCategory.CONDITIONS,
     "UNSUPPORTED": IntentCategory.UNSUPPORTED,

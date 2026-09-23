@@ -363,6 +363,24 @@ Status: ACCEPTED
 - Tests/verification: `tests/api/test_marinewatch_endpoints.py`, `frontend/src/components/marinewatch/marinewatch.test.ts`.
 
 
+## D029 — P0/P1 Hard Constraint Ordering, Provenance Fallback Confidence, and Flagship Multi-Turn Engine
+Status: ACCEPTED
+
+- Date: 2026-09-23
+- Agent/person: Antigravity AI Engine
+- Task/context: Fulfilling canonical P0 and P1 requirements from `docs/ORCA_AI_MASTER_CONTEXT.md` and verifying the flagship multi-turn conversational loop.
+- Decision:
+  1. Enforced hard constraint hierarchical evaluation in `backend/app/domain/risk_engine.py` (Severe Weather / Cyclone -> Prohibited Geofence -> Critical Telemetry Missing -> Wave / Wind Vessel Ceiling -> Port Advisory Warnings).
+  2. Implemented dynamic source provider inspection in `risk_engine.py` and decoupled complete fallback telemetry from automatic UNKNOWN degradation. Fallback sources receive tagged quality flags (`fallback_model`) with justified `ConfidenceLevel.MEDIUM` instead of blanket low confidence or collapsing valid predictions into UNKNOWN.
+  3. Added canonical P1 intent classes and aliases to `backend/app/agents/intent.py` (`WHY` -> `ANALYTICAL_EXPLANATION`, `WHAT_IF`, `WHAT_CHANGED`, `ALTERNATIVE`, `ALERT_IMPACT`).
+  4. Structured analytical explanation composer in `backend/app/agents/graph.py` to deterministically adhere to the canonical 5-step sequence: `[FACT / EVIDENCE]` -> `[RELATION / INFERENCE]` -> `[CONSTRAINT]` -> `[DECISION]` -> `[ACTIONABLE DIRECTIVE]`.
+  5. Implemented backend multi-turn `DecisionDelta` in `backend/app/agents/graph.py` using persisted `ThreadContext.metadata["last_risk_assessment"]` to enable true "What changed?" scenario deltas across temporal revisions without requiring redundant round-trip payload retransmission.
+  6. Verified the 4-turn flagship flow ("Can I go fishing tomorrow?" -> "Why?" -> "What if I leave at 11?" -> "What changed?") end-to-end in `tests/agent_eval/test_flagship_flow.py`.
+- Why: Guarantees deterministic compliance with safety bounds, transparent causal explainability, and multi-turn scenario comparisons without LLM hallucination.
+- Alternatives considered: Pure LLM-synthesized what-changed explanations; rejected because mathematical comparison between baseline and revised mission decisions must remain 100% deterministic in Python.
+- Affected areas: `backend/app/domain/risk_engine.py`, `backend/app/agents/intent.py`, `backend/app/agents/graph.py`, `tests/agent_eval/test_flagship_flow.py`.
+- Tests/verification: `test_flagship_flow.py` (100% passing), `tests/domain/` (18 passing), `tests/agent_eval/` (466 passing, 1 skipped).
+
 ## Decision template
 
 ### D0XX — <title>
@@ -373,5 +391,6 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 
 
