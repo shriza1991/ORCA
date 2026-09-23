@@ -300,6 +300,31 @@ PROGRESS.md now honestly tracks regressions (R-1 through R-6) and gaps (G-1 thro
 Owner: All
 Date: 2026-09-21
 
+## D014 — India MarineWatch Multi-Hub Platform Architecture & Real Data Foundation
+Status: ACCEPTED
+
+Decision:
+Adopt the Norwegian BarentsWatch multi-service platform architecture adapted for India ("India MarineWatch"), grounding the system in real institutional feeds (INCOIS, IMD, GEBCO, CMFRI, CAA, NHO) instead of synthetic-only fixtures.
+1. Ingest real Maharashtra/Goa coastal reference data: CMFRI Census 2020 landing centres (14 ports), CAA registered coastal aquaculture farms (7 sites), Indian maritime boundaries (12nm territorial waters, 24nm contiguous zone, 200nm EEZ, GEBCO 50m/100m/200m depth contours, Angria Bank submerged coral atoll, and Malvan Marine Sanctuary).
+2. Implement the INCOIS Predicted Astronomical Tide (PAT) harmonic engine calibrated with M2, S2, K1, O1 tidal constituents for West Coast ports.
+3. Expose the 10 foundation API contracts (§213): `/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`.
+4. Surface BarentsWatch UX patterns: interactive time scrubber (Now to +48h), layer registry toggles, dual Map/List views, click-to-inspect point panel ("What is here?"), and §212 Open Data Catalogue.
+
+Reason:
+Transitioning from synthetic fixtures to real data models delivers an authentic national marine intelligence system for India, providing verifiable provenance while strictly prohibiting generative AI hallucinations on critical maritime safety conditions.
+
+Alternatives:
+- Continue exclusively with synthetic fixtures (rejected: does not meet the user's objective to make a BarentsWatch-like real system for India).
+- National ingestion at once (rejected: §116 mandates Maharashtra-first pilot to maintain bounded, high-quality verification before national expansion).
+
+Impact:
+- Backend: Real harmonic tides, spatial proximity, GEBCO depth profiling, and 10 foundation endpoints.
+- Frontend: New `OceanWatch`, `FisherWatch`, `AquaWatch`, `PortWatch`, `MarineHazards`, and `DataCatalogue` views.
+- Grounding: Strict provenance tags and government licensing metadata for every dataset.
+
+Owner: Backend Platform & Geospatial UX Leads
+Date: 2026-09-23
+
 ## Decision template
 
 ### D0XX — <title>

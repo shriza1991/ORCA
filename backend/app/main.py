@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.agents.memory import memory_manager
+from backend.app.api.v1.marinewatch import router as marinewatch_router
 from backend.app.api.v1.routes import router as api_v1_router
 from backend.app.connectors.client import connector_http_client
 from backend.app.core.config import settings
@@ -56,6 +57,7 @@ def create_app() -> FastAPI:
 
     # Register API Routers
     app.include_router(api_v1_router)
+    app.include_router(marinewatch_router)
 
     # Configure persistence
     try:

@@ -1,0 +1,219 @@
+{
+  "type": "FeatureCollection",
+  "name": "India Maritime Boundaries & Environmental Baselines",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "BOUNDARY-12NM-TERRITORIAL-WEST",
+      "properties": {
+        "boundary_id": "BOUNDARY-12NM-TERRITORIAL-WEST",
+        "name": "India 12nm Territorial Waters (West Coast Sector)",
+        "type": "TERRITORIAL_WATERS",
+        "jurisdiction": "State & Union Sovereign Waters (12 Nautical Miles)",
+        "legislation": "Territorial Waters, Continental Shelf, EEZ and other Maritime Zones Act, 1976",
+        "authority": "Ministry of External Affairs / Indian Navy / Indian Coast Guard",
+        "color": "#3b82f6",
+        "stroke_width": 2
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [72.50, 20.20],
+          [72.52, 19.80],
+          [72.58, 19.30],
+          [72.62, 18.90],
+          [72.68, 18.40],
+          [72.82, 17.80],
+          [72.95, 17.20],
+          [73.08, 16.50],
+          [73.22, 16.00],
+          [73.40, 15.40],
+          [73.55, 15.00]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "BOUNDARY-24NM-CONTIGUOUS-WEST",
+      "properties": {
+        "boundary_id": "BOUNDARY-24NM-CONTIGUOUS-WEST",
+        "name": "India 24nm Contiguous Zone (West Coast Sector)",
+        "type": "CONTIGUOUS_ZONE",
+        "jurisdiction": "Customs, Fiscal, Immigration & Sanitary Enforcement Zone (24 Nautical Miles)",
+        "legislation": "Maritime Zones Act, 1976 §5",
+        "authority": "Indian Coast Guard & Central Board of Indirect Taxes and Customs",
+        "color": "#8b5cf6",
+        "stroke_width": 2,
+        "stroke_dash": [5, 5]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [72.30, 20.20],
+          [72.32, 19.80],
+          [72.38, 19.30],
+          [72.42, 18.90],
+          [72.48, 18.40],
+          [72.62, 17.80],
+          [72.75, 17.20],
+          [72.88, 16.50],
+          [73.02, 16.00],
+          [73.20, 15.40],
+          [73.35, 15.00]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "BOUNDARY-200NM-EEZ-WEST",
+      "properties": {
+        "boundary_id": "BOUNDARY-200NM-EEZ-WEST",
+        "name": "India Exclusive Economic Zone (200nm Arabian Sea Sector)",
+        "type": "EXCLUSIVE_ECONOMIC_ZONE",
+        "jurisdiction": "Sovereign Rights for Exploring, Exploiting, Conserving & Managing Marine Resources",
+        "legislation": "UNCLOS III / Territorial Waters, Continental Shelf, EEZ Act, 1976",
+        "authority": "Republic of India",
+        "color": "#0ea5e9",
+        "stroke_width": 2
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [68.50, 20.50],
+            [68.90, 19.50],
+            [69.40, 18.50],
+            [70.10, 17.50],
+            [70.80, 16.50],
+            [71.50, 15.50],
+            [72.20, 14.50],
+            [73.55, 15.00],
+            [73.40, 15.40],
+            [73.22, 16.00],
+            [73.08, 16.50],
+            [72.95, 17.20],
+            [72.82, 17.80],
+            [72.68, 18.40],
+            [72.62, 18.90],
+            [72.58, 19.30],
+            [72.52, 19.80],
+            [72.50, 20.20],
+            [68.50, 20.50]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "CONTOUR-GEBCO-50M-KONKAN",
+      "properties": {
+        "contour_id": "CONTOUR-GEBCO-50M-KONKAN",
+        "depth_m": 50,
+        "name": "50m Bathymetric Contour (Inner Konkan Shelf)",
+        "type": "BATHYMETRIC_CONTOUR",
+        "dataset": "GEBCO_2024 / GEBCO_2026 Grid",
+        "color": "#38bdf8",
+        "stroke_width": 1
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [72.48, 20.10],
+          [72.45, 19.50],
+          [72.55, 18.90],
+          [72.70, 18.20],
+          [72.85, 17.50],
+          [73.00, 16.80],
+          [73.18, 16.10],
+          [73.40, 15.30]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "CONTOUR-GEBCO-100M-KONKAN",
+      "properties": {
+        "contour_id": "CONTOUR-GEBCO-100M-KONKAN",
+        "depth_m": 100,
+        "name": "100m Bathymetric Contour (Outer Konkan Shelf Edge)",
+        "type": "BATHYMETRIC_CONTOUR",
+        "dataset": "GEBCO_2024 / GEBCO_2026 Grid",
+        "color": "#0284c7",
+        "stroke_width": 1.5
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [71.90, 20.10],
+          [71.95, 19.50],
+          [72.10, 18.80],
+          [72.35, 18.00],
+          [72.55, 17.20],
+          [72.75, 16.50],
+          [72.95, 15.80],
+          [73.15, 15.20]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "CONTOUR-GEBCO-200M-KONKAN",
+      "properties": {
+        "contour_id": "CONTOUR-GEBCO-200M-KONKAN",
+        "depth_m": 200,
+        "name": "200m Bathymetric Shelf Break / Continental Slope",
+        "type": "BATHYMETRIC_CONTOUR",
+        "dataset": "GEBCO_2024 / GEBCO_2026 Grid",
+        "color": "#1e3a8a",
+        "stroke_width": 2
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [71.40, 20.00],
+          [71.50, 19.30],
+          [71.70, 18.60],
+          [72.00, 17.80],
+          [72.25, 17.00],
+          [72.50, 16.30],
+          [72.75, 15.60],
+          [72.95, 15.00]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "MPA-ANGRIA-BANK-CORAL",
+      "properties": {
+        "site_id": "MPA-ANGRIA-BANK-CORAL",
+        "name": "Angria Bank Submerged Coral Atoll & Ecologically Sensitive Zone",
+        "type": "ECOLOGICALLY_SENSITIVE_MARINE_AREA",
+        "depth_range_m": "20 - 400m",
+        "authority": "National Hydrographic Office / MoEFCC / Wildlife Conservation Society India",
+        "description": "Submerged bank located 105 km offshore Vijaydurg, hosting pristine coral reefs, manta rays, whale sharks, and dolphins.",
+        "color": "#10b981",
+        "fill_opacity": 0.25
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [72.00, 16.35],
+            [72.05, 16.65],
+            [72.18, 16.70],
+            [72.25, 16.50],
+            [72.22, 16.30],
+            [72.10, 16.25],
+            [72.00, 16.35]
+          ]
+        ]
+      }
+    }
+  ]
+}

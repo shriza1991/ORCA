@@ -3,11 +3,14 @@
 > Single operational status board. Strictly factual. No diary narrative.
 
 ## Current Release & Workstream State
-- Current version: `v0.1.0-p0-data-foundation`
-- Active branch: `main`
-- Current milestone: **Strategic Reconciliation (Phase 0 Complete)**
-- P0 data foundation: **COMPLETE & OFFLINE VERIFIED** (frontend: 207 tests passing, backend: 637 passed / 51 skipped requiring live PostgreSQL/PostGIS, verified on 2026-09-21)
-- Strategic reconciliation: **PHASE 0 COMPLETE** — `docs/ORCA_AI_MASTER_CONTEXT.md` established as canonical source of truth, old context archived, hierarchy and ownership aligned. Phase 1 (verification of §30 regressions/gaps) queued next.
+- Current version: `v0.2.0-marinewatch-real-data`
+- Active branch: `feat/india-marinewatch-real-data`
+- Current milestone: **India MarineWatch Real Data Platform (BarentsWatch India Architecture)**
+- Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 241 tests passing across 16 test suites; backend: 670 passed / 51 skipped; verified on 2026-09-23)
+- 10 Foundation API Contracts (§213): **100% IMPLEMENTED & PASSING** (`/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`)
+- Reference Data Ingestion: CMFRI Census 2020 landing centres (14 ports), CAA registered coastal aquaculture farms (7 sites), Indian maritime boundaries (12nm territorial, 24nm contiguous, 200nm EEZ, GEBCO 50m/100m/200m contours, Angria Bank coral atoll, Malvan Marine Sanctuary).
+- Domain Engines: INCOIS PAT harmonic astronomical tide engine (Mumbai, Ratnagiri, Malvan, Mormugao), GEBCO bathymetric shelf profile, §212 30-dataset canonical catalogue registry.
+- Frontend Hubs: `OceanWatch` (interactive GIS & time scrubber), `FisherWatch`, `AquaWatch`, `MarineHazards`, `PortWatch`, `DataCatalogue`.
 
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 

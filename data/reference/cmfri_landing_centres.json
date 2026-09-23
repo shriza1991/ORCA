@@ -1,0 +1,282 @@
+[
+  {
+    "id": "CMFRI-MH-RAT-01",
+    "name": "Mirkarwada (Ratnagiri)",
+    "district": "Ratnagiri",
+    "state": "Maharashtra",
+    "latitude": 16.9942,
+    "longitude": 73.2847,
+    "type": "MAJOR_FISHING_HARBOUR",
+    "craft_count": {
+      "mechanized": 680,
+      "motorized": 220,
+      "non_motorized": 50,
+      "total": 950
+    },
+    "major_gears": ["Trawl net", "Purse seine", "Gill net"],
+    "facilities": ["Deep water quay", "Ice plants", "Fuel bunkering", "Slipway", "Auction hall"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census & Maharashtra Fisheries Dept",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-SIN-02",
+    "name": "Malvan Fishery Jetty",
+    "district": "Sindhudurg",
+    "state": "Maharashtra",
+    "latitude": 16.0583,
+    "longitude": 73.4658,
+    "type": "MINOR_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 140,
+      "motorized": 160,
+      "non_motorized": 45,
+      "total": 345
+    },
+    "major_gears": ["Gill net", "Trawl net", "Hook and line"],
+    "facilities": ["Jetty", "Auction hall", "Ice distribution"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-MUM-03",
+    "name": "Sassoon Dock",
+    "district": "Mumbai City",
+    "state": "Maharashtra",
+    "latitude": 18.9158,
+    "longitude": 72.8258,
+    "type": "MAJOR_FISHING_HARBOUR",
+    "craft_count": {
+      "mechanized": 890,
+      "motorized": 260,
+      "non_motorized": 30,
+      "total": 1180
+    },
+    "major_gears": ["Trawl net", "Gill net", "Longline"],
+    "facilities": ["Wet dock basins", "Cold storage", "Processing plants", "Export loading berth"],
+    "vhf_channel": 16,
+    "source": "Mumbai Port Authority & CMFRI",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-MUM-04",
+    "name": "Versova Fishing Village",
+    "district": "Mumbai Suburban",
+    "state": "Maharashtra",
+    "latitude": 19.1352,
+    "longitude": 72.8081,
+    "type": "TRADITIONAL_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 210,
+      "motorized": 240,
+      "non_motorized": 65,
+      "total": 515
+    },
+    "major_gears": ["Dol net (bag net)", "Gill net"],
+    "facilities": ["Beach landing", "Auction platform", "Dry fish yards"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-RAT-05",
+    "name": "Harne Fishing Port",
+    "district": "Ratnagiri",
+    "state": "Maharashtra",
+    "latitude": 17.8139,
+    "longitude": 73.0931,
+    "type": "INTERMEDIATE_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 180,
+      "motorized": 120,
+      "non_motorized": 35,
+      "total": 335
+    },
+    "major_gears": ["Trawl net", "Dol net", "Gill net"],
+    "facilities": ["Natural sheltered cove", "Beach suction landing", "Open auction"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-RAI-06",
+    "name": "Alibag / Versoli",
+    "district": "Raigad",
+    "state": "Maharashtra",
+    "latitude": 18.6536,
+    "longitude": 72.8681,
+    "type": "MINOR_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 75,
+      "motorized": 95,
+      "non_motorized": 30,
+      "total": 200
+    },
+    "major_gears": ["Dol net", "Shore seine", "Gill net"],
+    "facilities": ["Beach landing", "Community shed"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-PAL-07",
+    "name": "Dahanu Port",
+    "district": "Palghar",
+    "state": "Maharashtra",
+    "latitude": 19.9725,
+    "longitude": 72.7303,
+    "type": "INTERMEDIATE_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 130,
+      "motorized": 90,
+      "non_motorized": 40,
+      "total": 260
+    },
+    "major_gears": ["Dol net", "Gill net", "Trawl net"],
+    "facilities": ["Creek jetty", "Ice depot", "Auction platform"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-SIN-08",
+    "name": "Deogad Harbour",
+    "district": "Sindhudurg",
+    "state": "Maharashtra",
+    "latitude": 16.3761,
+    "longitude": 73.3767,
+    "type": "INTERMEDIATE_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 160,
+      "motorized": 95,
+      "non_motorized": 25,
+      "total": 280
+    },
+    "major_gears": ["Purse seine", "Gill net", "Trawl net"],
+    "facilities": ["Sheltered creek quay", "Ice plant", "Fuel station"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-SIN-09",
+    "name": "Vengurla Port",
+    "district": "Sindhudurg",
+    "state": "Maharashtra",
+    "latitude": 15.8564,
+    "longitude": 73.6328,
+    "type": "MINOR_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 90,
+      "motorized": 110,
+      "non_motorized": 30,
+      "total": 230
+    },
+    "major_gears": ["Gill net", "Hook and line", "Purse seine"],
+    "facilities": ["Pier", "Auction hall"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-RAI-10",
+    "name": "Karanja Jetty",
+    "district": "Raigad",
+    "state": "Maharashtra",
+    "latitude": 18.8683,
+    "longitude": 72.9344,
+    "type": "INTERMEDIATE_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 190,
+      "motorized": 120,
+      "non_motorized": 25,
+      "total": 335
+    },
+    "major_gears": ["Trawl net", "Dol net", "Gill net"],
+    "facilities": ["Concrete jetty", "Cold storage nearby", "Diesel dispensing"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-MH-PAL-11",
+    "name": "Satpati",
+    "district": "Palghar",
+    "state": "Maharashtra",
+    "latitude": 19.7289,
+    "longitude": 72.7042,
+    "type": "MAJOR_FISHING_HARBOUR",
+    "craft_count": {
+      "mechanized": 260,
+      "motorized": 130,
+      "non_motorized": 30,
+      "total": 420
+    },
+    "major_gears": ["Dol net", "Gill net", "Trawl net"],
+    "facilities": ["Cooperative auction hall", "Dry dock", "Ice plants"],
+    "vhf_channel": 16,
+    "source": "CMFRI Marine Fisheries Census",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-GOA-SOU-12",
+    "name": "Khariwada / Mormugao",
+    "district": "South Goa",
+    "state": "Goa",
+    "latitude": 15.4125,
+    "longitude": 73.8056,
+    "type": "MAJOR_FISHING_HARBOUR",
+    "craft_count": {
+      "mechanized": 280,
+      "motorized": 140,
+      "non_motorized": 30,
+      "total": 450
+    },
+    "major_gears": ["Purse seine", "Trawl net", "Gill net"],
+    "facilities": ["Fish landing jetty", "Reefer storage", "Fuel bunkering", "Auction shed"],
+    "vhf_channel": 16,
+    "source": "Directorate of Fisheries, Goa & CMFRI",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-GOA-NOR-13",
+    "name": "Malim / Mandovi Jetty",
+    "district": "North Goa",
+    "state": "Goa",
+    "latitude": 15.5033,
+    "longitude": 73.8378,
+    "type": "MAJOR_FISHING_HARBOUR",
+    "craft_count": {
+      "mechanized": 210,
+      "motorized": 90,
+      "non_motorized": 20,
+      "total": 320
+    },
+    "major_gears": ["Trawl net", "Purse seine"],
+    "facilities": ["Estuarine jetty", "Wholesale market", "Ice factory"],
+    "vhf_channel": 16,
+    "source": "Directorate of Fisheries, Goa & CMFRI",
+    "updated_at": "2026-09-01T00:00:00Z"
+  },
+  {
+    "id": "CMFRI-GOA-SOU-14",
+    "name": "Betul Harbour",
+    "district": "South Goa",
+    "state": "Goa",
+    "latitude": 15.1436,
+    "longitude": 73.9647,
+    "type": "MINOR_LANDING_CENTRE",
+    "craft_count": {
+      "mechanized": 85,
+      "motorized": 70,
+      "non_motorized": 25,
+      "total": 180
+    },
+    "major_gears": ["Gill net", "Trawl net", "Hook and line"],
+    "facilities": ["River mouth quay", "Community shed"],
+    "vhf_channel": 16,
+    "source": "Directorate of Fisheries, Goa & CMFRI",
+    "updated_at": "2026-09-01T00:00:00Z"
+  }
+]
