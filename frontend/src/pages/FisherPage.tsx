@@ -91,13 +91,61 @@ export default function FisherPage({
 
   const effectiveLayers = useMemo(() => {
     const chatLayers = assessment?.map_layers?.layers || [];
+    
+    // Convert backend route_candidates to MapLayers
+    const routeLayers: MapLayer[] = (assessment?.route_candidates || []).map((r, i) => ({
+      layer_id: `route_${r.route_id || i}`,
+      name: r.name || `Route ${i + 1}`,
+      layer_type: 'geojson',
+      visible: true,
+      style: {
+        layer_category: 'route',
+        risk_rating: r.risk_rating,
+        color: r.risk_rating === 'HIGH_RISK' ? '#ef4444' : r.risk_rating === 'MODERATE' ? '#eab308' : '#22c55e',
+      },
+      geojson: {
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: r.waypoints || []
+          },
+          properties: { ...r }
+        }]
+      }
+    }));
+
+    // Convert backend pfz_candidates to MapLayers
+    const pfzLayers: MapLayer[] = (assessment?.pfz_candidates || []).map((p, i) => ({
+      layer_id: `pfz_${p.candidate_id || i}`,
+      name: `PFZ Rank ${p.rank || i + 1}`,
+      layer_type: 'geojson',
+      visible: true,
+      style: {
+        layer_category: 'pfz',
+        color: '#10b981',
+      },
+      geojson: {
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [p.longitude, p.latitude]
+          },
+          properties: { ...p }
+        }]
+      }
+    }));
+
     return mergeFisherLayers({
       baseLayers,
       harborCoords,
       originHarbor,
       status: assessment?.decision?.status || 'UNKNOWN',
-      baselineRoutes: [],
-      baselinePFZ: [],
+      baselineRoutes: routeLayers,
+      baselinePFZ: pfzLayers,
       baselineHazards: [],
       chatLayers: chatLayers,
     });

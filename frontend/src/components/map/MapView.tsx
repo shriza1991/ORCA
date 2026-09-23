@@ -227,6 +227,18 @@ export default function MapView({
     return [...nonRouteLayers, ...dynamicRouteLayers];
   }, [layers, selectedCorridorMode, liveLocation, liveLocationStatus]);
 
+  // Pan to user's location when tracking is enabled and location updates
+  useEffect(() => {
+    if (isTrackingLocation && liveLocation && mapRef.current) {
+      mapRef.current.flyTo({
+        center: [liveLocation.longitude, liveLocation.latitude],
+        zoom: 14,
+        essential: true,
+        duration: 800
+      });
+    }
+  }, [liveLocation, isTrackingLocation]);
+
   // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
