@@ -24,6 +24,7 @@ import {
   fetchPFZAdvisories,
   fetchActiveHazards,
   fetchMaritimeBoundaries,
+  fetchHazardsGeoJson,
   executeSpatialQuery,
   searchMarineFeatures,
   type LandingCentre,
@@ -118,23 +119,41 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
   const [pfzs, setPfzs] = useState<PFZAdvisory[]>([]);
   const [lighthouses, setLighthouses] = useState<Lighthouse[]>([]);
   const [boundariesGeoJson, setBoundariesGeoJson] = useState<any>(null);
+  const [hazardsGeoJson, setHazardsGeoJson] = useState<any>(null);
+
+  // Helper to generate smooth circular geodesic polygons for PFZ advisory thermal fronts
+  function generateCirclePolygon(centerLon: number, centerLat: number, radiusKm: number, points = 24): number[][] {
+    const coords: number[][] = [];
+    const distanceX = radiusKm / (111.32 * Math.cos((centerLat * Math.PI) / 180));
+    const distanceY = radiusKm / 110.574;
+
+    for (let i = 0; i <= points; i++) {
+      const theta = (i / points) * (2 * Math.PI);
+      const x = distanceX * Math.cos(theta);
+      const y = distanceY * Math.sin(theta);
+      coords.push([parseFloat((centerLon + x).toFixed(5)), parseFloat((centerLat + y).toFixed(5))]);
+    }
+    return coords;
+  }
 
   // Initial Data Load (Whole India) using Promise.allSettled for maximum fault-tolerance
   useEffect(() => {
     async function loadAllData() {
       try {
-        const [portsRes, aquaRes, pfzRes, lhRes, boundsRes] = await Promise.allSettled([
+        const [portsRes, aquaRes, pfzRes, lhRes, boundsRes, hazGeoRes] = await Promise.allSettled([
           fetchAllPorts(),
           fetchAllAquacultureSites(),
           fetchPFZAdvisories('All'),
           fetchAllLighthouses(),
           fetchMaritimeBoundaries(),
+          fetchHazardsGeoJson(),
         ]);
         if (portsRes.status === 'fulfilled') setPorts(portsRes.value.ports || []);
         if (aquaRes.status === 'fulfilled') setFarms(aquaRes.value.aquaculture_sites || []);
         if (pfzRes.status === 'fulfilled') setPfzs(pfzRes.value.advisories || []);
         if (lhRes.status === 'fulfilled') setLighthouses(lhRes.value.lighthouses || []);
         if (boundsRes.status === 'fulfilled') setBoundariesGeoJson(boundsRes.value);
+        if (hazGeoRes.status === 'fulfilled') setHazardsGeoJson(hazGeoRes.value);
 
         // Initial default point query for Ratnagiri
         const ratnagiriPoint = await executeSpatialQuery(16.9942, 73.2847);
@@ -151,11 +170,13 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
   const refreshLiveTelemetry = async () => {
     setRefreshing(true);
     try {
-      const [pfzRes] = await Promise.allSettled([
+      const [pfzRes, hazGeoRes] = await Promise.allSettled([
         fetchPFZAdvisories('All'),
+        fetchHazardsGeoJson(),
         fetchActiveHazards(),
       ]);
       if (pfzRes.status === 'fulfilled') setPfzs(pfzRes.value.advisories || []);
+      if (hazGeoRes.status === 'fulfilled') setHazardsGeoJson(hazGeoRes.value);
 
       if (pointCoordinates) {
         const pt = await executeSpatialQuery(pointCoordinates[0], pointCoordinates[1]);
@@ -202,13 +223,28 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     });
     resizeObserver.observe(mapContainer.current);
 
+    const updateZoomTier = () => {
+      if (!mapContainer.current) return;
+      const z = map.getZoom();
+      if (z < 6.5) {
+        mapContainer.current.setAttribute('data-zoom-tier', 'overview');
+      } else if (z < 10) {
+        mapContainer.current.setAttribute('data-zoom-tier', 'regional');
+      } else {
+        mapContainer.current.setAttribute('data-zoom-tier', 'detail');
+      }
+    };
+
+    map.on('zoom', updateZoomTier);
+
     map.on('load', () => {
       setMapReady(true);
+      updateZoomTier();
     });
 
-    // General map click handler
+    // General map click handler (only runs when clicking unassigned ocean waters)
     map.on('click', async (e) => {
-      // If a feature click was already processed, do not clear
+      if ((e.originalEvent as any)?._handledFeature) return;
       const lat = parseFloat(e.lngLat.lat.toFixed(4));
       const lon = parseFloat(e.lngLat.lng.toFixed(4));
       setPointCoordinates([lat, lon]);
@@ -233,138 +269,275 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     };
   }, [theme]);
 
-  // Add and update GeoJSON Boundaries & MPAs layers
+  // Add and update GeoJSON vector layers (Boundaries, MPAs, Restrictions, Hazards, PFZ Areas)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !boundariesGeoJson) return;
+    if (!map || !mapReady) return;
 
     function setupLayers() {
       if (!map) return;
-      if (map.getSource('india-boundaries')) {
-        const src = map.getSource('india-boundaries') as maplibregl.GeoJSONSource;
-        src.setData(boundariesGeoJson);
-        return;
+
+      // 1. Sovereign Boundaries & Marine Protected Areas Source
+      if (boundariesGeoJson) {
+        if (map.getSource('india-boundaries')) {
+          const src = map.getSource('india-boundaries') as maplibregl.GeoJSONSource;
+          src.setData(boundariesGeoJson);
+        } else {
+          map.addSource('india-boundaries', {
+            type: 'geojson',
+            data: boundariesGeoJson,
+          });
+
+          // 1a. Exclusive Economic Zone (EEZ) Polygons (200nm)
+          map.addLayer({
+            id: 'eez-fill',
+            type: 'fill',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'EXCLUSIVE_ECONOMIC_ZONE'],
+            paint: {
+              'fill-color': '#0284c7',
+              'fill-opacity': 0.06,
+            },
+          });
+          map.addLayer({
+            id: 'eez-line',
+            type: 'line',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'EXCLUSIVE_ECONOMIC_ZONE'],
+            paint: {
+              'line-color': '#0284c7',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.0, 8, 1.8, 12, 3.0],
+              'line-dasharray': [4, 4],
+            },
+          });
+
+          // 1b. National Marine Protected Areas (MPAs) & Atolls
+          map.addLayer({
+            id: 'mpas-fill',
+            type: 'fill',
+            source: 'india-boundaries',
+            filter: [
+              'in',
+              ['get', 'type'],
+              ['literal', ['MARINE_PROTECTED_AREA', 'ECOLOGICALLY_SENSITIVE_MARINE_AREA', 'MPA_SANCTUARY_CORE']],
+            ],
+            paint: {
+              'fill-color': '#10b981',
+              'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4, 0.20, 8, 0.30, 12, 0.38],
+            },
+          });
+          map.addLayer({
+            id: 'mpas-line',
+            type: 'line',
+            source: 'india-boundaries',
+            filter: [
+              'in',
+              ['get', 'type'],
+              ['literal', ['MARINE_PROTECTED_AREA', 'ECOLOGICALLY_SENSITIVE_MARINE_AREA', 'MPA_SANCTUARY_CORE']],
+            ],
+            paint: {
+              'line-color': '#059669',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.5, 8, 2.5, 12, 4.0],
+            },
+          });
+
+          // 1c. 12nm Sovereign Territorial Waters Line
+          map.addLayer({
+            id: 'territorial-12nm-line',
+            type: 'line',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'TERRITORIAL_WATERS'],
+            paint: {
+              'line-color': '#2563eb',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2.2, 12, 4.0],
+            },
+          });
+
+          // 1d. 24nm Contiguous Enforcement Zone Line
+          map.addLayer({
+            id: 'contiguous-24nm-line',
+            type: 'line',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'CONTIGUOUS_ZONE'],
+            paint: {
+              'line-color': '#8b5cf6',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.0, 8, 1.8, 12, 3.2],
+              'line-dasharray': [4, 4],
+            },
+          });
+
+          // 1e. Naval Live Firing Ranges & Military Restricted Zones
+          map.addLayer({
+            id: 'naval-ranges-fill',
+            type: 'fill',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'NAVAL_FIRING_RANGE'],
+            paint: {
+              'fill-color': '#ef4444',
+              'fill-opacity': 0.22,
+            },
+          });
+          map.addLayer({
+            id: 'naval-ranges-line',
+            type: 'line',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'NAVAL_FIRING_RANGE'],
+            paint: {
+              'line-color': '#dc2626',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.8, 8, 2.8, 12, 4.5],
+              'line-dasharray': [5, 3],
+            },
+          });
+
+          // 1f. Sir Creek / International Maritime Boundary Line (IMBL) Buffer
+          map.addLayer({
+            id: 'imbl-buffer-fill',
+            type: 'fill',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'IMBL_ADVISORY_BORDER'],
+            paint: {
+              'fill-color': '#f59e0b',
+              'fill-opacity': 0.18,
+            },
+          });
+          map.addLayer({
+            id: 'imbl-buffer-line',
+            type: 'line',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'IMBL_ADVISORY_BORDER'],
+            paint: {
+              'line-color': '#d97706',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.5, 8, 2.2, 12, 3.5],
+              'line-dasharray': [4, 4],
+            },
+          });
+
+          // 1g. GEBCO Bathymetric Depth Contours (50m, 100m, 200m)
+          map.addLayer({
+            id: 'bathymetry-contours-line',
+            type: 'line',
+            source: 'india-boundaries',
+            filter: ['==', ['get', 'type'], 'BATHYMETRIC_CONTOUR'],
+            paint: {
+              'line-color': [
+                'case',
+                ['==', ['get', 'depth_m'], 50],
+                '#38bdf8',
+                ['==', ['get', 'depth_m'], 100],
+                '#0284c7',
+                '#1e3a8a',
+              ],
+              'line-width': [
+                'case',
+                ['==', ['get', 'depth_m'], 50],
+                ['interpolate', ['linear'], ['zoom'], 4, 0.8, 8, 1.2, 12, 2.0],
+                ['==', ['get', 'depth_m'], 100],
+                ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 1.8, 12, 2.8],
+                ['interpolate', ['linear'], ['zoom'], 4, 1.6, 8, 2.5, 12, 3.8],
+              ],
+            },
+          });
+        }
       }
 
-      map.addSource('india-boundaries', {
-        type: 'geojson',
-        data: boundariesGeoJson,
-      });
+      // 2. Potential Fishing Zone (PFZ) Advisory Areas
+      if (pfzs.length > 0) {
+        const pfzGeoJson = {
+          type: 'FeatureCollection',
+          features: pfzs.map((z) => ({
+            type: 'Feature',
+            id: `pfz-area-${z.advisory_id}`,
+            geometry: {
+              type: 'Polygon',
+              coordinates: [generateCirclePolygon(z.longitude, z.latitude, 14.0)],
+            },
+            properties: {
+              ...z,
+              name: z.location_name,
+              type: 'POTENTIAL_FISHING_ZONE',
+            },
+          })),
+        };
 
-      // 1. Exclusive Economic Zone (EEZ) Polygons
-      map.addLayer({
-        id: 'eez-fill',
-        type: 'fill',
-        source: 'india-boundaries',
-        filter: ['==', ['get', 'type'], 'EXCLUSIVE_ECONOMIC_ZONE'],
-        paint: {
-          'fill-color': '#0284c7',
-          'fill-opacity': 0.06,
-        },
-      });
-      map.addLayer({
-        id: 'eez-line',
-        type: 'line',
-        source: 'india-boundaries',
-        filter: ['==', ['get', 'type'], 'EXCLUSIVE_ECONOMIC_ZONE'],
-        paint: {
-          'line-color': '#0284c7',
-          'line-width': 1.5,
-          'line-dasharray': [4, 4],
-        },
-      });
+        if (map.getSource('pfz-zones-data')) {
+          const src = map.getSource('pfz-zones-data') as maplibregl.GeoJSONSource;
+          src.setData(pfzGeoJson as any);
+        } else {
+          map.addSource('pfz-zones-data', {
+            type: 'geojson',
+            data: pfzGeoJson as any,
+          });
 
-      // 2. National Marine Protected Areas (MPAs) & Atolls
-      map.addLayer({
-        id: 'mpas-fill',
-        type: 'fill',
-        source: 'india-boundaries',
-        filter: [
-          'in',
-          ['get', 'type'],
-          ['literal', ['MARINE_PROTECTED_AREA', 'ECOLOGICALLY_SENSITIVE_MARINE_AREA']],
-        ],
-        paint: {
-          'fill-color': '#10b981',
-          'fill-opacity': 0.32,
-        },
-      });
-      map.addLayer({
-        id: 'mpas-line',
-        type: 'line',
-        source: 'india-boundaries',
-        filter: [
-          'in',
-          ['get', 'type'],
-          ['literal', ['MARINE_PROTECTED_AREA', 'ECOLOGICALLY_SENSITIVE_MARINE_AREA']],
-        ],
-        paint: {
-          'line-color': '#059669',
-          'line-width': 2.5,
-        },
-      });
+          map.addLayer({
+            id: 'pfz-zones-fill',
+            type: 'fill',
+            source: 'pfz-zones-data',
+            paint: {
+              'fill-color': '#10b981',
+              'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4, 0.12, 8, 0.18, 12, 0.26],
+            },
+          });
+          map.addLayer({
+            id: 'pfz-zones-line',
+            type: 'line',
+            source: 'pfz-zones-data',
+            paint: {
+              'line-color': '#059669',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2.0, 12, 3.2],
+              'line-dasharray': [3, 2],
+            },
+          });
+        }
+      }
 
-      // 3. 12nm Sovereign Territorial Waters Line
-      map.addLayer({
-        id: 'territorial-12nm-line',
-        type: 'line',
-        source: 'india-boundaries',
-        filter: ['==', ['get', 'type'], 'TERRITORIAL_WATERS'],
-        paint: {
-          'line-color': '#2563eb',
-          'line-width': 2.5,
-        },
-      });
+      // 3. Active Meteorological Hazard Corridors & Warning Zones (IMD / INCOIS)
+      if (hazardsGeoJson) {
+        if (map.getSource('hazards-warning-data')) {
+          const src = map.getSource('hazards-warning-data') as maplibregl.GeoJSONSource;
+          src.setData(hazardsGeoJson);
+        } else {
+          map.addSource('hazards-warning-data', {
+            type: 'geojson',
+            data: hazardsGeoJson,
+          });
 
-      // 4. 24nm Contiguous Enforcement Zone Line
-      map.addLayer({
-        id: 'contiguous-24nm-line',
-        type: 'line',
-        source: 'india-boundaries',
-        filter: ['==', ['get', 'type'], 'CONTIGUOUS_ZONE'],
-        paint: {
-          'line-color': '#8b5cf6',
-          'line-width': 2.0,
-          'line-dasharray': [4, 4],
-        },
-      });
+          map.addLayer({
+            id: 'hazards-warning-fill',
+            type: 'fill',
+            source: 'hazards-warning-data',
+            paint: {
+              'fill-color': '#f97316',
+              'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4, 0.10, 8, 0.15, 12, 0.22],
+            },
+          });
+          map.addLayer({
+            id: 'hazards-warning-line',
+            type: 'line',
+            source: 'hazards-warning-data',
+            paint: {
+              'line-color': '#ea580c',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.5, 8, 2.4, 12, 3.8],
+              'line-dasharray': [6, 4],
+            },
+          });
+        }
+      }
 
-      // 5. GEBCO Bathymetric Depth Contours (50m, 100m, 200m)
-      map.addLayer({
-        id: 'bathymetry-contours-line',
-        type: 'line',
-        source: 'india-boundaries',
-        filter: ['==', ['get', 'type'], 'BATHYMETRIC_CONTOUR'],
-        paint: {
-          'line-color': [
-            'case',
-            ['==', ['get', 'depth_m'], 50],
-            '#38bdf8',
-            ['==', ['get', 'depth_m'], 100],
-            '#0284c7',
-            '#1e3a8a',
-          ],
-          'line-width': [
-            'case',
-            ['==', ['get', 'depth_m'], 50],
-            1.2,
-            ['==', ['get', 'depth_m'], 100],
-            1.8,
-            2.5,
-          ],
-        },
-      });
-
-      // Interactive Click & Hover Handlers for Polygons and Lines
+      // Interactive Click & Hover Handlers for All Areas and Lines
       const interactiveLayerIds = [
         'mpas-fill',
         'territorial-12nm-line',
         'contiguous-24nm-line',
         'eez-fill',
         'bathymetry-contours-line',
+        'naval-ranges-fill',
+        'imbl-buffer-fill',
+        'pfz-zones-fill',
+        'hazards-warning-fill',
       ];
 
       interactiveLayerIds.forEach((id) => {
+        if (!map.getLayer(id)) return;
         map.on('mouseenter', id, () => {
           map.getCanvas().style.cursor = 'pointer';
         });
@@ -374,133 +547,266 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
       });
 
       // Click on MPA polygon
-      map.on('click', 'mpas-fill', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const feat = e.features[0];
-        const props = (feat.properties as Record<string, any>) || {};
-        const lat = parseFloat(e.lngLat.lat.toFixed(4));
-        const lon = parseFloat(e.lngLat.lng.toFixed(4));
+      if (map.getLayer('mpas-fill')) {
+        map.on('click', 'mpas-fill', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(e.lngLat.lng.toFixed(4));
 
-        setSelectedFeature({
-          title: props.name || 'Marine Protected Area',
-          category: props.type || 'MARINE_PROTECTED_AREA',
-          badge: 'NATIONAL MARINE PROTECTED AREA',
-          authority: props.authority,
-          description: props.description,
-          regulations: props.regulations,
-          stats: {
-            State: props.state || 'National Reserve',
-            'Depth Range': props.depth_range_m || 'Coastal Waters',
-            Legislation: 'Wildlife Protection Act, 1972 / MoEFCC',
-          },
-          coordinates: [lat, lon],
+          setSelectedFeature({
+            title: props.name || 'Marine Protected Area',
+            category: props.type || 'MARINE_PROTECTED_AREA',
+            badge: 'NATIONAL MARINE PROTECTED AREA',
+            authority: props.authority || 'Ministry of Environment, Forest and Climate Change (MoEFCC)',
+            description: props.description,
+            regulations: props.regulations || 'Wildlife Protection Act, 1972 / Strict Conservation Zone',
+            stats: {
+              State: props.state || 'National Reserve',
+              'Depth Range': props.depth_range_m || 'Coastal Waters',
+              Legislation: 'Wildlife Protection Act, 1972 / MoEFCC',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
         });
-        setPointCoordinates([lat, lon]);
-        executeSpatialQuery(lat, lon).then(setPointData);
-      });
+      }
 
       // Click on 12nm Territorial Waters Line
-      map.on('click', 'territorial-12nm-line', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const feat = e.features[0];
-        const props = (feat.properties as Record<string, any>) || {};
-        const lat = parseFloat(e.lngLat.lat.toFixed(4));
-        const lon = parseFloat(e.lngLat.lng.toFixed(4));
+      if (map.getLayer('territorial-12nm-line')) {
+        map.on('click', 'territorial-12nm-line', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(e.lngLat.lng.toFixed(4));
 
-        setSelectedFeature({
-          title: props.name || '12nm Territorial Sovereign Waters',
-          category: 'TERRITORIAL_WATERS',
-          badge: 'SOVEREIGN MARITIME BOUNDARY',
-          authority: props.authority || 'Ministry of External Affairs / Indian Navy',
-          description: props.jurisdiction || 'Sovereign Coastal Territorial Sea (12 Nautical Miles)',
-          regulations: props.legislation || 'Maritime Zones Act, 1976 / UNCLOS III',
-          stats: {
-            Status: 'Sovereign State Waters (12nm)',
-            Enforcement: 'Indian Coast Guard & State Marine Police',
-          },
-          coordinates: [lat, lon],
+          setSelectedFeature({
+            title: props.name || '12nm Territorial Sovereign Waters',
+            category: 'TERRITORIAL_WATERS',
+            badge: 'SOVEREIGN MARITIME BOUNDARY',
+            authority: props.authority || 'Ministry of External Affairs / Indian Navy',
+            description: props.jurisdiction || 'Sovereign Coastal Territorial Sea (12 Nautical Miles)',
+            regulations: props.legislation || 'Maritime Zones Act, 1976 / UNCLOS III',
+            stats: {
+              Status: 'Sovereign State Waters (12nm)',
+              Enforcement: 'Indian Coast Guard & State Marine Police',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
         });
-        setPointCoordinates([lat, lon]);
-        executeSpatialQuery(lat, lon).then(setPointData);
-      });
+      }
 
       // Click on 200nm EEZ Area
-      map.on('click', 'eez-fill', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const feat = e.features[0];
-        const props = (feat.properties as Record<string, any>) || {};
-        const lat = parseFloat(e.lngLat.lat.toFixed(4));
-        const lon = parseFloat(e.lngLat.lng.toFixed(4));
+      if (map.getLayer('eez-fill')) {
+        map.on('click', 'eez-fill', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(e.lngLat.lng.toFixed(4));
 
-        setSelectedFeature({
-          title: props.name || 'India Exclusive Economic Zone (200nm)',
-          category: 'EXCLUSIVE_ECONOMIC_ZONE',
-          badge: 'EXCLUSIVE ECONOMIC ZONE (200nm)',
-          authority: props.authority || 'Republic of India',
-          description: props.jurisdiction || 'Sovereign Rights for exploring, exploiting, and managing resources',
-          regulations: props.legislation || 'UNCLOS III / Territorial Waters, Continental Shelf, EEZ Act, 1976',
-          stats: {
-            'EEZ Area': '2.02 Million Sq Km',
-            Jurisdiction: 'UNCLOS Delimited Sovereign Resource Exploration',
-          },
-          coordinates: [lat, lon],
+          setSelectedFeature({
+            title: props.name || 'India Exclusive Economic Zone (200nm)',
+            category: 'EXCLUSIVE_ECONOMIC_ZONE',
+            badge: 'EXCLUSIVE ECONOMIC ZONE (200nm)',
+            authority: props.authority || 'Republic of India',
+            description: props.jurisdiction || 'Sovereign Rights for exploring, exploiting, and managing resources',
+            regulations: props.legislation || 'UNCLOS III / Territorial Waters, Continental Shelf, EEZ Act, 1976',
+            stats: {
+              'EEZ Area': '2.02 Million Sq Km',
+              Jurisdiction: 'UNCLOS Delimited Sovereign Resource Exploration',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
         });
-        setPointCoordinates([lat, lon]);
-        executeSpatialQuery(lat, lon).then(setPointData);
-      });
+      }
 
       // Click on GEBCO Bathymetric Contour Line
-      map.on('click', 'bathymetry-contours-line', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const feat = e.features[0];
-        const props = (feat.properties as Record<string, any>) || {};
-        const lat = parseFloat(e.lngLat.lat.toFixed(4));
-        const lon = parseFloat(e.lngLat.lng.toFixed(4));
+      if (map.getLayer('bathymetry-contours-line')) {
+        map.on('click', 'bathymetry-contours-line', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(e.lngLat.lng.toFixed(4));
 
-        setSelectedFeature({
-          title: props.name || `${props.depth_m}m Bathymetric Contour`,
-          category: 'BATHYMETRIC_CONTOUR',
-          badge: 'GEBCO BATHYMETRIC CONTOUR',
-          authority: props.dataset || 'GEBCO Global Bathymetric Grid',
-          description: `Isobath marking ${props.depth_m}m below Chart Datum (CD). Represents the continental shelf edge & slope break.`,
-          stats: {
-            'Contour Depth': `${props.depth_m} meters`,
-            Grid: props.dataset || 'GEBCO_2024 Grid',
-          },
-          coordinates: [lat, lon],
+          setSelectedFeature({
+            title: props.name || `${props.depth_m}m Bathymetric Contour`,
+            category: 'BATHYMETRIC_CONTOUR',
+            badge: 'GEBCO BATHYMETRIC CONTOUR',
+            authority: props.dataset || 'GEBCO Global Bathymetric Grid',
+            description: `Isobath marking ${props.depth_m}m below Chart Datum (CD). Represents the continental shelf edge & slope break.`,
+            stats: {
+              'Contour Depth': `${props.depth_m} meters`,
+              Grid: props.dataset || 'GEBCO_2024 Grid',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
         });
-        setPointCoordinates([lat, lon]);
-        executeSpatialQuery(lat, lon).then(setPointData);
-      });
+      }
+
+      // Click on Naval Firing Range
+      if (map.getLayer('naval-ranges-fill')) {
+        map.on('click', 'naval-ranges-fill', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(e.lngLat.lng.toFixed(4));
+
+          setSelectedFeature({
+            title: props.name || 'Naval Firing Exercise Range',
+            category: 'NAVAL_FIRING_RANGE',
+            badge: 'MILITARY LIVE FIRING ZONE (NO-GO)',
+            authority: props.issuing_agency || 'Indian Navy / Directorate of Naval Operations',
+            description: props.description || 'Active surface gunnery, missile, and depth charge live-firing range. Extreme hazard to commercial and fishing vessels.',
+            regulations: props.penalty || 'Notices to Mariners (NAVAREA VIII) / Immediate confiscation & legal action under Maritime Zones Act.',
+            stats: {
+              'Active Schedule': props.active_schedule || 'Continuous Live Exercise Schedule',
+              'Restriction Level': 'STRICT NO-GO (Hard Barrier)',
+              Enforcement: 'Indian Coast Guard & Western/Eastern Naval Command',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
+        });
+      }
+
+      // Click on IMBL Advisory Buffer
+      if (map.getLayer('imbl-buffer-fill')) {
+        map.on('click', 'imbl-buffer-fill', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(e.lngLat.lng.toFixed(4));
+
+          setSelectedFeature({
+            title: props.name || 'Sir Creek / International Maritime Boundary Buffer',
+            category: 'IMBL_ADVISORY_BORDER',
+            badge: 'INTERNATIONAL BORDER BUFFER (CAUTION)',
+            authority: props.issuing_agency || 'Border Security Force (Water Wing) / Indian Coast Guard',
+            description: props.description || 'Sensitive border proximity buffer adjacent to international demarcation line. High risk of apprehension.',
+            regulations: 'Fishermen strictly advised not to cross GPS coordinates; immediate detention risks.',
+            stats: {
+              'Buffer Width': '5.0 Nautical Miles',
+              Sector: 'Gujarat / Kutch / Sir Creek Mouth',
+              Enforcement: 'Indian Coast Guard Fast Patrol Vessels & Marine Police',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
+        });
+      }
+
+      // Click on PFZ Advisory Area
+      if (map.getLayer('pfz-zones-fill')) {
+        map.on('click', 'pfz-zones-fill', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(props.latitude || e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(props.longitude || e.lngLat.lng.toFixed(4));
+
+          setSelectedFeature({
+            title: props.location_name || 'INCOIS PFZ Thermal Front',
+            category: 'POTENTIAL_FISHING_ZONE',
+            badge: 'INCOIS PFZ ADVISORY AREA',
+            authority: props.source || 'INCOIS PFZ Mission / ISRO Oceansat-3',
+            description: `High-catch probability front generated from satellite SST gradients and chlorophyll-a composite. Target species: ${Array.isArray(props.target_species) ? props.target_species.join(', ') : props.target_species || 'Pelagic shoal species'}.`,
+            regulations: 'Operational guidance advisory for registered Indian fishing craft.',
+            stats: {
+              'Sea Surface Temp': `${props.sst_celsius}°C`,
+              'Chlorophyll-a': `${props.chlorophyll_mg_m3} mg/m³`,
+              'Water Depth': props.depth_range_m || 'Coastal Waters',
+              Advisory: props.advisory_id || 'INCOIS-PFZ',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
+        });
+      }
+
+      // Click on Hazard Warning Zone
+      if (map.getLayer('hazards-warning-fill')) {
+        map.on('click', 'hazards-warning-fill', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          (e.originalEvent as any)._handledFeature = true;
+          const feat = e.features[0];
+          const props = (feat.properties as Record<string, any>) || {};
+          const lat = parseFloat(e.lngLat.lat.toFixed(4));
+          const lon = parseFloat(e.lngLat.lng.toFixed(4));
+
+          setSelectedFeature({
+            title: props.headline || 'Active Marine Hazard Warning',
+            category: 'METEOROLOGICAL_HAZARD',
+            badge: `IMD ${props.severity || 'WARNING'}`,
+            authority: props.source || 'India Meteorological Department (IMD)',
+            description: props.advisory || 'Severe weather, squally wind, or swell surge warning active for this offshore corridor.',
+            regulations: 'Fishermen and mechanized/motorized craft are strictly advised to adhere to safety advisories.',
+            stats: {
+              Severity: props.severity || 'WARNING',
+              Category: props.category || 'WEATHER_SQUALL',
+              'Wind Speed': props.wind_speed_kmph ? `${props.wind_speed_kmph} km/h` : 'Elevated Gusts',
+              'Sea Condition': props.sea_condition || 'Rough to Very Rough',
+              'Port Signals': props.port_signals || 'Local Warning Signals Hoisted',
+            },
+            coordinates: [lat, lon],
+          });
+          setPointCoordinates([lat, lon]);
+          executeSpatialQuery(lat, lon).then(setPointData);
+        });
+      }
     }
 
-    if (mapReady) {
-      setupLayers();
-    }
-  }, [mapReady, boundariesGeoJson]);
+    setupLayers();
+  }, [mapReady, boundariesGeoJson, pfzs, hazardsGeoJson]);
 
   // Update layer visibility
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
 
-    if (map.getLayer('mpas-fill')) {
-      map.setLayoutProperty('mpas-fill', 'visibility', visibleLayers.boundaries ? 'visible' : 'none');
-      map.setLayoutProperty('mpas-line', 'visibility', visibleLayers.boundaries ? 'visible' : 'none');
-    }
-    if (map.getLayer('eez-fill')) {
-      map.setLayoutProperty('eez-fill', 'visibility', visibleLayers.boundaries ? 'visible' : 'none');
-      map.setLayoutProperty('eez-line', 'visibility', visibleLayers.boundaries ? 'visible' : 'none');
-    }
-    if (map.getLayer('territorial-12nm-line')) {
-      map.setLayoutProperty('territorial-12nm-line', 'visibility', visibleLayers.boundaries ? 'visible' : 'none');
-    }
-    if (map.getLayer('contiguous-24nm-line')) {
-      map.setLayoutProperty('contiguous-24nm-line', 'visibility', visibleLayers.boundaries ? 'visible' : 'none');
-    }
-    if (map.getLayer('bathymetry-contours-line')) {
-      map.setLayoutProperty('bathymetry-contours-line', 'visibility', visibleLayers.bathymetry ? 'visible' : 'none');
-    }
+    const setVis = (layerId: string, isVisible: boolean) => {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+      }
+    };
+
+    setVis('eez-fill', visibleLayers.boundaries);
+    setVis('eez-line', visibleLayers.boundaries);
+    setVis('mpas-fill', visibleLayers.boundaries);
+    setVis('mpas-line', visibleLayers.boundaries);
+    setVis('territorial-12nm-line', visibleLayers.boundaries);
+    setVis('contiguous-24nm-line', visibleLayers.boundaries);
+    setVis('naval-ranges-fill', visibleLayers.boundaries);
+    setVis('naval-ranges-line', visibleLayers.boundaries);
+    setVis('imbl-buffer-fill', visibleLayers.boundaries);
+    setVis('imbl-buffer-line', visibleLayers.boundaries);
+    setVis('bathymetry-contours-line', visibleLayers.bathymetry);
+    setVis('pfz-zones-fill', visibleLayers.pfz);
+    setVis('pfz-zones-line', visibleLayers.pfz);
+    setVis('hazards-warning-fill', visibleLayers.hazards);
+    setVis('hazards-warning-line', visibleLayers.hazards);
   }, [mapReady, visibleLayers]);
 
   // Sync Markers to Map (Whole India: Ports, Lighthouses, PFZs, Aquaculture)
@@ -520,8 +826,11 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     if (visibleLayers.ports) {
       ports.forEach((p) => {
         const el = document.createElement('div');
-        el.className = 'marinewatch-custom-marker port-marker';
-        el.innerHTML = `<span style="font-size: 15px; cursor: pointer; filter: drop-shadow(0 0 4px #3b82f6);">⚓</span>`;
+        el.className = 'marinewatch-custom-marker';
+        const inner = document.createElement('div');
+        inner.className = 'marinewatch-marker-inner port-marker';
+        inner.innerHTML = `<span class="marker-emoji" style="cursor: pointer; filter: drop-shadow(0 0 3px #3b82f6);">⚓</span>`;
+        el.appendChild(inner);
         el.title = `${p.name} (${p.craft_count?.total || 0} craft · VHF Ch ${p.vhf_channel || 16})`;
         el.onclick = (e) => {
           e.stopPropagation();
@@ -543,7 +852,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           setPointCoordinates([p.latitude, p.longitude]);
           executeSpatialQuery(p.latitude, p.longitude).then(setPointData);
         };
-        const m = new maplibregl.Marker({ element: el }).setLngLat([p.longitude, p.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([p.longitude, p.latitude]).addTo(map);
         markersRef.current.push(m);
       });
     }
@@ -552,8 +861,11 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     if (visibleLayers.lighthouses) {
       lighthouses.forEach((lh) => {
         const el = document.createElement('div');
-        el.className = 'marinewatch-custom-marker lighthouse-marker';
-        el.innerHTML = `<span style="font-size: 16px; cursor: pointer; filter: drop-shadow(0 0 6px #eab308);">🗼</span>`;
+        el.className = 'marinewatch-custom-marker';
+        const inner = document.createElement('div');
+        inner.className = 'marinewatch-marker-inner lighthouse-marker';
+        inner.innerHTML = `<span class="marker-emoji" style="cursor: pointer; filter: drop-shadow(0 0 4px #eab308);">🗼</span>`;
+        el.appendChild(inner);
         el.title = `${lh.name} (Range: ${lh.range_nm}nm · Focal Ht: ${lh.focal_height_m}m)`;
         el.onclick = (e) => {
           e.stopPropagation();
@@ -575,7 +887,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           setPointCoordinates([lh.latitude, lh.longitude]);
           executeSpatialQuery(lh.latitude, lh.longitude).then(setPointData);
         };
-        const m = new maplibregl.Marker({ element: el }).setLngLat([lh.longitude, lh.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lh.longitude, lh.latitude]).addTo(map);
         markersRef.current.push(m);
       });
     }
@@ -584,8 +896,11 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     if (visibleLayers.pfz) {
       pfzs.forEach((z) => {
         const el = document.createElement('div');
-        el.className = 'marinewatch-custom-marker pfz-marker';
-        el.innerHTML = `<span style="font-size: 15px; cursor: pointer; filter: drop-shadow(0 0 5px #10b981);">🐟</span>`;
+        el.className = 'marinewatch-custom-marker';
+        const inner = document.createElement('div');
+        inner.className = 'marinewatch-marker-inner pfz-marker';
+        inner.innerHTML = `<span class="marker-emoji" style="cursor: pointer; filter: drop-shadow(0 0 4px #10b981);">🐟</span>`;
+        el.appendChild(inner);
         el.title = `${z.location_name} (SST ${z.sst_celsius}°C · Chl ${z.chlorophyll_mg_m3} mg/m³)`;
         el.onclick = (e) => {
           e.stopPropagation();
@@ -607,7 +922,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           setPointCoordinates([z.latitude, z.longitude]);
           executeSpatialQuery(z.latitude, z.longitude).then(setPointData);
         };
-        const m = new maplibregl.Marker({ element: el }).setLngLat([z.longitude, z.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([z.longitude, z.latitude]).addTo(map);
         markersRef.current.push(m);
       });
     }
@@ -616,8 +931,11 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     if (visibleLayers.aquaculture) {
       farms.forEach((f) => {
         const el = document.createElement('div');
-        el.className = 'marinewatch-custom-marker aqua-marker';
-        el.innerHTML = `<span style="font-size: 14px; cursor: pointer; filter: drop-shadow(0 0 4px #f97316);">🦐</span>`;
+        el.className = 'marinewatch-custom-marker';
+        const inner = document.createElement('div');
+        inner.className = 'marinewatch-marker-inner aqua-marker';
+        inner.innerHTML = `<span class="marker-emoji" style="cursor: pointer; filter: drop-shadow(0 0 3px #f97316);">🦐</span>`;
+        el.appendChild(inner);
         el.title = `${f.farm_name} (${f.cultured_species} · ${f.water_spread_area_ha} ha)`;
         el.onclick = (e) => {
           e.stopPropagation();
@@ -639,7 +957,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           setPointCoordinates([f.latitude, f.longitude]);
           executeSpatialQuery(f.latitude, f.longitude).then(setPointData);
         };
-        const m = new maplibregl.Marker({ element: el }).setLngLat([f.longitude, f.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([f.longitude, f.latitude]).addTo(map);
         markersRef.current.push(m);
       });
     }
@@ -883,6 +1201,16 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                     }
                   />
                   <span>🏔️ GEBCO Depth Contours</span>
+                </label>
+                <label className="layer-item">
+                  <input
+                    type="checkbox"
+                    checked={visibleLayers.hazards}
+                    onChange={(e) =>
+                      setVisibleLayers((prev) => ({ ...prev, hazards: e.target.checked }))
+                    }
+                  />
+                  <span>⚠️ Active Hazard Zones ({hazardsGeoJson?.features?.length ?? 0})</span>
                 </label>
               </div>
             </div>

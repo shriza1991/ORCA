@@ -319,3 +319,31 @@ def test_all_aquaculture_and_large_radius(client: TestClient):
     large_data = resp_large.json()
     assert large_data["count"] > 0
 
+
+def test_hazards_geojson_contract(client: TestClient):
+    """Test /hazards/geojson returns active meteorological warning polygon features."""
+    resp = client.get("/api/v1/hazards/geojson")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["type"] == "FeatureCollection"
+    assert len(data["features"]) >= 3
+    for f in data["features"]:
+        assert f["geometry"]["type"] == "Polygon"
+        assert "hazard_id" in f["properties"]
+        assert "severity" in f["properties"]
+
+
+def test_boundaries_includes_restrictions(client: TestClient):
+    """Test /boundaries includes both sovereign boundaries and restriction zones (Naval firing ranges, IMBL)."""
+    resp = client.get("/api/v1/boundaries")
+    assert resp.status_code == 200
+    data = resp.json()
+    features = data["features"]
+    feature_types = {f["properties"].get("type") for f in features}
+    assert "EXCLUSIVE_ECONOMIC_ZONE" in feature_types
+    assert "TERRITORIAL_WATERS" in feature_types
+    assert "MARINE_PROTECTED_AREA" in feature_types
+    assert "NAVAL_FIRING_RANGE" in feature_types
+    assert "IMBL_ADVISORY_BORDER" in feature_types
+
+

@@ -649,26 +649,57 @@
   font-size: 13px;
 }
 
-/* Markers */
+/* Markers — Root anchor managed by MapLibre; no transition on transform to prevent zoom lag */
 .marinewatch-custom-marker {
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+/* Inner Pin — Handles visual badge, borders, box-shadow, and hover scaling */
+.marinewatch-marker-inner {
   width: 26px;
   height: 26px;
+  box-sizing: border-box;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
-  transition: transform 0.15s ease;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
+  will-change: transform;
 }
 
-.marinewatch-custom-marker:hover {
-  transform: scale(1.25);
+.marinewatch-custom-marker:hover .marinewatch-marker-inner {
+  transform: scale(1.32);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38);
+  z-index: 50;
+}
+
+.marker-emoji {
+  line-height: 1;
+  display: inline-block;
+  user-select: none;
+  font-size: 14px;
 }
 
 .port-marker {
   border: 2px solid #0284c7;
+}
+
+.lighthouse-marker {
+  border: 2px solid #eab308;
 }
 
 .pfz-marker {
@@ -677,6 +708,45 @@
 
 .aqua-marker {
   border: 2px solid #f97316;
+}
+
+/* Zoom-Tier Adaptive Sizing for whole India overview vs local harbors */
+[data-zoom-tier="overview"] .marinewatch-custom-marker {
+  width: 22px;
+  height: 22px;
+}
+[data-zoom-tier="overview"] .marinewatch-marker-inner {
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+[data-zoom-tier="overview"] .marker-emoji {
+  font-size: 11px;
+}
+
+[data-zoom-tier="regional"] .marinewatch-custom-marker {
+  width: 28px;
+  height: 28px;
+}
+[data-zoom-tier="regional"] .marinewatch-marker-inner {
+  width: 26px;
+  height: 26px;
+}
+[data-zoom-tier="regional"] .marker-emoji {
+  font-size: 14px;
+}
+
+[data-zoom-tier="detail"] .marinewatch-custom-marker {
+  width: 34px;
+  height: 34px;
+}
+[data-zoom-tier="detail"] .marinewatch-marker-inner {
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.32);
+}
+[data-zoom-tier="detail"] .marker-emoji {
+  font-size: 17px;
 }
 
 /* Dual List View */

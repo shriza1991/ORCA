@@ -137,6 +137,15 @@ def get_active_hazards(
     }
 
 
+@router.get(
+    "/hazards/geojson",
+    summary="Active Marine Hazard Zones GeoJSON (§213)",
+    description="Returns GeoJSON polygons for active IMD squally corridors, Bay of Bengal depressions, and INCOIS swell surge warning belts.",
+)
+def get_hazards_geojson() -> Dict[str, Any]:
+    return marine_watch_service.get_hazards_geojson()
+
+
 # ---------------------------------------------------------------------------
 # 4. INCOIS Potential Fishing Zones (PFZ) (§213)
 # ---------------------------------------------------------------------------

@@ -18,7 +18,8 @@
   - Nationwide GEBCO bathymetric shelf profiling (accounting for narrow Coromandel/Andhra slope, broad Konkan/Gujarat shelf, insular trenches off Andaman, and coral lagoons of Lakshadweep).
   - §212 30-dataset canonical catalogue registry.
 - Frontend Interactive GIS Hubs:
-  - `OceanWatch GIS`: MapLibre GL nationwide interactive map with 13 bookmark presets, time scrubber, spatial query sidebar, and **100% clickable interactivity** on all markers (harbours, lighthouses, PFZs, aquaculture) and vector geometries (MPAs, 12nm limits, 200nm EEZ, GEBCO bathymetric contours) with real-time oceanographic & regulatory intelligence.
+  - `OceanWatch GIS`: MapLibre GL nationwide interactive map with 13 bookmark presets, time scrubber, spatial query sidebar, and **100% clickable interactivity** on all markers (harbours, lighthouses, PFZs, aquaculture) and vector geometries (MPAs, 12nm limits, 200nm EEZ, Naval Firing Ranges, Sir Creek IMBL buffer, Active IMD/INCOIS Hazard Corridors, PFZ thermal front geodesic polygons, and GEBCO bathymetric contours) with real-time oceanographic & regulatory intelligence.
+  - **Zoom Stability & Geographic Accuracy**: Decoupled DOM marker coordinate positioning from CSS transitions (`transition: transform` completely isolated to `.marinewatch-marker-inner`), dynamic zoom-tier sizing (`overview` / `regional` / `detail`), zoom-interpolated vector line widths, and zero-drift map anchoring across whole-India overview (z=4) down to local harbor berths (z=12).
   - `FisherWatch`: Multilingual operational dashboard with nationwide coastal sector pills (All India, Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar, Lakshadweep), PFZ advisories, landing harbours, and safety telemetry.
   - `AquaWatch`, `MarineHazards`, `PortWatch`, `DataCatalogue`.
 

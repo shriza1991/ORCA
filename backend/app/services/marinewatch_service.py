@@ -275,8 +275,113 @@ class IndiaMarineWatchService:
         return list(self._lighthouses)
 
     def get_boundaries_geojson(self) -> Dict[str, Any]:
-        """Return India maritime boundaries GeoJSON (12nm, 24nm, 200nm, MPAs, Contours)."""
-        return self._boundaries_geojson
+        """Return India maritime boundaries GeoJSON (12nm, 24nm, 200nm, MPAs, Contours, and Restrictions)."""
+        base_features = list(self._boundaries_geojson.get("features", []))
+        restriction_features = list(self._restrictions_geojson.get("features", []))
+
+        existing_ids = {f.get("id") for f in base_features}
+        for rf in restriction_features:
+            if rf.get("id") not in existing_ids:
+                base_features.append(rf)
+
+        return {
+            "type": "FeatureCollection",
+            "features": base_features,
+        }
+
+    def get_hazards_geojson(self) -> Dict[str, Any]:
+        """Return GeoJSON FeatureCollection of active meteorological hazard zones & warning areas."""
+        features = [
+            {
+                "type": "Feature",
+                "id": "HAZ-POLY-ARABIAN-SQUALL",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [68.0, 14.0],
+                            [73.6, 14.0],
+                            [73.2, 17.5],
+                            [72.5, 20.8],
+                            [68.5, 21.0],
+                            [68.0, 14.0],
+                        ]
+                    ],
+                },
+                "properties": {
+                    "hazard_id": "IMD-HAZ-2026-09-01",
+                    "headline": "Squally Weather Advisory — Central & South Arabian Sea",
+                    "severity": "WARNING",
+                    "category": "WEATHER_SQUALL",
+                    "source": "India Meteorological Department (IMD)",
+                    "wind_speed_kmph": "45-55 gusting to 65",
+                    "sea_condition": "Rough to Very Rough",
+                    "advisory": "Fishermen are advised not to venture into open Arabian Sea waters beyond 20 nautical miles.",
+                    "port_signals": "Kandla (Signal 3), Mumbai (Signal 3), Ratnagiri (Signal 3)",
+                },
+            },
+            {
+                "type": "Feature",
+                "id": "HAZ-POLY-BOB-DEPRESSION",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [80.2, 11.5],
+                            [85.5, 12.0],
+                            [86.5, 18.5],
+                            [83.5, 19.0],
+                            [80.5, 15.5],
+                            [80.2, 11.5],
+                        ]
+                    ],
+                },
+                "properties": {
+                    "hazard_id": "IMD-BOB-DEP-2026-09-03",
+                    "headline": "Depression / Squally Wind Warning — West-Central Bay of Bengal",
+                    "severity": "WARNING",
+                    "category": "WEATHER_SQUALL",
+                    "source": "India Meteorological Department (IMD)",
+                    "wind_speed_kmph": "50-60 gusting to 70",
+                    "sea_condition": "Rough to High",
+                    "advisory": "Fishermen along the Andhra Pradesh and North Tamil Nadu coasts are strictly advised not to venture into sea.",
+                    "port_signals": "Visakhapatnam (Signal 3), Paradip (Signal 3), Chennai (Signal 2)",
+                },
+            },
+            {
+                "type": "Feature",
+                "id": "HAZ-POLY-SWELL-SURGE",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [74.5, 8.2],
+                            [76.8, 8.2],
+                            [76.2, 10.2],
+                            [74.8, 13.0],
+                            [73.2, 16.5],
+                            [72.5, 16.5],
+                            [73.8, 12.8],
+                            [74.5, 8.2],
+                        ]
+                    ],
+                },
+                "properties": {
+                    "hazard_id": "INCOIS-SWELL-2026-09-02",
+                    "headline": "High Swell Surge (Kallakkadal) Warning — South-West & Konkan Coast",
+                    "severity": "ALERT",
+                    "category": "SWELL_SURGE",
+                    "source": "INCOIS Ocean State Forecast",
+                    "swell_height_m": 2.8,
+                    "swell_period_sec": 15.0,
+                    "advisory": "Low-lying beach landing craft should be anchored securely. Beach operations prohibited during high tide.",
+                },
+            },
+        ]
+        return {
+            "type": "FeatureCollection",
+            "features": features,
+        }
 
     # -----------------------------------------------------------------------
     # 5. Active Marine Hazards & Bulletins

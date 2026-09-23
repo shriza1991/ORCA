@@ -391,6 +391,12 @@ export async function fetchMaritimeBoundaries(): Promise<any> {
   return res.json();
 }
 
+export async function fetchHazardsGeoJson(): Promise<any> {
+  const res = await fetch(`${API_BASE}/hazards/geojson`);
+  if (!res.ok) throw new Error(`Failed to fetch hazards geojson: ${res.statusText}`);
+  return res.json();
+}
+
 export async function fetchCoastProfile(lat: number, lon: number): Promise<BathymetryProfile> {
   const res = await fetch(`${API_BASE}/coast/profile?lat=${lat}&lon=${lon}`);
   if (!res.ok) throw new Error(`Failed to fetch coast profile: ${res.statusText}`);
