@@ -5,6 +5,7 @@ import FisherDecisionSurface from '../components/fisher/FisherDecisionSurface';
 import WhatIfSimulator from '../components/mission/WhatIfSimulator';
 import OceanDetails from '../components/fisher/OceanDetails';
 import PFZDetails from '../components/fisher/PFZDetails';
+import TripPlanDetails from '../components/fisher/TripPlanDetails';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
 import { getHarborCoordinates, fetchAndFormatBaseLayers } from '../utils/geo';
@@ -204,6 +205,7 @@ export default function FisherPage({
 
             <PFZDetails assessment={assessment} language={chat.language} />
             <OceanDetails assessment={assessment} language={chat.language} />
+            <TripPlanDetails assessment={assessment} language={chat.language} />
           </div>
         )}
       </div>
