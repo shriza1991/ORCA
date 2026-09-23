@@ -337,6 +337,56 @@ interface TranslationEntry {
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
   {
+    en: 'No Active Hazards',
+    hi: 'कोई सक्रिय खतरा नहीं',
+    mr: 'कोणतेही सक्रिय धोके नाहीत',
+  },
+  {
+    en: 'Status Unknown',
+    hi: 'स्थिति अज्ञात',
+    mr: 'स्थिती अज्ञात',
+  },
+  {
+    en: 'Elevated Hazard',
+    hi: 'बढ़ा हुआ खतरा',
+    mr: 'वाढलेला धोका',
+  },
+  {
+    en: 'Hazard Alert',
+    hi: 'खतरे का अलर्ट',
+    mr: 'धोक्याचा इशारा',
+  },
+  {
+    en: 'What is happening:',
+    hi: 'क्या हो रहा है:',
+    mr: 'काय घडत आहे:',
+  },
+  {
+    en: 'Does it affect this trip?',
+    hi: 'क्या यह इस यात्रा को प्रभावित करता है?',
+    mr: 'याचा या प्रवासावर परिणाम होतो का?',
+  },
+  {
+    en: 'Yes, it directly affects your planned route.',
+    hi: 'हां, यह आपके नियोजित मार्ग को सीधे प्रभावित करता है।',
+    mr: 'होय, याचा तुमच्या नियोजित मार्गावर थेट परिणाम होतो.',
+  },
+  {
+    en: 'What to do next:',
+    hi: 'आगे क्या करना है:',
+    mr: 'पुढे काय करावे:',
+  },
+  {
+    en: 'Do not depart. Await further clearance.',
+    hi: 'प्रस्थान न करें। आगे की मंजूरी की प्रतीक्षा करें।',
+    mr: 'निघू नका. पुढील मंजुरीची प्रतीक्षा करा.',
+  },
+  {
+    en: 'Hear the official advisory',
+    hi: 'आधिकारिक सलाह सुनें',
+    mr: 'अधिकृत सल्ला ऐका',
+  },
+  {
     en: 'Alert',
     hi: 'अलर्ट',
     mr: 'इशारा',

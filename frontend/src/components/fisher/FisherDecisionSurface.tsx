@@ -244,7 +244,7 @@ export default function FisherDecisionSurface({
       if (hasActiveHazard) {
         const alertPrefix = translateText('Alert', language);
         const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
-        textToSpeak += ` ${alertPrefix}: ${hazardVal} ${affectsSuffix}`;
+        textToSpeak += ` ${alertPrefix}: ${translateText(hazardVal, language)} ${affectsSuffix}`;
       }
       speak(textToSpeak);
     }
@@ -346,7 +346,12 @@ export default function FisherDecisionSurface({
             <strong>{translateText('What to do next:', language)}</strong> {translateText('Do not depart. Await further clearance.', language)}
           </p>
           <button
-            onClick={() => speak(translateText(`A ${hazardVal} affects your planned trip. Do not depart. Hear the official advisory.`, language))}
+            onClick={() => {
+              const alertPrefix = translateText('Alert', language);
+              const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
+              const hearAdvisory = translateText('Hear the official advisory', language);
+              speak(`${alertPrefix}: ${translateText(hazardVal, language)}. ${affectsSuffix} ${hearAdvisory}`);
+            }}
             style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#ef4444', color: 'white', borderRadius: '8px', border: 'none', width: '100%' }}
           >
             <Volume2 size={24} />
