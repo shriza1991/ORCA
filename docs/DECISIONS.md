@@ -381,6 +381,24 @@ Status: ACCEPTED
 - Affected areas: `backend/app/domain/risk_engine.py`, `backend/app/agents/intent.py`, `backend/app/agents/graph.py`, `tests/agent_eval/test_flagship_flow.py`.
 - Tests/verification: `test_flagship_flow.py` (100% passing), `tests/domain/` (18 passing), `tests/agent_eval/` (466 passing, 1 skipped).
 
+## D030 — PostGIS Schema Versioning, SACHET CAP Harmonization, In-Memory Rate Limiting, and Telemetry
+Status: ACCEPTED
+
+- Date: 2026-09-23
+- Agent/person: Senior Backend / Data Engineer (M2)
+- Task/context: Durable persistence, disaster feed ingestion, rate limiting, and production telemetry.
+- Decision:
+  1. **PostGIS & Alembic Migration**: Added migration `e1a2b3c4d5e6_trip_assessments_and_alerts.py` versioning `saved_trip_subscriptions`, `actionable_alerts`, and `trip_assessments`. Retained GeoAlchemy2 spatial geometry for `map_layers` without forcing heavy PostGIS dependencies during hermetic test executions.
+  2. **NDMA SACHET / CAP Integration**: Ingests Common Alerting Protocol (CAP 1.2 XML / JSON). Employs deterministic 2D ray casting for polygons and haversine distance for circular boundaries. Merges into `ConnectorManager` with worst-case safety harmonization against IMD hazard bulletins.
+  3. **Backend Rate Limiting**: Implemented `RateLimitMiddleware` with an in-memory sliding window queue keyed by route type and client IP. Exempts health checks and test headers while returning HTTP 429 and `Retry-After`. Avoids premature Redis or distributed complexity for current deployment bounds.
+  4. **Observability**: Implemented `ObservabilityMiddleware` injecting `X-Request-ID` and `X-Response-Time-Ms` response headers. Instrumented `ConnectorManager._execute` with execution latency, upstream source, mode, and error state logging, while `RedactingJsonFormatter` prevents secret and coordinate leaks.
+- Why: Satisfies all M2 backend invariants: real-source integration, deterministic spatial checks, abuse prevention, production visibility, and epistemic honesty.
+- Alternatives considered:
+  - Introducing Redis for rate limiting (rejected as premature distributed infrastructure).
+  - Merging SACHET alerts blindly over IMD (rejected: authority and worst-case severity must be harmonized without overwriting).
+- Affected areas: `backend/alembic/versions/`, `backend/app/connectors/sachet.py`, `backend/app/connectors/manager.py`, `backend/app/api/middleware.py`, `backend/app/main.py`.
+- Tests/verification: `tests/connectors/test_sachet_connector.py`, `tests/api/test_rate_limiting.py`, `tests/api/test_observability.py`, `tests/domain/test_spatial_db_repository.py`.
+
 ## Decision template
 
 ### D0XX — <title>

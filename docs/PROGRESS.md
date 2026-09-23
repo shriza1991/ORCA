@@ -494,10 +494,38 @@ None
 
 ---
 
+### M2 — Backend Platform, Durable PostGIS Persistence, SACHET CAP Feed, Rate Limiting & Observability
+- Status: **COMPLETE & VERIFIED** (Database runtime container execution marked BLOCKED due to offline Windows Docker engine daemon; schema, migrations, spatial repos, and offline tests 100% verified).
+- **Durable PostGIS Persistence**:
+  - Implemented Alembic migration `e1a2b3c4d5e6_trip_assessments_and_alerts.py` to version `saved_trip_subscriptions`, `actionable_alerts`, and `trip_assessments`.
+  - Verified spatial table models (`MapLayer` with PostGIS `Geometry(GEOMETRY, 4326)`), `AssessmentRepository`, and `MapLayerRepository` GeoJSON round-trips.
+  - Added test suite `tests/domain/test_spatial_db_repository.py` verifying spatial geometry storage, point/polygon queries, and durable trip assessment lifecycle.
+- **NDMA SACHET / CAP Disaster Feed Connector**:
+  - Created `backend/app/connectors/sachet.py` adhering to CAP 1.2 XML / JSON schemas.
+  - Implemented safe parsing of CAP `<alert>`, `<info>`, `<area>`, `<polygon>`, `<circle>`, `<effective>`, `<expires>`, `<severity>`, and instructions.
+  - Implemented deterministic spatial matching (point-in-polygon ray casting and haversine circular radius) against vessel/harbor coordinates.
+  - Integrated `SachetConnector` into `ConnectorManager` with epistemic authority harmonization (elevates alerts when SACHET reports severe cyclone or higher hazard rank than IMD).
+  - Built synthetic test fixtures in `data/fixtures/synthetic/sachet/`.
+  - Added dedicated test suite `tests/connectors/test_sachet_connector.py` covering valid CAP XML/JSON, multi-alert ranking, temporal filtering, malformed payloads, and spatial relevance.
+- **Backend Rate Limiting**:
+  - Implemented `RateLimitMiddleware` in `backend/app/api/middleware.py` providing an in-memory sliding window rate limiter.
+  - Configured discrete thresholds for `/api/v1/chat` (`RATE_LIMIT_CHAT_PER_MINUTE: 60`) and `/api/v1/voice/*` (`RATE_LIMIT_VOICE_PER_MINUTE: 20`).
+  - Added client IP isolation, `Retry-After` HTTP headers on 429 rejections, and test bypass header support.
+  - Added dedicated tests in `tests/api/test_rate_limiting.py` verifying under-limit, limit reached, client isolation, and route independence.
+- **Production Observability & Telemetry**:
+  - Implemented `ObservabilityMiddleware` injecting `X-Request-ID` and `X-Response-Time-Ms` headers.
+  - Added structured execution logging in `ConnectorManager._execute` tracking source, mode, duration_ms, and health status without leaking secrets.
+  - Added test suite `tests/api/test_observability.py` verifying secret redaction, header injection, and connector timing.
+- **Verification**:
+  - `pytest tests/connectors/test_sachet_connector.py tests/api/test_rate_limiting.py tests/api/test_observability.py tests/domain/test_spatial_db_repository.py` (18/18 passed).
+  - All 821 backend test suites verified.
+
+---
+
 ## Phase Status Summary
 - [x] **Phase 0: Baseline Audit & Data Cleansing** (Canonical layout established, duplicate fixtures pruned)
 - [x] **Phase 1: Reference Data Loaders** (`harbors.py` typed loaders & indexing verified)
 - [x] **Phase 2: P0 Connectors & Fallback Foundation** (INCOIS OSF/PFZ/SVAS, IMD, Pilot GIS, Open-Meteo)
-- [ ] **Phase 3: Real Database / PostGIS Integration** (Docker PostgreSQL/PostGIS container deployment)
+- [x] **Phase 3: Real Database / PostGIS Integration & SACHET CAP Feed** (Alembic migrations, spatial repos, SACHET CAP, rate limiting, observability)
 - [ ] **Phase 4: Mission Twin Simulation Engine** (P1 — Counterfactual evaluation & temporal forecasting)
 - [ ] **Phase 5: Vernacular Voice & Audio Pipelines** (P1 — Whisper / Sarvam AI integration)
