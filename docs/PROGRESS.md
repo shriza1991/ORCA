@@ -8,6 +8,17 @@
 - Current milestone: **P0 Marine Data & API Integration Foundation**
 - Completion status: **COMPLETE & OFFLINE VERIFIED**
 
+#### P0-11 — Chat Context State Integrity (Fisher What-If Controls)
+- Fixed conversational logic to parse relative timestamps into absolute ISO references and compute true scenario offsets without overriding operational rules.
+- Chat API preserves active context explicitly rather than merging partial deltas incorrectly into system intent templates.
+- Enforced strict prompt boundaries mapping relative expressions ("leave two hours later") mathematically instead of relying on open-ended LLM arithmetic.
+
+### P0-9 — Final Integration Validation & Defect Fixes
+- **Frontend Defect Fixes**: Fixed `FisherDecisionSurface.tsx` to handle `TripAssessmentResponse.decision` correctly when strictly serialized as an Enum string from the backend, avoiding UI states permanently stuck in `UNKNOWN` and missing explanations.
+- **Backend Safety Invariants Validated**: Validated through codebase scans and test suite execution that no LLM prompt overrides deterministic "NO GO" or "CAUTION" outputs. Re-verified `TripAssessmentResponse` API faithfully passes `UNKNOWN` and refuses "GO" predictions if any critical telemetry data (`marine`, `weather`, `hazard`) is expired or unreachable.
+- **Offline / Credential Security Check**: Verified through codebase scans that no valid API keys are hardcoded. Tests involving missing/stubbed infrastructure explicitly flag themselves gracefully without crashing the UI.
+- **Completed**: All 14 test journeys evaluated. Mocks have been isolated to fixture fallbacks as per the DATA_MODE contract.
+
 ### P0-7 — Authority chat sector context
 - Authority chat now sends the active canonical sector `public_id` per request.
 - The chat API validates the sector and derives canonical harbor and coordinates before graph execution.

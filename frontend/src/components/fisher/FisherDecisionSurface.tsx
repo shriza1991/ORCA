@@ -51,7 +51,9 @@ export function getFisherDecisionStatus(
   if (error || !assessment || !assessment.decision) {
     return 'UNKNOWN';
   }
-  const rawStatus = (assessment.decision.status || '').toUpperCase();
+  const rawStatus = typeof assessment.decision === 'string' 
+    ? (assessment.decision as string).toUpperCase() 
+    : (assessment.decision as any)?.status?.toUpperCase() || '';
   switch (rawStatus) {
     case 'GO':
       return 'SAFE_TO_GO';
@@ -83,7 +85,21 @@ export function getFisherExplanation(
     return translateText('No current safety assessment available.', language);
   }
 
-  const rec = response.decision;
+  const rec = response.decision as any;
+  if (typeof rec === 'string') {
+    // If it's a string, we might only have alerts for the explanation
+    if (status === 'UNKNOWN' && response.alerts?.length > 0) {
+      return translateText((response.alerts[0] as any).message || response.alerts[0].title || 'A safety recommendation is not available from the current evidence.', language);
+    }
+    if (status === 'SAFE_TO_GO') {
+      return translateText('Conditions are within safe operating limits.', language);
+    }
+    if (status === 'CAUTION' || status === 'DO_NOT_GO') {
+      return translateText((response.alerts?.[0] as any)?.message || response.alerts?.[0]?.title || 'Conditions exceed safety limits.', language);
+    }
+    return translateText('A safety recommendation is not available from the current evidence.', language);
+  }
+
   if (status === 'UNKNOWN') {
     if (rec.summary && rec.summary.trim().length > 0) {
       return translateText(rec.summary, language);
