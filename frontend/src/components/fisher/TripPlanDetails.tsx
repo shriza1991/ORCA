@@ -3,7 +3,7 @@ import type { TripAssessmentResponse } from '../../types/assessment';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
 
 interface TripPlanDetailsProps {
-  assessment?: TripAssessmentResponse;
+  assessment: TripAssessmentResponse | null;
   language: SupportedLanguage;
 }
 
