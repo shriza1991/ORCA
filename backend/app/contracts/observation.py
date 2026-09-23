@@ -8,14 +8,19 @@ for a single analysis run.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 from pydantic import BaseModel, Field
 
-from backend.app.agents.integrations.dev2 import (
-    HazardBulletinPayload,
-    MarineConditionsPayload,
-    WeatherConditionsPayload,
-)
+if TYPE_CHECKING:
+    from backend.app.agents.integrations.dev2 import (
+        HazardBulletinPayload,
+        MarineConditionsPayload,
+        WeatherConditionsPayload,
+    )
+else:
+    HazardBulletinPayload = Any
+    MarineConditionsPayload = Any
+    WeatherConditionsPayload = Any
 
 
 class ObservationBundle(BaseModel):
