@@ -86,7 +86,7 @@ def _build_user_context(request: ChatRequest) -> dict[str, Any]:
         sector_context = resolve_authority_sector_context(ctx.sector_id)
         if sector_context is None:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Unknown canonical Authority sector '{ctx.sector_id}'.",
             )
         # A validated Authority sector is authoritative for this request; no

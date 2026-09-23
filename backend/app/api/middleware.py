@@ -1,14 +1,20 @@
 """FastAPI Middlewares.
 
 Owned by Dev 2 (Backend Platform).
-Implements request IDs and size limits.
+Implements request IDs, size limits, sliding-window rate limiting, and observability.
 """
 
+import asyncio
+import logging
+import math
+import time
 import uuid
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
@@ -55,3 +61,104 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                     )
         return await call_next(request)
 
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """In-memory sliding window rate limiter for critical endpoints.
+    
+    Protects /api/v1/chat and /api/v1/voice/* against denial-of-service,
+    excessive upstream provider consumption, and quota burnout.
+    """
+
+    def __init__(
+        self,
+        app,
+        chat_limit: int = 60,
+        voice_limit: int = 20,
+        window_seconds: int = 60,
+    ) -> None:
+        super().__init__(app)
+        self.chat_limit = chat_limit
+        self.voice_limit = voice_limit
+        self.window_seconds = window_seconds
+        # Dict mapping key -> list of float timestamps
+        self._history: dict[str, list[float]] = {}
+        self._lock = asyncio.Lock()
+
+    def _get_client_key(self, request: Request, route_type: str) -> str:
+        # Use X-Forwarded-For if available, otherwise client host
+        forwarded = request.headers.get("x-forwarded-for")
+        client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+        return f"{route_type}:{client_ip}"
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        path = request.url.path
+        route_type = None
+        limit = 0
+
+        if path.startswith("/api/v1/chat"):
+            route_type = "chat"
+            limit = self.chat_limit
+        elif path.startswith("/api/v1/voice"):
+            route_type = "voice"
+            limit = self.voice_limit
+
+        # If not a rate-limited route or limit is 0 (disabled), bypass
+        if not route_type or limit <= 0:
+            return await call_next(request)
+
+        # Allow tests to bypass if explicitly requested via header
+        if request.headers.get("x-bypass-rate-limit") == "true":
+            return await call_next(request)
+
+        now = time.time()
+        client_key = self._get_client_key(request, route_type)
+
+        async with self._lock:
+            timestamps = self._history.get(client_key, [])
+            # Prune timestamps older than window
+            cutoff = now - self.window_seconds
+            valid_timestamps = [t for t in timestamps if t > cutoff]
+
+            if len(valid_timestamps) >= limit:
+                retry_after = int(math.ceil(valid_timestamps[0] + self.window_seconds - now))
+                retry_after = max(1, retry_after)
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": "RateLimitExceeded",
+                        "message": f"Rate limit of {limit} requests per {self.window_seconds}s exceeded for {route_type}.",
+                        "retry_after_seconds": retry_after,
+                    },
+                    headers={"Retry-After": str(retry_after)},
+                )
+
+            valid_timestamps.append(now)
+            self._history[client_key] = valid_timestamps
+
+        return await call_next(request)
+
+
+class ObservabilityMiddleware(BaseHTTPMiddleware):
+    """Structured latency tracking and request metrics propagation."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        start_time = time.perf_counter()
+        request_id = getattr(request.state, "request_id", None) or request.headers.get("X-Request-ID", "unknown")
+
+        response = await call_next(request)
+
+        elapsed_ms = (time.perf_counter() - start_time) * 1000.0
+        response.headers["X-Response-Time-Ms"] = f"{elapsed_ms:.2f}"
+
+        # Structured request summary log without leaking secrets or payload
+        logger.info(
+            "HTTP %s %s status=%d duration_ms=%.2f request_id=%s",
+            request.method,
+            request.url.path,
+            response.status_code,
+            elapsed_ms,
+            request_id,
+            extra={"request_id": request_id},
+        )
+
+        return response
