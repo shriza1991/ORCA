@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>SACHET-NDMA-2026-09-CYCLONE-01</identifier>
+  <sender>ndma-sachet-marine@gov.in</sender>
+  <sent>2026-09-23T10:00:00+00:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <scope>Public</scope>
+  <info>
+    <category>Met</category>
+    <event>Severe Cyclonic Storm Warning</event>
+    <urgency>Immediate</urgency>
+    <severity>Severe</severity>
+    <certainty>Observed</certainty>
+    <eventCode>
+      <valueName>NDMA_CODE</valueName>
+      <value>CYCLONE</value>
+    </eventCode>
+    <effective>2026-09-23T10:00:00+00:00</effective>
+    <expires>2026-09-25T18:00:00+00:00</expires>
+    <senderName>National Disaster Management Authority (SACHET)</senderName>
+    <headline>Severe Cyclonic Storm Advisory for Maharashtra-Goa Maritime Belt</headline>
+    <description>Severe cyclonic disturbance active over North-Central Arabian Sea. Gale force winds reaching 45-55 knots with very rough sea state. Total suspension of all artisanal and motorized fishing operations advised.</description>
+    <instruction>All fishermen are advised not to venture into deep sea and coastal waters of Ratnagiri, Sindhudurg, and South Konkan.</instruction>
+    <area>
+      <areaDesc>Konkan and Maharashtra Coastal Sector</areaDesc>
+      <polygon>16.0,72.5 17.5,72.5 17.5,73.8 16.0,73.8 16.0,72.5</polygon>
+    </area>
+  </info>
+</alert>

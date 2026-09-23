@@ -55,9 +55,20 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    from backend.app.api.middleware import RequestIDMiddleware, RequestSizeLimitMiddleware
+    from backend.app.api.middleware import (
+        ObservabilityMiddleware,
+        RateLimitMiddleware,
+        RequestIDMiddleware,
+        RequestSizeLimitMiddleware,
+    )
     app.add_middleware(RequestIDMiddleware)
+    app.add_middleware(ObservabilityMiddleware)
     app.add_middleware(RequestSizeLimitMiddleware, max_upload_size=1048576)
+    app.add_middleware(
+        RateLimitMiddleware,
+        chat_limit=settings.RATE_LIMIT_CHAT_PER_MINUTE,
+        voice_limit=settings.RATE_LIMIT_VOICE_PER_MINUTE,
+    )
 
     # Register API Routers
     app.include_router(api_v1_router)
@@ -83,10 +94,13 @@ def create_app() -> FastAPI:
     from backend.app.connectors.snapshot import SnapshotConnector
     from backend.app.connectors.modes import DataMode
 
+    from backend.app.connectors.sachet import SachetConnector
+
     snapshot_connector = SnapshotConnector()
     marine_live = IncoisOceanStateConnector()
     weather_live = ImdWeatherConnector()
     hazard_live = ImdHazardConnector()
+    sachet_live = SachetConnector()
     pfz_live = marine_live
     svas_live = marine_live
 
@@ -98,6 +112,7 @@ def create_app() -> FastAPI:
         hazard_live=hazard_live,
         pfz_live=pfz_live,
         svas_live=svas_live,
+        sachet_live=sachet_live,
     )
     register_dev2_provider_tools(tool_registry, manager)
     

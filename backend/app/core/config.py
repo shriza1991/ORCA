@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     OPEN_METEO_BASE_URL: str = "https://marine-api.open-meteo.com/v1/marine"
     OPEN_METEO_CACHE_TTL_SECONDS: int = 3600
     SARVAM_API_KEY: str = ""
+    SACHET_API_BASE_URL: str = "https://sachet.ndma.gov.in/api/v1/cap/placeholder"
+    SACHET_API_KEY: str = ""
+
+    # Rate Limiting
+    RATE_LIMIT_CHAT_PER_MINUTE: int = 60
+    RATE_LIMIT_VOICE_PER_MINUTE: int = 20
 
     # LLM Settings
     GROQ_API_KEY: str = ""

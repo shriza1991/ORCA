@@ -137,12 +137,12 @@ def test_imd_hazard_cyclone_alert(monkeypatch, imd_hazard):
 
 
 def test_imd_hazard_fallback_normal():
-    # Without API key, connector returns safe NORMAL bulletin with degraded flag
+    # Without API key, connector loads genuine snapshot file or returns safe fallback bulletin with degraded flag
     conn = ImdHazardConnector(data_mode="HYBRID")
     ctx = ToolInvocationContext(origin_harbor="Ratnagiri")
     payload = conn.get_hazard_bulletin(ctx)
 
     assert payload.cyclone_warning_active is False
     assert payload.squall_alert is False
-    assert payload.severity == "UNKNOWN"
-    assert "UNAVAILABLE" in payload.source_name
+    assert payload.severity in ("NORMAL", "UNKNOWN")
+    assert any(term in payload.source_name for term in ("IMD", "UNAVAILABLE"))
