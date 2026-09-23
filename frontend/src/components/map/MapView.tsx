@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import maplibregl from 'maplibre-gl';
 import * as Popover from '@radix-ui/react-popover';
+import * as turf from '@turf/turf';
 import type { MapLayer } from '../../types/contracts';
 import type { OperationalMode } from '../../types/mission';
 import LayerManager from './LayerManager';
 import MissionMapBrief from './MissionMapBrief';
-import { Layers, Navigation } from 'lucide-react';
+import { Layers, Navigation, Play, Square, Ship, Sailboat } from 'lucide-react';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
 
 /** Initial fallback center (Indian coastal waters) */
@@ -35,6 +37,7 @@ interface MapViewProps {
   liveLocationStatus?: string;
   isTrackingLocation?: boolean;
   onToggleLocation?: () => void;
+  craftProfile?: string;
 }
 
 export default function MapView({
@@ -52,12 +55,17 @@ export default function MapView({
   liveLocationStatus,
   isTrackingLocation,
   onToggleLocation,
+  craftProfile = 'motorized_boat',
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const activeLayersRef = useRef<{ layers: string[]; sources: string[] }>({ layers: [], sources: [] });
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>({});
+  const [isSimulating, setIsSimulating] = useState(false);
+  const simulationMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const simulationRootRef = useRef<Root | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const [selectedCorridorMode, setSelectedCorridorMode] = useState<OperationalMode>('safest');
 
   const activeStyle = theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
@@ -238,6 +246,104 @@ export default function MapView({
       });
     }
   }, [liveLocation, isTrackingLocation]);
+
+  const stopSimulation = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (simulationMarkerRef.current) {
+      simulationMarkerRef.current.remove();
+      simulationMarkerRef.current = null;
+    }
+    if (simulationRootRef.current) {
+      simulationRootRef.current.unmount();
+      simulationRootRef.current = null;
+    }
+    setIsSimulating(false);
+  }, []);
+
+  const startSimulation = useCallback(() => {
+    if (!mapRef.current) return;
+    
+    // Find the primary route
+    const routeLayer = effectiveRenderLayers.find(l => l.style?.layer_category === 'route');
+    if (!routeLayer || !routeLayer.geojson || routeLayer.geojson.type !== 'FeatureCollection') return;
+    
+    const routeFeature = routeLayer.geojson.features?.[0];
+    if (!routeFeature || routeFeature.geometry.type !== 'LineString') return;
+
+    const line = routeFeature as GeoJSON.Feature<GeoJSON.LineString>;
+    const routeLength = turf.length(line, { units: 'kilometers' });
+    if (routeLength === 0) return;
+
+    setIsSimulating(true);
+
+    // Create custom DOM element for the boat marker
+    const el = document.createElement('div');
+    el.className = 'simulation-marker';
+    el.style.width = '40px';
+    el.style.height = '40px';
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.justifyContent = 'center';
+    el.style.background = 'white';
+    el.style.border = '2px solid #2563eb';
+    el.style.borderRadius = '50%';
+    el.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)';
+
+    const root = createRoot(el);
+    simulationRootRef.current = root;
+
+    let Icon = Ship;
+    if (craftProfile === 'traditional_non_motorized') Icon = Sailboat;
+    else if (craftProfile === 'mechanized_trawler') Icon = Ship; // using Ship for both, but we can differentiate color
+    
+    root.render(<Icon size={24} color="#2563eb" fill={craftProfile === 'mechanized_trawler' ? '#bfdbfe' : 'none'} />);
+
+    const marker = new maplibregl.Marker({ element: el, pitchAlignment: 'map', rotationAlignment: 'map' })
+      .setLngLat(line.geometry.coordinates[0] as [number, number])
+      .addTo(mapRef.current);
+    
+    simulationMarkerRef.current = marker;
+
+    const animationDuration = 10000; // 10 seconds to complete route
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = (timestamp - startTime) / animationDuration;
+
+      if (progress < 1) {
+        const distance = progress * routeLength;
+        const currentPoint = turf.along(line, distance, { units: 'kilometers' });
+        
+        // Calculate bearing to next point slightly ahead for smooth rotation
+        const nextPoint = turf.along(line, Math.min(distance + 0.05, routeLength), { units: 'kilometers' });
+        const bearing = turf.bearing(currentPoint, nextPoint);
+        
+        marker.setLngLat(currentPoint.geometry.coordinates as [number, number]);
+        marker.setRotation(bearing);
+
+        // Keep map centered on boat during simulation
+        mapRef.current?.panTo(currentPoint.geometry.coordinates as [number, number], { duration: 0 });
+
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        // Animation finished
+        stopSimulation();
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [effectiveRenderLayers, craftProfile, stopSimulation]);
+
+  // Clean up animation on unmount
+  useEffect(() => {
+    return () => {
+      stopSimulation();
+    };
+  }, [stopSimulation]);
 
   // Initialize map
   useEffect(() => {
@@ -807,6 +913,15 @@ export default function MapView({
             <Layers size={24} />
             {translateText('Fit Trip', language) || 'Fit Trip'}
           </button>
+          {layerAvailability?.routes === 'AVAILABLE' && (
+            <button
+              onClick={isSimulating ? stopSimulation : startSimulation}
+              style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: isSimulating ? '#fee2e2' : 'white', color: isSimulating ? '#dc2626' : '#2563eb', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+            >
+              {isSimulating ? <Square size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+              {isSimulating ? 'Stop' : 'Simulate'}
+            </button>
+          )}
         </div>
       )}
 

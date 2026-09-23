@@ -227,6 +227,7 @@ export default function FisherPage({
           liveLocationStatus={geoStatus}
           isTrackingLocation={isTracking}
           onToggleLocation={handleToggleLocation}
+          craftProfile={chat.missionContext.craft_profile || 'motorized_boat'}
         />
       </div>
     </main>
