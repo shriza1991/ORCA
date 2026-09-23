@@ -210,7 +210,59 @@ def get_nearby_aquaculture(
 
 
 # ---------------------------------------------------------------------------
-# 7. Coastal Profile & GEBCO Bathymetry (§213)
+# 7. DGLL Coastal Lighthouses & Navigational Aids
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/lighthouses/nearby",
+    summary="Nearby DGLL Lighthouses (§213)",
+    description="Finds Directorate General of Lighthouses and Lightships (DGLL) navigational aids within radius.",
+)
+def get_nearby_lighthouses(
+    lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
+    lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
+    radius_km: float = Query(200.0, ge=1.0, le=1000.0, description="Search radius in kilometers"),
+    limit: int = Query(8, ge=1, le=50, description="Maximum number of lighthouses to return"),
+) -> Dict[str, Any]:
+    lighthouses = marine_watch_service.get_nearby_lighthouses(lat=lat, lon=lon, radius_km=radius_km, limit=limit)
+    return {
+        "count": len(lighthouses),
+        "search_origin": {"lat": lat, "lon": lon},
+        "radius_km": radius_km,
+        "lighthouses": lighthouses,
+        "source": "Directorate General of Lighthouses and Lightships (DGLL), MoPSW",
+    }
+
+
+@router.get(
+    "/lighthouses",
+    summary="All Indian Coastal Lighthouses",
+    description="Returns full nationwide catalogue of primary coastal lighthouses and landfall beacons.",
+)
+def get_all_lighthouses() -> Dict[str, Any]:
+    lighthouses = marine_watch_service.get_all_lighthouses()
+    return {
+        "count": len(lighthouses),
+        "lighthouses": lighthouses,
+        "source": "DGLL National Aids to Navigation Register",
+    }
+
+
+# ---------------------------------------------------------------------------
+# 8. National Maritime Boundaries & Protected Areas GeoJSON
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/boundaries",
+    summary="India Maritime Boundaries & MPAs GeoJSON",
+    description="Returns 12nm Territorial Waters, 24nm Contiguous Zones, 200nm EEZ, MPAs, and GEBCO bathymetric contours.",
+)
+def get_maritime_boundaries() -> Dict[str, Any]:
+    return marine_watch_service.get_boundaries_geojson()
+
+
+# ---------------------------------------------------------------------------
+# 9. Coastal Profile & GEBCO Bathymetry (§213)
 # ---------------------------------------------------------------------------
 
 @router.get(
@@ -226,7 +278,7 @@ def get_coast_profile(
 
 
 # ---------------------------------------------------------------------------
-# 8. Data Catalogue (§212, §213)
+# 10. Data Catalogue (§212, §213)
 # ---------------------------------------------------------------------------
 
 @router.get(
@@ -265,7 +317,7 @@ def get_dataset(dataset_id: str) -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# 9. Unified Spatial Search (§213)
+# 11. Unified Spatial Search (§213)
 # ---------------------------------------------------------------------------
 
 @router.get(
@@ -285,7 +337,7 @@ def search_marine_features(
 
 
 # ---------------------------------------------------------------------------
-# 10. Unified Spatial Query ("What is here?") (§215)
+# 12. Unified Spatial Query ("What is here?") (§215)
 # ---------------------------------------------------------------------------
 
 @router.post(
@@ -297,6 +349,7 @@ def execute_spatial_query(request: SpatialQueryRequest) -> Dict[str, Any]:
     point_data = marine_watch_service.get_point_forecast(lat=request.lat, lon=request.lon)
     nearby_ports = marine_watch_service.get_nearby_ports(lat=request.lat, lon=request.lon, radius_km=request.radius_km)
     nearby_aqua = marine_watch_service.get_nearby_aquaculture(lat=request.lat, lon=request.lon, radius_km=request.radius_km)
+    nearby_lighthouses = marine_watch_service.get_nearby_lighthouses(lat=request.lat, lon=request.lon, radius_km=request.radius_km)
 
     return {
         "query_point": {"lat": request.lat, "lon": request.lon},
@@ -307,5 +360,6 @@ def execute_spatial_query(request: SpatialQueryRequest) -> Dict[str, Any]:
         "active_hazards": point_data["hazards"],
         "nearby_landing_centres": nearby_ports,
         "nearby_aquaculture_sites": nearby_aqua,
+        "nearby_lighthouses": nearby_lighthouses,
         "sources": point_data["sources"],
     }

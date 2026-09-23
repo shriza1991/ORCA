@@ -22,7 +22,23 @@ import {
   type RouteForecastResponse,
 } from '../../api/marinewatch-client';
 
+const COASTAL_SECTORS = [
+  'All India',
+  'Gujarat',
+  'Maharashtra',
+  'Goa',
+  'Karnataka',
+  'Kerala',
+  'Tamil Nadu',
+  'Andhra Pradesh',
+  'Odisha',
+  'West Bengal',
+  'Andaman & Nicobar',
+  'Lakshadweep',
+];
+
 export default function FisherWatchView() {
+  const [selectedSector, setSelectedSector] = useState<string>('All India');
   const [pfzList, setPfzList] = useState<PFZAdvisory[]>([]);
   const [landingCentres, setLandingCentres] = useState<LandingCentre[]>([]);
   const [selectedPort, setSelectedPort] = useState<string>('CMFRI-MH-RAT-01');
@@ -36,12 +52,31 @@ export default function FisherWatchView() {
     async function loadData() {
       setLoading(true);
       try {
+        const secParam = selectedSector === 'All India' ? 'All' : selectedSector;
         const [pfzRes, portsRes] = await Promise.all([
-          fetchPFZAdvisories('Maharashtra'),
-          fetchNearbyPorts(16.99, 73.28, 250, 15),
+          fetchPFZAdvisories(secParam),
+          fetchNearbyPorts(20.0, 78.0, 2500, 50),
         ]);
-        setPfzList(pfzRes.advisories);
-        setLandingCentres(portsRes.ports);
+        setPfzList(pfzRes.advisories || []);
+
+        const filteredPorts =
+          selectedSector === 'All India'
+            ? portsRes.ports || []
+            : (portsRes.ports || []).filter((p) =>
+                p.state.toLowerCase().includes(selectedSector.toLowerCase())
+              );
+
+        setLandingCentres(filteredPorts.length > 0 ? filteredPorts : portsRes.ports || []);
+
+        if (filteredPorts.length > 0) {
+          setSelectedPort(filteredPorts[0].id);
+        } else if (portsRes.ports && portsRes.ports.length > 0) {
+          setSelectedPort(portsRes.ports[0].id);
+        }
+
+        if (pfzRes.advisories && pfzRes.advisories.length > 0) {
+          setSelectedPfz(pfzRes.advisories[0].advisory_id);
+        }
       } catch (err) {
         console.error('Failed to load FisherWatch data:', err);
       } finally {
@@ -49,7 +84,7 @@ export default function FisherWatchView() {
       }
     }
     loadData();
-  }, []);
+  }, [selectedSector]);
 
   async function handleEvaluateDeparture() {
     const origin = landingCentres.find((p) => p.id === selectedPort);
@@ -115,6 +150,32 @@ export default function FisherWatchView() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Coastal Sector Selector (Nationwide Coverage) */}
+      <div className="coastal-sector-selector-bar" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '16px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>Sector:</span>
+        {COASTAL_SECTORS.map((sec) => (
+          <button
+            key={sec}
+            type="button"
+            className={`bookmark-chip ${selectedSector === sec ? 'active' : ''}`}
+            style={{
+              padding: '4px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              borderRadius: '9999px',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              border: selectedSector === sec ? '1px solid var(--primary)' : '1px solid var(--border)',
+              backgroundColor: selectedSector === sec ? 'var(--primary)' : 'var(--card)',
+              color: selectedSector === sec ? '#fff' : 'var(--foreground)',
+            }}
+            onClick={() => setSelectedSector(sec)}
+          >
+            {sec}
+          </button>
+        ))}
       </div>
 
       {/* Route & Passage Safety Evaluator */}

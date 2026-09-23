@@ -36,8 +36,21 @@ class PortTidalStation:
     constituents: Tuple[HarmonicConstituent, ...]
 
 
-# Calibrated harmonic constants for West Coast / Konkan ports
+# Calibrated harmonic constants for Indian Coastal Ports & Harbours (NHO & INCOIS PAT)
 TIDAL_STATIONS: Dict[str, PortTidalStation] = {
+    "kandla": PortTidalStation(
+        station_id="IN-KAN-01",
+        port_name="Deendayal / Kandla (Gulf of Kutch)",
+        latitude=23.0039,
+        longitude=70.2197,
+        z0_m=3.85,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 2.12, 310.2),
+            HarmonicConstituent("S2", 30.0000000, 0.78, 355.4),
+            HarmonicConstituent("K1", 15.0410686, 0.48, 312.0),
+            HarmonicConstituent("O1", 13.9430356, 0.25, 298.5),
+        ),
+    ),
     "mumbai": PortTidalStation(
         station_id="IN-BOM-01",
         port_name="Mumbai (Apollo Bunder)",
@@ -88,6 +101,123 @@ TIDAL_STATIONS: Dict[str, PortTidalStation] = {
             HarmonicConstituent("S2", 30.0000000, 0.30, 20.5),
             HarmonicConstituent("K1", 15.0410686, 0.35, 330.2),
             HarmonicConstituent("O1", 13.9430356, 0.17, 315.0),
+        ),
+    ),
+    "mangalore": PortTidalStation(
+        station_id="IN-MAN-05",
+        port_name="New Mangalore (Panambur)",
+        latitude=12.9247,
+        longitude=74.8211,
+        z0_m=1.05,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.48, 350.2),
+            HarmonicConstituent("S2", 30.0000000, 0.18, 25.1),
+            HarmonicConstituent("K1", 15.0410686, 0.28, 335.0),
+            HarmonicConstituent("O1", 13.9430356, 0.14, 318.0),
+        ),
+    ),
+    "cochin": PortTidalStation(
+        station_id="IN-COC-06",
+        port_name="Cochin / Kochi Harbour",
+        latitude=9.9667,
+        longitude=76.2667,
+        z0_m=0.92,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.32, 355.0),
+            HarmonicConstituent("S2", 30.0000000, 0.12, 30.0),
+            HarmonicConstituent("K1", 15.0410686, 0.22, 340.0),
+            HarmonicConstituent("O1", 13.9430356, 0.11, 322.0),
+        ),
+    ),
+    "tuticorin": PortTidalStation(
+        station_id="IN-TUT-07",
+        port_name="V.O. Chidambaranar / Tuticorin",
+        latitude=8.7500,
+        longitude=78.1833,
+        z0_m=0.74,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.34, 18.5),
+            HarmonicConstituent("S2", 30.0000000, 0.14, 48.0),
+            HarmonicConstituent("K1", 15.0410686, 0.18, 348.0),
+            HarmonicConstituent("O1", 13.9430356, 0.10, 330.0),
+        ),
+    ),
+    "chennai": PortTidalStation(
+        station_id="IN-CHE-08",
+        port_name="Chennai Port (Marina)",
+        latitude=13.0827,
+        longitude=80.2989,
+        z0_m=0.88,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.42, 42.0),
+            HarmonicConstituent("S2", 30.0000000, 0.16, 75.0),
+            HarmonicConstituent("K1", 15.0410686, 0.19, 356.0),
+            HarmonicConstituent("O1", 13.9430356, 0.09, 338.0),
+        ),
+    ),
+    "visakhapatnam": PortTidalStation(
+        station_id="IN-VIZ-09",
+        port_name="Visakhapatnam (Outer Harbour)",
+        latitude=17.6868,
+        longitude=83.2185,
+        z0_m=1.12,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.55, 60.5),
+            HarmonicConstituent("S2", 30.0000000, 0.21, 95.0),
+            HarmonicConstituent("K1", 15.0410686, 0.20, 2.0),
+            HarmonicConstituent("O1", 13.9430356, 0.08, 345.0),
+        ),
+    ),
+    "paradip": PortTidalStation(
+        station_id="IN-PAR-10",
+        port_name="Paradip Port (Mahanadi)",
+        latitude=20.2644,
+        longitude=86.6711,
+        z0_m=1.45,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.78, 85.0),
+            HarmonicConstituent("S2", 30.0000000, 0.30, 120.0),
+            HarmonicConstituent("K1", 15.0410686, 0.22, 10.0),
+            HarmonicConstituent("O1", 13.9430356, 0.09, 350.0),
+        ),
+    ),
+    "sagar_island": PortTidalStation(
+        station_id="IN-SAG-11",
+        port_name="Sagar Island / Haldia (Hooghly Estuary)",
+        latitude=21.6500,
+        longitude=88.0500,
+        z0_m=3.10,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 1.85, 115.0),
+            HarmonicConstituent("S2", 30.0000000, 0.68, 155.0),
+            HarmonicConstituent("K1", 15.0410686, 0.28, 22.0),
+            HarmonicConstituent("O1", 13.9430356, 0.14, 358.0),
+        ),
+    ),
+    "port_blair": PortTidalStation(
+        station_id="IN-PBL-12",
+        port_name="Port Blair (Phoenix Bay, A&N)",
+        latitude=11.6667,
+        longitude=92.7333,
+        z0_m=1.28,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.65, 38.0),
+            HarmonicConstituent("S2", 30.0000000, 0.24, 70.0),
+            HarmonicConstituent("K1", 15.0410686, 0.21, 350.0),
+            HarmonicConstituent("O1", 13.9430356, 0.11, 332.0),
+        ),
+    ),
+    "kavaratti": PortTidalStation(
+        station_id="IN-KAV-13",
+        port_name="Kavaratti / Agatti (Lakshadweep)",
+        latitude=10.5667,
+        longitude=72.6333,
+        z0_m=0.85,
+        constituents=(
+            HarmonicConstituent("M2", 28.9841042, 0.38, 348.0),
+            HarmonicConstituent("S2", 30.0000000, 0.15, 22.0),
+            HarmonicConstituent("K1", 15.0410686, 0.25, 332.0),
+            HarmonicConstituent("O1", 13.9430356, 0.12, 315.0),
         ),
     ),
 }

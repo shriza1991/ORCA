@@ -160,6 +160,23 @@ export interface AquacultureSite {
   source: string;
 }
 
+export interface Lighthouse {
+  id: string;
+  name: string;
+  district: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+  focal_height_m: number;
+  range_nm: number;
+  light_character: string;
+  structure: string;
+  year_built: number;
+  authority: string;
+  description: string;
+  distance_km?: number;
+}
+
 export interface DatasetItem {
   id: string;
   title: string;
@@ -185,6 +202,7 @@ export interface PointForecastResponse {
   nearby: {
     ports: LandingCentre[];
     aquaculture_sites: AquacultureSite[];
+    lighthouses?: Lighthouse[];
   };
   sources: Array<{
     provider: string;
@@ -220,7 +238,7 @@ export interface RouteForecastResponse {
 export interface SpatialSearchResult {
   id: string;
   name: string;
-  category: 'PORT_LANDING_CENTRE' | 'AQUACULTURE_FARM' | 'POTENTIAL_FISHING_ZONE' | 'RESTRICTED_ZONE';
+  category: string;
   latitude: number;
   longitude: number;
   state: string;
@@ -237,6 +255,7 @@ export interface UnifiedSpatialQueryResponse {
   active_hazards: ActiveHazard[];
   nearby_landing_centres: LandingCentre[];
   nearby_aquaculture_sites: AquacultureSite[];
+  nearby_lighthouses?: Lighthouse[];
   sources: Array<{
     provider: string;
     dataset: string;
@@ -326,6 +345,35 @@ export async function fetchNearbyAquaculture(
   });
   const res = await fetch(`${API_BASE}/aquaculture/sites/nearby?${params.toString()}`);
   if (!res.ok) throw new Error(`Failed to fetch nearby aquaculture: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchNearbyLighthouses(
+  lat: number,
+  lon: number,
+  radiusKm = 200,
+  limit = 8
+): Promise<{ count: number; lighthouses: Lighthouse[] }> {
+  const params = new URLSearchParams({
+    lat: lat.toString(),
+    lon: lon.toString(),
+    radius_km: radiusKm.toString(),
+    limit: limit.toString(),
+  });
+  const res = await fetch(`${API_BASE}/lighthouses/nearby?${params.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch nearby lighthouses: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchAllLighthouses(): Promise<{ count: number; lighthouses: Lighthouse[] }> {
+  const res = await fetch(`${API_BASE}/lighthouses`);
+  if (!res.ok) throw new Error(`Failed to fetch all lighthouses: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchMaritimeBoundaries(): Promise<any> {
+  const res = await fetch(`${API_BASE}/boundaries`);
+  if (!res.ok) throw new Error(`Failed to fetch maritime boundaries: ${res.statusText}`);
   return res.json();
 }
 

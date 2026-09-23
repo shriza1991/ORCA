@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 LANDING_CENTRES_PATH = PROJECT_ROOT / "data" / "reference" / "cmfri_landing_centres.json"
 AQUACULTURE_PATH = PROJECT_ROOT / "data" / "reference" / "caa_aquaculture_sites.json"
+LIGHTHOUSES_PATH = PROJECT_ROOT / "data" / "reference" / "lighthouses_india.json"
 BOUNDARIES_PATH = PROJECT_ROOT / "data" / "reference" / "india_maritime_boundaries.geojson"
 RESTRICTIONS_PATH = PROJECT_ROOT / "data" / "reference" / "marine_restrictions.geojson"
 
@@ -56,6 +57,7 @@ class IndiaMarineWatchService:
         self._open_meteo = OpenMeteoConnector()
         self._landing_centres = self._load_json(LANDING_CENTRES_PATH)
         self._aquaculture_sites = self._load_json(AQUACULTURE_PATH)
+        self._lighthouses = self._load_json(LIGHTHOUSES_PATH)
         self._boundaries_geojson = self._load_geojson(BOUNDARIES_PATH)
         self._restrictions_geojson = self._load_geojson(RESTRICTIONS_PATH)
 
@@ -85,55 +87,7 @@ class IndiaMarineWatchService:
     # -----------------------------------------------------------------------
 
     def get_coast_profile(self, lat: float, lon: float) -> Dict[str, Any]:
-        """Calculate bathymetric depth, continental shelf zone, and MPA intersections."""
-        # Check if inside Angria Bank submerged coral atoll (16.25-16.70°N, 72.00-72.25°E)
-        if 16.25 <= lat <= 16.70 and 72.00 <= lon <= 72.25:
-            depth_m = 24.5  # Shallow submerged coral reef atoll
-            shelf_zone = "Submerged Coral Bank (Angria Bank Ecological Zone)"
-            is_atoll = True
-        else:
-            is_atoll = False
-            # Approximate distance to Indian West Coast (~73.0 to 73.5°E)
-            # Coastline longitude along Konkan roughly 73.0 at north to 73.8 at south
-            coast_lon = 72.85 + (20.0 - lat) * 0.08
-            dist_deg = max(0.0, coast_lon - lon)
-            dist_km = dist_deg * 105.0  # approximate km per degree longitude
-
-            if dist_km <= 5.0:
-                depth_m = round(4.0 + dist_km * 3.5, 1)
-                shelf_zone = "Nearshore Coastal Waters (0-20m)"
-            elif dist_km <= 25.0:
-                depth_m = round(20.0 + (dist_km - 5.0) * 1.5, 1)
-                shelf_zone = "Inner Continental Shelf (20-50m)"
-            elif dist_km <= 65.0:
-                depth_m = round(50.0 + (dist_km - 25.0) * 1.25, 1)
-                shelf_zone = "Mid Continental Shelf (50-100m)"
-            elif dist_km <= 110.0:
-                depth_m = round(100.0 + (dist_km - 65.0) * 2.2, 1)
-                shelf_zone = "Outer Shelf Break (100-200m)"
-            else:
-                depth_m = round(200.0 + (dist_km - 110.0) * 18.0, 1)
-                shelf_zone = "Continental Slope & Abyssal Plain (>200m)"
-
-        # Check restricted areas / MPA intersections
-        pt = Point(lon, lat)
-        intersecting_zones: List[Dict[str, Any]] = []
-
-        for feat in self._restrictions_geojson.get("features", []):
-            try:
-                geom = shape(feat.get("geometry"))
-                if geom.contains(pt):
-                    intersecting_zones.append({
-                        "id": feat.get("id"),
-                        "name": feat.get("properties", {}).get("name"),
-                        "type": feat.get("properties", {}).get("type"),
-                        "level": feat.get("properties", {}).get("restriction_level"),
-                        "authority": feat.get("properties", {}).get("authority"),
-                        "description": feat.get("properties", {}).get("description"),
-                    })
-            except Exception:
-                pass
-
+        """Calculate bathymetric depth, continental shelf zone, and MPA intersections across India."""
         # Identify nearest CMFRI landing centre to estimate distance to shore
         nearest_centre = None
         min_dist = float("inf")
@@ -142,6 +96,94 @@ class IndiaMarineWatchService:
             if d < min_dist:
                 min_dist = d
                 nearest_centre = lc
+
+        # 1. Check Angria Bank submerged coral atoll (16.25-16.70°N, 72.00-72.25°E)
+        if 16.25 <= lat <= 16.70 and 72.00 <= lon <= 72.25:
+            depth_m = 24.5
+            shelf_zone = "Submerged Coral Bank (Angria Bank Ecological Zone)"
+            is_atoll = True
+        # 2. Andaman & Nicobar Archipelago (lon >= 91.5°E)
+        elif lon >= 91.5:
+            is_atoll = False
+            if min_dist <= 3.0:
+                depth_m = round(4.0 + min_dist * 5.0, 1)
+                shelf_zone = "Insular Reef Lagoon & Fringing Reefs (0-20m)"
+            elif min_dist <= 15.0:
+                depth_m = round(20.0 + (min_dist - 3.0) * 12.0, 1)
+                shelf_zone = "Steep Insular Shelf Edge (20-150m)"
+            else:
+                depth_m = round(150.0 + (min_dist - 15.0) * 35.0, 1)
+                shelf_zone = "Andaman Sea Deep Oceanic Trench & Basin (>200m)"
+        # 3. Lakshadweep Coral Atolls (lat <= 12.5°N, 71.0 <= lon <= 74.0°E)
+        elif lat <= 12.5 and 71.0 <= lon <= 74.0 and min_dist < 60.0:
+            is_atoll = True
+            if min_dist <= 3.0:
+                depth_m = round(3.0 + min_dist * 3.5, 1)
+                shelf_zone = "Coral Atoll Lagoon & Barrier Reef (0-15m)"
+            elif min_dist <= 12.0:
+                depth_m = round(15.0 + (min_dist - 3.0) * 20.0, 1)
+                shelf_zone = "Atoll Seaward Reef Slope (15-200m)"
+            else:
+                depth_m = round(200.0 + (min_dist - 12.0) * 40.0, 1)
+                shelf_zone = "Arabian Basin Deep Pelagic (>200m)"
+        # 4. East Coast / Bay of Bengal (lon >= 79.5°E) - Narrow continental shelf
+        elif lon >= 79.5:
+            is_atoll = False
+            if min_dist <= 6.0:
+                depth_m = round(4.0 + min_dist * 3.0, 1)
+                shelf_zone = "Nearshore Coromandel/Andhra Coast (0-25m)"
+            elif min_dist <= 25.0:
+                depth_m = round(25.0 + (min_dist - 6.0) * 4.0, 1)
+                shelf_zone = "Narrow Continental Shelf Break (25-100m)"
+            elif min_dist <= 50.0:
+                depth_m = round(100.0 + (min_dist - 25.0) * 4.5, 1)
+                shelf_zone = "Steep Continental Slope (100-200m)"
+            else:
+                depth_m = round(200.0 + (min_dist - 50.0) * 22.0, 1)
+                shelf_zone = "Bay of Bengal Abyssal Plain & Bengal Fan (>200m)"
+        # 5. West Coast (Gujarat, Maharashtra, Goa, Karnataka, Kerala) - Wide shelf
+        else:
+            is_atoll = False
+            if min_dist <= 8.0:
+                depth_m = round(4.0 + min_dist * 2.0, 1)
+                shelf_zone = "Nearshore Coastal Waters (0-20m)"
+            elif min_dist <= 35.0:
+                depth_m = round(20.0 + (min_dist - 8.0) * 1.1, 1)
+                shelf_zone = "Inner Continental Shelf (20-50m)"
+            elif min_dist <= 80.0:
+                depth_m = round(50.0 + (min_dist - 35.0) * 1.1, 1)
+                shelf_zone = "Mid Continental Shelf (50-100m)"
+            elif min_dist <= 130.0:
+                depth_m = round(100.0 + (min_dist - 80.0) * 2.0, 1)
+                shelf_zone = "Outer Shelf Break (100-200m)"
+            else:
+                depth_m = round(200.0 + (min_dist - 130.0) * 16.0, 1)
+                shelf_zone = "Continental Slope & Abyssal Plain (>200m)"
+
+        # Check restricted areas and national Marine Protected Area (MPA) intersections
+        pt = Point(lon, lat)
+        intersecting_zones: List[Dict[str, Any]] = []
+
+        all_features = list(self._restrictions_geojson.get("features", [])) + [
+            f for f in self._boundaries_geojson.get("features", [])
+            if f.get("properties", {}).get("type") in ("MARINE_PROTECTED_AREA", "ECOLOGICALLY_SENSITIVE_MARINE_AREA")
+        ]
+
+        for feat in all_features:
+            try:
+                geom = shape(feat.get("geometry"))
+                if geom.contains(pt):
+                    intersecting_zones.append({
+                        "id": feat.get("id"),
+                        "name": feat.get("properties", {}).get("name"),
+                        "type": feat.get("properties", {}).get("type"),
+                        "level": feat.get("properties", {}).get("restriction_level", "LEGAL_PROTECTED_ZONE"),
+                        "authority": feat.get("properties", {}).get("authority"),
+                        "description": feat.get("properties", {}).get("description"),
+                        "regulations": feat.get("properties", {}).get("regulations"),
+                    })
+            except Exception:
+                pass
 
         return {
             "latitude": lat,
@@ -195,45 +237,115 @@ class IndiaMarineWatchService:
         return results[:limit]
 
     # -----------------------------------------------------------------------
-    # 4. Active Marine Hazards & Bulletins
+    # -----------------------------------------------------------------------
+    # 4. Nearby DGLL Lighthouses & Navigational Aids
+    # -----------------------------------------------------------------------
+
+    def get_nearby_lighthouses(
+        self, lat: float, lon: float, radius_km: float = 200.0, limit: int = 6
+    ) -> List[Dict[str, Any]]:
+        """Find DGLL coastal lighthouses within radius, sorted by distance."""
+        results: List[Dict[str, Any]] = []
+        for lh in self._lighthouses:
+            dist = haversine_distance_km(lat, lon, lh["latitude"], lh["longitude"])
+            if dist <= radius_km:
+                item = dict(lh)
+                item["distance_km"] = dist
+                results.append(item)
+
+        results.sort(key=lambda x: x["distance_km"])
+        return results[:limit]
+
+    def get_all_lighthouses(self) -> List[Dict[str, Any]]:
+        """Return all registered DGLL coastal lighthouses across India."""
+        return list(self._lighthouses)
+
+    def get_boundaries_geojson(self) -> Dict[str, Any]:
+        """Return India maritime boundaries GeoJSON (12nm, 24nm, 200nm, MPAs, Contours)."""
+        return self._boundaries_geojson
+
+    # -----------------------------------------------------------------------
+    # 5. Active Marine Hazards & Bulletins
     # -----------------------------------------------------------------------
 
     def get_active_hazards(self, sector: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Return active official IMD and INCOIS marine hazard bulletins."""
+        """Return active official IMD and INCOIS marine hazard bulletins across India."""
         now = datetime.now(UTC)
         valid_until = (now + timedelta(hours=18)).isoformat()
 
-        hazards = [
+        all_hazards = [
             {
                 "hazard_id": "IMD-HAZ-2026-09-01",
                 "headline": "Squally Weather Advisory — Central & South Arabian Sea",
                 "severity": "WARNING",
                 "source": "India Meteorological Department (IMD)",
                 "category": "WEATHER_SQUALL",
-                "affected_area": "Maharashtra and Goa offshore corridor (15°N to 19°N)",
+                "affected_area": "Gujarat, Maharashtra, Goa, and Karnataka offshore corridor (14°N to 21°N)",
                 "wind_speed_kmph": "45-55 gusting to 65",
                 "sea_condition": "Rough to Very Rough",
                 "issued_at": (now - timedelta(hours=2)).isoformat(),
                 "valid_until": valid_until,
                 "advisory": "Fishermen are advised not to venture into open Arabian Sea waters beyond 20 nautical miles.",
                 "port_signals": [
+                    {"port": "Kandla", "signal": 3, "meaning": "Local Cautionary Signal"},
                     {"port": "Mumbai", "signal": 3, "meaning": "Local Cautionary Signal"},
                     {"port": "Ratnagiri", "signal": 3, "meaning": "Local Cautionary Signal"},
                     {"port": "Mormugao", "signal": 2, "meaning": "Distant Warning Signal"},
+                    {"port": "New Mangalore", "signal": 2, "meaning": "Distant Warning Signal"},
+                ],
+            },
+            {
+                "hazard_id": "IMD-BOB-DEP-2026-09-03",
+                "headline": "Depression / Squally Wind Warning — West-Central Bay of Bengal",
+                "severity": "WARNING",
+                "source": "India Meteorological Department (IMD)",
+                "category": "WEATHER_SQUALL",
+                "affected_area": "Tamil Nadu, Andhra Pradesh, and South Odisha Coasts (11°N to 19°N)",
+                "wind_speed_kmph": "50-60 gusting to 70",
+                "sea_condition": "Rough to High",
+                "issued_at": (now - timedelta(hours=1)).isoformat(),
+                "valid_until": valid_until,
+                "advisory": "Fishermen along the Andhra Pradesh and North Tamil Nadu coasts are strictly advised not to venture into sea.",
+                "port_signals": [
+                    {"port": "Visakhapatnam", "signal": 3, "meaning": "Local Cautionary Signal"},
+                    {"port": "Paradip", "signal": 3, "meaning": "Local Cautionary Signal"},
+                    {"port": "Chennai", "signal": 2, "meaning": "Distant Warning Signal"},
                 ],
             },
             {
                 "hazard_id": "INCOIS-SWELL-2026-09-02",
-                "headline": "High Swell Surge (Kallakkadal) Warning — Konkan Coast",
+                "headline": "High Swell Surge (Kallakkadal) Warning — South-West & Konkan Coast",
                 "severity": "ALERT",
                 "source": "INCOIS Ocean State Forecast",
                 "category": "SWELL_SURGE",
-                "affected_area": "Ratnagiri, Sindhudurg, and South Goa coastal belts",
-                "swell_height_m": 2.6,
-                "swell_period_sec": 14.5,
+                "affected_area": "Kerala, South Karnataka, Goa, and Sindhudurg coastal belts",
+                "swell_height_m": 2.8,
+                "swell_period_sec": 15.0,
                 "issued_at": (now - timedelta(hours=3)).isoformat(),
                 "valid_until": valid_until,
                 "advisory": "Low-lying beach landing craft should be anchored securely. Beach recreation and nearshore operations prohibited during high tide.",
+            },
+            {
+                "hazard_id": "REST-MPA-GAHIRMATHA-SEASONAL",
+                "headline": "Gahirmatha Olive Ridley Turtle Mass Nesting Fishing Prohibition",
+                "severity": "LEGAL_RESTRICTION",
+                "source": "Odisha Forest & Wildlife Department / MoEFCC",
+                "category": "MARINE_PROTECTED_AREA",
+                "affected_area": "Dhamra river mouth to Hukitola Island, Kendrapara (20.4°N to 20.9°N)",
+                "issued_at": "2026-01-01T00:00:00Z",
+                "valid_until": "2026-05-31T23:59:59Z",
+                "advisory": "Complete statutory ban on mechanized fishing and motorized gill-netting within 20 km of shore to protect Arribada mass nesting.",
+            },
+            {
+                "hazard_id": "REST-MPA-MANNAR-PERMANENT",
+                "headline": "Gulf of Mannar Marine National Park Core Reef & Dugong Conservation Zone",
+                "severity": "LEGAL_RESTRICTION",
+                "source": "Tamil Nadu Forest Department / MoEFCC / UNESCO MAB",
+                "category": "MARINE_PROTECTED_AREA",
+                "affected_area": "Mandapam to Tuticorin 21 Island Chain (8.7°N to 9.3°N)",
+                "issued_at": "2026-01-01T00:00:00Z",
+                "valid_until": "2026-12-31T23:59:59Z",
+                "advisory": "Strict prohibition of bottom trawling, coral reef extraction, and anchoring on sea-grass beds.",
             },
             {
                 "hazard_id": "REST-MPA-MALVAN-PERMANENT",
@@ -247,19 +359,43 @@ class IndiaMarineWatchService:
                 "advisory": "Commercial mechanized trawling and bottom gill-netting strictly prohibited by Wildlife Protection Act, 1972.",
             },
         ]
-        return hazards
+
+        if sector and sector.lower() not in ("all", "india"):
+            sec = sector.lower()
+            return [h for h in all_hazards if sec in h["affected_area"].lower() or sec in h["headline"].lower()]
+
+        return all_hazards
 
     # -----------------------------------------------------------------------
-    # 5. INCOIS Potential Fishing Zones (PFZ) Advisories
+    # 6. INCOIS Potential Fishing Zones (PFZ) Advisories
     # -----------------------------------------------------------------------
 
-    def get_pfz_advisories(self, sector: str = "Maharashtra") -> List[Dict[str, Any]]:
-        """Return active INCOIS PFZ advisory geometries, SST front, and chlorophyll."""
+    def get_pfz_advisories(self, sector: str = "All") -> List[Dict[str, Any]]:
+        """Return active INCOIS PFZ advisory geometries, SST front, and chlorophyll across India."""
         now = datetime.now(UTC)
         valid_to = (now + timedelta(days=1)).strftime("%Y-%m-%dT23:59:59Z")
         valid_from = now.strftime("%Y-%m-%dT00:00:00Z")
 
-        return [
+        all_pfzs = [
+            {
+                "advisory_id": "INCOIS-PFZ-GJ-01",
+                "sector": "Gujarat (Veraval / Saurashtra)",
+                "location_name": "Veraval Offshore Thermal Front",
+                "latitude": 20.650,
+                "longitude": 69.950,
+                "depth_range_m": "50 - 70m",
+                "distance_km": 46.5,
+                "bearing_deg": 220,
+                "sst_celsius": 28.2,
+                "chlorophyll_mg_m3": 1.45,
+                "target_species": ["Ribbonfish (Trichiurus lepturus)", "Croakers (Dhoma)", "Indian Squid"],
+                "gear_recommended": ["Trawl net", "Gill net"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM", "INSAT-3DR TIR"],
+                "status": "ACTIVE",
+            },
             {
                 "advisory_id": "INCOIS-PFZ-MH-01",
                 "sector": "Maharashtra (Ratnagiri Offshore)",
@@ -317,7 +453,167 @@ class IndiaMarineWatchService:
                 "satellite_sensors": ["Oceansat-3 OCM", "AVHRR"],
                 "status": "ACTIVE",
             },
+            {
+                "advisory_id": "INCOIS-PFZ-KA-01",
+                "sector": "Karnataka (Mangalore / Malpe)",
+                "location_name": "Malpe-Mangalore Pelagic Zone",
+                "latitude": 13.150,
+                "longitude": 74.320,
+                "depth_range_m": "45 - 65m",
+                "distance_km": 38.0,
+                "bearing_deg": 250,
+                "sst_celsius": 28.3,
+                "chlorophyll_mg_m3": 1.55,
+                "target_species": ["Oil Sardine (Sardinella longiceps)", "Mackerel", "Carangids"],
+                "gear_recommended": ["Purse seine", "Gill net"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM"],
+                "status": "ACTIVE",
+            },
+            {
+                "advisory_id": "INCOIS-PFZ-KL-01",
+                "sector": "Kerala (Cochin / Kollam)",
+                "location_name": "Cochin Offshore Upwelling Front",
+                "latitude": 9.850,
+                "longitude": 75.820,
+                "depth_range_m": "50 - 80m",
+                "distance_km": 45.0,
+                "bearing_deg": 240,
+                "sst_celsius": 27.9,
+                "chlorophyll_mg_m3": 1.80,
+                "target_species": ["Threadfin bream (Nemipterus japonicus)", "Squid", "Skipjack Tuna"],
+                "gear_recommended": ["Trawl net", "Hook and line"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM", "AVHRR"],
+                "status": "ACTIVE",
+            },
+            {
+                "advisory_id": "INCOIS-PFZ-TN-01",
+                "sector": "Tamil Nadu (Nagapattinam / Chennai)",
+                "location_name": "Nagapattinam Oceanic Eddy",
+                "latitude": 10.920,
+                "longitude": 80.250,
+                "depth_range_m": "60 - 95m",
+                "distance_km": 42.0,
+                "bearing_deg": 105,
+                "sst_celsius": 28.7,
+                "chlorophyll_mg_m3": 1.35,
+                "target_species": ["Yellowfin Tuna (Thunnus albacares)", "Barracuda", "Seerfish"],
+                "gear_recommended": ["Longline", "Drift gill net"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM", "INSAT-3DR"],
+                "status": "ACTIVE",
+            },
+            {
+                "advisory_id": "INCOIS-PFZ-AP-01",
+                "sector": "Andhra Pradesh (Visakhapatnam)",
+                "location_name": "Visakhapatnam Shelf Break Front",
+                "latitude": 17.550,
+                "longitude": 83.580,
+                "depth_range_m": "65 - 110m",
+                "distance_km": 36.5,
+                "bearing_deg": 125,
+                "sst_celsius": 28.5,
+                "chlorophyll_mg_m3": 1.48,
+                "target_species": ["Mackerel", "Ribbonfish", "Tiger Prawns (Penaeus monodon)"],
+                "gear_recommended": ["Trawl net", "Gill net"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM"],
+                "status": "ACTIVE",
+            },
+            {
+                "advisory_id": "INCOIS-PFZ-OD-01",
+                "sector": "Odisha (Paradip / Dhamra)",
+                "location_name": "Paradip Offshore Chlorophyll Plume",
+                "latitude": 20.080,
+                "longitude": 86.950,
+                "depth_range_m": "35 - 55m",
+                "distance_km": 38.2,
+                "bearing_deg": 140,
+                "sst_celsius": 28.8,
+                "chlorophyll_mg_m3": 2.10,
+                "target_species": ["Hilsa (Tenualosa ilisha)", "Pomfret", "Sea Bass (Bhetki)"],
+                "gear_recommended": ["Drift gill net", "Trawl net"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM"],
+                "status": "ACTIVE",
+            },
+            {
+                "advisory_id": "INCOIS-PFZ-WB-01",
+                "sector": "West Bengal (Digha / Sandheads)",
+                "location_name": "Sandheads Estuarine Gradient",
+                "latitude": 21.250,
+                "longitude": 88.350,
+                "depth_range_m": "25 - 45m",
+                "distance_km": 44.0,
+                "bearing_deg": 155,
+                "sst_celsius": 29.1,
+                "chlorophyll_mg_m3": 2.45,
+                "target_species": ["Hilsa shad", "Silver Pomfret (Pampus argenteus)", "Bombay duck"],
+                "gear_recommended": ["Gill net", "Bag net"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM", "INSAT-3DR"],
+                "status": "ACTIVE",
+            },
+            {
+                "advisory_id": "INCOIS-PFZ-AN-01",
+                "sector": "Andaman & Nicobar (Port Blair)",
+                "location_name": "Rutland South Pelagic Tuna Bank",
+                "latitude": 11.380,
+                "longitude": 92.880,
+                "depth_range_m": "100 - 350m",
+                "distance_km": 35.0,
+                "bearing_deg": 160,
+                "sst_celsius": 28.9,
+                "chlorophyll_mg_m3": 0.95,
+                "target_species": ["Yellowfin Tuna", "Skipjack Tuna", "Mahi Mahi (Coryphaena hippurus)"],
+                "gear_recommended": ["Oceanic longline", "Trolling line"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM"],
+                "status": "ACTIVE",
+            },
+            {
+                "advisory_id": "INCOIS-PFZ-LD-01",
+                "sector": "Lakshadweep (Minicoy)",
+                "location_name": "Minicoy Nine Degree Channel Front",
+                "latitude": 8.520,
+                "longitude": 73.180,
+                "depth_range_m": "200 - 600m",
+                "distance_km": 32.0,
+                "bearing_deg": 25,
+                "sst_celsius": 28.7,
+                "chlorophyll_mg_m3": 0.88,
+                "target_species": ["Skipjack Tuna (Katsuwonus pelamis)", "Yellowfin Tuna"],
+                "gear_recommended": ["Pole and line with live bait", "Trolling line"],
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "source": "INCOIS Potential Fishing Zone (PFZ) Advisory Service",
+                "satellite_sensors": ["Oceansat-3 OCM"],
+                "status": "ACTIVE",
+            },
         ]
+
+        if sector and sector.lower() not in ("all", "india"):
+            sec = sector.lower()
+            filtered = [z for z in all_pfzs if sec in z["sector"].lower() or sec in z["location_name"].lower()]
+            if filtered:
+                return filtered
+
+        return all_pfzs
 
     # -----------------------------------------------------------------------
     # 6. Single Point Marine Intelligence (§214)
@@ -365,8 +661,9 @@ class IndiaMarineWatchService:
 
         # 4. Active hazards affecting this coordinate
         all_hazards = self.get_active_hazards()
-        nearby_ports = self.get_nearby_ports(lat, lon, radius_km=80.0, limit=3)
-        nearby_aqua = self.get_nearby_aquaculture(lat, lon, radius_km=60.0, limit=3)
+        nearby_ports = self.get_nearby_ports(lat, lon, radius_km=100.0, limit=3)
+        nearby_aqua = self.get_nearby_aquaculture(lat, lon, radius_km=80.0, limit=3)
+        nearby_lighthouses = self.get_nearby_lighthouses(lat, lon, radius_km=150.0, limit=3)
 
         return {
             "location": {
@@ -380,6 +677,7 @@ class IndiaMarineWatchService:
             "nearby": {
                 "ports": nearby_ports,
                 "aquaculture_sites": nearby_aqua,
+                "lighthouses": nearby_lighthouses,
             },
             "sources": [
                 {
@@ -405,6 +703,12 @@ class IndiaMarineWatchService:
                     "dataset": "Fishermen Warnings & Marine Weather",
                     "issued_at": (target_dt - timedelta(hours=2)).isoformat(),
                     "license": "Official Government Warning",
+                },
+                {
+                    "provider": "DGLL",
+                    "dataset": "Indian List of Lights & Fog Signals",
+                    "issued_at": "2026-01-01T00:00:00Z",
+                    "license": "Ministry of Ports, Shipping and Waterways",
                 },
             ],
         }
@@ -540,7 +844,25 @@ class IndiaMarineWatchService:
                     "subtitle": f"CAA Certified · {farm['cultured_species']} · {farm['water_spread_area_ha']} ha",
                 })
 
-        # 3. Search PFZ Advisories
+        # 3. Search DGLL Lighthouses
+        for lh in self._lighthouses:
+            if (
+                q in lh["name"].lower()
+                or q in lh["district"].lower()
+                or q in lh["state"].lower()
+            ):
+                results.append({
+                    "id": lh["id"],
+                    "name": lh["name"],
+                    "category": "LIGHTHOUSE_NAV_AID",
+                    "latitude": lh["latitude"],
+                    "longitude": lh["longitude"],
+                    "state": lh["state"],
+                    "district": lh["district"],
+                    "subtitle": f"DGLL Lighthouse · Range {lh['range_nm']} nm · Focal Ht {lh['focal_height_m']}m",
+                })
+
+        # 4. Search PFZ Advisories
         for pfz in self.get_pfz_advisories():
             if (
                 q in pfz["location_name"].lower()
@@ -558,27 +880,39 @@ class IndiaMarineWatchService:
                     "subtitle": f"INCOIS PFZ · SST {pfz['sst_celsius']}°C · Chl {pfz['chlorophyll_mg_m3']} mg/m³",
                 })
 
-        # 4. Search Marine Restrictions
-        for feat in self._restrictions_geojson.get("features", []):
+        # 5. Search Marine Restrictions & National MPAs
+        all_zone_features = list(self._restrictions_geojson.get("features", [])) + list(
+            self._boundaries_geojson.get("features", [])
+        )
+        for feat in all_zone_features:
             name = feat.get("properties", {}).get("name", "")
-            if q in name.lower() or q in feat.get("properties", {}).get("type", "").lower():
+            feat_type = feat.get("properties", {}).get("type", "")
+            if q in name.lower() or q in feat_type.lower():
                 # Extract centroid
-                coords = feat.get("geometry", {}).get("coordinates", [[]])[0]
-                if coords:
-                    avg_lon = sum(c[0] for c in coords) / len(coords)
-                    avg_lat = sum(c[1] for c in coords) / len(coords)
+                coords_list = feat.get("geometry", {}).get("coordinates", [])
+                if coords_list:
+                    flat_coords = coords_list[0] if isinstance(coords_list[0], list) and isinstance(coords_list[0][0], (int, float, list)) else coords_list
+                    # Normalize to list of [lon, lat]
+                    if flat_coords and isinstance(flat_coords[0], list):
+                        avg_lon = sum(c[0] for c in flat_coords) / len(flat_coords)
+                        avg_lat = sum(c[1] for c in flat_coords) / len(flat_coords)
+                    elif flat_coords and isinstance(flat_coords[0], (int, float)):
+                        avg_lon = flat_coords[0]
+                        avg_lat = flat_coords[1]
+                    else:
+                        continue
                     results.append({
                         "id": feat.get("id"),
                         "name": name,
-                        "category": "RESTRICTED_ZONE",
+                        "category": feat_type or "RESTRICTED_ZONE",
                         "latitude": round(avg_lat, 4),
                         "longitude": round(avg_lon, 4),
-                        "state": "Maritime Boundary",
+                        "state": feat.get("properties", {}).get("state", "Indian Maritime Zone"),
                         "district": feat.get("properties", {}).get("authority", ""),
-                        "subtitle": f"{feat.get('properties', {}).get('type')} · {feat.get('properties', {}).get('restriction_level')}",
+                        "subtitle": f"{feat_type.replace('_', ' ')} · {feat.get('properties', {}).get('authority', '')}",
                     })
 
-        return results[:15]
+        return results[:20]
 
 
 # Global singleton instance

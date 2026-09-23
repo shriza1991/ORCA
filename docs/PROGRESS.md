@@ -3,14 +3,24 @@
 > Single operational status board. Strictly factual. No diary narrative.
 
 ## Current Release & Workstream State
-- Current version: `v0.2.0-marinewatch-real-data`
+- Current version: `v0.2.1-marinewatch-all-india`
 - Active branch: `feat/india-marinewatch-real-data`
-- Current milestone: **India MarineWatch Real Data Platform (BarentsWatch India Architecture)**
-- Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 241 tests passing across 16 test suites; backend: 670 passed / 51 skipped; verified on 2026-09-23)
-- 10 Foundation API Contracts (§213): **100% IMPLEMENTED & PASSING** (`/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`)
-- Reference Data Ingestion: CMFRI Census 2020 landing centres (14 ports), CAA registered coastal aquaculture farms (7 sites), Indian maritime boundaries (12nm territorial, 24nm contiguous, 200nm EEZ, GEBCO 50m/100m/200m contours, Angria Bank coral atoll, Malvan Marine Sanctuary).
-- Domain Engines: INCOIS PAT harmonic astronomical tide engine (Mumbai, Ratnagiri, Malvan, Mormugao), GEBCO bathymetric shelf profile, §212 30-dataset canonical catalogue registry.
-- Frontend Hubs: `OceanWatch` (interactive GIS & time scrubber), `FisherWatch`, `AquaWatch`, `MarineHazards`, `PortWatch`, `DataCatalogue`.
+- Current milestone: **India MarineWatch Nationwide Real Data Platform (BarentsWatch India Architecture)**
+- Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 241 tests passing across 16 test suites; backend: 674 passed / 51 skipped; verified on 2026-09-23)
+- 13 Foundation API Contracts (§213): **100% IMPLEMENTED & PASSING** (`/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`, `/lighthouses/nearby`, `/lighthouses`, `/boundaries`)
+- Nationwide Reference Data Ingestion:
+  - CMFRI Marine Fisheries Census: 30 primary & intermediate landing harbours across all coastal states (Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar, Lakshadweep).
+  - DGLL Coastal Lighthouses & Navigational Aids: 15 primary landfall lighthouses (Dwarka, Mumbai, Ratnagiri, Vengurla, Aguada, Bhatkal, Cochin, Kovalam, Kanyakumari, Chennai Marina, Dolphin's Nose Vizag, Paradip, Sagar Island, Indira Point Nicobar, Minicoy).
+  - CAA Coastal Aquaculture Authority: Certified brackishwater shrimp & marine finfish farms across both coasts.
+  - Nationwide Maritime Boundaries & EEZ GeoJSON: Complete 12nm Territorial Waters, 24nm Contiguous Zones, 200nm Exclusive Economic Zones (Arabian Sea, Bay of Bengal, Andaman Sea), GEBCO 50m/100m/200m bathymetric contours, and National Marine Protected Areas (Gulf of Mannar, Sundarbans, Gahirmatha, Gulf of Kutch, Malvan, Mahatma Gandhi Marine Park Wandoor, Angria Bank).
+- Domain Engines:
+  - INCOIS PAT harmonic astronomical tide engine expanded to 14 national ports (Kandla, Mumbai, Ratnagiri, Malvan, Mormugao, Mangalore, Cochin, Tuticorin, Chennai, Visakhapatnam, Paradip, Sagar Island, Port Blair, Kavaratti).
+  - Nationwide GEBCO bathymetric shelf profiling (accounting for narrow Coromandel/Andhra slope, broad Konkan/Gujarat shelf, insular trenches off Andaman, and coral lagoons of Lakshadweep).
+  - §212 30-dataset canonical catalogue registry.
+- Frontend Interactive GIS Hubs:
+  - `OceanWatch GIS`: MapLibre GL nationwide interactive map with 13 bookmark presets, time scrubber, spatial query sidebar, and **100% clickable interactivity** on all markers (harbours, lighthouses, PFZs, aquaculture) and vector geometries (MPAs, 12nm limits, 200nm EEZ, GEBCO bathymetric contours) with real-time oceanographic & regulatory intelligence.
+  - `FisherWatch`: Multilingual operational dashboard with nationwide coastal sector pills (All India, Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar, Lakshadweep), PFZ advisories, landing harbours, and safety telemetry.
+  - `AquaWatch`, `MarineHazards`, `PortWatch`, `DataCatalogue`.
 
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
@@ -384,6 +394,31 @@
 - Resolved `ThreadContext` initialization: `RunRepository.create()` now initializes `context_json` with valid `ThreadContext(thread_id=thread_id).model_dump(mode="json")`, resolving Pydantic validation warnings.
 - Real Groq smoke test verified: Model authentication, HTTP communication, structured intent extraction, and response composition verified against live Groq endpoint with `qwen/qwen3.8-27b`.
 
+### P0-26 — India MarineWatch Nationwide Real Institutional Data Platform (BarentsWatch India Architecture)
+- **Nationwide Coverage Across All Coastal States & UTs**:
+  - Expanded from limited West Coast pilot to full national coverage across Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar Islands, and Lakshadweep.
+- **DGLL Coastal Lighthouses & Navigational Aids**:
+  - Ingested 15 primary landfall lighthouses from Directorate General of Lighthouses and Lightships (`data/reference/lighthouses_india.json`).
+  - Implemented `/api/v1/lighthouses` and `/api/v1/lighthouses/nearby` endpoints returning optical elevation, nominal range (NM), light character, and AIS AtoN equipment.
+  - Linked lighthouses directly into spatial query responses (`nearby_lighthouses`).
+- **CMFRI Marine Fisheries Census Landing Centres**:
+  - Ingested 30 landing centres (`data/reference/cmfri_landing_centres.json`) with fleet size census, mechanization breakdown, and VHF channel 16 radio communications.
+- **National Marine Protected Areas (MPAs) & Maritime Limits**:
+  - Expanded `india_maritime_boundaries.geojson` with authentic boundaries: Gulf of Mannar Biosphere Reserve, Sundarbans Tiger Reserve Core/Buffer, Gahirmatha Marine Sanctuary, Gulf of Kutch Marine National Park, Malvan Sanctuary, Mahatma Gandhi Marine Park Wandoor (A&N), and Angria Bank Coral Atoll.
+  - Included 12nm Sovereign Territorial Waters, 24nm Contiguous Zones, 200nm Exclusive Economic Zones across Arabian Sea, Bay of Bengal, and Andaman Sea, and GEBCO 50m/100m/200m depth contours.
+- **14 INCOIS PAT Harmonic Astronomical Tide Ports**:
+  - Added harmonic constituents ($M_2, S_2, N_2, K_1, O_1$) for Kandla, Mumbai, Ratnagiri, Malvan, Mormugao, Mangalore, Cochin, Tuticorin, Chennai, Visakhapatnam, Paradip, Sagar Island, Port Blair, and Kavaratti in `backend/app/domain/tides.py`.
+- **Coast Bathymetry Profiles**:
+  - Enhanced `get_coast_profile` to compute true slope differences between broad Western continental shelf, steep Coromandel/Andhra slope, insular trenches off Andaman, and coral atoll lagoons of Lakshadweep.
+- **100% Clickable & Interactive Map GIS**:
+  - In `OceanWatchGIS.tsx`, every marker (harbours ⚓, lighthouses 🗼, PFZs 🐟, aquaculture 🦐) AND every polygon/line (MPAs, 12nm Territorial Waters, 24nm Contiguous Zones, 200nm EEZ, GEBCO depth contours) is interactive and clickable.
+  - Clicking any feature displays a comprehensive inspection card (authority, regulations, legal status, coordinates, dimensions) while simultaneously triggering real-time point forecasts and astronomical tidal predictions for that exact location.
+- **Nationwide Sector Filtering**:
+  - Added coastal sector switcher pills in `FisherWatchView.tsx` and `OceanWatchGIS.tsx` to easily filter PFZ advisories and landing centres by state/UT.
+- **Verification**:
+  - 15 dedicated backend tests in `test_marinewatch_endpoints.py` (100% pass rate).
+  - Full backend suite: 674 passed, 51 skipped, 0 failures.
+  - Full frontend suite: 241 passed across 16 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build (`vite build`).
 
 ---
 

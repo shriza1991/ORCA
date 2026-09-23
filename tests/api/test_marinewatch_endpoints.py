@@ -228,4 +228,64 @@ def test_spatial_query_contract(client: TestClient):
     assert "astronomical_tide" in data
     assert "active_hazards" in data
     assert "nearby_landing_centres" in data
+    assert "nearby_lighthouses" in data
     assert "sources" in data
+
+
+def test_lighthouses_contract(client: TestClient):
+    """Test DGLL coastal lighthouses endpoints."""
+    # 1. All lighthouses
+    resp_all = client.get("/api/v1/lighthouses")
+    assert resp_all.status_code == 200
+    all_data = resp_all.json()
+    assert all_data["count"] >= 15
+    names = [lh["name"] for lh in all_data["lighthouses"]]
+    assert any("Prongs Reef" in n for n in names)
+    assert any("Dolphin's Nose" in n for n in names)
+    assert any("Indira Point" in n for n in names)
+
+    # 2. Nearby lighthouses (near Ratnagiri)
+    resp_near = client.get("/api/v1/lighthouses/nearby?lat=16.99&lon=73.28&radius_km=150")
+    assert resp_near.status_code == 200
+    near_data = resp_near.json()
+    assert near_data["count"] > 0
+    assert any("Ratnagiri" in lh["name"] for lh in near_data["lighthouses"])
+
+
+def test_boundaries_geojson_contract(client: TestClient):
+    """Test nationwide maritime boundaries, MPAs, and GEBCO contours GeoJSON."""
+    resp = client.get("/api/v1/boundaries")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["type"] == "FeatureCollection"
+    assert len(data["features"]) >= 10
+
+    feature_ids = [f["id"] for f in data["features"]]
+    assert "BOUNDARY-12NM-TERRITORIAL-WEST" in feature_ids
+    assert "BOUNDARY-12NM-TERRITORIAL-EAST" in feature_ids
+    assert "BOUNDARY-200NM-EEZ-WEST" in feature_ids
+    assert "BOUNDARY-200NM-EEZ-EAST" in feature_ids
+    assert "MPA-GULF-OF-MANNAR" in feature_ids
+    assert "MPA-SUNDARBANS" in feature_ids
+    assert "MPA-GAHIRMATHA" in feature_ids
+
+
+def test_national_pfz_coverage(client: TestClient):
+    """Test PFZ coverage across various Indian coastal sectors."""
+    sectors = ["Gujarat", "Kerala", "Tamil Nadu", "Odisha", "Andaman"]
+    for sec in sectors:
+        resp = client.get(f"/api/v1/fisheries/pfz?sector={sec}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["advisories_count"] > 0
+
+
+def test_mpa_intersection_detection(client: TestClient):
+    """Test that points inside MPAs return the MPA in intersections."""
+    # Gulf of Mannar coordinate: 9.0°N, 79.0°E
+    resp = client.get("/api/v1/coast/profile?lat=9.0&lon=79.0")
+    assert resp.status_code == 200
+    data = resp.json()
+    intersections = data.get("intersections", [])
+    assert any("Gulf of Mannar" in inter["name"] for inter in intersections)
+
