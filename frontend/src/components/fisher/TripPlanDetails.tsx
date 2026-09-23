@@ -13,11 +13,11 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
   }
 
   const primaryRoute = assessment.route_candidates[0];
-  const distance = primaryRoute.distance_km;
-  const etaHours = primaryRoute.eta_hours;
-  const fuel = primaryRoute.fuel_estimate_liters;
-  const risk = primaryRoute.risk_rating;
-  const waves = primaryRoute.max_wave_height_m;
+  const distance = primaryRoute.distance_km || 0;
+  const etaHours = primaryRoute.eta_hours || 0;
+  const fuel = primaryRoute.fuel_estimate_liters || 0;
+  const risk = primaryRoute.risk_rating || 'UNKNOWN';
+  const waves = primaryRoute.max_wave_height_m || 0;
 
   // Format time
   const hours = Math.floor(etaHours);
@@ -27,12 +27,12 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
 
   // Estimate arrival date/time
   let departureTimeMs = Date.now();
-  const rawDep = assessment.trip_context?.departure_time?.toLowerCase() || '';
+  const rawDep = (assessment.trip_context?.departure_time || '').toLowerCase();
   if (rawDep.includes('tomorrow')) {
     departureTimeMs += 24 * 60 * 60 * 1000;
   }
   const arrivalDate = new Date(departureTimeMs + etaHours * 60 * 60 * 1000);
-  const arrivalStr = arrivalDate.toLocaleString('en-IN', {
+  const arrivalStr = isNaN(arrivalDate.getTime()) ? 'Unknown' : arrivalDate.toLocaleString('en-IN', {
     day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'
   });
 
@@ -105,6 +105,12 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
         {optimizationStr && (
           <div style={{ padding: '12px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe', fontSize: '0.9rem', color: '#1e40af', lineHeight: '1.4' }}>
             <strong>💡 AI Insight:</strong> {optimizationStr}
+          </div>
+        )}
+
+        {assessment.alerts && assessment.alerts.length > 0 && (
+          <div style={{ padding: '12px', background: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', fontSize: '0.9rem', color: '#991b1b', lineHeight: '1.4', marginTop: '12px' }}>
+            <strong>⚠️ Early Warning:</strong> {assessment.alerts[0].description || assessment.alerts[0].title || assessment.alerts[0].message || 'Weather anomalies detected along the route.'}
           </div>
         )}
       </div>
