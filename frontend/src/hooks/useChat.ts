@@ -112,11 +112,19 @@ export function useChat() {
     }
   }, [conversationId, language, missionContext]);
 
-  const simulateWhatIf = useCallback(async (params: WhatIfParameters, queryText: string) => {
+  const simulateWhatIf = useCallback(async (params: WhatIfParameters, queryText: string, currentAssessmentId?: string) => {
     const baselineStatus = activeResponse?.recommendation.status ?? 'READY';
+    
+    // Calculate new departure and return times
+    const now = new Date();
+    const departureDate = new Date(now.getTime() + (params.timeOffsetHours || 0) * 60 * 60 * 1000);
+    const returnDate = new Date(departureDate.getTime() + 12 * 60 * 60 * 1000); // Assume 12hr default trip
+
     const effectiveContext: MissionContext = {
       origin_harbor: missionContext.origin_harbor,
       craft_profile: params.craftProfileOverride ?? missionContext.craft_profile,
+      departure_time: departureDate.toISOString(),
+      return_time: returnDate.toISOString()
     };
 
     const userMsg: ChatMessage = {
@@ -144,6 +152,7 @@ export function useChat() {
         user_context: {
           ...effectiveContext,
           language_preference: language,
+          parent_assessment_id: currentAssessmentId || activeResponse?.assessment_id,
         },
       };
 

@@ -97,6 +97,14 @@ class EvaluatedRouteItem(BaseModel):
     risk_rating: str = Field("LOW", description="Exposure rating: LOW | MODERATE | HIGH")
     exposure_score: float = Field(..., description="Numerical risk exposure metric")
     waypoints: List[List[float]] = Field(default_factory=list, description="List of [lon, lat] coordinates")
+    eta_hours: Optional[float] = Field(None, description="Estimated time of arrival in hours")
+    eta_assumptions: Optional[str] = Field(None, description="Assumptions used for ETA calculation")
+    fuel_estimate_liters: Optional[float] = Field(None, description="Estimated fuel consumption")
+    fuel_assumptions: Optional[str] = Field(None, description="Assumptions used for fuel calculation")
+    is_feasible: bool = Field(True, description="False if route intersects land or NO_GO area")
+    infeasibility_reasons: List[str] = Field(default_factory=list, description="Why the route is infeasible")
+    is_synthetic: bool = Field(False, description="True if route is a demo/synthetic corridor")
+    missing_data_state: Optional[str] = Field(None, description="Explanation if data was missing")
 
 
 class RouteExposurePayload(BaseModel):
@@ -163,6 +171,11 @@ class RouteExposureEngine(Protocol):
         context: ToolInvocationContext,
         marine: MarineConditionsPayload,
         destination: str,
+        weather: Optional[WeatherConditionsPayload] = None,
+        hazard: Optional[HazardBulletinPayload] = None,
+        geospatial_engine: Optional[Any] = None,
+        dest_coords: Optional[List[float]] = None,
+        base_waypoints: Optional[List[List[float]]] = None,
     ) -> RouteExposurePayload:
         """Computes alternative route passages and scores risk exposure."""
         ...

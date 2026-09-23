@@ -5,6 +5,7 @@ Owned by Dev 2 (Backend Platform Lead).
 
 import logging
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +22,10 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from backend.app.core.worker import alert_monitor_loop
+    task = asyncio.create_task(alert_monitor_loop(interval_seconds=60))
     yield
+    task.cancel()
     connector_http_client.close()
 
 
@@ -73,14 +77,16 @@ def create_app() -> FastAPI:
     from backend.app.connectors.imd_weather import ImdWeatherConnector
     from backend.app.connectors.incois import IncoisOceanStateConnector
     from backend.app.connectors.manager import ConnectorManager
-    from backend.app.connectors.registration import register_dev2_provider_tools
+    from backend.app.connectors.registration import register_dev2_provider_tools, register_dev4_operational_engines
     from backend.app.connectors.snapshot import SnapshotConnector
+    from backend.app.connectors.modes import DataMode
 
     snapshot_connector = SnapshotConnector()
     marine_live = IncoisOceanStateConnector()
     weather_live = ImdWeatherConnector()
     hazard_live = ImdHazardConnector()
     pfz_live = marine_live
+    svas_live = marine_live
 
     manager = ConnectorManager(
         None,
@@ -89,9 +95,14 @@ def create_app() -> FastAPI:
         weather_live=weather_live,
         hazard_live=hazard_live,
         pfz_live=pfz_live,
+        svas_live=svas_live,
     )
     register_dev2_provider_tools(tool_registry, manager)
-    register_m2_contract_mocks(tool_registry, override=False)
+    
+    if manager.current_mode in (DataMode.LIVE, DataMode.HYBRID):
+        register_dev4_operational_engines(tool_registry, manager)
+    else:
+        register_m2_contract_mocks(tool_registry, override=False)
 
     @app.get("/", tags=["System"])
     async def root():

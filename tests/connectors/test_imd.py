@@ -83,6 +83,7 @@ def test_imd_weather_live_failure_fallback_to_open_meteo(monkeypatch, imd_weathe
         200,
         json={
             "hourly": {
+                "time": ["2026-09-22T00:00"],
                 "wind_speed_10m": [14.0],
                 "wind_gusts_10m": [18.0],
                 "wind_direction_10m": [220.0],
@@ -143,5 +144,5 @@ def test_imd_hazard_fallback_normal():
 
     assert payload.cyclone_warning_active is False
     assert payload.squall_alert is False
-    assert payload.severity == "NORMAL"
-    assert "DEGRADED — LIVE_UNAVAILABLE" in payload.source_name
+    assert payload.severity == "UNKNOWN"
+    assert "UNAVAILABLE" in payload.source_name

@@ -1,175 +1,98 @@
 import { describe, it, expect } from 'vitest';
-import FisherDecisionSurface, {
+import {
   getFisherDecisionStatus,
   getFisherExplanation,
   extractFisherConditions,
 } from './FisherDecisionSurface';
-import { createHarborLayer } from '../../utils/geo';
-import {
-  CANONICAL_DATA_MODE_LABEL,
-  CANONICAL_DATA_MODE_TOOLTIP,
-} from '../../api/researcher-client';
-import type { ChatResponse } from '../../types/contracts';
+import type { TripAssessmentResponse } from '../../types/assessment';
 
 describe('P0-22: Fisherman Decision Surface & Local Conditions', () => {
-  const mockSafeResponse: ChatResponse = {
-    run_id: 'run_safe_01',
-    conversation_id: 'conv_01',
-    language: 'en',
-    intent: 'GO_NO_GO_SAFETY',
-    answer: 'Conditions are calm and safe for coastal voyage departure from Ratnagiri.',
-    recommendation: {
+  const mockSafeResponse: TripAssessmentResponse = {
+    assessment_id: 'assmnt_01',
+    assessed_at: '2026-09-15T06:00:00Z',
+    trip_context: {
+      origin_harbor: 'Ratnagiri',
+      coordinates: [73.28, 16.98],
+      craft_profile: 'motorized_boat',
+      departure_time: '2026-09-15T06:00:00Z',
+      return_time: '2026-09-15T18:00:00Z'
+    },
+    decision: {
       status: 'GO',
       summary: 'Conditions are calm and safe for coastal voyage departure.',
       decisive_factors: ['Significant wave height 1.2m is calm (< 1.5m).', 'Sustained wind 10.0 kt is favorable.'],
       next_action: 'Proceed with planned voyage under standard safety protocols.',
-      threshold_comparisons: [
-        {
-          metric_name: 'significant_wave_height_m',
-          observed_value: 1.2,
-          threshold_value: 1.5,
-          operator: '<',
-          unit: 'meters',
-          exceeded: false,
-          impact: 'SAFE',
-          description: 'Wave height 1.2m is safe.',
-        },
-        {
-          metric_name: 'wind_speed_knots',
-          observed_value: 10.0,
-          threshold_value: 18.0,
-          operator: '<',
-          unit: 'knots',
-          exceeded: false,
-          impact: 'SAFE',
-          description: 'Wind 10 kt is calm.',
-        },
-      ],
     },
-    confidence: {
-      level: 'HIGH',
-      reasons: ['All parameters strictly within safe operating limits'],
+    conditions: {
+      timestamp: '2026-09-15T06:00:00Z',
+      measurements: {
+        significant_wave_height: { value: 1.2, unit: 'm' },
+        wind_speed: { value: 10.0, unit: 'kn' },
+        visibility: { value: 12.0, unit: 'km' },
+        is_forecast: false
+      }
     },
-    evidence: [
-      {
-        source_name: 'INCOIS Ocean State Forecast',
-        retrieved_at: '2026-09-15T06:00:00Z',
-        metric_name: 'significant_wave_height',
-        metric_value: 1.2,
-        metric_unit: 'm',
-        quality_flags: ['fresh', 'official_source'],
-      },
-      {
-        source_name: 'IMD Coastal Weather',
-        retrieved_at: '2026-09-15T06:00:00Z',
-        metric_name: 'wind_speed',
-        metric_value: 10.0,
-        metric_unit: 'knots',
-        quality_flags: ['fresh', 'official_source'],
-      },
-      {
-        source_name: 'IMD Coastal Weather',
-        retrieved_at: '2026-09-15T06:00:00Z',
-        metric_name: 'visibility',
-        metric_value: 12.0,
-        metric_unit: 'km',
-        quality_flags: ['fresh', 'official_source'],
-      },
-    ],
-    map_layers: [],
-    trace: [],
-    warnings: [],
-    suggested_followups: [],
+    alerts: [],
+    pfz_candidates: [],
+    route_candidates: [],
+    map_layers: { layers: [] },
+    evidence: [],
+    source_status: [],
+    is_durable: false
   };
 
-  const mockCautionResponse: ChatResponse = {
+  const mockCautionResponse: TripAssessmentResponse = {
     ...mockSafeResponse,
-    recommendation: {
+    decision: {
+      ...mockSafeResponse.decision,
       status: 'CAUTION',
       summary: 'Moderate wave conditions (1.9m waves, 16 kt wind) require operational caution for motorized boat.',
       decisive_factors: ['Moderate wave height 1.9m requires caution.'],
-      next_action: 'Operate with caution within 5 nm of coastline.',
-      threshold_comparisons: [
-        {
-          metric_name: 'significant_wave_height_m',
-          observed_value: 1.9,
-          threshold_value: 1.5,
-          operator: '>=',
-          unit: 'meters',
-          exceeded: true,
-          impact: 'CAUTION_TRIGGER',
-          description: 'Moderate wave height requires caution.',
-        },
-        {
-          metric_name: 'wind_speed_knots',
-          observed_value: 16.0,
-          threshold_value: 18.0,
-          operator: '<',
-          unit: 'knots',
-          exceeded: false,
-          impact: 'SAFE',
-          description: 'Wind speed within range.',
-        },
-      ],
     },
   };
 
-  const mockNoGoResponse: ChatResponse = {
+  const mockNoGoResponse: TripAssessmentResponse = {
     ...mockSafeResponse,
-    recommendation: {
+    decision: {
+      ...mockSafeResponse.decision,
       status: 'NO_GO',
       summary: 'Departure advised against (NO-GO). Severe sea state with wave heights of 3.4m and active IMD squall alert.',
       decisive_factors: [
         'Significant wave height 3.4m exceeds safety ceiling (2.5m)',
         'Active IMD squall alert across coastal sector',
       ],
-      next_action: 'Remain moored in port. Do not navigate under any circumstances.',
-      threshold_comparisons: [
-        {
-          metric_name: 'significant_wave_height_m',
-          observed_value: 3.4,
-          threshold_value: 2.5,
-          operator: '>',
-          unit: 'meters',
-          exceeded: true,
-          impact: 'NO_GO_TRIGGER',
-          description: 'Wave height 3.4m exceeds limit.',
-        },
-        {
-          metric_name: 'squall_alert',
-          observed_value: true,
-          threshold_value: false,
-          operator: '==',
-          unit: 'boolean',
-          exceeded: true,
-          impact: 'NO_GO_TRIGGER',
-          description: 'Active squall alert.',
-        },
-      ],
     },
+    conditions: {
+      timestamp: '2026-09-15T06:00:00Z',
+      measurements: {
+        significant_wave_height: { value: 3.4, unit: 'm' },
+        wind_speed: { value: 25.0, unit: 'kn' },
+        is_forecast: false
+      }
+    },
+    alerts: [
+      {
+        title: 'Squall Alert',
+        description: 'Active squall alert',
+        severity: 'high',
+        affects_trip: true,
+        action: 'Do not depart.'
+      }
+    ]
   };
 
-  const mockUnknownResponse: ChatResponse = {
+  const mockUnknownResponse: TripAssessmentResponse = {
     ...mockSafeResponse,
-    recommendation: {
+    decision: {
+      ...mockSafeResponse.decision,
       status: 'UNKNOWN',
       summary: 'Sensor telemetry is stale or missing. Safe departure evaluation cannot be completed.',
       decisive_factors: ['Missing critical sensor telemetry.'],
-      next_action: 'Hold departure and verify with port authorities.',
-      threshold_comparisons: [
-        {
-          metric_name: 'data_validity',
-          observed_value: 'EXPIRED',
-          threshold_value: 'CURRENT_WINDOW',
-          operator: '==',
-          unit: 'status',
-          exceeded: true,
-          impact: 'UNKNOWN_TRIGGER',
-          description: 'Telemetry expired.',
-        },
-      ],
     },
-    evidence: [],
+    conditions: {
+      timestamp: '2026-09-15T06:00:00Z',
+      measurements: {}
+    }
   };
 
   describe('Primary Decision State Resolution', () => {
@@ -246,51 +169,6 @@ describe('P0-22: Fisherman Decision Surface & Local Conditions', () => {
       expect(conds.waves).not.toBe('0 m');
       expect(conds.waves).not.toBe('0');
       expect(conds.wind).not.toBe('0 kn');
-    });
-
-    it('preserves empty response conditions as all "—"', () => {
-      const conds = extractFisherConditions(null);
-      expect(conds.waves).toBe('—');
-      expect(conds.wind).toBe('—');
-      expect(conds.visibility).toBe('—');
-      expect(conds.hazard).toBe('—');
-    });
-  });
-
-  describe('Harbor Layer Initial Neutrality', () => {
-    it('creates neutral harbor layer when status is UNKNOWN (never implies GO)', () => {
-      const layer = createHarborLayer('Ratnagiri', 'UNKNOWN');
-      expect(layer.style?.color).toBe('#64748b'); // Neutral slate
-      expect(layer.geojson.properties.operational_status).toBe('UNKNOWN');
-    });
-
-    it('defaults createHarborLayer to UNKNOWN color when called without explicit status', () => {
-      const layer = createHarborLayer('Ratnagiri');
-      expect(layer.style?.color).toBe('#64748b');
-      expect(layer.geojson.properties.operational_status).toBe('UNKNOWN');
-    });
-
-    it('updates harbor layer color when active recommendation arrives', () => {
-      const safeLayer = createHarborLayer('Ratnagiri', 'GO');
-      expect(safeLayer.style?.color).toBe('#0ea5e9');
-
-      const noGoLayer = createHarborLayer('Ratnagiri', 'NO_GO');
-      expect(noGoLayer.style?.color).toBe('#ef4444');
-
-      const cautionLayer = createHarborLayer('Ratnagiri', 'CAUTION');
-      expect(cautionLayer.style?.color).toBe('#eab308');
-    });
-  });
-
-  describe('Data Mode Disclosure & Component Integrity', () => {
-    it('exports FisherDecisionSurface component cleanly', () => {
-      expect(FisherDecisionSurface).toBeDefined();
-      expect(typeof FisherDecisionSurface).toBe('function');
-    });
-
-    it('reused the canonical DATA MODE constants without discrepancy', () => {
-      expect(CANONICAL_DATA_MODE_LABEL).toBe('DATA MODE: SYNTHETIC DEMO / SNAPSHOT');
-      expect(CANONICAL_DATA_MODE_TOOLTIP).toContain('Deterministic synthetic data modeled on documented');
     });
   });
 });

@@ -61,6 +61,9 @@
 - MissionMapBrief and MapView dynamic layer rendering updated with candidate switching, real metric display, and honest empty/unavailable handling without hardcoded operational route geometry.
 
 ### P0-8H — Simultaneous route alternatives visualization without clutter
+- Established verifiable data ingest pipelines (`importers/`) covering INCOIS PFZ, IMD Hazards, and native NetCDF satellite handling (`xarray`).
+- Integrated offline reference fallbacks safely bypassing unconfigured API endpoints without brittle scraping.
+- Created Unified Trip Assessment Pipeline (`POST /api/v1/trip-assessments`), aligning Fisher dashboard and conversational interface decision logic (using `AssessmentService`).
 - Established visual hierarchy for route comparison: selected candidate rendered prominently as solid cyan line (`line_width: 4`, `opacity: 0.95`, `#06b6d4`), while non-selected alternatives render simultaneously as thin, dashed lines (`line_width: 2.5`, `line_dasharray: [3, 3]`, `opacity: 0.50`, `#38bdf8`).
 - Integrated dynamic sector route fetching in `AuthorityPage` with request cancellation and stale-state clearing on sector switch.
 - Stabilized map camera bounds to prevent abrupt jumping/refitting during Safest / Balanced / Direct corridor switching.
@@ -186,6 +189,20 @@
 - Handled edge cases: multi-candidate dynamic bounds auto-fitting, single candidate centering, invalid coordinate filtering, and explicit empty state.
 - Compact map provenance caption: `INCOIS PFZ-style candidate data · synthetic snapshot`.
 - Validated with 7 automated unit & feature transformation tests (119 total frontend tests passing) and clean `tsc && vite build`.
+
+## Phase 2: Data Grounding & Provider Alignment (Current)
+
+### Completed
+- Contract alignment for `MarineConditionsPayload`: Added `wave_direction_deg` and `freshness_flags`.
+- Refactored `OpenMeteoConnector`: Fixed trip-window alignment, km/h to knots conversion, added precise forecast hour extraction.
+- Refactored `SnapshotConnector` and `DataService`: Removed clock-invented timestamps. 
+- Synced test baselines in `SYNTHETIC` and `SNAPSHOT` data modes to deterministic scenario anchor times (`2026-09-12T06:00:00+00:00`) rather than fabricating time from `now_utc`.
+- Repaired corrupted provider tests (`test_imd.py`, `test_incois.py`) and updated `test_open_meteo.py` mocks.
+- `IncoisOSFNormalizer` updated to correctly derive a 6-hour `valid_to` window deterministically from `observation_time` instead of from the current clock.
+- **Verification:** 100% pass on regression suite (148 tests).
+
+### Blockers
+None
 
 ### P0-15 — Hazard Spatial Polygon Visualization in Researcher Lab
 - Implemented `HazardSpatialMap.tsx` reusing MapLibre GL conventions and dark basemap styling for spatial exploration of observed/advisory hazard polygons.
@@ -381,8 +398,34 @@
 - Resolved `ThreadContext` initialization: `RunRepository.create()` now initializes `context_json` with valid `ThreadContext(thread_id=thread_id).model_dump(mode="json")`, resolving Pydantic validation warnings.
 - Real Groq smoke test verified: Model authentication, HTTP communication, structured intent extraction, and response composition verified against live Groq endpoint with `qwen/qwen3.8-27b`.
 
+### P0-26 — Unified Trip Assessment Pipeline
+- Designed and implemented a single, unified `AssessmentService` pipeline consumed by both the conversational interface (LangGraph) and the Fisher dashboard (`POST /api/v1/trip-assessments`).
+- Created robust typed models mapping four explicit decision states (`GO`, `CAUTION`, `NO_GO`, `UNKNOWN`) based on verifiable data availability.
+- Orchestrates the full lifecycle: `MarineConditionsProvider`, `WeatherConditionsProvider`, `HazardBulletinsProvider`, `PFZSourceDataProvider` and `GeospatialHazardEngine` are aggregated into an `ObservationBundle`.
+- Evaluates full trip windows using `return_time` vs `valid_to` boundaries, rejecting queries with expired or out-of-range observation data.
+- Persists all executed trip assessments and their inputs to PostgreSQL using `TripAssessmentRecord` for analytics and audit trails.
+- LangGraph graph structure simplified to use `trip_assessment` instead of duplicating component tool calls; `specialist_tools_node` automatically parses standard outputs.
+
+### P0-27 — What-If Simulator & Chat Assessment Integration
+- Integrated the What-If Simulator directly into the `FisherDecisionSurface` for seamless exploratory alternative evaluations.
+- Enhanced `useChat` to pass structured, offset-calculated `departure_time`, `return_time`, and `parent_assessment_id` across the API boundary into `UserContext`.
+- Refactored `SPECIALIST_TOOLS` node in LangGraph to natively invoke `AssessmentService.assess_trip()` for what-if scenarios, strictly utilizing the deterministic risk boundaries instead of a disconnected risk engine mock.
+- Engineered a deterministic comparison block inside `RESPONSE_COMPOSER` that fetches the baseline assessment and mathematically highlights changes to the safety verdict (e.g. CAUTION -> GO) without relying on hallucinatory LLM outputs.
+- Synchronized frontend application context updates (explicit adoption) to correctly trigger deterministic baseline recalculations across the whole dashboard.
+
+### P0-28 — Repository Governance, Audit, Unification & Multi-AI Protocol
+- Established canonical strategic truth: Created and synchronized `docs/ORCA_AI_MASTER_CONTEXT.md` defining the inviolable cognitive flow (`ASK → PLAN → DISCOVER → REASON → DECIDE → EXPLAIN → SIMULATE → ADAPT`) and core architectural invariants.
+- Streamlined `AGENTS.md` at repository root into a high-leverage entrypoint enforcing mandatory preflight reading, deterministic safety authority, epistemic data honesty (missing evidence != zero risk, unknown != safe, mock != live), and automatic documentation maintenance.
+- Documented key architectural decisions in `docs/DECISIONS.md`:
+  - `D025`: Supervisor capability DAG and specialist tool result reconciliation.
+  - `D026`: Deterministic date string parsing and DB offline resilience.
+  - `D027`: Multi-AI collaborative governance protocol and canonical documentation standard.
+- Unified domain risk engine: Hardened natural language date/time parsing in `backend/app/domain/risk_engine.py` to prevent `ValueError` crashes on colloquial time expressions.
+- Hardened database persistence in `backend/app/services/assessment_service.py` to ensure graceful fallback when PostgreSQL is offline.
+- Verified test suite: `pytest tests/agent_eval/` (387 passed, 1 skipped), frontend Vitest (224 passed across 16 test suites, zero TypeScript errors).
 
 ---
+
 
 ## P0 Marine Data Providers Status Board
 

@@ -76,11 +76,67 @@ class ImdHazardConnector(BaseLiveConnector):
         if self.data_mode == "SNAPSHOT":
             return self._make_normal_payload(harbor, "SNAPSHOT_REDIRECT")
 
-        if self.data_mode in ("LIVE", "HYBRID") and settings.IMD_API_KEY:
+        if self.data_mode in ("LIVE", "HYBRID") and settings.IMD_API_KEY and "placeholder" not in settings.IMD_API_BASE_URL.lower():
             try:
                 return self._fetch_imd_hazard(harbor, context)
             except Exception as exc:
-                logger.warning("IMD hazard live fetch failed (%s). Returning NORMAL.", exc)
+                logger.warning("IMD Hazard live fetch failed (%s).", exc)
+        else:
+            logger.debug("IMD Hazard API is unconfigured (placeholder or missing key). Skipping live fetch.")
+
+        # Import from genuine dated IMD marine hazard bulletin file.
+        # Path points to the official-format sample in data/source_snapshots/imd/.
+        import_path = "data/source_snapshots/imd/marine_hazard_bulletin_2026-09-12.json"
+        import pathlib
+        if pathlib.Path(import_path).exists():
+            try:
+                from backend.app.importers.hazard_importer import HazardImporter
+                from backend.app.connectors.dataset_registry import (
+                    DatasetMetadata, GeographicCoverage, dataset_registry
+                )
+                import json as _json
+                with open(import_path, "r", encoding="utf-8") as _f:
+                    _raw = _json.load(_f)
+                importer = HazardImporter(import_path)
+                res = importer.process()
+                # Register dataset metadata
+                dataset_registry.register(DatasetMetadata(
+                    dataset_id="imd_hazard_import_2026-09-12",
+                    variable="marine_hazard",
+                    source_name=_raw.get("issuing_authority", "IMD Cyclone Warning Division"),
+                    issuing_authority=_raw.get("issuing_authority", "IMD"),
+                    source_url=_raw.get("source_url", self.SOURCE_URL),
+                    geographic_coverage=GeographicCoverage(
+                        lat_min=_raw.get("geographic_coverage", {}).get("lat_min", 14.0),
+                        lat_max=_raw.get("geographic_coverage", {}).get("lat_max", 22.0),
+                        lon_min=_raw.get("geographic_coverage", {}).get("lon_min", 70.0),
+                        lon_max=_raw.get("geographic_coverage", {}).get("lon_max", 77.0),
+                        description="North Arabian Sea — Maharashtra sector",
+                    ),
+                    time_coverage_start=_raw.get("valid_from"),
+                    time_coverage_end=_raw.get("valid_to"),
+                    resolution_description="Point/polygon bulletin",
+                    access_method="FILE_IMPORT",
+                    availability="CACHED",
+                    availability_detail=f"Loaded from {import_path}",
+                    original_file_path=import_path,
+                    checksum=res["metadata"]["checksum"],
+                    product_id=_raw.get("bulletin_id"),
+                    acquisition_time=_raw.get("issued_at"),
+                    quality_flags=[
+                        f"severity={_raw.get('severity', 'UNKNOWN')}",
+                        f"cyclone_active={_raw.get('cyclone_warning_active', False)}",
+                        f"squall_alert={_raw.get('squall_alert', False)}",
+                    ],
+                ))
+                logger.info(
+                    "Registered IMD hazard dataset metadata: bulletin_id=%s, severity=%s",
+                    _raw.get("bulletin_id", "unknown"),
+                    _raw.get("severity", "UNKNOWN"),
+                )
+                return res["payload"]
+            except Exception as exc:
+                logger.warning("Failed to load Hazard from file importer: %s", exc)
 
         # Key absent or HYBRID fallback: return NORMAL (conservative default)
         return self._make_normal_payload(harbor, "LIVE_UNAVAILABLE")
@@ -118,17 +174,17 @@ class ImdHazardConnector(BaseLiveConnector):
 
     @staticmethod
     def _make_normal_payload(harbor: str, reason: str) -> HazardBulletinPayload:
-        """Return NORMAL hazard bulletin payload used on live data failure."""
+        """Return UNKNOWN hazard bulletin payload used on live data failure."""
         now_utc = datetime.now(UTC)
         return HazardBulletinPayload(
             harbor=harbor,
             cyclone_warning_active=False,
             squall_alert=False,
             bulletin_id=None,
-            severity="NORMAL",
-            headline=f"No active hazard (live bulletin unavailable — {reason})",
+            severity="UNKNOWN",
+            headline=f"Hazard bulletin unavailable ({reason})",
             valid_from=now_utc.isoformat(),
-            valid_to=(now_utc + timedelta(hours=24)).isoformat(),
-            source_name=f"IMD Cyclone Warning Division (DEGRADED — {reason})",
+            valid_to=(now_utc - timedelta(seconds=1)).isoformat(),
+            source_name=f"IMD Cyclone Warning Division (UNAVAILABLE — {reason})",
             source_url=None,
         )

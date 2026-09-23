@@ -5,8 +5,8 @@ import type { MapLayer } from '../../types/contracts';
 import type { OperationalMode } from '../../types/mission';
 import LayerManager from './LayerManager';
 import MissionMapBrief from './MissionMapBrief';
-import { Layers } from 'lucide-react';
-import type { SupportedLanguage } from '../../i18n/translations';
+import { Layers, Navigation } from 'lucide-react';
+import { translateText, type SupportedLanguage } from '../../i18n/translations';
 
 /** Initial fallback center (Indian coastal waters) */
 const INITIAL_CENTER: [number, number] = [73.28, 16.99];
@@ -30,6 +30,11 @@ interface MapViewProps {
     routes?: 'AVAILABLE' | 'UNAVAILABLE' | 'EMPTY';
     hazards?: 'AVAILABLE' | 'UNAVAILABLE' | 'EMPTY';
   };
+  hideAdvancedControls?: boolean;
+  liveLocation?: any;
+  liveLocationStatus?: string;
+  isTrackingLocation?: boolean;
+  onToggleLocation?: () => void;
 }
 
 export default function MapView({
@@ -42,6 +47,11 @@ export default function MapView({
   onResetView,
   resetViewTrigger,
   layerAvailability,
+  hideAdvancedControls = false,
+  liveLocation,
+  liveLocationStatus,
+  isTrackingLocation,
+  onToggleLocation,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -178,8 +188,44 @@ export default function MapView({
       });
     }
 
+
+    if (liveLocation && (liveLocationStatus === 'accurate' || liveLocationStatus === 'stale')) {
+      dynamicRouteLayers.push({
+        layer_id: 'layer_live_location',
+        name: 'My Location',
+        layer_type: 'geojson',
+        visible: true,
+        style: {
+          color: liveLocationStatus === 'stale' ? '#94a3b8' : '#2563eb', // Gray if stale, blue if accurate
+          opacity: 1.0,
+          circle_radius: 8,
+          layer_category: 'navigation',
+        },
+        geojson: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [liveLocation.longitude, liveLocation.latitude]
+              },
+              properties: {
+                point_type: 'My Location',
+                status: liveLocationStatus,
+                accuracy: liveLocation.accuracy,
+                speed: liveLocation.speed,
+                heading: liveLocation.heading,
+                // Turf circle approximation for accuracy radius can be done natively via circle-radius or adding a polygon
+              }
+            }
+          ]
+        }
+      });
+    }
+
     return [...nonRouteLayers, ...dynamicRouteLayers];
-  }, [layers, selectedCorridorMode]);
+  }, [layers, selectedCorridorMode, liveLocation, liveLocationStatus]);
 
   // Initialize map
   useEffect(() => {
@@ -720,16 +766,39 @@ export default function MapView({
     <section className="map-view" aria-label="Geospatial map viewport">
       <div ref={containerRef} className="map-container" />
 
-      <MissionMapBrief
-        layers={layers}
-        selectedMode={selectedCorridorMode}
-        onModeChange={setSelectedCorridorMode}
-        language={language}
-        onResetView={onResetView || handleResetView}
-        layerAvailability={layerAvailability}
-      />
+      {!hideAdvancedControls && (
+        <MissionMapBrief
+          layers={layers}
+          selectedMode={selectedCorridorMode}
+          onModeChange={setSelectedCorridorMode}
+          language={language}
+          onResetView={onResetView || handleResetView}
+          layerAvailability={layerAvailability}
+        />
+      )}
 
-      {layers.length > 0 && (
+      {hideAdvancedControls && (
+        <div className="fisher-simple-map-controls" style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {onToggleLocation && (
+            <button
+              onClick={onToggleLocation}
+              style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: isTrackingLocation ? '#eff6ff' : 'white', color: isTrackingLocation ? '#2563eb' : '#0f172a', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: isTrackingLocation ? 'bold' : 'normal' }}
+            >
+              <Navigation size={24} fill={isTrackingLocation ? '#2563eb' : 'none'} />
+              {translateText('My Location', language) || 'My Location'}
+            </button>
+          )}
+          <button
+            onClick={onResetView || handleResetView}
+            style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'white', color: '#0f172a', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+          >
+            <Layers size={24} />
+            {translateText('Fit Trip', language) || 'Fit Trip'}
+          </button>
+        </div>
+      )}
+
+      {layers.length > 0 && !hideAdvancedControls && (
         <Popover.Root open={showLayerPanel} onOpenChange={setShowLayerPanel}>
           <Popover.Trigger asChild>
             <button

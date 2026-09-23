@@ -79,3 +79,61 @@ p, .chat-message-content, .recommendation-summary, .evidence-card-desc {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-hover);
 }
+
+/* Fisher Accessibility Overrides */
+.fisher-large-action-btn {
+  min-height: 48px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.fisher-large-action-btn:active {
+  transform: scale(0.98);
+}
+
+.fisher-simple-map-controls button {
+  min-height: 48px;
+  cursor: pointer;
+}
+
+/* Fisher Responsive Layout Overrides */
+.app-main.fisher-page {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.fisher-content-column {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+}
+
+.fisher-map-column {
+  display: flex;
+  flex: 0 0 auto;
+  height: 60vh;
+  min-height: 400px;
+  position: relative;
+}
+
+/* Desktop side-by-side */
+@media (min-width: 769px) {
+  .app-main.fisher-page {
+    flex-direction: row;
+    overflow: hidden;
+  }
+  .fisher-content-column {
+    width: var(--sidebar-width, 400px);
+    height: 100%;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+  }
+  .fisher-map-column {
+    flex: 1 1 0%;
+    height: 100%;
+  }
+}

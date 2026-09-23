@@ -86,11 +86,14 @@ def test_incois_osf_live_timeout_fallback_to_open_meteo(monkeypatch, incois_conn
         200,
         json={
             "hourly": {
+                "time": ["2026-09-22T00:00"],
                 "wave_height": [1.8],
+                "wave_direction": [200.0],
+                "wave_period": [7.0],
                 "swell_wave_height": [1.1],
                 "swell_wave_period": [8.0],
                 "ocean_current_velocity": [0.6],
-                "sea_surface_temperature": [28.0]
+                "sea_surface_temperature": [28.0],
             }
         }
     ))
@@ -209,5 +212,5 @@ def test_incois_svas_live_unavailable_cached_real():
     ctx = ToolInvocationContext(origin_harbor="Ratnagiri")
     payload = conn.get_svas_advisories(ctx)
 
-    assert payload.advisory_status == "SAFE"
-    assert "CACHED_REAL" in payload.source_name or "SNAPSHOT" in payload.source_name
+    assert payload.advisory_status == "UNKNOWN"
+    assert "UNAVAILABLE" in payload.source_name

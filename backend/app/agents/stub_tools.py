@@ -269,6 +269,71 @@ def risk_stub(
 
 
 # =============================================================================
+# 4A. Trip Assessment Stub Tool (Unified Pipeline Mock)
+# =============================================================================
+
+def trip_assessment_stub(
+    origin_harbor: str = "Ratnagiri",
+    craft_profile: str = "motorized_boat",
+    **kwargs: Any,
+) -> ToolResult:
+    """Simulated Trip Assessment pipeline evaluation."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    
+    # Simulate a NO_GO decision based on some craft threshold for demo
+    rec_status = RecommendationStatus.CAUTION
+    summary = f"Simulated trip assessment for {origin_harbor}. Exercise caution."
+    
+    recommendation = Recommendation(
+        status=rec_status,
+        summary=summary,
+        decisive_factors=[f"Craft: {craft_profile}", "Simulated M1 environment"],
+        next_action="Monitor local weather (Simulation only).",
+    )
+    
+    confidence = Confidence(
+        level=ConfidenceLevel.MEDIUM,
+        reasons=["Generated from M1 simulated assessment pipeline"],
+    )
+
+    marine = {
+        "harbor": origin_harbor,
+        "significant_wave_height_m": 1.5,
+        "sea_surface_current_knots": 1.1,
+    }
+    weather = {
+        "harbor": origin_harbor,
+        "wind_speed_knots": 15.0,
+        "wind_gust_knots": 18.0,
+        "visibility_km": 10.0,
+    }
+
+    return ToolResult(
+        status=ToolStatus.OK,
+        data={
+            "source_type": "M1_DEMO",
+            "recommendation": recommendation.model_dump(),
+            "confidence": confidence.model_dump(),
+            "conditions": {
+                "marine": marine,
+                "weather": weather,
+            },
+        },
+        evidence=[
+            EvidenceItem(
+                source_name="SAMUDRA Trip Assessment (Simulated M1 Demo)",
+                source_url="https://samudra.internal/trip_assessment",
+                observed_time=now_iso,
+                metric_name="risk_status",
+                metric_value=rec_status.value,
+                quality_flags=["M1_DEMO_DATA", "SIMULATED"],
+            )
+        ],
+        warnings=["Simulated unified assessment for demonstration."],
+    )
+
+
+# =============================================================================
 # 5. Route Comparison Stub Tool
 # =============================================================================
 
@@ -410,6 +475,19 @@ def register_m1_stub_tools(registry: Optional[Any] = None) -> None:
                 is_deterministic=True,
             ),
             risk_stub,
+        ),
+        (
+            ToolDefinition(
+                name="trip_assessment_stub",
+                description="Execute the unified trip assessment pipeline using M1 simulated data.",
+                category="risk",
+                parameters=[
+                    ToolParameter(name="origin_harbor", type_name="str", description="Departure harbor", required=False, default="Ratnagiri"),
+                    ToolParameter(name="craft_profile", type_name="str", description="Vessel craft class", required=False, default="motorized_boat"),
+                ],
+                is_deterministic=True,
+            ),
+            trip_assessment_stub,
         ),
         (
             ToolDefinition(

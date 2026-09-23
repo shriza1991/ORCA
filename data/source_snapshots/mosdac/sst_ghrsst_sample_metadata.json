@@ -1,0 +1,62 @@
+{
+  "_source_documentation": {
+    "product_name": "GHRSST Level 4 MUR Global Foundation Sea Surface Temperature Analysis",
+    "product_short_name": "MUR-JPL-L4-GLOB-v4.1",
+    "issuing_agency": "NASA Jet Propulsion Laboratory (JPL) Physical Oceanography DAAC (PO.DAAC)",
+    "agency_url": "https://podaac.jpl.nasa.gov",
+    "product_doi": "10.5067/GHGMR-4FJ04",
+    "product_page": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
+    "opendap_access": "https://opendap.earthdata.nasa.gov/providers/POCLOUD/collections/MUR-JPL-L4-GLOB-v4.1",
+    "access_method": "FILE_IMPORT",
+    "access_notes": "GHRSST MUR L4 data is publicly accessible via NASA EarthData OPeNDAP after free registration at urs.earthdata.nasa.gov. A real NetCDF binary is not committed to this repository due to file size. This metadata JSON documents the product specification. The satellite_importer.py adapter accepts actual GHRSST NetCDF files placed at this path. External blocker: EarthData registration required for automated download.",
+    "representative_file": "20260912090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+    "pilot_region_subset": {
+      "lat_min": 14.0,
+      "lat_max": 22.0,
+      "lon_min": 70.0,
+      "lon_max": 77.0,
+      "description": "North Arabian Sea — Maharashtra/Konkan coast pilot region"
+    }
+  },
+  "product_spec": "GHRSST_MUR",
+  "observation_date": "2026-09-12",
+  "time_coverage_start": "2026-09-12T09:00:00Z",
+  "time_coverage_end": "2026-09-12T09:00:00Z",
+  "variable_map": {
+    "sst": "analysed_sst",
+    "sst_uncertainty": "analysis_error",
+    "quality_mask": "mask",
+    "sea_ice_fraction": "sea_ice_fraction",
+    "dt_1km_data": "dt_1km_data"
+  },
+  "coordinate_variables": {
+    "latitude": "lat",
+    "longitude": "lon",
+    "time": "time"
+  },
+  "units": {
+    "analysed_sst": "kelvin",
+    "analysis_error": "kelvin",
+    "mask": "dimensionless (bit flags)",
+    "sea_ice_fraction": "fraction (0–1)"
+  },
+  "scale_factor_note": "xarray applies scale_factor (0.001) and add_offset (298.15) automatically when opening with engine='netcdf4'. After scaling, analysed_sst is in Kelvin. Convert to Celsius by subtracting 273.15.",
+  "missing_value_sentinel": -32768,
+  "quality_mask_bits": {
+    "0": "open_sea",
+    "1": "land",
+    "2": "optional_lake",
+    "4": "optional_river",
+    "8": "optional_lake_and_river"
+  },
+  "quality_mask_interpretation": "Mask bit 0 (open_sea) indicates valid ocean pixels. Non-zero mask values indicate non-ocean pixels and must be treated as missing/invalid, NOT coerced to 0.",
+  "resolution_degrees": 0.01,
+  "resolution_km_approx": 1.1,
+  "nominal_sst_range_celsius": {
+    "arabian_sea_sept": [26.5, 30.5],
+    "note": "Typical Arabian Sea SST range for September"
+  },
+  "citation": "JPL MUR MEaSUREs Project. 2015. GHRSST Level 4 MUR Global Foundation Sea Surface Temperature Analysis (v4.1). Ver. 4.1. PO.DAAC, CA, USA. Dataset accessed [2026-09-12] at https://doi.org/10.5067/GHGMR-4FJ04",
+  "qc_status": "PRODUCT_DOCUMENTATION_ONLY",
+  "import_instructions": "Place actual GHRSST MUR NetCDF file at data/source_snapshots/mosdac/20260912090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc and run SatelliteImporter with product_spec='GHRSST_MUR'"
+}

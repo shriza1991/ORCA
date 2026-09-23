@@ -31,12 +31,25 @@ class MarineConditionsPayload(BaseModel):
     significant_wave_height_m: Optional[float] = Field(None, ge=0.0, description="Wave height in meters")
     swell_height_m: Optional[float] = Field(None, ge=0.0, description="Swell wave height in meters")
     swell_period_sec: Optional[float] = Field(None, ge=0.0, description="Swell period in seconds")
+    wave_direction_deg: Optional[float] = Field(
+        None, ge=0.0, le=360.0,
+        description="Dominant wave direction in degrees (0=N, 90=E, 180=S, 270=W)",
+    )
     surface_current_knots: Optional[float] = Field(None, description="Surface current speed in knots")
     sea_surface_temp_c: Optional[float] = Field(None, description="Sea surface temperature in Celsius")
     observed_at: Optional[str] = Field(None, description="Sensor or satellite measurement timestamp (ISO-8601 UTC)")
     valid_to: Optional[str] = Field(None, description="Forecast window expiration (ISO-8601 UTC)")
     source_name: str = Field("INCOIS Ocean State Forecast", description="Official issuing authority")
     source_url: Optional[str] = Field(None, description="Direct URL to official bulletin or feed")
+    freshness_flags: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "Structured freshness and coverage metadata for frontend display. "
+            "Keys: forecast_valid_time (ISO-8601), source_issue_time (ISO-8601 or null), "
+            "retrieved_at (ISO-8601), cache_time (ISO-8601 or null), "
+            "coverage_status (OK | GEOGRAPHIC_FALLBACK | WINDOW_UNAVAILABLE | SYNTHETIC_TIMESTAMPS)."
+        ),
+    )
 
 
 class WeatherConditionsPayload(BaseModel):

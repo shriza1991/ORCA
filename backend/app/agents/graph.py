@@ -701,7 +701,10 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
 
         required_capabilities: List[str] = []
         if intent_val == IntentCategory.SAFETY.value:
-            required_capabilities = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
+            if tool_mode == "contract_mock" or not tool_registry.is_capability_available("trip_assessment"):
+                required_capabilities = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
+            else:
+                required_capabilities = ["trip_assessment"]
         elif intent_val == IntentCategory.PFZ.value:
             required_capabilities = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.CONDITIONS.value:
@@ -827,7 +830,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         if intent_val == IntentCategory.PFZ.value:
             tools = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.SAFETY.value:
-            tools = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
+            tools = _enforce_dependency_order(required_capabilities)
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_conditions"]
         elif intent_val in [IntentCategory.HAZARDS.value, IntentCategory.ROUTE.value, IntentCategory.ANALYTICAL_EXPLANATION.value]:
@@ -975,6 +978,17 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
             coords = state.get("location", {}).get("coordinates") or _get_harbor_coordinates(harbor)
             if coords:
                 params["coordinates"] = coords
+        elif tool_name == "trip_assessment":
+            params = {
+                "origin_harbor": harbor,
+                "craft_profile": craft_type,
+                "departure_time": state.get("time_window", {}).get("departure_time") or state.get("user_profile", {}).get("departure_time"),
+                "return_time": state.get("user_profile", {}).get("return_time"),
+                "coordinates": state.get("location", {}).get("coordinates"),
+                "destination_id": destination,
+                "data_mode": state.get("tool_mode", "demo"),
+                "parent_assessment_id": state.get("user_profile", {}).get("parent_assessment_id")
+            }
         elif tool_name == "risk_stub":
             # Pass collected marine observations into risk engine
             wave_m = observations.get("significant_wave_height_m", 1.8)
@@ -1074,12 +1088,77 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
             )
 
         start_tool = time.perf_counter()
-        result = tool_registry.execute_tool(tool_name, params, on_retry=on_retry)
+        
+        if tool_name == "trip_assessment":
+            from backend.app.services.assessment_service import AssessmentService
+            from backend.app.contracts.assessment import TripAssessmentRequest
+            from backend.app.agents.tools import ToolResult
+            try:
+                req = TripAssessmentRequest(**params)
+                assessment_response = AssessmentService.assess_trip(req)
+                
+                rec_status = assessment_response.decision
+                dec_status = rec_status.value if hasattr(rec_status, "value") else str(rec_status)
+                summary_map = {
+                    "GO": f"Conditions off {harbor or 'harbor'} are within safe operational limits for {craft_type}.",
+                    "CAUTION": f"Marginal conditions detected off {harbor or 'harbor'}. Exercise heightened vigilance.",
+                    "NO_GO": f"Unsafe conditions detected off {harbor or 'harbor'}. Hold departure.",
+                    "UNKNOWN": f"Critical marine/weather data unavailable off {harbor or 'harbor'}. Cannot recommend departure.",
+                }
+                action_map = {
+                    "GO": "Safe to depart. Maintain standard watch and monitor VHF.",
+                    "CAUTION": "Exercise caution. Restrict distance offshore and inspect safety equipment.",
+                    "NO_GO": "Hold departure. Await updated coastal bulletins from authorities.",
+                    "UNKNOWN": "Hold departure and verify local port authority advisories.",
+                }
+                rec_dict = {
+                    "status": dec_status,
+                    "summary": summary_map.get(dec_status, f"Operational evaluation: {dec_status}."),
+                    "decisive_factors": [a.get("message", "") for a in (assessment_response.alerts or []) if a.get("message")] or [f"Assessed status: {dec_status}"],
+                    "next_action": action_map.get(dec_status, "Verify port warnings before departure."),
+                }
+                
+                result_data = {
+                    "source_type": "REAL_ASSESSMENT",
+                    "assessment_id": assessment_response.assessment_id,
+                    "recommendation": rec_dict,
+                    "confidence": {"level": "MEDIUM", "reasons": ["Generated from deterministic trip assessment service"]},
+                    "conditions": assessment_response.conditions.model_dump() if assessment_response.conditions else None,
+                }
+                
+                if req.parent_assessment_id:
+                    try:
+                        from backend.app.db.session import SessionLocal
+                        from backend.app.db.repositories import AssessmentRepository
+                        with SessionLocal() as db:
+                            repo = AssessmentRepository(db)
+                            parent_assessment = repo.get_by_id(req.parent_assessment_id)
+                            if parent_assessment:
+                                result_data["baseline_recommendation"] = {
+                                    "status": parent_assessment.decision,
+                                    "evidence": parent_assessment.evidence_json
+                                }
+                    except Exception as e:
+                        logger.warning(f"Could not fetch parent assessment {req.parent_assessment_id}: {e}")
+
+                result = ToolResult(
+                    status=ToolStatus.OK,
+                    data=result_data,
+                    evidence=[],
+                    warnings=[]
+                )
+            except Exception as e:
+                result = ToolResult(
+                    status=ToolStatus.FAILED,
+                    warnings=[f"trip_assessment failed: {e}"]
+                )
+        else:
+            result = tool_registry.execute_tool(tool_name, params, on_retry=on_retry)
         tool_dur = round((time.perf_counter() - start_tool) * 1000, 2)
         if result.status == ToolStatus.FAILED:
             failed_tools.add(tool_name)
             collected_warnings.extend(result.warnings)
-            if tool_name in ["risk_stub", "risk_evaluation"] or (
+            if tool_name in ["risk_stub", "risk_evaluation", "trip_assessment"] or (
                 state.get("intent") == IntentCategory.SAFETY.value
                 and tool_name in ["marine_conditions", "weather_conditions", "marine_stub", "weather_stub"]
             ):
@@ -1148,7 +1227,7 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
         collected_warnings.extend(result.warnings)
 
         # If risk engine ran, populate deterministic Recommendation
-        if tool_name in ["risk_stub", "risk_evaluation"] and "recommendation" in result.data:
+        if tool_name in ["risk_stub", "risk_evaluation", "trip_assessment", "trip_assessment_stub"] and "recommendation" in result.data:
             rec_dict = result.data["recommendation"]
             risk_assessment = Recommendation(**rec_dict)
             if "confidence" in result.data:
@@ -1432,6 +1511,17 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                 f"Notice: This is an M1 demonstration response generated from simulated marine, weather, and risk inputs. "
                 f"Live safety decisions are not available in M1."
             )
+
+        baseline = state.get("observations", {}).get("baseline_recommendation")
+        if baseline:
+            base_status_val = baseline.get("status")
+            base_status = base_status_val.value if hasattr(base_status_val, "value") else str(base_status_val)
+            if base_status != rec.status.value:
+                diff_text = f"\n\n[What-If Comparison]\nYour alternative plan changed the safety status from {base_status} to {rec.status.value}."
+            else:
+                diff_text = f"\n\n[What-If Comparison]\nYour alternative plan resulted in the same safety status ({rec.status.value}). The underlying environmental conditions for this timeframe/profile are either unchanged or unavailable."
+            answer += diff_text
+
         confidence = state.get("confidence") or Confidence(
             level=ConfidenceLevel.MEDIUM,
             reasons=["Evaluated against M1 simulated sea-state thresholds"],

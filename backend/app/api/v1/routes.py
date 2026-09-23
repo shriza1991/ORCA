@@ -52,9 +52,14 @@ from backend.app.services.tts_service import (
     synthesize_speech,
 )
 
+from backend.app.api.v1.assessments import router as assessments_router
+from backend.app.api.v1.alerts import router as alerts_router
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1")
+router.include_router(assessments_router)
+router.include_router(alerts_router)
 
 
 
@@ -1206,7 +1211,8 @@ def get_demo_route_alternatives(
     """Retrieve evaluated passage route alternatives computed by RouteExposureEngine."""
     from backend.app.agents.integrations.contracts import ToolInvocationContext
     from backend.app.agents.integrations.dev2 import MarineConditionsPayload
-    from backend.app.agents.integrations.mocks import MockRouteExposureEngine
+    from backend.app.domain.route_engine import DeterministicRouteExposureEngine
+    from backend.app.domain.geo_restrictions import DeterministicGeospatialEngine
     from backend.app.domain.situation import resolve_authority_sector_context
 
     effective_origin = origin_harbor
@@ -1271,11 +1277,15 @@ def get_demo_route_alternatives(
     )
 
     try:
-        engine = MockRouteExposureEngine()
+        engine = DeterministicRouteExposureEngine()
+        geo_engine = DeterministicGeospatialEngine()
         payload = engine.evaluate_routes(
-            ctx,
-            marine,
-            effective_dest,
+            context=ctx,
+            marine=marine,
+            destination=effective_dest,
+            weather=None,
+            hazard=None,
+            geospatial_engine=geo_engine,
             dest_coords=effective_dest_coords,
             base_waypoints=v_base_waypoints,
         )

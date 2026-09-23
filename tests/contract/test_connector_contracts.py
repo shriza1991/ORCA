@@ -215,7 +215,7 @@ class TestConnectorDegradedFallback:
         connector.data_mode = "SNAPSHOT"
         payload = connector.get_hazard_bulletin(ratnagiri_context)
         assert isinstance(payload.cyclone_warning_active, bool)
-        assert payload.severity in ("NORMAL", "WATCH", "ALERT", "WARNING", "SEVERE")
+        assert payload.severity in ("UNKNOWN", "NORMAL", "WATCH", "ALERT", "WARNING", "SEVERE")
 
     def test_imd_hazard_live_fail_returns_normal(self, ratnagiri_context):
         """When HYBRID and no key, ImdHazardConnector returns NORMAL severity payload."""

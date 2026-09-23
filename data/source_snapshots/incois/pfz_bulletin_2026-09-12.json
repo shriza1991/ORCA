@@ -1,0 +1,98 @@
+{
+  "_source_documentation": {
+    "issuing_agency": "Indian National Centre for Ocean Information Services (INCOIS)",
+    "agency_url": "https://incois.gov.in",
+    "product_name": "Potential Fishing Zone (PFZ) Advisory",
+    "product_page": "https://incois.gov.in/portal/pfz/pfz.jsp",
+    "bulletin_type": "PFZ_VECTOR_ADVISORY",
+    "access_method": "FILE_IMPORT",
+    "access_notes": "INCOIS PFZ advisories are available via INCOIS portal and GIS downloads. Automated machine-readable API access requires an approved INCOIS API key. This file is a manually captured representative sample for the Konkan coast pilot region (D013). External blocker: INCOIS API key not available.",
+    "acquisition_date": "2026-09-12",
+    "acquisition_time_utc": "2026-09-12T04:00:00Z",
+    "format_reference": "INCOIS PFZ GIS Advisory Format (GeoJSON-like vector features with SST gradient and chlorophyll-a proxies)"
+  },
+  "bulletin_date": "2026-09-12T00:00:00Z",
+  "valid_from": "2026-09-12T00:00:00Z",
+  "valid_to": "2026-09-13T00:00:00Z",
+  "issuing_authority": "INCOIS — Fisheries Oceanography Division",
+  "product_id": "INCOIS-PFZ-MH-20260912",
+  "bulletin_id": "PFZ-MH-20260912-001",
+  "pilot_region": "Maharashtra Konkan Coast",
+  "geographic_coverage": {
+    "lat_min": 14.5,
+    "lat_max": 20.0,
+    "lon_min": 71.0,
+    "lon_max": 74.5,
+    "description": "North Arabian Sea — Maharashtra and Goa coastal waters"
+  },
+  "resolution_km": 4.0,
+  "units": {
+    "sst_gradient": "°C/km",
+    "chlorophyll_proxy": "mg/m³ (relative index)",
+    "coordinates": "WGS-84 decimal degrees"
+  },
+  "source_satellite_inputs": [
+    "INSAT-3D AVHRR SST composite",
+    "Oceansat-3 OCM chlorophyll-a"
+  ],
+  "qc_method": "Automated gradient threshold filtering + spatial coherence check",
+  "features": [
+    {
+      "feature_id": "PFZ-MH-20260912-F01",
+      "lat": 16.72,
+      "lon": 72.95,
+      "sst_gradient_c": 0.82,
+      "sst_gradient_units": "°C/km",
+      "chlorophyll_proxy": 1.45,
+      "confidence": "HIGH",
+      "depth_m": 35,
+      "bearing_deg_from_ratnagiri": 248,
+      "distance_km_from_ratnagiri": 18.5,
+      "qc_status": "VALID",
+      "notes": "Persistent thermal front, elevated chl-a signal"
+    },
+    {
+      "feature_id": "PFZ-MH-20260912-F02",
+      "lat": 17.05,
+      "lon": 72.75,
+      "sst_gradient_c": 1.12,
+      "sst_gradient_units": "°C/km",
+      "chlorophyll_proxy": 1.88,
+      "confidence": "HIGH",
+      "depth_m": 42,
+      "bearing_deg_from_ratnagiri": 330,
+      "distance_km_from_ratnagiri": 32.1,
+      "qc_status": "VALID",
+      "notes": "Strong seasonal upwelling front"
+    },
+    {
+      "feature_id": "PFZ-MH-20260912-F03",
+      "lat": 16.45,
+      "lon": 73.20,
+      "sst_gradient_c": 0.61,
+      "sst_gradient_units": "°C/km",
+      "chlorophyll_proxy": 1.22,
+      "confidence": "MEDIUM",
+      "depth_m": 28,
+      "bearing_deg_from_ratnagiri": 175,
+      "distance_km_from_ratnagiri": 61.3,
+      "qc_status": "VALID",
+      "notes": "Moderate gradient; partial cloud obscuration"
+    },
+    {
+      "feature_id": "PFZ-MH-20260912-F04",
+      "lat": 17.30,
+      "lon": 72.60,
+      "sst_gradient_c": -999.0,
+      "sst_gradient_units": "°C/km",
+      "chlorophyll_proxy": null,
+      "confidence": "UNKNOWN",
+      "depth_m": null,
+      "bearing_deg_from_ratnagiri": null,
+      "distance_km_from_ratnagiri": null,
+      "qc_status": "CLOUD_OBSCURED",
+      "notes": "Full cloud cover at acquisition time; SST gradient not derivable"
+    }
+  ],
+  "quarantine_notes": "Feature F04 is cloud-obscured. SST gradient sentinel -999.0 indicates missing value. Must NOT be coerced to 0."
+}

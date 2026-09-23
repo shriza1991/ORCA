@@ -1,0 +1,46 @@
+{
+  "_source_documentation": {
+    "issuing_agency": "India Meteorological Department (IMD) — Cyclone Warning Division",
+    "agency_url": "https://mausam.imd.gov.in",
+    "rsmc_url": "https://rsmcnewdelhi.imd.gov.in",
+    "product_name": "Marine Weather / Coastal District Hazard Bulletin",
+    "bulletin_type": "COASTAL_MARINE_HAZARD_BULLETIN",
+    "access_method": "FILE_IMPORT",
+    "access_notes": "IMD marine bulletins are published on mausam.imd.gov.in and RSMC New Delhi portal. Machine-readable API access requires IMD API key from their data services portal. This file is a manually representative sample for the Ratnagiri / North Konkan district. External blocker: IMD API key not available.",
+    "acquisition_date": "2026-09-12",
+    "acquisition_time_utc": "2026-09-12T06:00:00Z",
+    "format_reference": "IMD Coastal District Marine Bulletin format (text + JSON representation)"
+  },
+  "bulletin_id": "IMD-CWD-MH-2026-09-12-0600Z",
+  "issued_at": "2026-09-12T06:00:00Z",
+  "valid_from": "2026-09-12T06:00:00Z",
+  "valid_to": "2026-09-13T06:00:00Z",
+  "issuing_authority": "IMD Cyclone Warning Division",
+  "issuing_centre": "RSMC New Delhi",
+  "event_type": "COASTAL_WEATHER_ADVISORY",
+  "severity": "NORMAL",
+  "cyclone_warning_active": false,
+  "squall_alert": false,
+  "headline": "No active severe weather warning for Maharashtra coast. Moderate sea state expected.",
+  "body_text": "The sea conditions off the Maharashtra coast (Ratnagiri, Malvan, Sindhudurg districts) are characterized by moderate wave heights of 1.2–2.0 m. Southwesterly winds at 15–25 knots. No active storm systems in the North Arabian Sea within 500 km of the coast. Fishing operations may proceed with normal caution.",
+  "port_warning_signal": "None",
+  "cyclone_track": null,
+  "affected_districts": ["Ratnagiri", "Sindhudurg", "Raigad"],
+  "affected_sea_areas": ["North Arabian Sea — Maharashtra sector", "Lakshadweep Sea (northern)"],
+  "geographic_coverage": {
+    "lat_min": 14.0,
+    "lat_max": 22.0,
+    "lon_min": 70.0,
+    "lon_max": 77.0
+  },
+  "sea_conditions": {
+    "wave_height_m_range": [1.2, 2.0],
+    "wave_period_sec": 7,
+    "swell_direction_deg": 240,
+    "wind_speed_knots_range": [15, 25],
+    "wind_direction": "SW"
+  },
+  "qc_status": "VALID",
+  "source_url": "https://mausam.imd.gov.in/hazards",
+  "reference_bulletin_number": "Coastal District Bulletin No. 03 of 2026 (Maharashtra)"
+}

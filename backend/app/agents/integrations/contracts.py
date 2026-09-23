@@ -144,6 +144,14 @@ CAPABILITIES_CATALOG: Dict[str, CapabilityDefinition] = {
         dependencies=[],
         requires_evidence=True,
     ),
+    "trip_assessment": CapabilityDefinition(
+        name="trip_assessment",
+        owner=ToolOwner.DEV2,
+        description="Executes the unified trip assessment pipeline (Marine, Weather, Hazard, Risk).",
+        required_context_fields=["origin_harbor"],
+        dependencies=[],
+        requires_evidence=True,
+    ),
     "svas_advisory": CapabilityDefinition(
         name="svas_advisory",
         owner=ToolOwner.DEV2,

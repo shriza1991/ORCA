@@ -39,6 +39,7 @@ from backend.app.agents.integrations.dev2 import (
 )
 from backend.app.connectors.base import BaseLiveConnector
 from backend.app.connectors.open_meteo import OpenMeteoConnector
+from backend.app.connectors.health import SourceHealth, SourceHealthStatus
 from backend.app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -91,14 +92,17 @@ class IncoisOceanStateConnector(BaseLiveConnector):
             return self._make_degraded_marine_payload(harbor, "SNAPSHOT_REDIRECT")
 
         if self.data_mode in ("LIVE", "HYBRID"):
-            # Attempt live INCOIS endpoint
-            if settings.INCOIS_API_KEY:
+            # Attempt live INCOIS endpoint if configured properly
+            is_placeholder = "placeholder" in self.OSF_SOURCE_URL.lower() or "placeholder" in settings.INCOIS_API_BASE_URL.lower()
+            if settings.INCOIS_API_KEY and not is_placeholder:
                 try:
                     return self._fetch_incois_marine(harbor, context)
                 except Exception as exc:
                     logger.warning(
                         "INCOIS OSF live fetch failed (%s), falling back to Open-Meteo.", exc
                     )
+            else:
+                 logger.debug("INCOIS API is unconfigured (placeholder or missing key). Skipping live fetch.")
 
             # Fall back to Open-Meteo
             return self._fallback.get_marine_conditions(context)
@@ -167,11 +171,67 @@ class IncoisOceanStateConnector(BaseLiveConnector):
                 source_url=self.PFZ_SOURCE_URL,
             )
 
-        if settings.INCOIS_API_KEY:
+        if settings.INCOIS_API_KEY and "placeholder" not in settings.INCOIS_API_BASE_URL.lower():
             try:
                 return self._fetch_incois_pfz(context)
             except Exception as exc:
                 logger.warning("INCOIS PFZ live fetch failed (%s).", exc)
+        else:
+             logger.debug("INCOIS API is unconfigured (placeholder or missing key). Skipping live fetch for PFZ.")
+
+        # Import from genuine dated PFZ bulletin file.
+        # Path points to the official-format sample in data/source_snapshots/incois/.
+        import_path = "data/source_snapshots/incois/pfz_bulletin_2026-09-12.json"
+        import pathlib
+        if pathlib.Path(import_path).exists():
+             try:
+                 from backend.app.importers.pfz_importer import PfzImporter
+                 from backend.app.connectors.dataset_registry import (
+                     DatasetMetadata, GeographicCoverage, dataset_registry
+                 )
+                 import json as _json
+                 # Read raw to extract product metadata before normalizing
+                 with open(import_path, "r", encoding="utf-8") as _f:
+                     _raw = _json.load(_f)
+                 importer = PfzImporter(import_path)
+                 res = importer.process()
+                 # Register dataset metadata for downstream discoverability
+                 dataset_registry.register(DatasetMetadata(
+                     dataset_id="incois_pfz_import_2026-09-12",
+                     variable="pfz_zones",
+                     source_name=_raw.get("issuing_authority", "INCOIS PFZ"),
+                     issuing_authority=_raw.get("issuing_authority", "INCOIS"),
+                     source_url=self.PFZ_SOURCE_URL,
+                     geographic_coverage=GeographicCoverage(
+                         lat_min=_raw.get("geographic_coverage", {}).get("lat_min", 14.5),
+                         lat_max=_raw.get("geographic_coverage", {}).get("lat_max", 20.0),
+                         lon_min=_raw.get("geographic_coverage", {}).get("lon_min", 71.0),
+                         lon_max=_raw.get("geographic_coverage", {}).get("lon_max", 74.5),
+                         description="Maharashtra Konkan Coast",
+                     ),
+                     time_coverage_start=_raw.get("valid_from"),
+                     time_coverage_end=_raw.get("valid_to"),
+                     resolution_description=f"{_raw.get('resolution_km', 4)} km",
+                     access_method="FILE_IMPORT",
+                     availability="CACHED",
+                     availability_detail=f"Loaded from {import_path}",
+                     original_file_path=import_path,
+                     checksum=res["metadata"]["checksum"],
+                     product_id=_raw.get("product_id"),
+                     acquisition_time=_raw.get("bulletin_date"),
+                     quality_flags=[
+                         f"quarantined_records={res['metadata']['quarantined_records']}",
+                         f"valid_features={len(res['payload'].features)}",
+                     ],
+                 ))
+                 logger.info(
+                     "Registered INCOIS PFZ dataset metadata: product_id=%s, features=%d",
+                     _raw.get("product_id", "unknown"),
+                     len(res["payload"].features),
+                 )
+                 return res["payload"]
+             except Exception as exc:
+                 logger.warning("Failed to load PFZ from file importer: %s", exc)
 
         # Return empty advisory set; Dev 4 will handle absence gracefully
         return PFZSourceDataPayload(
@@ -216,33 +276,35 @@ class IncoisOceanStateConnector(BaseLiveConnector):
             return SVASAdvisoryPayload(
                 harbor=harbor,
                 craft_profile=craft_profile,
-                advisory_status="SAFE",
-                safety_index=2.1,
-                capsizing_risk="LOW",
-                warning_statement="Simulated SVAS baseline: favorable coastal operating conditions.",
+                advisory_status="UNKNOWN",
+                safety_index=None,
+                capsizing_risk="UNKNOWN",
+                warning_statement="Live SVAS advisory unavailable in snapshot.",
                 issued_at=now_utc.isoformat(),
-                valid_to=valid_to,
-                source_name="INCOIS SVAS (SNAPSHOT_REDIRECT)",
+                valid_to=(now_utc - timedelta(seconds=1)).isoformat(),
+                source_name="INCOIS SVAS (UNAVAILABLE — SNAPSHOT_REDIRECT)",
                 source_url=self.SVAS_SOURCE_URL,
             )
 
-        if settings.INCOIS_API_KEY:
+        if settings.INCOIS_API_KEY and "placeholder" not in settings.INCOIS_API_BASE_URL.lower():
             try:
                 return self._fetch_incois_svas(harbor, craft_profile, context)
             except Exception as exc:
                 logger.warning("INCOIS SVAS live fetch failed (%s). Returning CACHED_REAL fallback.", exc)
+        else:
+            logger.debug("INCOIS API is unconfigured (placeholder or missing key). Skipping live fetch for SVAS.")
 
-        # In HYBRID / LIVE without active SVAS key: return CACHED_REAL / LIMITED advisory
+        # In HYBRID / LIVE without active SVAS key: return UNAVAILABLE
         return SVASAdvisoryPayload(
             harbor=harbor,
             craft_profile=craft_profile,
-            advisory_status="SAFE",
-            safety_index=2.5,
-            capsizing_risk="LOW",
-            warning_statement="Operational conditions normal. Maintain coastal VHF watch.",
+            advisory_status="UNKNOWN",
+            safety_index=None,
+            capsizing_risk="UNKNOWN",
+            warning_statement="Live SVAS advisory unavailable.",
             issued_at=now_utc.isoformat(),
-            valid_to=valid_to,
-            source_name="INCOIS SVAS (CACHED_REAL — live unavailable)",
+            valid_to=(now_utc - timedelta(seconds=1)).isoformat(),
+            source_name="INCOIS SVAS (UNAVAILABLE — live unavailable)",
             source_url=self.SVAS_SOURCE_URL,
         )
 

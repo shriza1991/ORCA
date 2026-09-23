@@ -143,6 +143,7 @@ def map_state_to_response(
     return ChatResponse(
         run_id=run_id,
         conversation_id=conversation_id,
+        assessment_id=state.get("observations", {}).get("assessment_id"),
         language=state.get("language") or "en",
         intent=state.get("intent") or "UNKNOWN",
         answer=answer,
