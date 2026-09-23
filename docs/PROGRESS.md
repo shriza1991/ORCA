@@ -3,10 +3,10 @@
 > Single operational status board. Strictly factual. No diary narrative.
 
 ## Current Release & Workstream State
-- Current version: `v0.2.1-marinewatch-all-india`
-- Active branch: `feat/india-marinewatch-real-data`
-- Current milestone: **India MarineWatch Nationwide Real Data Platform (BarentsWatch India Architecture)**
-- Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 241 tests passing across 16 test suites; backend: 674 passed / 51 skipped; verified on 2026-09-23)
+- Current version: `v0.2.2-features-main-integrated`
+- Active branch: `main`
+- Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**
+- Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 235 tests passing across 16 test suites; backend: 387 passed / 1 skipped in agent_eval, 19/19 passed in marinewatch; verified on 2026-09-23)
 - 13 Foundation API Contracts (§213): **100% IMPLEMENTED & PASSING** (`/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`, `/lighthouses/nearby`, `/lighthouses`, `/boundaries`)
 - Nationwide Reference Data Ingestion:
   - CMFRI Marine Fisheries Census: 30 primary & intermediate landing harbours across all coastal states (Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar, Lakshadweep).
