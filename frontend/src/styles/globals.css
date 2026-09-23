@@ -1,5 +1,6 @@
 @import './variables.css';
 @import './components.css';
+@import './marinewatch.css';
 
 *, *::before, *::after {
   box-sizing: border-box;

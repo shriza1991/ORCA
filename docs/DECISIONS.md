@@ -272,24 +272,58 @@ Enables real Groq generation for situational and briefing queries without compro
 Owner: Dev 3 (Agent Orchestration & Explainability)
 Date: 2026-09-18
 
-## D024 — Operational Provider Mode Registration and Data-Unavailability Semantics
+## D024 — Strategic Reconciliation: ORCA_AI_MASTER_CONTEXT.md as Canonical Strategic Source of Truth
 Status: ACCEPTED
 
 Decision:
-1. Operational provider mode (`LIVE`, `HYBRID`) explicitly isolates and prevents registration of mock engines (`MockPFZRankingEngine`, `MockRouteExposureEngine`, `MockGeospatialHazardEngine`).
-2. Dev 4 deterministic engines (`DeterministicPFZRankingEngine`, `DeterministicGeospatialEngine`, `DeterministicRiskEngine`) are unconditionally registered through established `ProviderToolAdapter` wrappers. Route capability is marked explicitly unavailable in operational mode until a real route evaluator is built.
-3. Replace fabricated fallback payload data (e.g., IMD "NORMAL/no warning", INCOIS "SAFE/CACHED_REAL") with explicit "UNKNOWN", "UNAVAILABLE", or "DEGRADED" representations when authoritative live endpoints fail or keys are absent. 
-4. The Risk Engine preserves existing "NO_GO" precedence for verified severe hazards (e.g. active cyclones, severe squalls) even when other secondary telemetry is missing or stale. Missing or degraded telemetry alone correctly returns "UNKNOWN", but never forces a "GO" or "CAUTION".
-5. SVAS capability dynamic availability is updated according to operational mode; if the API key is absent in LIVE/HYBRID mode, `svas_advisory` is set as unavailable.
+The new `docs/ORCA_AI_MASTER_CONTEXT.md` (2579 lines) supersedes the old `docs/ORCA_MASTER_CONTEXT.md` (222 lines, now archived as `ORCA_MASTER_CONTEXT_v1_ARCHIVED.md`) as the sole strategic and architectural source of truth for ORCA.
+
+Key changes from this reconciliation:
+1. Document authority hierarchy established: Code+Tests → ORCA_AI_MASTER_CONTEXT.md → SAFETY.md → API_CONTRACTS.md → IMPLEMENTATION_PLAN.md → PROGRESS.md → DECISIONS.md
+2. AGENTS.md updated to reference new master context
+3. OWNERSHIP.md updated from 4-member (M1-M4) to 6-role (P1-P6) conceptual model
+4. IMPLEMENTATION_PLAN.md reconciled with new P0/P1/P2 priority tiers
+5. PROGRESS.md updated with honest regression/gap tables from §30 audit
+6. Decision terminology mapping documented: current `NO_GO` ≡ new context's `AVOID`; `RESTRICTED` is a subtype. Code retains existing terms; equivalence is documented.
 
 Reason:
-To prevent demonstration artifacts and fabricated safe-harbor telemetry from leaking into production provider paths and causing silent failures or false assurances.
+Multiple AI sessions were reading different documents and gradually diverging the project's architecture. A single authoritative context prevents architecture drift.
+
+Alternatives:
+- Merge old and new contexts into one document (rejected: new context is comprehensive and intentionally supersedes)
+- Keep both as co-equal (rejected: creates exactly the contradiction this reconciliation solves)
 
 Impact:
-Guarantees explicit system degradation behavior on upstream provider failure. Enforces true separation between demonstration mocks and real operational deterministic evaluation logic.
+All AI agents now read `docs/ORCA_AI_MASTER_CONTEXT.md` as their first strategic reference.
+PROGRESS.md now honestly tracks regressions (R-1 through R-6) and gaps (G-1 through G-6) identified by the master context audit.
 
-Owner: Dev 2 / Dev 4 (Integration & Backend Platform)
+Owner: All
 Date: 2026-09-21
+
+## D014 — India MarineWatch Multi-Hub Platform Architecture & Real Data Foundation
+Status: ACCEPTED
+
+Decision:
+Adopt the Norwegian BarentsWatch multi-service platform architecture adapted for India ("India MarineWatch"), grounding the system in real institutional feeds (INCOIS, IMD, GEBCO, CMFRI, CAA, NHO) instead of synthetic-only fixtures.
+1. Ingest real Maharashtra/Goa coastal reference data: CMFRI Census 2020 landing centres (14 ports), CAA registered coastal aquaculture farms (7 sites), Indian maritime boundaries (12nm territorial waters, 24nm contiguous zone, 200nm EEZ, GEBCO 50m/100m/200m depth contours, Angria Bank submerged coral atoll, and Malvan Marine Sanctuary).
+2. Implement the INCOIS Predicted Astronomical Tide (PAT) harmonic engine calibrated with M2, S2, K1, O1 tidal constituents for West Coast ports.
+3. Expose the 10 foundation API contracts (§213): `/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`.
+4. Surface BarentsWatch UX patterns: interactive time scrubber (Now to +48h), layer registry toggles, dual Map/List views, click-to-inspect point panel ("What is here?"), and §212 Open Data Catalogue.
+
+Reason:
+Transitioning from synthetic fixtures to real data models delivers an authentic national marine intelligence system for India, providing verifiable provenance while strictly prohibiting generative AI hallucinations on critical maritime safety conditions.
+
+Alternatives:
+- Continue exclusively with synthetic fixtures (rejected: does not meet the user's objective to make a BarentsWatch-like real system for India).
+- National ingestion at once (rejected: §116 mandates Maharashtra-first pilot to maintain bounded, high-quality verification before national expansion).
+
+Impact:
+- Backend: Real harmonic tides, spatial proximity, GEBCO depth profiling, and 10 foundation endpoints.
+- Frontend: New `OceanWatch`, `FisherWatch`, `AquaWatch`, `PortWatch`, `MarineHazards`, and `DataCatalogue` views.
+- Grounding: Strict provenance tags and government licensing metadata for every dataset.
+
+Owner: Backend Platform & Geospatial UX Leads
+Date: 2026-09-23
 
 ## Decision template
 

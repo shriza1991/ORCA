@@ -1,9 +1,47 @@
 # ORCA Master Implementation Plan
 
+> Reconciled with `docs/ORCA_AI_MASTER_CONTEXT.md` §31-36 on 2026-09-21.
+> Strategic priorities: P0 (must-fix regressions + core reasoning) → P1 (high-value reasoning) → P2 (strategic extensions).
+> See the master context for the authoritative priority definitions.
+
 ## Strategy
 Build a complete product in independent vertical slices. Four members work in parallel, integrate continuously into `develop`, and promote only verified releases to `main`.
 
 Separate MVP, production hardening, and post-MVP expansion.
+
+## Current Priority Mapping
+
+The new strategic context defines three priority tiers that cut across phases:
+
+### P0 — Must Fix / Core Foundation
+- Fix schema/payload regressions (Phase 2 scope)
+- Fix observation bundle lineage (Phase 3 scope)
+- Fix fallback confidence (Phase 3 scope)
+- Freeze canonical MissionState (Phase 4 scope)
+- Implement temporal validity (Phase 4 scope)
+- Implement hard constraints (Phase 4 scope)
+- Mission-first decision UI (Phase 4 scope)
+- Voice → MissionState integration (Phase 5 scope)
+
+### P1 — High-Value Reasoning
+- Source Registry + planner-driven evidence plan (Phase 6 scope)
+- ExplanationEngine (Phase 6 scope)
+- Trajectory exposure engine (Phase 4 scope)
+- Intent classes: WHY, WHAT_IF, WHAT_CHANGED (Phase 6 scope)
+- Cached-real fixtures + explicit data modes (Phase 2 scope)
+- Source conflict policy (Phase 6 scope)
+- Decision Delta + safe alternatives (Phase 6 scope)
+- Multilingual continuity (Phase 5 scope)
+
+### P2 — Strategic Extensions
+- Decision robustness / sensitivity (Phase 12 scope)
+- Time-dependent routing (Phase 12 scope)
+- SACHET and selected connectors (Phase 11 scope)
+- Mission replay / audit trace (Phase 12 scope)
+- Low-bandwidth channels (Phase 11 scope)
+- ORCA-MarineEval benchmark (Phase 7 scope)
+- Historical fisheries analysis (Phase 12 scope)
+- Field UX hardening (Phase 10 scope)
 
 ## Phase 0 — Repository & Contract Baseline
 **All**

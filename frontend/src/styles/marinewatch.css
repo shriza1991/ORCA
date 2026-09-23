@@ -1,0 +1,1759 @@
+/* =========================================================================
+   India MarineWatch — BarentsWatch Inspired UI Styles
+   ========================================================================= */
+
+.marinewatch-full-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* Nav Header */
+.marinewatch-nav-header {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  flex-shrink: 0;
+}
+
+.marinewatch-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.marinewatch-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.marinewatch-back-btn:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-hover);
+}
+
+.marinewatch-brand-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.marinewatch-brand-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.marinewatch-version-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-border);
+}
+
+.marinewatch-pilot-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.pilot-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+/* Tabs Bar */
+.marinewatch-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.marinewatch-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.marinewatch-tab:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-accent-subtle);
+}
+
+.marinewatch-tab.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  font-weight: 600;
+}
+
+.tab-counter {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+/* Body Content */
+.marinewatch-body-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* OceanWatch GIS Workspace */
+.oceanwatch-gis-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.oceanwatch-top-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background-color: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 10;
+}
+
+.oceanwatch-search-container {
+  position: relative;
+  width: 380px;
+}
+
+.oceanwatch-search-container input {
+  width: 100%;
+  padding: 6px 10px 6px 32px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.oceanwatch-search-container .search-icon {
+  position: absolute;
+  left: 9px;
+  top: 8px;
+  color: var(--color-text-muted);
+}
+
+.oceanwatch-search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  margin-top: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.search-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.search-dropdown-item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.oceanwatch-bookmarks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.bookmark-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.bookmark-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.oceanwatch-live-telemetry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.live-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: livePulse 2s infinite ease-in-out;
+}
+
+@keyframes livePulse {
+  0% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 4px #22c55e; }
+  50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 10px #22c55e; }
+  100% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 4px #22c55e; }
+}
+
+.live-telemetry-label {
+  font-weight: 700;
+  color: #22c55e;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+
+.live-telemetry-time {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  font-family: monospace;
+}
+
+.live-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.live-refresh-btn:hover {
+  color: var(--color-accent);
+}
+
+.live-refresh-btn.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.view-mode-toggle {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: var(--color-bg-primary);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.toggle-btn.active {
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+/* Map Area Layout */
+.oceanwatch-main-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.oceanwatch-map-wrapper {
+  flex: 1;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.maplibre-full-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Time Scrubber (BarentsWatch Pattern) */
+.oceanwatch-time-scrubber {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 30px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 20;
+}
+
+[data-theme='dark'] .oceanwatch-time-scrubber {
+  background-color: rgba(15, 23, 42, 0.92);
+}
+
+.scrubber-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.scrubber-steps {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-btn {
+  padding: 4px 10px;
+  border-radius: 16px;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.step-btn:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.step-btn.active {
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+/* Layer Switcher Panel */
+.oceanwatch-layer-panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+  z-index: 20;
+  width: 220px;
+}
+
+[data-theme='dark'] .oceanwatch-layer-panel {
+  background-color: rgba(15, 23, 42, 0.92);
+}
+
+.layer-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.layer-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.layer-item input {
+  cursor: pointer;
+}
+
+/* Point Inspection Side Panel ("What is Here?") */
+.oceanwatch-point-panel {
+  width: 360px;
+  height: 100%;
+  border-left: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.point-panel-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.point-panel-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.05em;
+}
+
+.point-panel-header h3 {
+  margin: 2px 0 0 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.point-panel-content {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.point-info-card {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.card-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.depth-big-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+.depth-big-value small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.tide-phase-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.tide-phase-pill.flood {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.tide-phase-pill.ebb {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.tide-phase-pill.high_slack,
+.tide-phase-pill.low_slack {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.tide-extrema-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.extrema-box {
+  flex: 1;
+  background-color: var(--color-bg-tertiary);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.extrema-label {
+  display: block;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.extrema-val {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.conditions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.condition-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--color-bg-tertiary);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.condition-label {
+  display: block;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.condition-val {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nearby-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nearby-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 4px;
+  background-color: var(--color-bg-tertiary);
+}
+
+.warning-card {
+  border-color: #fcd34d;
+  background-color: #fffbeb;
+}
+
+[data-theme='dark'] .warning-card {
+  background-color: #451a03;
+  border-color: #78350f;
+}
+
+.hazard-snippet {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.provenance-footer {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  text-align: center;
+  padding: 6px;
+}
+
+.point-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  padding: 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* Markers — Root anchor managed by MapLibre; no transition on transform to prevent zoom lag */
+.marinewatch-custom-marker {
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+/* Inner Pin — Handles visual badge, borders, box-shadow, and hover scaling */
+.marinewatch-marker-inner {
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
+  will-change: transform;
+}
+
+.marinewatch-custom-marker:hover .marinewatch-marker-inner {
+  transform: scale(1.32);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38);
+  z-index: 50;
+}
+
+.marker-emoji {
+  line-height: 1;
+  display: inline-block;
+  user-select: none;
+  font-size: 14px;
+}
+
+.port-marker {
+  border: 2px solid #0284c7;
+}
+
+.lighthouse-marker {
+  border: 2px solid #eab308;
+}
+
+.pfz-marker {
+  border: 2px solid #10b981;
+}
+
+.aqua-marker {
+  border: 2px solid #f97316;
+}
+
+/* Zoom-Tier Adaptive Sizing for whole India overview vs local harbors */
+[data-zoom-tier="overview"] .marinewatch-custom-marker {
+  width: 22px;
+  height: 22px;
+}
+[data-zoom-tier="overview"] .marinewatch-marker-inner {
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+[data-zoom-tier="overview"] .marker-emoji {
+  font-size: 11px;
+}
+
+[data-zoom-tier="regional"] .marinewatch-custom-marker {
+  width: 28px;
+  height: 28px;
+}
+[data-zoom-tier="regional"] .marinewatch-marker-inner {
+  width: 26px;
+  height: 26px;
+}
+[data-zoom-tier="regional"] .marker-emoji {
+  font-size: 14px;
+}
+
+[data-zoom-tier="detail"] .marinewatch-custom-marker {
+  width: 34px;
+  height: 34px;
+}
+[data-zoom-tier="detail"] .marinewatch-marker-inner {
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.32);
+}
+[data-zoom-tier="detail"] .marker-emoji {
+  font-size: 17px;
+}
+
+/* Dual List View */
+.oceanwatch-list-view-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.list-view-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 14px;
+}
+
+.list-view-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.list-table-wrap {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.oceanwatch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.oceanwatch-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  text-transform: uppercase;
+}
+
+.oceanwatch-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+/* Data Catalogue View */
+.marinewatch-catalogue-container {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: var(--color-bg-secondary);
+}
+
+.marinewatch-catalogue-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.marinewatch-catalogue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 6px;
+}
+
+.marinewatch-catalogue-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.marinewatch-catalogue-header p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  max-width: 720px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.marinewatch-catalogue-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.catalogue-stat-box {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+}
+
+.stat-num {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.marinewatch-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.catalogue-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 480px;
+}
+
+.catalogue-search-wrap input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  font-size: 13px;
+}
+
+.catalogue-search-wrap svg {
+  position: absolute;
+  left: 10px;
+  top: 9px;
+  color: var(--color-text-muted);
+}
+
+.catalogue-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-group select {
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+
+.marinewatch-dataset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.marinewatch-dataset-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.marinewatch-dataset-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.dataset-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dataset-id-tag {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  background-color: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dataset-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.dataset-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+}
+
+.dataset-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.dataset-metadata-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: 12px;
+}
+
+.dataset-meta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.meta-label {
+  color: var(--color-text-dim);
+}
+
+.dataset-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dataset-tier-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.dataset-inspect-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* Modal */
+.catalogue-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.catalogue-modal-content {
+  width: 580px;
+  max-width: 90vw;
+  background-color: var(--color-bg-primary);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.catalogue-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.catalogue-modal-header h3 {
+  margin: 4px 0 0 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal-close-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.catalogue-modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.detail-box {
+  background-color: var(--color-bg-tertiary);
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
+.detail-label {
+  display: block;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.detail-val {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.license-info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.provenance-link-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--color-bg-secondary);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.provenance-url-text {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-accent);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.catalogue-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+}
+
+.modal-dismiss-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* FisherWatch View */
+.marinewatch-fisher-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: var(--color-bg-secondary);
+}
+
+.marinewatch-fisher-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.fisher-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  margin-bottom: 6px;
+}
+
+.craft-ceilings-card {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.craft-ceilings-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.craft-ceiling-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.ceiling-item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: var(--color-bg-tertiary);
+  font-size: 11px;
+}
+
+.ceiling-item.highlight {
+  border: 1px solid #10b981;
+  background-color: #ecfdf5;
+}
+
+[data-theme='dark'] .ceiling-item.highlight {
+  background-color: #064e3b;
+}
+
+.craft-name {
+  color: var(--color-text-muted);
+}
+
+.craft-limit {
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.fisher-route-evaluator-card {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.evaluator-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.evaluator-title-row h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.evaluator-form-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr auto;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.evaluator-input-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.evaluator-input-group select {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  font-size: 12px;
+}
+
+.evaluator-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  height: 34px;
+}
+
+.route-verdict-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.route-verdict-banner.status-go {
+  background-color: #f0fdf4;
+  border-color: #86efac;
+}
+
+[data-theme='dark'] .route-verdict-banner.status-go {
+  background-color: #052e16;
+  border-color: #166534;
+}
+
+.route-verdict-banner.status-caution {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+}
+
+[data-theme='dark'] .route-verdict-banner.status-caution {
+  background-color: #451a03;
+  border-color: #92400e;
+}
+
+.route-verdict-banner.status-no_go {
+  background-color: #fff1f2;
+  border-color: #fecdd3;
+}
+
+[data-theme='dark'] .route-verdict-banner.status-no_go {
+  background-color: #4c0519;
+  border-color: #9f1239;
+}
+
+.verdict-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.verdict-pill.status-go {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.verdict-pill.status-caution {
+  background-color: #f59e0b;
+  color: #ffffff;
+}
+
+.verdict-pill.status-no_go {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.verdict-metrics {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.fisher-content-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.column-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.column-count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.pfz-cards-list,
+.ports-directory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pfz-advisory-card,
+.landing-centre-card {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.pfz-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pfz-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: 0.04em;
+}
+
+.pfz-status-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.pfz-name {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pfz-coordinates {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+
+.pfz-indicators-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.indicator-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-bg-tertiary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pfz-species-row {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.species-label {
+  color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+.species-names {
+  font-weight: 600;
+}
+
+.pfz-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 8px;
+  font-size: 11px;
+  color: var(--color-text-dim);
+}
+
+.centre-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.centre-name {
+  margin: 0 0 2px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.centre-location {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.centre-type-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.craft-fleet-breakdown {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.fleet-stat {
+  flex: 1;
+  background-color: var(--color-bg-tertiary);
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.fleet-stat.total {
+  background-color: var(--color-accent-subtle);
+}
+
+.fleet-num {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fleet-desc {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.centre-details-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 8px;
+}
+
+/* AquaWatch & Other Tabs */
+.marinewatch-tab-inner-view {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: var(--color-bg-secondary);
+}
+
+.tab-view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.tab-view-header h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+}
+
+.tab-view-header p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 720px;
+}
+
+.registry-count-pill,
+.hazards-badge-count {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.hazards-badge-count {
+  background-color: #ef4444;
+}
+
+.aqua-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.aqua-farm-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.farm-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.farm-name {
+  margin: 0 0 2px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.farm-reg-no {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  font-family: monospace;
+}
+
+.farm-status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.farm-attributes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: 12px;
+}
+
+.attr-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.attr-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.attr-val {
+  font-size: 12px;
+}
+
+.farm-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.source-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+/* Hazards Stack */
+.hazards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hazard-banner-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.hazard-banner-card.severity-alert {
+  border-left-color: #f59e0b;
+}
+
+.hazard-banner-card.severity-legal_restriction {
+  border-left-color: #6366f1;
+}
+
+.hazard-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hazard-severity-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.hazard-severity-tag.severity-warning {
+  background-color: #ef4444;
+}
+
+.hazard-severity-tag.severity-alert {
+  background-color: #f59e0b;
+}
+
+.hazard-severity-tag.severity-legal_restriction {
+  background-color: #6366f1;
+}
+
+.hazard-source-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.hazard-headline {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.hazard-affected {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.hazard-advisory-text {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.port-signals-section {
+  background-color: var(--color-bg-tertiary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.port-signals-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.port-signal-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.signal-num {
+  font-weight: 800;
+  color: #ef4444;
+}
+
+.hazard-footer {
+  font-size: 11px;
+  color: var(--color-text-dim);
+}
+
+.ports-table-wrap {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
