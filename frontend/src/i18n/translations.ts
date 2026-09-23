@@ -337,6 +337,66 @@ interface TranslationEntry {
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
   {
+    en: 'Checking current marine conditions…',
+    hi: 'वर्तमान समुद्री स्थितियों की जाँच की जा रही है…',
+    mr: 'सध्याची सागरी परिस्थिती तपासत आहे…',
+  },
+  {
+    en: 'Unable to obtain a current safety assessment.',
+    hi: 'वर्तमान सुरक्षा मूल्यांकन प्राप्त करने में असमर्थ।',
+    mr: 'सध्याचे सुरक्षिततेचे मूल्यमापन प्राप्त करण्यात अक्षम.',
+  },
+  {
+    en: 'No current safety assessment available.',
+    hi: 'कोई वर्तमान सुरक्षा मूल्यांकन उपलब्ध नहीं है।',
+    mr: 'सध्याचे कोणतेही सुरक्षिततेचे मूल्यमापन उपलब्ध नाही.',
+  },
+  {
+    en: 'No operational summary available.',
+    hi: 'कोई परिचालन सारांश उपलब्ध नहीं है।',
+    mr: 'कोणताही परिचलनात्मक सारांश उपलब्ध नाही.',
+  },
+  {
+    en: 'Evaluated Window:',
+    hi: 'मूल्यांकन अवधि:',
+    mr: 'मूल्यमापन कालावधी:',
+  },
+  {
+    en: 'Assessment Time:',
+    hi: 'मूल्यांकन का समय:',
+    mr: 'मूल्यमापनाची वेळ:',
+  },
+  {
+    en: 'Waves',
+    hi: 'लहरें',
+    mr: 'लाटा',
+  },
+  {
+    en: 'Wind',
+    hi: 'हवा',
+    mr: 'वारा',
+  },
+  {
+    en: 'Visibility',
+    hi: 'दृश्यता',
+    mr: 'दृश्यमानता',
+  },
+  {
+    en: 'Tide',
+    hi: 'ज्वार',
+    mr: 'भरती-ओहोटी',
+  },
+  {
+    en: 'Based on forecast',
+    hi: 'पूर्वानुमान पर आधारित',
+    mr: 'हवामानाच्या अंदाजावर आधारित',
+  },
+  {
+    en: 'Based on current observation',
+    hi: 'वर्तमान अवलोकन पर आधारित',
+    mr: 'सध्याच्या निरीक्षणावर आधारित',
+  },
+  {
     en: 'No Active Hazards',
     hi: 'कोई सक्रिय खतरा नहीं',
     mr: 'कोणतेही सक्रिय धोके नाहीत',

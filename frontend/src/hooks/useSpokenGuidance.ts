@@ -36,7 +36,23 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
         mr: 'mr-IN',
       };
       
-      utterance.lang = langMap[language] || 'en-IN';
+      const targetLang = langMap[language] || 'en-IN';
+      utterance.lang = targetLang;
+      
+      // Explicitly try to select a matching voice if available, especially on Windows
+      const voices = synth.getVoices();
+      if (voices.length > 0) {
+        // Try exact locale match first (e.g. hi-IN)
+        let bestVoice = voices.find(v => v.lang.replace('_', '-') === targetLang);
+        // Fallback to language prefix match (e.g. hi)
+        if (!bestVoice) {
+           const prefix = targetLang.split('-')[0];
+           bestVoice = voices.find(v => v.lang.replace('_', '-').startsWith(prefix));
+        }
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+        }
+      }
       
       utterance.onstart = () => setIsPlaying(true);
       utterance.onend = () => setIsPlaying(false);

@@ -199,25 +199,25 @@ export default function FisherDecisionSurface({
     { label: string; bgClass: string; icon: React.ReactNode; testId: string }
   > = {
     SAFE_TO_GO: {
-      label: translateText('Within assessed limits', language),
+      label: t.statusLabels['GO'] || 'Within assessed limits',
       bgClass: 'decision-safe',
       icon: <ShieldCheck size={32} className="decision-icon" />,
       testId: 'status-safe-to-go',
     },
     CAUTION: {
-      label: translateText('Be careful', language),
+      label: t.statusLabels['CAUTION'] || 'Be careful',
       bgClass: 'decision-caution',
       icon: <ShieldAlert size={32} className="decision-icon" />,
       testId: 'status-caution',
     },
     DO_NOT_GO: {
-      label: translateText('Do not depart', language),
+      label: t.statusLabels['NO_GO'] || 'Do not depart',
       bgClass: 'decision-nogo',
       icon: <ShieldX size={32} className="decision-icon" />,
       testId: 'status-do-not-go',
     },
     UNKNOWN: {
-      label: translateText('Information unavailable', language),
+      label: t.statusLabels['UNKNOWN'] || 'Information unavailable',
       bgClass: 'decision-unknown',
       icon: <HelpCircle size={32} className="decision-icon" />,
       testId: 'status-unknown',
