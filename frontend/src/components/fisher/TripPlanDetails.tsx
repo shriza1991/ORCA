@@ -25,6 +25,31 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
   let timeStr = `${hours}h ${minutes}m`;
   if (hours === 0) timeStr = `${minutes}m`;
 
+  // Estimate arrival date/time
+  let departureTimeMs = Date.now();
+  const rawDep = assessment.trip_context?.departure_time?.toLowerCase() || '';
+  if (rawDep.includes('tomorrow')) {
+    departureTimeMs += 24 * 60 * 60 * 1000;
+  }
+  const arrivalDate = new Date(departureTimeMs + etaHours * 60 * 60 * 1000);
+  const arrivalStr = arrivalDate.toLocaleString('en-IN', {
+    day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'
+  });
+
+  // AI Route Optimization Insights
+  const altRoutes = assessment.route_candidates.slice(1);
+  let optimizationStr = '';
+  if (altRoutes.length > 0) {
+    const alt = altRoutes[0];
+    if (alt.distance_km < distance && alt.risk_rating === 'HIGH' && risk !== 'HIGH') {
+      optimizationStr = `AI Route Optimization: This route is ${Math.round(distance - alt.distance_km)}km longer than the direct path, but safely avoids ${alt.max_wave_height_m}m waves.`;
+    } else if (distance < alt.distance_km) {
+      optimizationStr = `AI Route Optimization: This route saves you ${Math.round(alt.distance_km - distance)}km compared to alternative paths.`;
+    } else {
+      optimizationStr = `AI Route Optimization: This path provides the best balance of safety and speed.`;
+    }
+  }
+
   // Summary message
   let summaryStr = '';
   if (risk === 'LOW') {
@@ -65,6 +90,7 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
             <Clock size={24} color="#f59e0b" style={{ marginBottom: '8px' }} />
             <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>{timeLabel}</div>
             <div style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 'bold' }}>{timeStr}</div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Arriving: {arrivalStr}</div>
           </div>
 
           <div style={{ padding: '12px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -75,6 +101,12 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
             </div>
           </div>
         </div>
+
+        {optimizationStr && (
+          <div style={{ padding: '12px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe', fontSize: '0.9rem', color: '#1e40af', lineHeight: '1.4' }}>
+            <strong>💡 AI Insight:</strong> {optimizationStr}
+          </div>
+        )}
       </div>
     </div>
   );

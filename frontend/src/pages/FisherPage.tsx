@@ -17,6 +17,8 @@ import { useSpokenGuidance } from '../hooks/useSpokenGuidance';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useGeofence } from '../hooks/useGeofence';
 import LocationWarningsOverlay from '../components/map/LocationWarningsOverlay';
+import { RefreshCw } from 'lucide-react';
+import { DEFAULT_MISSION_CONTEXT } from '../types/mission';
 
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
@@ -53,6 +55,12 @@ export default function FisherPage({
   const handleToggleLocation = () => {
     if (isTracking) stopTracking();
     else startTracking();
+  };
+
+  const handleResetTrip = () => {
+    chat.clearChat();
+    chat.setMissionContext(DEFAULT_MISSION_CONTEXT);
+    setSidebarTab('voyage');
   };
 
   // 1. Fetch base geofences & boundaries
@@ -173,6 +181,17 @@ export default function FisherPage({
           </div>
         ) : (
           <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Trip Dashboard</h2>
+              <button 
+                onClick={handleResetTrip}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                <RefreshCw size={16} />
+                Reset Trip
+              </button>
+            </div>
+
             <FisherAlertPanel 
               alerts={alerts} 
               language={chat.language} 
