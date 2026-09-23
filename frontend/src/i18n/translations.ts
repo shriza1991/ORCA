@@ -337,6 +337,21 @@ interface TranslationEntry {
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
   {
+    en: 'Cannot assess due to missing data. Check source status.',
+    hi: 'डेटा गायब होने के कारण मूल्यांकन नहीं किया जा सकता। स्रोत की स्थिति जांचें।',
+    mr: 'डेटा नसल्यामुळे मूल्यमापन करता येत नाही. स्रोताची स्थिती तपासा.',
+  },
+  {
+    en: 'Internal evaluation error occurred.',
+    hi: 'आंतरिक मूल्यांकन त्रुटि हुई।',
+    mr: 'अंतर्गत मूल्यमापन त्रुटी आली.',
+  },
+  {
+    en: 'Missing critical inputs: Must provide either harbor or explicit starting coordinates.',
+    hi: 'महत्वपूर्ण इनपुट गायब: बंदरगाह या स्पष्ट प्रारंभिक निर्देशांक प्रदान करना चाहिए।',
+    mr: 'महत्त्वाचे इनपुट गहाळ: बंदर किंवा स्पष्ट प्रारंभिक निर्देशांक देणे आवश्यक आहे.',
+  },
+  {
     en: 'Checking current marine conditions…',
     hi: 'वर्तमान समुद्री स्थितियों की जाँच की जा रही है…',
     mr: 'सध्याची सागरी परिस्थिती तपासत आहे…',

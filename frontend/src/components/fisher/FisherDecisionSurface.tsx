@@ -154,7 +154,7 @@ export function extractFisherConditions(response: TripAssessmentResponse | null)
   if (response.alerts && response.alerts.length > 0) {
     // Pick highest severity alert that affects trip
     const highestAlert = response.alerts.find(a => a.affects_trip) || response.alerts[0];
-    hazardVal = highestAlert.title;
+    hazardVal = highestAlert.title || (highestAlert as any).message || '—';
   } else {
     const status = response.decision?.status;
     if (status === 'GO') {
@@ -244,7 +244,8 @@ export default function FisherDecisionSurface({
       if (hasActiveHazard) {
         const alertPrefix = translateText('Alert', language);
         const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
-        textToSpeak += ` ${alertPrefix}: ${translateText(hazardVal, language)} ${affectsSuffix}`;
+        const hazardText = hazardVal ? translateText(hazardVal, language) : '';
+        textToSpeak += ` ${alertPrefix}: ${hazardText} ${affectsSuffix}`;
       }
       speak(textToSpeak);
     }
