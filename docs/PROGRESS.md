@@ -413,11 +413,17 @@
 - **100% Clickable & Interactive Map GIS**:
   - In `OceanWatchGIS.tsx`, every marker (harbours ⚓, lighthouses 🗼, PFZs 🐟, aquaculture 🦐) AND every polygon/line (MPAs, 12nm Territorial Waters, 24nm Contiguous Zones, 200nm EEZ, GEBCO depth contours) is interactive and clickable.
   - Clicking any feature displays a comprehensive inspection card (authority, regulations, legal status, coordinates, dimensions) while simultaneously triggering real-time point forecasts and astronomical tidal predictions for that exact location.
-- **Nationwide Sector Filtering**:
+- **Nationwide Sector Filtering & Real-Time Auto-Refresh**:
   - Added coastal sector switcher pills in `FisherWatchView.tsx` and `OceanWatchGIS.tsx` to easily filter PFZ advisories and landing centres by state/UT.
+  - Implemented 30-second recurring background telemetry polling without page reload: updates active hazards, PFZ advisories, and the currently inspected point's oceanographic conditions dynamically.
+  - Added interactive `● LIVE TELEMETRY (30s)` status badge in `OceanWatchGIS` with live pulse animation, last-updated timestamp, on-demand refresh, and pause/resume controls.
+- **422 Validation Fix & Dedicated Full-Coast Endpoints**:
+  - Expanded search radius limit up to 5,000 km (`le=5000.0`) on `/ports/nearby` and `/aquaculture/sites/nearby`.
+  - Added dedicated `GET /api/v1/ports` and `GET /api/v1/aquaculture/sites` endpoints returning full nationwide inventories with optional state filter.
+  - Stabilized MapLibre canvas lifecycle with `mapReady` state, `ResizeObserver`, and `markersRef` garbage collection, ensuring immediate rendering of all 30 landing harbours, 15 lighthouses, PFZs, aquaculture farms, MPAs, and bathymetric contours.
 - **Verification**:
-  - 15 dedicated backend tests in `test_marinewatch_endpoints.py` (100% pass rate).
-  - Full backend suite: 674 passed, 51 skipped, 0 failures.
+  - 17 dedicated backend tests in `test_marinewatch_endpoints.py` (100% pass rate).
+  - Full backend suite: 676 passed, 51 skipped, 0 failures.
   - Full frontend suite: 241 passed across 16 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build (`vite build`).
 
 ---

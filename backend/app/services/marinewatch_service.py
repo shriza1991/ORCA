@@ -256,6 +256,20 @@ class IndiaMarineWatchService:
         results.sort(key=lambda x: x["distance_km"])
         return results[:limit]
 
+    def get_all_ports(self, state: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Return all CMFRI landing centres, optionally filtered by state."""
+        if not state or state.lower() in ("all", "all india"):
+            return list(self._landing_centres)
+        state_clean = state.strip().lower()
+        return [p for p in self._landing_centres if p.get("state", "").strip().lower() == state_clean]
+
+    def get_all_aquaculture(self, state: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Return all CAA aquaculture sites, optionally filtered by state."""
+        if not state or state.lower() in ("all", "all india"):
+            return list(self._aquaculture_sites)
+        state_clean = state.strip().lower()
+        return [f for f in self._aquaculture_sites if f.get("state", "").strip().lower() == state_clean]
+
     def get_all_lighthouses(self) -> List[Dict[str, Any]]:
         """Return all registered DGLL coastal lighthouses across India."""
         return list(self._lighthouses)

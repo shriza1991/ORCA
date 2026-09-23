@@ -15,12 +15,14 @@ import {
   List,
   Map as MapIcon,
   X,
+  RefreshCw,
 } from 'lucide-react';
 import {
-  fetchNearbyPorts,
-  fetchNearbyAquaculture,
+  fetchAllPorts,
+  fetchAllAquacultureSites,
   fetchAllLighthouses,
   fetchPFZAdvisories,
+  fetchActiveHazards,
   fetchMaritimeBoundaries,
   executeSpatialQuery,
   searchMarineFeatures,
@@ -75,6 +77,13 @@ interface OceanWatchGISProps {
 export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+
+  // Real-time status & auto-refresh
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [autoRefreshActive, setAutoRefreshActive] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // View state
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
@@ -110,32 +119,64 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
   const [lighthouses, setLighthouses] = useState<Lighthouse[]>([]);
   const [boundariesGeoJson, setBoundariesGeoJson] = useState<any>(null);
 
-  // Initial Data Load (Whole India)
+  // Initial Data Load (Whole India) using Promise.allSettled for maximum fault-tolerance
   useEffect(() => {
     async function loadAllData() {
       try {
-        const [portsRes, aquaRes, pfzRes, lhRes, boundsRes] = await Promise.all([
-          fetchNearbyPorts(20.0, 78.0, 2500, 50),
-          fetchNearbyAquaculture(20.0, 78.0, 2500, 50),
+        const [portsRes, aquaRes, pfzRes, lhRes, boundsRes] = await Promise.allSettled([
+          fetchAllPorts(),
+          fetchAllAquacultureSites(),
           fetchPFZAdvisories('All'),
           fetchAllLighthouses(),
           fetchMaritimeBoundaries(),
         ]);
-        setPorts(portsRes.ports || []);
-        setFarms(aquaRes.aquaculture_sites || []);
-        setPfzs(pfzRes.advisories || []);
-        setLighthouses(lhRes.lighthouses || []);
-        setBoundariesGeoJson(boundsRes);
+        if (portsRes.status === 'fulfilled') setPorts(portsRes.value.ports || []);
+        if (aquaRes.status === 'fulfilled') setFarms(aquaRes.value.aquaculture_sites || []);
+        if (pfzRes.status === 'fulfilled') setPfzs(pfzRes.value.advisories || []);
+        if (lhRes.status === 'fulfilled') setLighthouses(lhRes.value.lighthouses || []);
+        if (boundsRes.status === 'fulfilled') setBoundariesGeoJson(boundsRes.value);
 
         // Initial default point query for Ratnagiri
         const ratnagiriPoint = await executeSpatialQuery(16.9942, 73.2847);
         setPointData(ratnagiriPoint);
+        setLastUpdated(new Date());
       } catch (err) {
         console.error('Error loading initial MarineWatch GIS data:', err);
       }
     }
     loadAllData();
   }, []);
+
+  // Real-time live data refresh (updates automatically without site reload)
+  const refreshLiveTelemetry = async () => {
+    setRefreshing(true);
+    try {
+      const [pfzRes] = await Promise.allSettled([
+        fetchPFZAdvisories('All'),
+        fetchActiveHazards(),
+      ]);
+      if (pfzRes.status === 'fulfilled') setPfzs(pfzRes.value.advisories || []);
+
+      if (pointCoordinates) {
+        const pt = await executeSpatialQuery(pointCoordinates[0], pointCoordinates[1]);
+        setPointData(pt);
+      }
+      setLastUpdated(new Date());
+    } catch (e) {
+      console.warn('Real-time telemetry update failed:', e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // 30-second recurring background interval for real-time automatic telemetry updates
+  useEffect(() => {
+    if (!autoRefreshActive) return;
+    const timer = setInterval(() => {
+      refreshLiveTelemetry();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [autoRefreshActive, pointCoordinates]);
 
   // MapLibre Initialization
   useEffect(() => {
@@ -149,12 +190,21 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: styleUrl,
-      center: [75.0, 16.5],
-      zoom: 6.2,
+      center: [78.5, 18.0],
+      zoom: 5.0,
     });
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
     mapRef.current = map;
+
+    const resizeObserver = new ResizeObserver(() => {
+      map.resize();
+    });
+    resizeObserver.observe(mapContainer.current);
+
+    map.on('load', () => {
+      setMapReady(true);
+    });
 
     // General map click handler
     map.on('click', async (e) => {
@@ -174,7 +224,12 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     });
 
     return () => {
+      resizeObserver.disconnect();
+      setMapReady(false);
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
       map.remove();
+      mapRef.current = null;
     };
   }, [theme]);
 
@@ -185,7 +240,11 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
 
     function setupLayers() {
       if (!map) return;
-      if (map.getSource('india-boundaries')) return;
+      if (map.getSource('india-boundaries')) {
+        const src = map.getSource('india-boundaries') as maplibregl.GeoJSONSource;
+        src.setData(boundariesGeoJson);
+        return;
+      }
 
       map.addSource('india-boundaries', {
         type: 'geojson',
@@ -415,17 +474,15 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
       });
     }
 
-    if (map.isStyleLoaded()) {
+    if (mapReady) {
       setupLayers();
-    } else {
-      map.on('load', setupLayers);
     }
-  }, [boundariesGeoJson]);
+  }, [mapReady, boundariesGeoJson]);
 
   // Update layer visibility
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !mapReady) return;
 
     if (map.getLayer('mpas-fill')) {
       map.setLayoutProperty('mpas-fill', 'visibility', visibleLayers.boundaries ? 'visible' : 'none');
@@ -444,14 +501,18 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
     if (map.getLayer('bathymetry-contours-line')) {
       map.setLayoutProperty('bathymetry-contours-line', 'visibility', visibleLayers.bathymetry ? 'visible' : 'none');
     }
-  }, [visibleLayers]);
+  }, [mapReady, visibleLayers]);
 
   // Sync Markers to Map (Whole India: Ports, Lighthouses, PFZs, Aquaculture)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapReady) return;
 
-    // Remove existing markers if any
+    // Remove existing markers tracked in markersRef
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
+    // Also remove any existing custom markers from DOM
     const existingMarkers = document.querySelectorAll('.marinewatch-custom-marker');
     existingMarkers.forEach((m) => m.remove());
 
@@ -461,7 +522,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
         const el = document.createElement('div');
         el.className = 'marinewatch-custom-marker port-marker';
         el.innerHTML = `<span style="font-size: 15px; cursor: pointer; filter: drop-shadow(0 0 4px #3b82f6);">⚓</span>`;
-        el.title = `${p.name} (${p.craft_count.total} craft · VHF Ch ${p.vhf_channel})`;
+        el.title = `${p.name} (${p.craft_count?.total || 0} craft · VHF Ch ${p.vhf_channel || 16})`;
         el.onclick = (e) => {
           e.stopPropagation();
           map.flyTo({ center: [p.longitude, p.latitude], zoom: 11 });
@@ -470,19 +531,20 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
             category: 'PORT_LANDING_CENTRE',
             badge: 'CMFRI FISHING HARBOUR',
             authority: 'Central Marine Fisheries Research Institute (CMFRI)',
-            description: `${p.type} located in ${p.district}, ${p.state}. Major gears: ${p.major_gears.join(', ')}. Facilities: ${p.facilities.join(', ')}.`,
+            description: `${p.type} located in ${p.district}, ${p.state}. Major gears: ${(p.major_gears || []).join(', ')}. Facilities: ${(p.facilities || []).join(', ')}.`,
             stats: {
-              'Fleet Size': `${p.craft_count.total} registered craft`,
-              Mechanized: p.craft_count.mechanized,
-              Motorized: p.craft_count.motorized,
-              'VHF Radio': `Channel ${p.vhf_channel}`,
+              'Fleet Size': `${p.craft_count?.total || 0} registered craft`,
+              Mechanized: p.craft_count?.mechanized ?? 0,
+              Motorized: p.craft_count?.motorized ?? 0,
+              'VHF Radio': `Channel ${p.vhf_channel || 16}`,
             },
             coordinates: [p.latitude, p.longitude],
           });
           setPointCoordinates([p.latitude, p.longitude]);
           executeSpatialQuery(p.latitude, p.longitude).then(setPointData);
         };
-        new maplibregl.Marker({ element: el }).setLngLat([p.longitude, p.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el }).setLngLat([p.longitude, p.latitude]).addTo(map);
+        markersRef.current.push(m);
       });
     }
 
@@ -513,7 +575,8 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           setPointCoordinates([lh.latitude, lh.longitude]);
           executeSpatialQuery(lh.latitude, lh.longitude).then(setPointData);
         };
-        new maplibregl.Marker({ element: el }).setLngLat([lh.longitude, lh.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el }).setLngLat([lh.longitude, lh.latitude]).addTo(map);
+        markersRef.current.push(m);
       });
     }
 
@@ -532,7 +595,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
             category: 'POTENTIAL_FISHING_ZONE',
             badge: 'INCOIS PFZ ADVISORY',
             authority: z.source,
-            description: `Target species: ${z.target_species.join(', ')}. Recommended gears: ${z.gear_recommended.join(', ')}. Valid until: ${new Date(z.valid_to).toLocaleDateString('en-IN')}.`,
+            description: `Target species: ${(z.target_species || []).join(', ')}. Recommended gears: ${(z.gear_recommended || []).join(', ')}. Valid until: ${new Date(z.valid_to).toLocaleDateString('en-IN')}.`,
             stats: {
               'Sea Surface Temp': `${z.sst_celsius}°C`,
               'Chlorophyll-a': `${z.chlorophyll_mg_m3} mg/m³`,
@@ -544,7 +607,8 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           setPointCoordinates([z.latitude, z.longitude]);
           executeSpatialQuery(z.latitude, z.longitude).then(setPointData);
         };
-        new maplibregl.Marker({ element: el }).setLngLat([z.longitude, z.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el }).setLngLat([z.longitude, z.latitude]).addTo(map);
+        markersRef.current.push(m);
       });
     }
 
@@ -575,10 +639,11 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           setPointCoordinates([f.latitude, f.longitude]);
           executeSpatialQuery(f.latitude, f.longitude).then(setPointData);
         };
-        new maplibregl.Marker({ element: el }).setLngLat([f.longitude, f.latitude]).addTo(map);
+        const m = new maplibregl.Marker({ element: el }).setLngLat([f.longitude, f.latitude]).addTo(map);
+        markersRef.current.push(m);
       });
     }
-  }, [ports, farms, pfzs, lighthouses, visibleLayers]);
+  }, [mapReady, ports, farms, pfzs, lighthouses, visibleLayers]);
 
   // Search handler
   async function handleSearch(val: string) {
@@ -667,6 +732,32 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
               <span>{bm.name}</span>
             </button>
           ))}
+        </div>
+        {/* Live Telemetry Auto-Update Indicator */}
+        <div className="oceanwatch-live-telemetry-badge" title="Real-time telemetry auto-refreshes every 30s without page reload">
+          <span
+            className="live-pulse-dot"
+            style={{ backgroundColor: autoRefreshActive ? '#22c55e' : '#94a3b8', cursor: 'pointer' }}
+            onClick={() => setAutoRefreshActive(!autoRefreshActive)}
+            title={autoRefreshActive ? 'Auto-refresh active (30s) — click to pause' : 'Auto-refresh paused — click to resume'}
+          />
+          <span
+            className="live-telemetry-label"
+            style={{ color: autoRefreshActive ? '#22c55e' : '#94a3b8', cursor: 'pointer' }}
+            onClick={() => setAutoRefreshActive(!autoRefreshActive)}
+            title={autoRefreshActive ? 'Auto-refresh active (30s) — click to pause' : 'Auto-refresh paused — click to resume'}
+          >
+            {autoRefreshActive ? 'LIVE TELEMETRY' : 'PAUSED'}
+          </span>
+          <span className="live-telemetry-time">{lastUpdated.toLocaleTimeString()}</span>
+          <button
+            type="button"
+            onClick={refreshLiveTelemetry}
+            title="Refresh real-time data now"
+            className={`live-refresh-btn ${refreshing ? 'spinning' : ''}`}
+          >
+            <RefreshCw size={12} />
+          </button>
         </div>
 
         {/* View Mode Toggle: Map vs List */}

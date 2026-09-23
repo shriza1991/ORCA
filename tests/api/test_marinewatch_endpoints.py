@@ -289,3 +289,33 @@ def test_mpa_intersection_detection(client: TestClient):
     intersections = data.get("intersections", [])
     assert any("Gulf of Mannar" in inter["name"] for inter in intersections)
 
+
+def test_all_ports_and_large_radius(client: TestClient):
+    """Test /ports endpoint and that large search radius (up to 5000 km) does not 422."""
+    # 1. All ports
+    resp_all = client.get("/api/v1/ports")
+    assert resp_all.status_code == 200
+    all_data = resp_all.json()
+    assert all_data["count"] >= 30
+
+    # 2. Large radius query (e.g. 2500 km across India)
+    resp_large = client.get("/api/v1/ports/nearby?lat=20.0&lon=78.0&radius_km=2500&limit=50")
+    assert resp_large.status_code == 200
+    large_data = resp_large.json()
+    assert large_data["count"] > 0
+
+
+def test_all_aquaculture_and_large_radius(client: TestClient):
+    """Test /aquaculture/sites endpoint and large search radius."""
+    # 1. All aquaculture sites
+    resp_all = client.get("/api/v1/aquaculture/sites")
+    assert resp_all.status_code == 200
+    all_data = resp_all.json()
+    assert all_data["count"] >= 9
+
+    # 2. Large radius query
+    resp_large = client.get("/api/v1/aquaculture/sites/nearby?lat=20.0&lon=78.0&radius_km=2500&limit=50")
+    assert resp_large.status_code == 200
+    large_data = resp_large.json()
+    assert large_data["count"] > 0
+

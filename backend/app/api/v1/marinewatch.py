@@ -171,14 +171,31 @@ def get_pfz_advisories(
 def get_nearby_ports(
     lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
     lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
-    radius_km: float = Query(100.0, ge=1.0, le=500.0, description="Search radius in kilometers"),
-    limit: int = Query(10, ge=1, le=50, description="Maximum number of ports to return"),
+    radius_km: float = Query(100.0, ge=1.0, le=5000.0, description="Search radius in kilometers"),
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of ports to return"),
 ) -> Dict[str, Any]:
     ports = marine_watch_service.get_nearby_ports(lat=lat, lon=lon, radius_km=radius_km, limit=limit)
     return {
         "count": len(ports),
         "search_origin": {"lat": lat, "lon": lon},
         "radius_km": radius_km,
+        "ports": ports,
+        "source": "CMFRI Marine Fisheries Census 2020 & State Fisheries Departments",
+    }
+
+
+@router.get(
+    "/ports",
+    summary="All CMFRI Landing Centres (§213)",
+    description="Returns full nationwide catalogue of registered CMFRI fish landing centres, optionally filtered by state.",
+)
+def get_all_ports(
+    state: Optional[str] = Query(None, description="Optional coastal state filter"),
+) -> Dict[str, Any]:
+    ports = marine_watch_service.get_all_ports(state=state)
+    return {
+        "count": len(ports),
+        "state": state,
         "ports": ports,
         "source": "CMFRI Marine Fisheries Census 2020 & State Fisheries Departments",
     }
@@ -196,14 +213,31 @@ def get_nearby_ports(
 def get_nearby_aquaculture(
     lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
     lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
-    radius_km: float = Query(80.0, ge=1.0, le=500.0, description="Search radius in kilometers"),
-    limit: int = Query(10, ge=1, le=50, description="Maximum number of farms to return"),
+    radius_km: float = Query(80.0, ge=1.0, le=5000.0, description="Search radius in kilometers"),
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of farms to return"),
 ) -> Dict[str, Any]:
     farms = marine_watch_service.get_nearby_aquaculture(lat=lat, lon=lon, radius_km=radius_km, limit=limit)
     return {
         "count": len(farms),
         "search_origin": {"lat": lat, "lon": lon},
         "radius_km": radius_km,
+        "aquaculture_sites": farms,
+        "source": "Coastal Aquaculture Authority (CAA) Statutory Registry",
+    }
+
+
+@router.get(
+    "/aquaculture/sites",
+    summary="All CAA Registered Aquaculture Sites (§213)",
+    description="Returns full nationwide catalogue of statutory Coastal Aquaculture Authority registered farms, optionally filtered by state.",
+)
+def get_all_aquaculture(
+    state: Optional[str] = Query(None, description="Optional coastal state filter"),
+) -> Dict[str, Any]:
+    farms = marine_watch_service.get_all_aquaculture(state=state)
+    return {
+        "count": len(farms),
+        "state": state,
         "aquaculture_sites": farms,
         "source": "Coastal Aquaculture Authority (CAA) Statutory Registry",
     }
@@ -221,8 +255,8 @@ def get_nearby_aquaculture(
 def get_nearby_lighthouses(
     lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
     lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
-    radius_km: float = Query(200.0, ge=1.0, le=1000.0, description="Search radius in kilometers"),
-    limit: int = Query(8, ge=1, le=50, description="Maximum number of lighthouses to return"),
+    radius_km: float = Query(200.0, ge=1.0, le=5000.0, description="Search radius in kilometers"),
+    limit: int = Query(8, ge=1, le=100, description="Maximum number of lighthouses to return"),
 ) -> Dict[str, Any]:
     lighthouses = marine_watch_service.get_nearby_lighthouses(lat=lat, lon=lon, radius_km=radius_km, limit=limit)
     return {

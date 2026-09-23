@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import {
   fetchPFZAdvisories,
-  fetchNearbyPorts,
+  fetchAllPorts,
   fetchRouteForecast,
   type PFZAdvisory,
   type LandingCentre,
@@ -47,36 +47,30 @@ export default function FisherWatchView() {
   const [routeResult, setRouteResult] = useState<RouteForecastResponse | null>(null);
   const [evaluatingRoute, setEvaluatingRoute] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       try {
-        const secParam = selectedSector === 'All India' ? 'All' : selectedSector;
-        const [pfzRes, portsRes] = await Promise.all([
-          fetchPFZAdvisories(secParam),
-          fetchNearbyPorts(20.0, 78.0, 2500, 50),
+        const secParam = selectedSector === 'All India' ? undefined : selectedSector;
+        const [pfzRes, portsRes] = await Promise.allSettled([
+          fetchPFZAdvisories(selectedSector === 'All India' ? 'All' : selectedSector),
+          fetchAllPorts(secParam),
         ]);
-        setPfzList(pfzRes.advisories || []);
+        const advisories = pfzRes.status === 'fulfilled' ? pfzRes.value.advisories || [] : [];
+        const ports = portsRes.status === 'fulfilled' ? portsRes.value.ports || [] : [];
 
-        const filteredPorts =
-          selectedSector === 'All India'
-            ? portsRes.ports || []
-            : (portsRes.ports || []).filter((p) =>
-                p.state.toLowerCase().includes(selectedSector.toLowerCase())
-              );
+        setPfzList(advisories);
+        setLandingCentres(ports);
 
-        setLandingCentres(filteredPorts.length > 0 ? filteredPorts : portsRes.ports || []);
-
-        if (filteredPorts.length > 0) {
-          setSelectedPort(filteredPorts[0].id);
-        } else if (portsRes.ports && portsRes.ports.length > 0) {
-          setSelectedPort(portsRes.ports[0].id);
+        if (ports.length > 0) {
+          setSelectedPort(ports[0].id);
         }
-
-        if (pfzRes.advisories && pfzRes.advisories.length > 0) {
-          setSelectedPfz(pfzRes.advisories[0].advisory_id);
+        if (advisories.length > 0) {
+          setSelectedPfz(advisories[0].advisory_id);
         }
+        setLastUpdated(new Date());
       } catch (err) {
         console.error('Failed to load FisherWatch data:', err);
       } finally {
@@ -84,6 +78,22 @@ export default function FisherWatchView() {
       }
     }
     loadData();
+  }, [selectedSector]);
+
+  // Real-time automatic background refresh every 30s without reload
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      try {
+        const pfzRes = await fetchPFZAdvisories(selectedSector === 'All India' ? 'All' : selectedSector);
+        if (pfzRes?.advisories) {
+          setPfzList(pfzRes.advisories);
+        }
+        setLastUpdated(new Date());
+      } catch (e) {
+        console.warn('Real-time background update in FisherWatch:', e);
+      }
+    }, 30000);
+    return () => clearInterval(timer);
   }, [selectedSector]);
 
   async function handleEvaluateDeparture() {
@@ -124,6 +134,10 @@ export default function FisherWatchView() {
           <div className="fisher-badge">
             <Fish size={14} />
             <span>FisherWatch India — Operational Pelagic Intelligence</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginLeft: '12px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              LIVE TELEMETRY ({lastUpdated.toLocaleTimeString()})
+            </span>
           </div>
           <h2>Potential Fishing Zones & Harbours Directory</h2>
           <p>

@@ -331,6 +331,13 @@ export async function fetchNearbyPorts(
   return res.json();
 }
 
+export async function fetchAllPorts(state?: string): Promise<{ count: number; ports: LandingCentre[] }> {
+  const url = state ? `${API_BASE}/ports?state=${encodeURIComponent(state)}` : `${API_BASE}/ports`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch all ports: ${res.statusText}`);
+  return res.json();
+}
+
 export async function fetchNearbyAquaculture(
   lat: number,
   lon: number,
@@ -345,6 +352,13 @@ export async function fetchNearbyAquaculture(
   });
   const res = await fetch(`${API_BASE}/aquaculture/sites/nearby?${params.toString()}`);
   if (!res.ok) throw new Error(`Failed to fetch nearby aquaculture: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchAllAquacultureSites(state?: string): Promise<{ count: number; aquaculture_sites: AquacultureSite[] }> {
+  const url = state ? `${API_BASE}/aquaculture/sites?state=${encodeURIComponent(state)}` : `${API_BASE}/aquaculture/sites`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch all aquaculture sites: ${res.statusText}`);
   return res.json();
 }
 
