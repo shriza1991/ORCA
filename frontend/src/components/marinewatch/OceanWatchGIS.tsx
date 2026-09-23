@@ -34,6 +34,7 @@ import {
   type UnifiedSpatialQueryResponse,
   type SpatialSearchResult,
 } from '../../api/marinewatch-client';
+import { translateText, type SupportedLanguage } from '../../i18n/translations';
 
 const TIME_STEPS = [
   { label: 'Now', hours: 0 },
@@ -73,9 +74,10 @@ export interface SelectedFeatureInfo {
 
 interface OceanWatchGISProps {
   theme?: 'light' | 'dark';
+  language?: SupportedLanguage;
 }
 
-export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
+export default function OceanWatchGIS({ theme = 'light', language = 'en' }: OceanWatchGISProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -1063,9 +1065,9 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
             className="live-telemetry-label"
             style={{ color: autoRefreshActive ? '#22c55e' : '#94a3b8', cursor: 'pointer' }}
             onClick={() => setAutoRefreshActive(!autoRefreshActive)}
-            title={autoRefreshActive ? 'Auto-refresh active (30s) — click to pause' : 'Auto-refresh paused — click to resume'}
+            title={autoRefreshActive ? translateText('Auto-refresh active (30s) — click to pause', language) : translateText('Auto-refresh paused — click to resume', language)}
           >
-            {autoRefreshActive ? 'LIVE TELEMETRY' : 'PAUSED'}
+            {autoRefreshActive ? translateText('LIVE TELEMETRY', language) : translateText('PAUSED', language)}
           </span>
           <span className="live-telemetry-time">{lastUpdated.toLocaleTimeString()}</span>
           <button
@@ -1083,18 +1085,18 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
           <button
             className={`toggle-btn ${viewMode === 'map' ? 'active' : ''}`}
             onClick={() => setViewMode('map')}
-            title="Map View"
+            title={translateText("Map View", language)}
           >
             <MapIcon size={14} />
-            <span>Map</span>
+            <span>{translateText("Map", language)}</span>
           </button>
           <button
             className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
             onClick={() => setViewMode('list')}
-            title="List View"
+            title={translateText("List View", language)}
           >
             <List size={14} />
-            <span>List</span>
+            <span>{translateText("List", language)}</span>
           </button>
         </div>
       </div>
@@ -1110,7 +1112,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
             <div className="oceanwatch-time-scrubber">
               <div className="scrubber-header">
                 <Clock size={14} />
-                <span>Forecast Horizon: <strong>{TIME_STEPS[selectedTimeStep].label}</strong></span>
+                <span>{translateText("Forecast Horizon:", language)} <strong>{translateText(TIME_STEPS[selectedTimeStep].label, language)}</strong></span>
               </div>
               <div className="scrubber-steps">
                 {TIME_STEPS.map((step, idx) => (
@@ -1129,7 +1131,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
             <div className="oceanwatch-layer-panel">
               <div className="layer-panel-header">
                 <Layers size={14} />
-                <span>Layer Registry (All India)</span>
+                <span>{translateText("LAYER REGISTRY (ALL INDIA)", language)}</span>
               </div>
               <div className="layer-toggle-list">
                 <label className="layer-item">
@@ -1140,7 +1142,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, waves: e.target.checked }))
                     }
                   />
-                  <span>🌊 Wave & Swell (INCOIS)</span>
+                  <span>🌊 {translateText("Wave & Swell (INCOIS)", language)}</span>
                 </label>
                 <label className="layer-item">
                   <input
@@ -1150,7 +1152,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, pfz: e.target.checked }))
                     }
                   />
-                  <span>🐟 Potential Fishing Zones</span>
+                  <span>🐟 {translateText("Potential Fishing Zones", language)}</span>
                 </label>
                 <label className="layer-item">
                   <input
@@ -1160,7 +1162,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, ports: e.target.checked }))
                     }
                   />
-                  <span>⚓ CMFRI Landing Centres ({ports.length})</span>
+                  <span>⚓ {translateText("CMFRI Landing Centres", language)} ({ports.length})</span>
                 </label>
                 <label className="layer-item">
                   <input
@@ -1170,7 +1172,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, lighthouses: e.target.checked }))
                     }
                   />
-                  <span>🗼 DGLL Lighthouses ({lighthouses.length})</span>
+                  <span>🗼 {translateText("DGLL Lighthouses", language)} ({lighthouses.length})</span>
                 </label>
                 <label className="layer-item">
                   <input
@@ -1180,7 +1182,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, aquaculture: e.target.checked }))
                     }
                   />
-                  <span>🦐 CAA Coastal Aquaculture ({farms.length})</span>
+                  <span>🦐 {translateText("CAA Coastal Aquaculture", language)} ({farms.length})</span>
                 </label>
                 <label className="layer-item">
                   <input
@@ -1190,7 +1192,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, boundaries: e.target.checked }))
                     }
                   />
-                  <span>📏 12nm / 200nm & Marine Parks</span>
+                  <span>📏 {translateText("12nm / 200nm & Marine Parks", language)}</span>
                 </label>
                 <label className="layer-item">
                   <input
@@ -1200,7 +1202,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, bathymetry: e.target.checked }))
                     }
                   />
-                  <span>🏔️ GEBCO Depth Contours</span>
+                  <span>🏔️ {translateText("GEBCO Depth Contours", language)}</span>
                 </label>
                 <label className="layer-item">
                   <input
@@ -1210,7 +1212,7 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
                       setVisibleLayers((prev) => ({ ...prev, hazards: e.target.checked }))
                     }
                   />
-                  <span>⚠️ Active Hazard Zones ({hazardsGeoJson?.features?.length ?? 0})</span>
+                  <span>⚠️ {translateText("Active Hazard Zones", language)} ({hazardsGeoJson?.features?.length ?? 0})</span>
                 </label>
               </div>
             </div>
@@ -1405,12 +1407,12 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
         <aside className="oceanwatch-point-panel">
           <div className="point-panel-header">
             <div>
-              <span className="point-panel-eyebrow">UNIFIED MARITIME INTELLIGENCE</span>
+              <span className="point-panel-eyebrow">{translateText("UNIFIED MARITIME INTELLIGENCE", language)}</span>
               <h3>
                 {pointCoordinates[0].toFixed(3)}°N, {pointCoordinates[1].toFixed(3)}°E
               </h3>
             </div>
-            {inspectingPoint && <span className="text-xs text-primary animate-pulse">Querying…</span>}
+            {inspectingPoint && <span className="text-xs text-primary animate-pulse">{translateText("Querying…", language)}</span>}
           </div>
 
           <div className="point-panel-content">
@@ -1462,45 +1464,45 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
               <>
                 {/* Bathymetry & Continental Shelf Card */}
                 <div className="point-info-card">
-                  <div className="card-badge">GEBCO BATHYMETRY & SHELF</div>
+                  <div className="card-badge">{translateText("GEBCO BATHYMETRY & SHELF", language)}</div>
                   <div className="depth-big-value">
-                    {pointData.bathymetry_and_shelf.bathymetry_depth_m} <small>m depth</small>
+                    {pointData.bathymetry_and_shelf.bathymetry_depth_m} <small>{translateText("m depth", language)}</small>
                   </div>
                   <div className="text-xs font-semibold text-primary mt-1">
-                    {pointData.bathymetry_and_shelf.shelf_zone}
+                    {translateText(pointData.bathymetry_and_shelf.shelf_zone, language)}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Distance to coast: <strong>{pointData.bathymetry_and_shelf.distance_to_shore_km} km</strong>
+                    {translateText("Distance to coast:", language)} <strong>{pointData.bathymetry_and_shelf.distance_to_shore_km} km</strong>
                     {pointData.bathymetry_and_shelf.nearest_landing_centre && (
-                      <span> (nearest: {pointData.bathymetry_and_shelf.nearest_landing_centre})</span>
+                      <span> ({translateText("nearest:", language)} {pointData.bathymetry_and_shelf.nearest_landing_centre})</span>
                     )}
                   </div>
                 </div>
 
                 {/* Astronomical Tide Card */}
                 <div className="point-info-card">
-                  <div className="card-badge">INCOIS PREDICTED TIDE (PAT)</div>
+                  <div className="card-badge">{translateText("INCOIS PREDICTED TIDE (PAT)", language)}</div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-xs text-muted-foreground">Elevation Above Chart Datum</span>
+                      <span className="text-xs text-muted-foreground">{translateText("Elevation Above Chart Datum", language)}</span>
                       <div className="text-lg font-bold">
                         {pointData.astronomical_tide.current_height_m} m
                       </div>
                       <span className="text-[11px] text-muted-foreground">
-                        Station: {pointData.astronomical_tide.station_name}
+                        {translateText("Station:", language)} {pointData.astronomical_tide.station_name}
                       </span>
                     </div>
                     <span className={`tide-phase-pill ${pointData.astronomical_tide.phase.toLowerCase()}`}>
-                      {pointData.astronomical_tide.phase}
+                      {translateText(pointData.astronomical_tide.phase, language)}
                     </span>
                   </div>
                   <div className="tide-extrema-row">
                     <div className="extrema-box">
-                      <span className="extrema-label">Next High Water</span>
+                      <span className="extrema-label">{translateText("Next High Water", language)}</span>
                       <span className="extrema-val">{pointData.astronomical_tide.next_high.height_m} m</span>
                     </div>
                     <div className="extrema-box">
-                      <span className="extrema-label">Next Low Water</span>
+                      <span className="extrema-label">{translateText("Next Low Water", language)}</span>
                       <span className="extrema-val">{pointData.astronomical_tide.next_low.height_m} m</span>
                     </div>
                   </div>
@@ -1508,33 +1510,33 @@ export default function OceanWatchGIS({ theme = 'light' }: OceanWatchGISProps) {
 
                 {/* Sea Conditions Card */}
                 <div className="point-info-card">
-                  <div className="card-badge">INCOIS OSF / HIGH-RES MARINE</div>
+                  <div className="card-badge">{translateText("INCOIS OSF / HIGH-RES MARINE", language)}</div>
                   <div className="conditions-grid">
                     <div className="condition-item">
                       <Waves size={16} className="text-blue-500" />
                       <div>
-                        <span className="condition-label">Wave Height</span>
+                        <span className="condition-label">{translateText("Wave Height", language)}</span>
                         <span className="condition-val">{pointData.ocean_state.wave_height_m} m</span>
                       </div>
                     </div>
                     <div className="condition-item">
                       <Thermometer size={16} className="text-rose-500" />
                       <div>
-                        <span className="condition-label">SST</span>
+                        <span className="condition-label">{translateText("SST", language)}</span>
                         <span className="condition-val">{pointData.ocean_state.sst_c}°C</span>
                       </div>
                     </div>
                     <div className="condition-item">
                       <Wind size={16} className="text-sky-500" />
                       <div>
-                        <span className="condition-label">Wind Speed</span>
+                        <span className="condition-label">{translateText("Wind Speed", language)}</span>
                         <span className="condition-val">{pointData.ocean_state.wind_speed_kn} kn</span>
                       </div>
                     </div>
                     <div className="condition-item">
                       <Compass size={16} className="text-indigo-500" />
                       <div>
-                        <span className="condition-label">Swell Period</span>
+                        <span className="condition-label">{translateText("Swell Period", language)}</span>
                         <span className="condition-val">{pointData.ocean_state.swell_period_s} s</span>
                       </div>
                     </div>

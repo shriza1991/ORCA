@@ -122,7 +122,7 @@ export default function App() {
           onBack={handleBack}
         />
       ) : portal === 'marinewatch' ? (
-        <MarineWatchPage onBackToPortal={() => setPortal('selection')} theme={theme} />
+        <MarineWatchPage onBackToPortal={() => setPortal('selection')} theme={theme} language={chat.language} />
       ) : portal === 'researcher' ? (
         <ResearcherPage />
       ) : portal === 'deckgl-experiment' ? (
