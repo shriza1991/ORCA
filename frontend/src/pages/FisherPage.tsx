@@ -6,6 +6,7 @@ import WhatIfSimulator from '../components/mission/WhatIfSimulator';
 import OceanDetails from '../components/fisher/OceanDetails';
 import PFZDetails from '../components/fisher/PFZDetails';
 import TripPlanDetails from '../components/fisher/TripPlanDetails';
+import ChatPanel from '../components/chat/ChatPanel';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
 import { getHarborCoordinates, fetchAndFormatBaseLayers } from '../utils/geo';
@@ -17,7 +18,7 @@ import { useSpokenGuidance } from '../hooks/useSpokenGuidance';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useGeofence } from '../hooks/useGeofence';
 import LocationWarningsOverlay from '../components/map/LocationWarningsOverlay';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, MessageSquare, Navigation } from 'lucide-react';
 import { DEFAULT_MISSION_CONTEXT } from '../types/mission';
 
 export interface FisherPageProps {
@@ -34,16 +35,16 @@ export default function FisherPage({
   chat,
   theme,
   mobileView: _mobileView,
-  onStartCall: _onStartCall,
-  onOpenEvidence: _onOpenEvidence,
-  onBack: _onBack,
+  onStartCall,
+  onOpenEvidence,
+  onBack,
   onViewMap,
 }: FisherPageProps) {
   const originHarbor = chat.missionContext.origin_harbor || 'Ratnagiri';
   const harborCoords = useMemo(() => getHarborCoordinates(originHarbor), [originHarbor]);
   
   const [baseLayers, setBaseLayers] = useState<MapLayer[]>([]);
-  const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage'>('decision');
+  const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage' | 'chat'>('decision');
 
   const { data: assessment, isLoading, error, isOffline, isExpired, assessTrip } = useTripAssessment();
   const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
@@ -180,51 +181,82 @@ export default function FisherPage({
             />
           </div>
         ) : (
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Trip Dashboard</h2>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setSidebarTab('decision')}
+                  style={{ padding: '8px 12px', background: sidebarTab === 'decision' ? '#e2e8f0' : 'transparent', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: '#0f172a' }}
+                >
+                  <Navigation size={16} /> Plan
+                </button>
+                <button
+                  onClick={() => setSidebarTab('chat')}
+                  style={{ padding: '8px 12px', background: sidebarTab === 'chat' ? '#e2e8f0' : 'transparent', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: '#0f172a' }}
+                >
+                  <MessageSquare size={16} /> Assistant
+                </button>
+              </div>
               <button 
                 onClick={handleResetTrip}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
               >
                 <RefreshCw size={16} />
-                Reset Trip
+                Reset
               </button>
             </div>
 
-            <FisherAlertPanel 
-              alerts={alerts} 
-              language={chat.language} 
-              onAcknowledge={acknowledgeAlert} 
-              onReplay={(text) => speak(text)} 
-            />
+            {sidebarTab === 'chat' ? (
+              <div style={{ flex: 1, overflow: 'hidden', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+                <ChatPanel
+                  language={chat.language}
+                  messages={chat.messages}
+                  activeResponse={chat.activeResponse}
+                  isLoading={chat.isLoading}
+                  onSend={chat.send}
+                  onStartCall={onStartCall}
+                  onBack={() => setSidebarTab('decision')}
+                  onReset={handleResetTrip}
+                  onEvidenceClick={onOpenEvidence}
+                />
+              </div>
+            ) : (
+              <>
+                <FisherAlertPanel 
+                  alerts={alerts} 
+                  language={chat.language} 
+                  onAcknowledge={acknowledgeAlert} 
+                  onReplay={(text) => speak(text)} 
+                />
 
-            <FisherDecisionSurface
-              assessment={assessment}
-              isLoading={isLoading}
-              error={error}
-              isOffline={isOffline}
-              isExpired={isExpired}
-              activeDiff={chat.activeDiff}
-              missionContext={chat.missionContext}
-              language={chat.language}
-              onOpenVoyageSettings={() => setSidebarTab('voyage')}
-              onViewMap={onViewMap}
-            />
+                <FisherDecisionSurface
+                  assessment={assessment}
+                  isLoading={isLoading}
+                  error={error}
+                  isOffline={isOffline}
+                  isExpired={isExpired}
+                  activeDiff={chat.activeDiff}
+                  missionContext={chat.missionContext}
+                  language={chat.language}
+                  onOpenVoyageSettings={() => setSidebarTab('voyage')}
+                  onViewMap={onViewMap}
+                />
 
-            <WhatIfSimulator
-              currentContext={chat.missionContext}
-              currentStatus={assessment?.decision?.status || 'UNKNOWN'}
-              language={chat.language}
-              isLoading={chat.isLoading}
-              activeDiff={chat.activeDiff}
-              onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)}
-              onApplyContext={(newCtx) => chat.setMissionContext(newCtx)}
-            />
+                <WhatIfSimulator
+                  currentContext={chat.missionContext}
+                  currentStatus={assessment?.decision?.status || 'UNKNOWN'}
+                  language={chat.language}
+                  isLoading={chat.isLoading}
+                  activeDiff={chat.activeDiff}
+                  onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)}
+                  onApplyContext={(newCtx) => chat.setMissionContext(newCtx)}
+                />
 
-            <PFZDetails assessment={assessment} language={chat.language} />
-            <OceanDetails assessment={assessment} language={chat.language} />
-            <TripPlanDetails assessment={assessment} language={chat.language} />
+                <PFZDetails assessment={assessment} language={chat.language} />
+                <OceanDetails assessment={assessment} language={chat.language} />
+                <TripPlanDetails assessment={assessment} language={chat.language} />
+              </>
+            )}
           </div>
         )}
       </div>
