@@ -3,6 +3,9 @@
 > Single operational status board. Strictly factual. No diary narrative.
 
 ## Current Release & Workstream State
+
+> Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
+
 - Current version: `v0.2.2-features-main-integrated`
 - Active branch: `main`
 - Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**

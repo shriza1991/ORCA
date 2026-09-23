@@ -15,73 +15,252 @@
 
 When working on ORCA, treat this document as the project's strategic and architectural context.
 
-## 0.1 Core objective
+## 0.1 Final product direction
 
-ORCA is NOT primarily another marine dashboard, alert application, PFZ viewer, weather application, or generic chatbot.
+ORCA is the final product identity: a Marine Mission Intelligence platform.
 
-ORCA is:
-
-> **A mission-intelligence and reasoning layer above India's existing marine information ecosystem.**
-
-The central product loop is:
+Core principle:
 
 ```text
-ASK
-  â†“
-PLAN
-  â†“
-DISCOVER
-  â†“
-REASON
-  â†“
-DECIDE
-  â†“
-EXPLAIN
-  â†“
-SIMULATE
-  â†“
-ADAPT
+ASK → PLAN → DISCOVER → REASON → DECIDE → EXPLAIN → SIMULATE → ADAPT
 ```
 
-The visual/product identity is:
+ORCA is not another marine data dashboard. It is the intelligence and reasoning layer above existing marine information systems.
+
+Primary value:
 
 ```text
-DATA â†’ REASONING â†’ DECISION â†’ ADAPTATION
+DATA → REASONING → DECISION → ADAPTATION
 ```
 
-The primary product promise is:
+Primary user:
+- Fisherman / field marine user
 
-> The user should not need to know which marine system contains the answer. They should describe what they want to do, and ORCA should determine what information is needed, retrieve/correlate the relevant evidence, reason over space/time/context, apply constraints, make a decision, explain it, and recompute it when the mission changes.
+Institutional users:
+- Fisheries officers
+- Fleet / boat operators
+- Researchers
+- Emergency / SAR users
+- Administrators / operations users
 
-## 0.2 Do not optimize for feature count
+The product promise is:
 
-The project has already researched competing implementations and existing Indian marine systems.
+> A field user should describe a marine mission or question in natural language, and ORCA should determine what information is needed, retrieve and correlate the relevant evidence, reason over time and geography, apply safety constraints, decide, explain the rationale, simulate alternatives, and adapt as the mission changes.
 
-Do NOT interpret the solution as:
+## 0.2 Final product strategy
 
-- more agents
-- more dashboards
-- more APIs
-- more LLM calls
-- more languages
-- more map layers
-- more infrastructure
-- more connectors
+ORCA has two product interfaces sharing one intelligence core.
 
-Those are implementation mechanisms, not the product differentiator.
+### A. Mobile Field Application
+Primary field product for:
+- Fishermen
+- Crew
+- Other field users where appropriate
 
-The highest-value work is:
+Purpose:
+- Low-friction interaction
+- Voice-first interaction where useful
+- GPS / location
+- Mission context
+- Marine decision
+- WHY explanation
+- WHAT-IF exploration
+- Maps
+- Alerts
+- Offline / low-connectivity capability
 
-1. reliable evidence
-2. temporal reasoning
-3. mission state
-4. hard constraints
-5. explainability
-6. counterfactual simulation
-7. decision delta
-8. adaptive replanning
-9. source/provenance/confidence handling
-10. reproducible live/cache/demo behavior
+The mobile app is a native field product and does not attempt to reproduce the entire institutional web platform.
+
+### B. Web Platform
+Primary:
+- Public / demo entry point
+- Institutional / operations interface
+- Research / analytics interface
+- Role-specific views
+
+Roles may include:
+- Fisherman
+- Boat owner
+- Fleet operator
+- Fisheries officer
+- Researcher
+- Emergency / SAR
+- Administrator
+
+The web platform exposes more operational and analytical complexity than the mobile field experience, without duplicating the intelligence core.
+
+## 0.3 Shared intelligence core
+
+Mobile and web must use the same ORCA backend and intelligence layer.
+
+```text
+                    ORCA CORE
+                       │
+          +------------+------------+
+          |                         │
+       MOBILE                      WEB
+   React Native + Expo            Next.js
+          │                         │
+          +------------+------------+
+                       │
+                    FastAPI
+                       │
+             Mission / Agent / Data
+                       │
+        Decision + Evidence + GIS
+```
+
+Shared concepts include:
+- MissionState
+- MarineContext
+- Source Registry
+- Decision Engine
+- Safety / Constraint Engine
+- Evidence / Provenance
+- Explanation Engine
+- Route / GIS services
+- Alerts
+- What-if / Decision Delta
+- Data modes
+
+## 0.4 Final platform stack
+
+### Mobile (final)
+React Native + Expo + TypeScript
+
+Use React Native with Expo as the mobile application technology.
+
+Target:
+- Primarily Android for field / SIH use case
+- iOS remains possible for future expansion
+
+The mobile app is a real native product, not a mobile website.
+Expo / EAS is the intended build and distribution path.
+
+Mobile distribution model:
+- EAS build / install distribution for development and demo
+- Google Play testing or release later if appropriate
+
+Important distinction:
+- Web: Next.js → Vercel / hosting → URL
+- Mobile: React Native + Expo → EAS build → Android application → distribution / install link
+
+Expo Web is optional and not the primary mobile strategy.
+
+### Web (final)
+Next.js + React + TypeScript
+
+The web platform is the primary frictionless demo and judging surface. Existing Vercel / Render deployment remains the public demo entry point and should not be replaced or redesigned in this task.
+
+### Backend / core (final intended stack)
+- Python
+- FastAPI
+- PostgreSQL
+- PostGIS
+- Redis
+- SQLAlchemy
+- Alembic
+- Shapely / GeoPandas / PyProj as appropriate
+- LangGraph for agent orchestration where applicable
+- Object storage such as S3 / MinIO for large scientific / EO assets
+- OpenTelemetry + Prometheus / Grafana for observability where already planned
+
+Critical rule:
+- LLMs / agents understand intent, plan, select tools / sources, synthesize, and explain.
+- Deterministic services handle GIS, spatial calculations, temporal validity, route calculations, safety constraints, geofencing, evidence validation, and hard decision rules.
+
+Safety-critical decisions must not depend solely on LLM output.
+
+## 0.5 Mobile vs web responsibility
+
+### Mobile = field-first
+Prioritize:
+- Fisherman workflow
+- Mission setup
+- Ask ORCA
+- Decision
+- WHY
+- WHAT-IF
+- Map
+- GPS
+- Voice
+- Offline / cache
+- Alerts
+
+### Web = platform / institution-first
+Prioritize:
+- Fisherman demo experience
+- Operations
+- Fleet
+- Fisheries
+- Research
+- Emergency / SAR
+- Analytics
+- Evidence
+- Historical / replay views
+- Broader maps / data layers
+
+Do not require feature parity between mobile and web.
+
+## 0.6 Demo / judging strategy
+
+This is final.
+
+Primary demo:
+- Existing deployed Next.js web URL
+
+Reason:
+- Zero installation
+- Immediate judge access
+- Works from PPT link / QR
+- Can expose Fisherman Mode + institutional roles
+- Main judging surface
+
+Mobile:
+- Build a focused native React Native + Expo fisherman MVP
+- Demonstrate in the demo video
+- Can be distributed through an installable EAS / Android link
+
+Judges should not be expected to install the APK as the primary way to experience ORCA.
+
+PPT flow:
+1. Primary QR / link → deployed web demo
+2. Optional QR / link → mobile app distribution / install
+3. Demo video → shows actual mobile app + web platform
+
+Do not create a second web product merely because mobile needs a shareable URL.
+
+## 0.7 Mobile MVP scope
+
+Intended initial mobile scope only:
+1. Mission setup / context
+2. Ask ORCA
+3. Decision: GO / CAUTION / AVOID or applicable decision state
+4. WHY / evidence
+5. WHAT-IF / Decision Delta
+6. Marine map
+7. GPS / location
+8. Voice
+9. Offline / low-connectivity support
+10. Alerts where already supported
+
+Do not expand mobile into a full institutional dashboard.
+
+## 0.8 Demo mode and data honesty
+
+ORCA should support a controlled demo / prototype mode where applicable.
+
+Important distinction:
+- LIVE
+- LIMITED
+- CACHED_REAL
+- HISTORICAL
+- MOCK
+- UNAVAILABLE
+
+Never claim mock / cached data is live.
+
+Demo scenarios should be reproducible and should use the same ORCA reasoning pipeline as much as possible.
 
 ---
 

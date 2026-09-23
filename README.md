@@ -10,13 +10,27 @@
 
 ## 🌊 Overview
 
-**ORCA** (implemented via the **SAMUDRA** codebase) is an Agentic AI-powered Marine Intelligence & Mission Reasoning Platform. Its purpose is to empower coastal fishermen, vessel skippers, marine researchers, and disaster management authorities to query complex ocean conditions in natural language (including Indian vernacular languages like Hindi, Marathi, and Tamil) and receive deterministic, evidence-backed, geospatial recommendations.
+**ORCA** is the final product identity for the Marine Mission Intelligence platform. It is not another marine dashboard; it is the intelligence and reasoning layer above existing marine information systems.
 
-ORCA bridges the gap between sophisticated Earth Observation datasets (ISRO MOSDAC, INCOIS, IMD) and grassroots maritime safety through coordinated AI agents, deterministic geospatial calculations, and transparent provenance tracking.
+The final ORCA principle is:
+
+```text
+ASK → PLAN → DISCOVER → REASON → DECIDE → EXPLAIN → SIMULATE → ADAPT
+```
+
+The final product value chain is:
+
+```text
+DATA → REASONING → DECISION → ADAPTATION
+```
+
+The primary user is the fisherman or field marine operator. Institutional users include fisheries officers, fleet operators, researchers, Emergency/SAR teams, and administrators.
+
+This repository still contains a current implementation prototype and historical design artifacts. The product direction below is the final target architecture and should be treated as the canonical product definition, while current implementation status remains separate and factual.
 
 > [!CAUTION]
-> **PROTOTYPE DISCLAIMER**  
-> ORCA / SAMUDRA is a functional prototype built for the Smart India Hackathon 2026. It is **NOT** a certified marine navigational aid, SOLAS-compliant safety-of-life system, or official replacement for statutory bulletins issued by IMD, INCOIS, or the Indian Coast Guard.
+> **CURRENT IMPLEMENTATION STATUS**  
+> This codebase reflects an active prototype / integration build, not a finished production marine operations platform. The decisions below define the final ORCA product direction and target architecture.
 
 ---
 
@@ -24,7 +38,7 @@ ORCA bridges the gap between sophisticated Earth Observation datasets (ISRO MOSD
 
 Before making any modifications or assuming feature states, review the canonical project documentation:
 
-1. [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) — Strategic and architectural source of truth. Mission-intelligence positioning, MissionState, evidence model, decision object, priorities (P0/P1/P2), and implementation direction.
+1. [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) — Final strategic and architectural source of truth for ORCA product direction, product interfaces, shared intelligence core, and technology stack decisions.
 2. [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) — Canonical development roadmap and phased implementation plan.
 3. [docs/SAFETY.md](docs/SAFETY.md) — Deterministic risk thresholds, craft limits, and safety hard-stops.
 4. [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) — Canonical Pydantic schemas (`ChatRequest`, `ChatResponse`, `VoiceChatResponse`).
@@ -32,70 +46,66 @@ Before making any modifications or assuming feature states, review the canonical
 
 ---
 
-## 🎯 The Four Core User Journeys
+## 🏛️ Final Product Architecture
 
-ORCA delivers four canonical, judge-facing user journeys:
+ORCA has two product interfaces sharing one intelligence core:
 
-1. **Nearest PFZ Discovery**  
-   *Query:* *"Where is the nearest Potential Fishing Zone today from Ratnagiri?"*  
-   *Outcome:* Ranked PFZ zones, geodesic distance, compass bearing, map marker, source attribution, and validity window.
+1. **Mobile Field Application**: Built with **React Native + Expo + TypeScript**. Primary user value is fishermen and other field users with low-friction, voice-first interaction, GPS, mission context, safety decisions, WHY/WHAT-IF reasoning, offline capability, and maps.
+2. **Web Platform**: Built with **Next.js + React + TypeScript**. Primary user value is the public demo entry point and institutional / operational / research experiences for fleet operators, fisheries officers, researchers, emergency/SAR users, and administrators.
 
-2. **GO / NO-GO Safety Decision Gate**  
-   *Query:* *"Is it safe to leave tomorrow at 6 AM on a motorized boat?"*  
-   *Outcome:* Deterministic safety state (`GO` / `CAUTION` / `NO_GO` / `UNKNOWN`), decisive factors, wave/wind evidence, and confidence rating.
-
-3. **Hazard & Maritime Boundary Alerts**  
-   *Query:* *"Any cyclone, lightning or restricted-water risk on this trip?"*  
-   *Outcome:* Active hazard polygons, geofence intersection with naval or protected zones, and hard-stop alerts.
-
-4. **Safer Alternative Route Comparison**  
-   *Query:* *"Which of these routes has the lowest weather and boundary risk?"*  
-   *Outcome:* Comparative evaluation of candidate routes, exposure scoring, and clear risk tradeoffs.
-
----
-
-## 🏛️ System Architecture
-
-ORCA is architected as a **Modular Monolith**:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 FRONTEND (React + MapLibre)                 │
-│    Chat Interface │ Vector Maps │ Evidence Drawer │ Call UI │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ JSON REST / Multipart Audio API
-┌──────────────────────────────▼──────────────────────────────┐
-│                  FASTAPI APPLICATION BACKEND                │
-│                                                             │
-│  [ LangGraph Agent Orchestrator ]                           │
-│  - Intent & Locale Detection   - Planning & Coordination    │
-│  - Response Localization       - Evidence Validation        │
-│                                                             │
-│  [ Deterministic Domain Engines ] (No LLM in Calculations!) │
-│  - Geodesic Distances          - Shapely Geofencing         │
-│  - Deterministic Risk Engine   - Route Exposure Scoring     │
-│                                                             │
-│  [ Voice Services (Sarvam AI) ]                             │
-│  - saaras:v4 (Vernacular STT)  - bulbul:v3 (Natural TTS)    │
-│                                                             │
-│  [ Hybrid Ingestion & Storage ]                             │
-│  - INCOIS (PFZ & OSF)          - IMD Weather Bulletins      │
-│  - Open-Meteo Marine (Live)    - Curated Maritime GeoJSON   │
-└─────────────────────────────────────────────────────────────┘
+```text
+                    ORCA CORE
+                       │
+          +------------+------------+
+          |                         │
+       MOBILE                      WEB
+   React Native + Expo            Next.js
+          │                         │
+          +------------+------------+
+                       │
+                    FastAPI
+                       │
+             Mission / Agent / Data
+                       │
+        Decision + Evidence + GIS
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Final Technology Stack
 
-| Domain | Technology |
-| :--- | :--- |
-| **Frontend** | React 18, Vite, TypeScript, MapLibre GL JS, Lucide Icons, Vanilla CSS |
-| **Backend API** | FastAPI, Pydantic v2, HTTPX, SQLAlchemy, Uvicorn |
-| **Agent Runtime** | LangGraph, Provider-Agnostic LLM Interface (OpenAI / Ollama / Fake) |
-| **Geospatial & Domain** | Shapely, GeoPandas, PyProj, GeoAlchemy2, PostGIS |
-| **Voice & Speech** | Sarvam AI SDK (`saaras:v4` STT, `bulbul:v3` TTS), Faster-Whisper |
-| **Testing** | Pytest (526 tests), Vitest (39 tests) |
+| Domain | Final Technology | Notes |
+| :--- | :--- | :--- |
+| **Mobile Field App** | **React Native + Expo + TypeScript** | Native field product, primarily Android; EAS build / install distribution; Expo Web is optional and not primary. |
+| **Web Platform** | **Next.js + React + TypeScript** | Primary frictionless demo and judging interface; role-oriented institutional experience. |
+| **Backend & Core API** | **FastAPI, Python, SQLAlchemy, Alembic** | Shared intelligence core powering both interfaces. |
+| **Database & GIS** | **PostgreSQL, PostGIS, Redis** | Spatial constraints, route logic, evidence and operational data. |
+| **Deterministic Engines** | **Shapely, GeoPandas, PyProj** | Safety, geofencing, route calculations, temporal validity, evidence validation. |
+| **Agent Orchestration** | **LangGraph** | Intent, planning, source selection, synthesis, explanation. |
+| **Scientific Storage** | **S3 / MinIO compatible object storage** | Large EO / scientific assets. |
+| **Observability** | **OpenTelemetry, Prometheus / Grafana** | Monitoring and traceability where already planned. |
+
+---
+
+## ⚖️ Mobile vs Web Responsibilities
+
+| Dimension | Mobile Field App (React Native + Expo) | Web Platform (Next.js) |
+| :--- | :--- | :--- |
+| **Primary Audience** | Fisherman, crew, field marine user | Demo users, institutional operators, researchers, emergency/SAR, administrators |
+| **Interaction Style** | Low-friction, voice-first, map-first, offline-friendly | Analytical, multi-role, operational and research-focused |
+| **Primary Scope** | Mission setup, Ask ORCA, decision, WHY, WHAT-IF, GPS, alerts, offline | Fleet, fisheries, research, analytics, evidence, historical and replay views |
+| **Delivery / Target** | EAS build → Android app / install link | Deployed web URL as the frictionless judge access point |
+
+The mobile app is not a reduced web experience and does not need feature parity with the institutional web application.
+
+---
+
+## 🏆 Final Demonstration & Judging Strategy
+
+1. **Primary demo surface**: Existing deployed **Next.js web URL**. This remains the zero-install, instant-access judge experience.
+2. **Mobile demonstration**: A focused native **React Native + Expo** fisherman MVP is shown in the demo video and can be distributed through an **EAS / Android install link**.
+3. **Web-first judgment**: Judges should not be expected to install the APK as the primary way to experience ORCA.
+4. **Data honesty**: Data modes are explicit (`LIVE`, `LIMITED`, `CACHED_REAL`, `HISTORICAL`, `MOCK`, `UNAVAILABLE`), and mock or cached data is never misrepresented as live.
 
 ---
 
@@ -164,8 +174,8 @@ cd frontend && npm run build
 Before modifying this repository:
 
 1. Read this `README.md`.
-2. Read [`docs/ORCA_MASTER_CONTEXT.md`](file:///d:/Projects/SAMUDRA/docs/ORCA_MASTER_CONTEXT.md) for canonical system behavior.
-3. Read [`docs/ORCA_IMPLEMENTATION_PLAN.md`](file:///d:/Projects/SAMUDRA/docs/ORCA_IMPLEMENTATION_PLAN.md) and identify your assigned workstream (A through F).
+2. Read [`docs/ORCA_AI_MASTER_CONTEXT.md`](docs/ORCA_AI_MASTER_CONTEXT.md) for canonical system behavior and final product direction.
+3. Read [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) and identify your assigned workstream.
 4. Inspect the relevant source code before making changes.
 5. **Verify implementation status** before assuming a feature exists.
 6. Follow the current implementation plan and maintain existing tests.

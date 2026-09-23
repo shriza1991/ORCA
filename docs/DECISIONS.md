@@ -399,6 +399,53 @@ Status: ACCEPTED
 - Affected areas: `backend/alembic/versions/`, `backend/app/connectors/sachet.py`, `backend/app/connectors/manager.py`, `backend/app/api/middleware.py`, `backend/app/main.py`.
 - Tests/verification: `tests/connectors/test_sachet_connector.py`, `tests/api/test_rate_limiting.py`, `tests/api/test_observability.py`, `tests/domain/test_spatial_db_repository.py`.
 
+## D031 — Final ORCA Product Definition and Interface Split
+Status: ACCEPTED
+
+Decision:
+1. ORCA is finalized as the Marine Mission Intelligence platform.
+2. ORCA is not another marine data dashboard; it is the intelligence and reasoning layer above existing marine information systems.
+3. ORCA has two interfaces sharing one intelligence core: a field-first mobile application and a web/institutional platform.
+4. Mobile is the fisherman / field experience, optimized for mission setup, voice, GPS, decision support, WHY / WHAT-IF, map, alerts, and offline operations.
+5. Web is the institutional / research / operations experience, optimized for broader analytics, role-specific views, evidence, replay, and operational complexity.
+6. Mobile and web must not have separate decision logic; both consume the same ORCA backend / intelligence layer.
+
+Reason:
+A single intelligence core with differently scoped interfaces preserves product clarity, avoids duplication, and aligns the system with the final product identity and mission-oriented workflow.
+
+Alternatives:
+- Build one interface that tries to do all work (rejected: too heavy, weak for field use, and not aligned with the intended product split)
+- Duplicate reasoning logic across mobile and web (rejected: creates drift and inconsistent decisions)
+
+Impact:
+The product architecture now clearly distinguishes field-first mobile UX from institution-first web UX while preserving a shared core.
+Owner: Product / Architecture
+Date: 2026-09-24
+
+## D032 — Final Technology Stack and Distribution Model
+Status: ACCEPTED
+
+Decision:
+1. Final mobile stack: React Native + Expo + TypeScript.
+2. Final web stack: Next.js + React + TypeScript.
+3. Web remains the primary frictionless demo and judging surface through the existing deployed web URL.
+4. Mobile is a native field product for Android-first deployment using Expo / EAS; iOS remains future-facing.
+5. Expo Web is optional and not the primary mobile strategy.
+6. The mobile app is distributed as an installable EAS / Android application, not as a Vercel / Render host.
+7. The web platform should not be replaced or redesigned in this task.
+
+Reason:
+This preserves the intended product flow: zero-install browser demo first, native mobile field experience second, one shared ORCA core behind both.
+
+Alternatives:
+- Treat Expo Web as the primary mobile strategy (rejected: it does not match the final native field-product goal)
+- Move all product interaction into a second web application (rejected: adds friction for judges and weakens mobile-native field positioning)
+
+Impact:
+The documentation and product narrative now distinguish web demo access from native mobile distribution and align both with the shared intelligence layer.
+Owner: Product / Architecture
+Date: 2026-09-24
+
 ## Decision template
 
 ### D0XX — <title>
