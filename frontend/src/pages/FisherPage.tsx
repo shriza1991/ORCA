@@ -42,7 +42,7 @@ export default function FisherPage({
   const [baseLayers, setBaseLayers] = useState<MapLayer[]>([]);
   const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage'>('decision');
 
-  const { data: assessment, isLoading, error, assessTrip } = useTripAssessment();
+  const { data: assessment, isLoading, error, isOffline, isExpired, assessTrip } = useTripAssessment();
   const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
   const { speak } = useSpokenGuidance({ language: chat.language });
 
@@ -135,6 +135,10 @@ export default function FisherPage({
               assessment={assessment}
               isLoading={isLoading}
               error={error}
+              isOffline={isOffline}
+              isExpired={isExpired}
+              activeDiff={chat.activeDiff}
+              missionContext={chat.missionContext}
               language={chat.language}
               onOpenVoyageSettings={() => setSidebarTab('voyage')}
               onViewMap={onViewMap}

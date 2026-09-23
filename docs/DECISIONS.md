@@ -346,6 +346,23 @@ Status: ACCEPTED
 - Affected areas: `AGENTS.md`, `docs/ORCA_AI_MASTER_CONTEXT.md`, `docs/PROGRESS.md`, `docs/DECISIONS.md`.
 - Tests/verification: Full suite verification.
 
+## D028 — India MarineWatch Multi-Hub Platform Architecture & Real Data Foundation
+Status: ACCEPTED
+
+- Date: 2026-09-23
+- Agent/person: Backend Platform & Geospatial UX Leads
+- Task/context: Establishing real institutional feeds and nationwide GIS infrastructure adapted from Norwegian BarentsWatch multi-service platform.
+- Decision:
+  1. Ingest real coastal reference data: CMFRI Census landing centres, CAA registered coastal aquaculture farms, Indian maritime boundaries (12nm territorial waters, 24nm contiguous zone, 200nm EEZ, GEBCO depth contours, Angria Bank submerged coral atoll, and Malvan Marine Sanctuary).
+  2. Implement the INCOIS Predicted Astronomical Tide (PAT) harmonic engine calibrated with M2, S2, K1, O1 tidal constituents for West Coast ports.
+  3. Expose the 10 foundation API contracts: `/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`.
+  4. Surface BarentsWatch UX patterns: interactive time scrubber (Now to +48h), layer registry toggles, dual Map/List views, click-to-inspect point panel ("What is here?"), and Open Data Catalogue.
+- Why: Transitioning from synthetic fixtures to real data models delivers an authentic national marine intelligence system for India, providing verifiable provenance while strictly prohibiting generative AI hallucinations on critical maritime safety conditions.
+- Alternatives considered: Continue exclusively with synthetic fixtures (rejected: does not meet the user's objective to make an authentic real-data system for India).
+- Affected areas: `backend/app/api/v1/marinewatch.py`, `backend/app/services/marinewatch_service.py`, `backend/app/domain/tides.py`, `frontend/src/pages/MarineWatchPage.tsx`, `frontend/src/components/marinewatch/*`.
+- Tests/verification: `tests/api/test_marinewatch_endpoints.py`, `frontend/src/components/marinewatch/marinewatch.test.ts`.
+
+
 ## Decision template
 
 ### D0XX — <title>

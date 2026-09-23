@@ -7,15 +7,28 @@ export interface SpokenGuidanceOptions {
 
 export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const synth = window.speechSynthesis;
   
   // Keep track of the currently speaking utterance so we can cancel it
   const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
 
+  // Load voices on mount
+  useEffect(() => {
+    if (!synth) return;
+    const updateVoices = () => {
+      setVoices(synth.getVoices());
+    };
+    updateVoices();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = updateVoices;
+    }
+  }, [synth]);
+
   // Stop speaking when component unmounts
   useEffect(() => {
     return () => {
-      synth.cancel();
+      if (synth) synth.cancel();
     };
   }, [synth]);
 
@@ -36,15 +49,44 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
         mr: 'mr-IN',
       };
       
-      utterance.lang = langMap[language] || 'en-IN';
+      const targetLang = langMap[language] || 'en-IN';
+      utterance.lang = targetLang;
+      
+      // Explicitly try to select a matching voice if available, especially on Windows
+      const availableVoices = voices.length > 0 ? voices : synth.getVoices();
+      if (availableVoices.length > 0) {
+        // Try exact locale match first (e.g. hi-IN)
+        let bestVoice = availableVoices.find(v => v.lang.replace('_', '-') === targetLang);
+        
+        // Fallback to language prefix match (e.g. hi)
+        if (!bestVoice) {
+           const prefix = targetLang.split('-')[0];
+           bestVoice = availableVoices.find(v => v.lang.replace('_', '-').startsWith(prefix));
+        }
+        
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+        } else {
+          console.warn(`No TTS voice found for language: ${targetLang}`);
+        }
+      } else {
+         console.warn('No TTS voices available in the browser.');
+      }
       
       utterance.onstart = () => setIsPlaying(true);
       utterance.onend = () => setIsPlaying(false);
-      utterance.onerror = () => setIsPlaying(false);
+      utterance.onerror = (e) => {
+        console.warn('Speech synthesis error:', e);
+        setIsPlaying(false);
+      };
 
-      synth.speak(utterance);
+      // Sometimes calling speak too quickly after initialization fails on some browsers.
+      // Small timeout helps ensure the voice engine is ready.
+      setTimeout(() => {
+        synth.speak(utterance);
+      }, 50);
     },
-    [language, synth]
+    [language, synth, voices]
   );
 
   const stop = useCallback(() => {

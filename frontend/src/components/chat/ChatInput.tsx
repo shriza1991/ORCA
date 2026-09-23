@@ -29,7 +29,7 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
     onTranscription: result => {
       if (result && result.transcript) {
         setDetectedLanguage(result.normalized_language);
-        onSend(result.transcript, result.normalized_language as 'en' | 'hi' | 'mr');
+        setText((prev) => prev ? `${prev} ${result.transcript}` : result.transcript);
       }
     },
   });
@@ -54,12 +54,21 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
     }
   };
 
-  const handleMicClick = async () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      await startRecording();
-    }
+  const handlePointerDown = async (e: React.PointerEvent) => {
+    // Only primary button or touch
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (isRecording) return;
+    
+    // Attempt to request pointer capture so we don't lose the up event if dragged outside
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    
+    await startRecording();
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isRecording) return;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    stopRecording();
   };
 
   return (
@@ -141,8 +150,11 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
           <div className="chat-input-actions-right">
             <button
               type="button"
-              className={`chat-mic-btn ${isRecording ? 'is-recording' : ''} ${isTranscribing ? 'is-transcribing' : ''}`}
-              onClick={handleMicClick}
+              className={`chat-mic-btn ptt-btn ${isRecording ? 'is-recording' : ''} ${isTranscribing ? 'is-transcribing' : ''}`}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              onContextMenu={e => e.preventDefault()} // Prevent context menu on long press
               disabled={disabled || isTranscribing || !isSupported}
               title={
                 !isSupported
@@ -151,7 +163,7 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
                   ? t.micRecordingAria
                   : isTranscribing
                   ? t.micTranscribingAria
-                  : t.micBtnAria
+                  : "Hold to Talk"
               }
               aria-label={
                 !isSupported
@@ -160,7 +172,7 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
                   ? t.micRecordingAria
                   : isTranscribing
                   ? t.micTranscribingAria
-                  : t.micBtnAria
+                  : "Hold to Talk"
               }
             >
               {isTranscribing ? (

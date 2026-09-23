@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ActionableAlertDto, SavedTripRequest, SavedTripResponse } from '../types/alerts';
 import { useSpokenGuidance } from './useSpokenGuidance';
-import { type SupportedLanguage } from '../i18n/translations';
+import { translateText, type SupportedLanguage } from '../i18n/translations';
 
 export function useAlerts(language: SupportedLanguage) {
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
@@ -53,7 +53,8 @@ export function useAlerts(language: SupportedLanguage) {
         data.alerts.forEach((alert: ActionableAlertDto) => {
           if (!alert.is_acknowledged && !announcedAlertsRef.current.has(alert.id)) {
             // New alert! 
-            speak(`Alert: ${alert.title}. ${alert.recommended_action}`);
+            const alertPrefix = translateText('Alert', language);
+            speak(`${alertPrefix}: ${alert.title}. ${alert.recommended_action}`);
             announcedAlertsRef.current.add(alert.id);
           }
         });

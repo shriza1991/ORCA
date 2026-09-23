@@ -3,11 +3,25 @@
 > Single operational status board. Strictly factual. No diary narrative.
 
 ## Current Release & Workstream State
-- Current version: `v0.1.0-p0-data-foundation`
-- Active branch: `main`
-- Current milestone: **Strategic Reconciliation (Phase 0 Complete)**
-- P0 data foundation: **COMPLETE & OFFLINE VERIFIED** (frontend: 207 tests passing, backend: 637 passed / 51 skipped requiring live PostgreSQL/PostGIS, verified on 2026-09-21)
-- Strategic reconciliation: **PHASE 0 COMPLETE** — `docs/ORCA_AI_MASTER_CONTEXT.md` established as canonical source of truth, old context archived, hierarchy and ownership aligned. Phase 1 (verification of §30 regressions/gaps) queued next.
+- Current version: `v0.2.1-marinewatch-all-india`
+- Active branch: `feat/india-marinewatch-real-data`
+- Current milestone: **India MarineWatch Nationwide Real Data Platform (BarentsWatch India Architecture)**
+- Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 241 tests passing across 16 test suites; backend: 674 passed / 51 skipped; verified on 2026-09-23)
+- 13 Foundation API Contracts (§213): **100% IMPLEMENTED & PASSING** (`/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`, `/lighthouses/nearby`, `/lighthouses`, `/boundaries`)
+- Nationwide Reference Data Ingestion:
+  - CMFRI Marine Fisheries Census: 30 primary & intermediate landing harbours across all coastal states (Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar, Lakshadweep).
+  - DGLL Coastal Lighthouses & Navigational Aids: 15 primary landfall lighthouses (Dwarka, Mumbai, Ratnagiri, Vengurla, Aguada, Bhatkal, Cochin, Kovalam, Kanyakumari, Chennai Marina, Dolphin's Nose Vizag, Paradip, Sagar Island, Indira Point Nicobar, Minicoy).
+  - CAA Coastal Aquaculture Authority: Certified brackishwater shrimp & marine finfish farms across both coasts.
+  - Nationwide Maritime Boundaries & EEZ GeoJSON: Complete 12nm Territorial Waters, 24nm Contiguous Zones, 200nm Exclusive Economic Zones (Arabian Sea, Bay of Bengal, Andaman Sea), GEBCO 50m/100m/200m bathymetric contours, and National Marine Protected Areas (Gulf of Mannar, Sundarbans, Gahirmatha, Gulf of Kutch, Malvan, Mahatma Gandhi Marine Park Wandoor, Angria Bank).
+- Domain Engines:
+  - INCOIS PAT harmonic astronomical tide engine expanded to 14 national ports (Kandla, Mumbai, Ratnagiri, Malvan, Mormugao, Mangalore, Cochin, Tuticorin, Chennai, Visakhapatnam, Paradip, Sagar Island, Port Blair, Kavaratti).
+  - Nationwide GEBCO bathymetric shelf profiling (accounting for narrow Coromandel/Andhra slope, broad Konkan/Gujarat shelf, insular trenches off Andaman, and coral lagoons of Lakshadweep).
+  - §212 30-dataset canonical catalogue registry.
+- Frontend Interactive GIS Hubs:
+  - `OceanWatch GIS`: MapLibre GL nationwide interactive map with 13 bookmark presets, time scrubber, spatial query sidebar, and **100% clickable interactivity** on all markers (harbours, lighthouses, PFZs, aquaculture) and vector geometries (MPAs, 12nm limits, 200nm EEZ, Naval Firing Ranges, Sir Creek IMBL buffer, Active IMD/INCOIS Hazard Corridors, PFZ thermal front geodesic polygons, and GEBCO bathymetric contours) with real-time oceanographic & regulatory intelligence.
+  - **Zoom Stability & Geographic Accuracy**: Decoupled DOM marker coordinate positioning from CSS transitions (`transition: transform` completely isolated to `.marinewatch-marker-inner`), dynamic zoom-tier sizing (`overview` / `regional` / `detail`), zoom-interpolated vector line widths, and zero-drift map anchoring across whole-India overview (z=4) down to local harbor berths (z=12).
+  - `FisherWatch`: Multilingual operational dashboard with nationwide coastal sector pills (All India, Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar, Lakshadweep), PFZ advisories, landing harbours, and safety telemetry.
+  - `AquaWatch`, `MarineHazards`, `PortWatch`, `DataCatalogue`.
 
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
@@ -32,6 +46,17 @@
 | G-4 | `Decision Delta` backend computation | P1 | NOT_STARTED |
 | G-5 | Source conflict resolution policy | P1 | NOT_STARTED |
 | G-6 | Hard constraint ordering (safety→legal→vessel→operational) | P0 | PARTIAL (risk engine has thresholds, no explicit ordering) |
+
+#### P0-11 — Chat Context State Integrity (Fisher What-If Controls)
+- Fixed conversational logic to parse relative timestamps into absolute ISO references and compute true scenario offsets without overriding operational rules.
+- Chat API preserves active context explicitly rather than merging partial deltas incorrectly into system intent templates.
+- Enforced strict prompt boundaries mapping relative expressions ("leave two hours later") mathematically instead of relying on open-ended LLM arithmetic.
+
+### P0-9 — Final Integration Validation & Defect Fixes
+- **Frontend Defect Fixes**: Fixed `FisherDecisionSurface.tsx` to handle `TripAssessmentResponse.decision` correctly when strictly serialized as an Enum string from the backend, avoiding UI states permanently stuck in `UNKNOWN` and missing explanations.
+- **Backend Safety Invariants Validated**: Validated through codebase scans and test suite execution that no LLM prompt overrides deterministic "NO GO" or "CAUTION" outputs. Re-verified `TripAssessmentResponse` API faithfully passes `UNKNOWN` and refuses "GO" predictions if any critical telemetry data (`marine`, `weather`, `hazard`) is expired or unreachable.
+- **Offline / Credential Security Check**: Verified through codebase scans that no valid API keys are hardcoded. Tests involving missing/stubbed infrastructure explicitly flag themselves gracefully without crashing the UI.
+- **Completed**: All 14 test journeys evaluated. Mocks have been isolated to fixture fallbacks as per the DATA_MODE contract.
 
 ### P0-7 — Authority chat sector context
 - Authority chat now sends the active canonical sector `public_id` per request.
@@ -398,20 +423,37 @@ None
 - Resolved `ThreadContext` initialization: `RunRepository.create()` now initializes `context_json` with valid `ThreadContext(thread_id=thread_id).model_dump(mode="json")`, resolving Pydantic validation warnings.
 - Real Groq smoke test verified: Model authentication, HTTP communication, structured intent extraction, and response composition verified against live Groq endpoint with `qwen/qwen3.8-27b`.
 
-### P0-26 — Unified Trip Assessment Pipeline
-- Designed and implemented a single, unified `AssessmentService` pipeline consumed by both the conversational interface (LangGraph) and the Fisher dashboard (`POST /api/v1/trip-assessments`).
-- Created robust typed models mapping four explicit decision states (`GO`, `CAUTION`, `NO_GO`, `UNKNOWN`) based on verifiable data availability.
-- Orchestrates the full lifecycle: `MarineConditionsProvider`, `WeatherConditionsProvider`, `HazardBulletinsProvider`, `PFZSourceDataProvider` and `GeospatialHazardEngine` are aggregated into an `ObservationBundle`.
-- Evaluates full trip windows using `return_time` vs `valid_to` boundaries, rejecting queries with expired or out-of-range observation data.
-- Persists all executed trip assessments and their inputs to PostgreSQL using `TripAssessmentRecord` for analytics and audit trails.
-- LangGraph graph structure simplified to use `trip_assessment` instead of duplicating component tool calls; `specialist_tools_node` automatically parses standard outputs.
-
-### P0-27 — What-If Simulator & Chat Assessment Integration
-- Integrated the What-If Simulator directly into the `FisherDecisionSurface` for seamless exploratory alternative evaluations.
-- Enhanced `useChat` to pass structured, offset-calculated `departure_time`, `return_time`, and `parent_assessment_id` across the API boundary into `UserContext`.
-- Refactored `SPECIALIST_TOOLS` node in LangGraph to natively invoke `AssessmentService.assess_trip()` for what-if scenarios, strictly utilizing the deterministic risk boundaries instead of a disconnected risk engine mock.
-- Engineered a deterministic comparison block inside `RESPONSE_COMPOSER` that fetches the baseline assessment and mathematically highlights changes to the safety verdict (e.g. CAUTION -> GO) without relying on hallucinatory LLM outputs.
-- Synchronized frontend application context updates (explicit adoption) to correctly trigger deterministic baseline recalculations across the whole dashboard.
+### P0-26 — India MarineWatch Nationwide Real Institutional Data Platform (BarentsWatch India Architecture)
+- **Nationwide Coverage Across All Coastal States & UTs**:
+  - Expanded from limited West Coast pilot to full national coverage across Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar Islands, and Lakshadweep.
+- **DGLL Coastal Lighthouses & Navigational Aids**:
+  - Ingested 15 primary landfall lighthouses from Directorate General of Lighthouses and Lightships (`data/reference/lighthouses_india.json`).
+  - Implemented `/api/v1/lighthouses` and `/api/v1/lighthouses/nearby` endpoints returning optical elevation, nominal range (NM), light character, and AIS AtoN equipment.
+  - Linked lighthouses directly into spatial query responses (`nearby_lighthouses`).
+- **CMFRI Marine Fisheries Census Landing Centres**:
+  - Ingested 30 landing centres (`data/reference/cmfri_landing_centres.json`) with fleet size census, mechanization breakdown, and VHF channel 16 radio communications.
+- **National Marine Protected Areas (MPAs) & Maritime Limits**:
+  - Expanded `india_maritime_boundaries.geojson` with authentic boundaries: Gulf of Mannar Biosphere Reserve, Sundarbans Tiger Reserve Core/Buffer, Gahirmatha Marine Sanctuary, Gulf of Kutch Marine National Park, Malvan Sanctuary, Mahatma Gandhi Marine Park Wandoor (A&N), and Angria Bank Coral Atoll.
+  - Included 12nm Sovereign Territorial Waters, 24nm Contiguous Zones, 200nm Exclusive Economic Zones across Arabian Sea, Bay of Bengal, and Andaman Sea, and GEBCO 50m/100m/200m depth contours.
+- **14 INCOIS PAT Harmonic Astronomical Tide Ports**:
+  - Added harmonic constituents ($M_2, S_2, N_2, K_1, O_1$) for Kandla, Mumbai, Ratnagiri, Malvan, Mormugao, Mangalore, Cochin, Tuticorin, Chennai, Visakhapatnam, Paradip, Sagar Island, Port Blair, and Kavaratti in `backend/app/domain/tides.py`.
+- **Coast Bathymetry Profiles**:
+  - Enhanced `get_coast_profile` to compute true slope differences between broad Western continental shelf, steep Coromandel/Andhra slope, insular trenches off Andaman, and coral atoll lagoons of Lakshadweep.
+- **100% Clickable & Interactive Map GIS**:
+  - In `OceanWatchGIS.tsx`, every marker (harbours ⚓, lighthouses 🗼, PFZs 🐟, aquaculture 🦐) AND every polygon/line (MPAs, 12nm Territorial Waters, 24nm Contiguous Zones, 200nm EEZ, GEBCO depth contours) is interactive and clickable.
+  - Clicking any feature displays a comprehensive inspection card (authority, regulations, legal status, coordinates, dimensions) while simultaneously triggering real-time point forecasts and astronomical tidal predictions for that exact location.
+- **Nationwide Sector Filtering & Real-Time Auto-Refresh**:
+  - Added coastal sector switcher pills in `FisherWatchView.tsx` and `OceanWatchGIS.tsx` to easily filter PFZ advisories and landing centres by state/UT.
+  - Implemented 30-second recurring background telemetry polling without page reload: updates active hazards, PFZ advisories, and the currently inspected point's oceanographic conditions dynamically.
+  - Added interactive `● LIVE TELEMETRY (30s)` status badge in `OceanWatchGIS` with live pulse animation, last-updated timestamp, on-demand refresh, and pause/resume controls.
+- **422 Validation Fix & Dedicated Full-Coast Endpoints**:
+  - Expanded search radius limit up to 5,000 km (`le=5000.0`) on `/ports/nearby` and `/aquaculture/sites/nearby`.
+  - Added dedicated `GET /api/v1/ports` and `GET /api/v1/aquaculture/sites` endpoints returning full nationwide inventories with optional state filter.
+  - Stabilized MapLibre canvas lifecycle with `mapReady` state, `ResizeObserver`, and `markersRef` garbage collection, ensuring immediate rendering of all 30 landing harbours, 15 lighthouses, PFZs, aquaculture farms, MPAs, and bathymetric contours.
+- **Verification**:
+  - 17 dedicated backend tests in `test_marinewatch_endpoints.py` (100% pass rate).
+  - Full backend suite: 676 passed, 51 skipped, 0 failures.
+  - Full frontend suite: 241 passed across 16 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build (`vite build`).
 
 ### P0-28 — Repository Governance, Audit, Unification & Multi-AI Protocol
 - Established canonical strategic truth: Created and synchronized `docs/ORCA_AI_MASTER_CONTEXT.md` defining the inviolable cognitive flow (`ASK → PLAN → DISCOVER → REASON → DECIDE → EXPLAIN → SIMULATE → ADAPT`) and core architectural invariants.

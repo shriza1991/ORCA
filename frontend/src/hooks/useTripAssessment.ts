@@ -1,10 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { TripAssessmentRequest, TripAssessmentResponse } from '../types/assessment';
+import { saveOfflineAssessment, loadOfflineAssessment } from '../utils/offline-cache';
 
-const API_BASE_URL = 'http://127.0.0.1:8000'; // Assuming standard local dev server
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
+const CACHE_EXPIRY_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 export function useTripAssessment() {
   const [data, setData] = useState<TripAssessmentResponse | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -22,11 +26,13 @@ export function useTripAssessment() {
 
     setIsLoading(true);
     setError(null);
+    setIsOffline(false);
+    setIsExpired(false);
     // Note: Do not clear previous data immediately to prevent flashing empty state,
     // but the UI must ensure "Initial/loading/error states must not appear favourable" (Req 3).
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trip-assessments`, {
+      const res = await fetch(`${API_BASE_URL}/trip-assessments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,13 +51,39 @@ export function useTripAssessment() {
       if (!controller.signal.aborted) {
         setData(result);
         setIsLoading(false);
+        // Save to offline cache
+        await saveOfflineAssessment(request.origin_harbor || 'Ratnagiri', result);
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        setError(err.message || 'An error occurred during assessment.');
+        setIsOffline(true);
+        // Try to load from offline cache
+        const cached = await loadOfflineAssessment(request.origin_harbor || 'Ratnagiri');
+        
+        if (cached) {
+          const ageMs = Date.now() - cached.timestamp;
+          if (ageMs > CACHE_EXPIRY_MS) {
+            setIsExpired(true);
+            // Requirement: Do not issue a new favourable decision from expired evidence
+            const expiredData: TripAssessmentResponse = {
+              ...cached.data,
+              decision: {
+                ...cached.data.decision,
+                status: 'UNKNOWN',
+                summary: 'Offline mode: Cached assessment has expired. Safety status is unknown.',
+                next_action: 'Please reconnect to the internet to fetch fresh assessments.',
+              }
+            };
+            setData(expiredData);
+          } else {
+            setData(cached.data);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        setError(err.message || 'An error occurred during assessment and no offline cache was found.');
         setIsLoading(false);
-        // Requirement 12: Never display previous location's assessment as current.
-        // If an error happens, we should clear the data to prevent showing stale/unsafe data.
         setData(null);
       }
     }
@@ -70,6 +102,8 @@ export function useTripAssessment() {
     data,
     isLoading,
     error,
+    isOffline,
+    isExpired,
     assessTrip,
   };
 }

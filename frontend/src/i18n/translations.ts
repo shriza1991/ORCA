@@ -78,6 +78,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
       NO_GO: 'Do not depart',
       UNKNOWN: 'Information unavailable',
       INFORMATIONAL: 'Advisory Only',
+      LIVE: 'Live Data',
+      CACHED: 'Offline Cached',
+      EXPIRED: 'Expired Cache',
     },
     confidenceLabels: {
       HIGH: 'High Confidence',
@@ -162,6 +165,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
       NO_GO: 'प्रस्थान न करें',
       UNKNOWN: 'जानकारी अनुपलब्ध है',
       INFORMATIONAL: 'सूचनात्मक — केवल परामर्श',
+      LIVE: 'लाइव डेटा',
+      CACHED: 'ऑफ़लाइन सहेजा गया',
+      EXPIRED: 'समय सीमा समाप्त',
     },
     confidenceLabels: {
       HIGH: 'उच्च आत्मविश्वास',
@@ -246,6 +252,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
       NO_GO: 'प्रस्थान करू नका',
       UNKNOWN: 'माहिती उपलब्ध नाही',
       INFORMATIONAL: 'माहितीपूर्ण — केवळ मार्गदर्शन',
+      LIVE: 'थेट डेटा',
+      CACHED: 'ऑफलाइन जतन केले',
+      EXPIRED: 'कालबाह्य',
     },
     confidenceLabels: {
       HIGH: 'उच्च विश्वासार्हता',
@@ -327,6 +336,156 @@ interface TranslationEntry {
 }
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
+  {
+    en: 'Cannot assess due to missing data. Check source status.',
+    hi: 'डेटा गायब होने के कारण मूल्यांकन नहीं किया जा सकता। स्रोत की स्थिति जांचें।',
+    mr: 'डेटा नसल्यामुळे मूल्यमापन करता येत नाही. स्रोताची स्थिती तपासा.',
+  },
+  {
+    en: 'Internal evaluation error occurred.',
+    hi: 'आंतरिक मूल्यांकन त्रुटि हुई।',
+    mr: 'अंतर्गत मूल्यमापन त्रुटी आली.',
+  },
+  {
+    en: 'Missing critical inputs: Must provide either harbor or explicit starting coordinates.',
+    hi: 'महत्वपूर्ण इनपुट गायब: बंदरगाह या स्पष्ट प्रारंभिक निर्देशांक प्रदान करना चाहिए।',
+    mr: 'महत्त्वाचे इनपुट गहाळ: बंदर किंवा स्पष्ट प्रारंभिक निर्देशांक देणे आवश्यक आहे.',
+  },
+  {
+    en: 'Checking current marine conditions…',
+    hi: 'वर्तमान समुद्री स्थितियों की जाँच की जा रही है…',
+    mr: 'सध्याची सागरी परिस्थिती तपासत आहे…',
+  },
+  {
+    en: 'Unable to obtain a current safety assessment.',
+    hi: 'वर्तमान सुरक्षा मूल्यांकन प्राप्त करने में असमर्थ।',
+    mr: 'सध्याचे सुरक्षिततेचे मूल्यमापन प्राप्त करण्यात अक्षम.',
+  },
+  {
+    en: 'No current safety assessment available.',
+    hi: 'कोई वर्तमान सुरक्षा मूल्यांकन उपलब्ध नहीं है।',
+    mr: 'सध्याचे कोणतेही सुरक्षिततेचे मूल्यमापन उपलब्ध नाही.',
+  },
+  {
+    en: 'No operational summary available.',
+    hi: 'कोई परिचालन सारांश उपलब्ध नहीं है।',
+    mr: 'कोणताही परिचलनात्मक सारांश उपलब्ध नाही.',
+  },
+  {
+    en: 'Evaluated Window:',
+    hi: 'मूल्यांकन अवधि:',
+    mr: 'मूल्यमापन कालावधी:',
+  },
+  {
+    en: 'Assessment Time:',
+    hi: 'मूल्यांकन का समय:',
+    mr: 'मूल्यमापनाची वेळ:',
+  },
+  {
+    en: 'Waves',
+    hi: 'लहरें',
+    mr: 'लाटा',
+  },
+  {
+    en: 'Wind',
+    hi: 'हवा',
+    mr: 'वारा',
+  },
+  {
+    en: 'Visibility',
+    hi: 'दृश्यता',
+    mr: 'दृश्यमानता',
+  },
+  {
+    en: 'Tide',
+    hi: 'ज्वार',
+    mr: 'भरती-ओहोटी',
+  },
+  {
+    en: 'Based on forecast',
+    hi: 'पूर्वानुमान पर आधारित',
+    mr: 'हवामानाच्या अंदाजावर आधारित',
+  },
+  {
+    en: 'Based on current observation',
+    hi: 'वर्तमान अवलोकन पर आधारित',
+    mr: 'सध्याच्या निरीक्षणावर आधारित',
+  },
+  {
+    en: 'No Active Hazards',
+    hi: 'कोई सक्रिय खतरा नहीं',
+    mr: 'कोणतेही सक्रिय धोके नाहीत',
+  },
+  {
+    en: 'Status Unknown',
+    hi: 'स्थिति अज्ञात',
+    mr: 'स्थिती अज्ञात',
+  },
+  {
+    en: 'Elevated Hazard',
+    hi: 'बढ़ा हुआ खतरा',
+    mr: 'वाढलेला धोका',
+  },
+  {
+    en: 'Hazard Alert',
+    hi: 'खतरे का अलर्ट',
+    mr: 'धोक्याचा इशारा',
+  },
+  {
+    en: 'What is happening:',
+    hi: 'क्या हो रहा है:',
+    mr: 'काय घडत आहे:',
+  },
+  {
+    en: 'Does it affect this trip?',
+    hi: 'क्या यह इस यात्रा को प्रभावित करता है?',
+    mr: 'याचा या प्रवासावर परिणाम होतो का?',
+  },
+  {
+    en: 'Yes, it directly affects your planned route.',
+    hi: 'हां, यह आपके नियोजित मार्ग को सीधे प्रभावित करता है।',
+    mr: 'होय, याचा तुमच्या नियोजित मार्गावर थेट परिणाम होतो.',
+  },
+  {
+    en: 'What to do next:',
+    hi: 'आगे क्या करना है:',
+    mr: 'पुढे काय करावे:',
+  },
+  {
+    en: 'Do not depart. Await further clearance.',
+    hi: 'प्रस्थान न करें। आगे की मंजूरी की प्रतीक्षा करें।',
+    mr: 'निघू नका. पुढील मंजुरीची प्रतीक्षा करा.',
+  },
+  {
+    en: 'Hear the official advisory',
+    hi: 'आधिकारिक सलाह सुनें',
+    mr: 'अधिकृत सल्ला ऐका',
+  },
+  {
+    en: 'Alert',
+    hi: 'अलर्ट',
+    mr: 'इशारा',
+  },
+  {
+    en: 'affects your planned trip. Do not depart.',
+    hi: 'आपकी यात्रा को प्रभावित करता है। प्रस्थान न करें।',
+    mr: 'तुमच्या नियोजित प्रवासावर परिणाम करतो. निघू नका.',
+  },
+  {
+    en: 'Conditions are within safe operating limits.',
+    hi: 'स्थितियां सुरक्षित परिचालन सीमा के भीतर हैं।',
+    mr: 'स्थिती सुरक्षित ऑपरेटिंग मर्यादेत आहे.',
+  },
+  {
+    en: 'Conditions exceed safety limits.',
+    hi: 'स्थितियां सुरक्षा सीमा से अधिक हैं।',
+    mr: 'स्थिती सुरक्षिततेच्या मर्यादेपेक्षा जास्त आहे.',
+  },
+  {
+    en: 'A safety recommendation is not available from the current evidence.',
+    hi: 'वर्तमान साक्ष्य से सुरक्षा अनुशंसा उपलब्ध नहीं है।',
+    mr: 'सध्याच्या पुराव्यावरून सुरक्षिततेची शिफारस उपलब्ध नाही.',
+  },
   // Sample Prompts
   {
     en: 'Where is the nearest Potential Fishing Zone today from Ratnagiri?',

@@ -40,6 +40,8 @@ export interface FisherDecisionSurfaceProps {
   language?: SupportedLanguage;
   onOpenVoyageSettings?: () => void;
   onViewMap?: () => void;
+  isOffline?: boolean;
+  isExpired?: boolean;
 }
 
 export function getFisherDecisionStatus(
@@ -49,7 +51,9 @@ export function getFisherDecisionStatus(
   if (error || !assessment || !assessment.decision) {
     return 'UNKNOWN';
   }
-  const rawStatus = (assessment.decision.status || '').toUpperCase();
+  const rawStatus = typeof assessment.decision === 'string' 
+    ? (assessment.decision as string).toUpperCase() 
+    : (assessment.decision as any)?.status?.toUpperCase() || '';
   switch (rawStatus) {
     case 'GO':
       return 'SAFE_TO_GO';
@@ -81,7 +85,21 @@ export function getFisherExplanation(
     return translateText('No current safety assessment available.', language);
   }
 
-  const rec = response.decision;
+  const rec = response.decision as any;
+  if (typeof rec === 'string') {
+    // If it's a string, we might only have alerts for the explanation
+    if (status === 'UNKNOWN' && response.alerts?.length > 0) {
+      return translateText((response.alerts[0] as any).message || response.alerts[0].title || 'A safety recommendation is not available from the current evidence.', language);
+    }
+    if (status === 'SAFE_TO_GO') {
+      return translateText('Conditions are within safe operating limits.', language);
+    }
+    if (status === 'CAUTION' || status === 'DO_NOT_GO') {
+      return translateText((response.alerts?.[0] as any)?.message || response.alerts?.[0]?.title || 'Conditions exceed safety limits.', language);
+    }
+    return translateText('A safety recommendation is not available from the current evidence.', language);
+  }
+
   if (status === 'UNKNOWN') {
     if (rec.summary && rec.summary.trim().length > 0) {
       return translateText(rec.summary, language);
@@ -136,7 +154,7 @@ export function extractFisherConditions(response: TripAssessmentResponse | null)
   if (response.alerts && response.alerts.length > 0) {
     // Pick highest severity alert that affects trip
     const highestAlert = response.alerts.find(a => a.affects_trip) || response.alerts[0];
-    hazardVal = highestAlert.title;
+    hazardVal = highestAlert.title || (highestAlert as any).message || '—';
   } else {
     const status = response.decision?.status;
     if (status === 'GO') {
@@ -167,7 +185,10 @@ export default function FisherDecisionSurface({
   language = 'en',
   onOpenVoyageSettings,
   onViewMap,
+  isOffline = false,
+  isExpired = false,
 }: FisherDecisionSurfaceProps) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const status = getFisherDecisionStatus(assessment, error);
   const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
   const conditions = extractFisherConditions(isLoading || error ? null : assessment);
@@ -178,25 +199,25 @@ export default function FisherDecisionSurface({
     { label: string; bgClass: string; icon: React.ReactNode; testId: string }
   > = {
     SAFE_TO_GO: {
-      label: translateText('Within assessed limits', language),
+      label: t.statusLabels['GO'] || 'Within assessed limits',
       bgClass: 'decision-safe',
       icon: <ShieldCheck size={32} className="decision-icon" />,
       testId: 'status-safe-to-go',
     },
     CAUTION: {
-      label: translateText('Be careful', language),
+      label: t.statusLabels['CAUTION'] || 'Be careful',
       bgClass: 'decision-caution',
       icon: <ShieldAlert size={32} className="decision-icon" />,
       testId: 'status-caution',
     },
     DO_NOT_GO: {
-      label: translateText('Do not depart', language),
+      label: t.statusLabels['NO_GO'] || 'Do not depart',
       bgClass: 'decision-nogo',
       icon: <ShieldX size={32} className="decision-icon" />,
       testId: 'status-do-not-go',
     },
     UNKNOWN: {
-      label: translateText('Information unavailable', language),
+      label: t.statusLabels['UNKNOWN'] || 'Information unavailable',
       bgClass: 'decision-unknown',
       icon: <HelpCircle size={32} className="decision-icon" />,
       testId: 'status-unknown',
@@ -221,7 +242,10 @@ export default function FisherDecisionSurface({
     } else {
       let textToSpeak = `${currentCfg.label}. ${explanation}.`;
       if (hasActiveHazard) {
-        textToSpeak += ` Alert: ${hazardVal} affects your planned trip. Do not depart.`;
+        const alertPrefix = translateText('Alert', language);
+        const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
+        const hazardText = hazardVal ? translateText(hazardVal, language) : '';
+        textToSpeak += ` ${alertPrefix}: ${hazardText} ${affectsSuffix}`;
       }
       speak(textToSpeak);
     }
@@ -234,6 +258,21 @@ export default function FisherDecisionSurface({
       data-testid="fisher-decision-surface"
     >
       <div className={`fisher-decision-card ${currentCfg.bgClass}`} data-testid={currentCfg.testId}>
+        {/* Connectivity / Data Status Indicator */}
+        <div className="connectivity-strip" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          {isOffline ? (
+            <span className="badge badge-error" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <AlertTriangle size={12} />
+              {isExpired ? (t.statusLabels?.['EXPIRED'] || 'Expired Cache') : (t.statusLabels?.['CACHED'] || 'Offline Cached')}
+            </span>
+          ) : (
+            <span className="badge badge-success" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="pulse-dot" style={{ width: 6, height: 6, backgroundColor: 'currentColor', borderRadius: '50%' }}></span>
+              {t.statusLabels?.['LIVE'] || 'Live Data'}
+            </span>
+          )}
+        </div>
+
         <div className="decision-card-badge-row">
           <div className="decision-badge" style={{ padding: '16px', gap: '12px' }}>
             {currentCfg.icon}
@@ -308,7 +347,12 @@ export default function FisherDecisionSurface({
             <strong>{translateText('What to do next:', language)}</strong> {translateText('Do not depart. Await further clearance.', language)}
           </p>
           <button
-            onClick={() => speak(translateText(`A ${hazardVal} affects your planned trip. Do not depart. Hear the official advisory.`, language))}
+            onClick={() => {
+              const alertPrefix = translateText('Alert', language);
+              const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
+              const hearAdvisory = translateText('Hear the official advisory', language);
+              speak(`${alertPrefix}: ${translateText(hazardVal, language)}. ${affectsSuffix} ${hearAdvisory}`);
+            }}
             style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#ef4444', color: 'white', borderRadius: '8px', border: 'none', width: '100%' }}
           >
             <Volume2 size={24} />
