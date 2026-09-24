@@ -56,6 +56,7 @@
 | G-4 | `Decision Delta` backend computation | P1 | **RESOLVED & VERIFIED** |
 | G-5 | Source conflict resolution policy | P1 | COMPLETE (`D010` authoritative hierarchy + fallback confidence) |
 | G-6 | Hard constraint ordering (safety→legal→vessel→operational) | P0 | **RESOLVED & VERIFIED** |
+| G-7 | ORCA Field Intelligence Network (Community Observations) | P1 | PLANNED (Architectural Spec §31, D034-D036) |
 
 #### P0-11 — Chat Context State Integrity (Fisher What-If Controls)
 - Fixed conversational logic to parse relative timestamps into absolute ISO references and compute true scenario offsets without overriding operational rules.

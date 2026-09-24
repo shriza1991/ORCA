@@ -179,3 +179,30 @@ PHASE K — Retire old Vite frontend
 - [x] Backend CORS origin updated for Next.js (`http://localhost:3000`).
 - [x] Fisher route (`/fisher`) established with minimal behavioral change.
 - [x] Old React/Vite frontend remains available and completely functional.
+
+---
+
+# 7. ORCA Field Intelligence Network (Community Intelligence)
+
+### 7.1 Core Concept & Invariants
+The ORCA Field Intelligence Network turns participating mariners into trusted, privacy-controlled ground-truth sensors for local conditions without transforming ORCA into a generic social network.
+
+**Closed Loop**:
+`OBSERVE → REPORT → VALIDATE → CORROBORATE → FUSE → REASON → INFORM → LEARN`
+
+**Five Safety Invariants**:
+1. **INVARIANT C-1 (Official Supremacy)**: Official hard constraints (IMD storm bulletins, legal geofences, vessel craft limits) are immutable and NEVER overridden by community reports.
+2. **INVARIANT C-2 (Epistemic Honesty)**: Missing community reports in a sector do NOT imply safety (`Missing != Safe`).
+3. **INVARIANT C-3 (Explicit Lineage)**: Community observations are always labeled with the explicit tag `[FIELD SIGNAL]` with corroboration count and freshness.
+4. **INVARIANT C-4 (Categorical Trust)**: Prohibit decimal percentages ("87.4% trusted"); trust is reported via verifiable dimensions: identity state (`UNVERIFIED`, `PHONE_VERIFIED`, `ESTABLISHED`), evidence completeness (GPS, media), corroboration count, and official agreement.
+5. **INVARIANT C-5 (Confidence Modulation Bounds)**: Community signals may only modulate confidence between `MEDIUM` and `HIGH` (e.g. flagging unexpected swells or confirming CAUTION status). Single uncorroborated reports never affect decisions.
+
+### 7.2 Privacy by Design
+- **Default Precision**: `APPROXIMATE` (5km / H3 grid cell); exact coordinates are never exposed in public queries.
+- **Catch Privacy**: Catch quantities and species indications are `PRIVATE` by default.
+- **Identity Protection**: Contributor identities and vessel numbers are scrubbed from public community aggregates.
+
+### 7.3 Phasing & First Contract Step
+- **Non-blocking for P0**: Community feature implementation is scheduled for P1.
+- **First Implementation Step**: Extend canonical `EvidenceItem` contract with `source_type: Literal["OFFICIAL", "SCIENTIFIC", "OPERATIONAL", "COMMUNITY", "DERIVED"] = "OFFICIAL"` across backend and frontend, establishing backward-compatible type foundation.
+
