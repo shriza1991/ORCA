@@ -112,6 +112,7 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
             sst = props.get("sst") or props.get("sea_surface_temp_c")
             chlorophyll = props.get("chlorophyll") or props.get("chlorophyll_mg_m3")
             depth = props.get("depth_m") or props.get("water_depth_m")
+            loc_ref = props.get("location_reference")
 
             cand = PFZCandidatePayload(
                 candidate_id=cid,
@@ -122,6 +123,7 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
                 water_depth_m=float(depth) if depth is not None else None,
                 sea_surface_temp_c=float(sst) if sst is not None else None,
                 chlorophyll_mg_m3=float(chlorophyll) if chlorophyll is not None else None,
+                location_reference=str(loc_ref) if loc_ref else None,
                 rank=1,  # Assigned after sorting
             )
             candidates.append(cand)

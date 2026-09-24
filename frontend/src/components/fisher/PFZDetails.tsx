@@ -21,6 +21,12 @@ export default function PFZDetails({ assessment, language = 'en' }: PFZDetailsPr
         <Navigation size={24} color="#3b82f6" />
         {translateText('Suggested Fishing Area', language)}
       </h3>
+      
+      {pfz.location_reference && (
+        <div style={{ marginBottom: '16px', color: '#334155', fontWeight: 600, fontSize: '1.1rem' }}>
+          📍 {pfz.location_reference}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
         <div>

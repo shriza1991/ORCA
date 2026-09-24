@@ -1,36 +1,855 @@
 {
   "metadata": {
-    "snapshot_id": "SNAP-PFZ_ADVISORIES",
-    "provider": "INCOIS",
-    "source_name": "INCOIS PFZ Snapshot",
-    "captured_at": "2026-09-06T04:20:06.304636+00:00",
-    "valid_from": "2026-01-01T00:00:00+00:00",
-    "valid_to": "2030-01-01T00:00:00+00:00",
-    "schema_version": "1.0.0",
-    "checksum": "cc297414da23b5c258d79714088bc9414df25f40ff08b86f35a6443f5acaf281",
-    "reference_url": "https://example.com/snapshot",
-    "status": "SIMULATED"
+    "source": "pfz_advisories",
+    "version": "1.0",
+    "captured_at": "2026-09-24T03:20:15.750799+00:00"
   },
   "payload": {
     "features": [
       {
-        "id": "PFZ-SNAP-01",
-        "lat": 16.92,
-        "lon": 73.15,
-        "sst_grad": 0.8,
-        "chlorophyll": 1.4
+        "id": "MH-PFZ-1",
+        "latitude": 20.0831,
+        "longitude": 71.7294,
+        "properties": {
+          "candidate_id": "MH-PFZ-1",
+          "location_reference": "Tarapur Pt",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
       },
       {
-        "id": "PFZ-SNAP-02",
-        "lat": 17.05,
-        "lon": 73.05,
-        "sst_grad": 1.1,
-        "chlorophyll": 1.9
+        "id": "MH-PFZ-2",
+        "latitude": 20.0542,
+        "longitude": 71.7525,
+        "properties": {
+          "candidate_id": "MH-PFZ-2",
+          "location_reference": "Ghivali",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-3",
+        "latitude": 20.0219,
+        "longitude": 71.77,
+        "properties": {
+          "candidate_id": "MH-PFZ-3",
+          "location_reference": "Varor",
+          "depth_m": 24.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-4",
+        "latitude": 19.9983,
+        "longitude": 71.7978,
+        "properties": {
+          "candidate_id": "MH-PFZ-4",
+          "location_reference": "Kambode",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-5",
+        "latitude": 19.9786,
+        "longitude": 71.8286,
+        "properties": {
+          "candidate_id": "MH-PFZ-5",
+          "location_reference": "PokharanDandi/Uchheli",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-6",
+        "latitude": 19.9458,
+        "longitude": 71.845,
+        "properties": {
+          "candidate_id": "MH-PFZ-6",
+          "location_reference": "Navapur (Ucheli Cr)",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-7",
+        "latitude": 19.9103,
+        "longitude": 71.855,
+        "properties": {
+          "candidate_id": "MH-PFZ-7",
+          "location_reference": "DhaktiDahanu/Gungawada",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-8",
+        "latitude": 19.8742,
+        "longitude": 71.8617,
+        "properties": {
+          "candidate_id": "MH-PFZ-8",
+          "location_reference": "Satpati(N)",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-9",
+        "latitude": 19.8375,
+        "longitude": 71.8611,
+        "properties": {
+          "candidate_id": "MH-PFZ-9",
+          "location_reference": "Murbe",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-10",
+        "latitude": 19.8053,
+        "longitude": 71.845,
+        "properties": {
+          "candidate_id": "MH-PFZ-10",
+          "location_reference": "Satpati(M/S)",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-11",
+        "latitude": 19.6217,
+        "longitude": 71.7472,
+        "properties": {
+          "candidate_id": "MH-PFZ-11",
+          "location_reference": "Satpati",
+          "depth_m": 31.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-12",
+        "latitude": 19.5814,
+        "longitude": 71.7231,
+        "properties": {
+          "candidate_id": "MH-PFZ-12",
+          "location_reference": "Vadarai",
+          "depth_m": 33.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-13",
+        "latitude": 19.5481,
+        "longitude": 71.6903,
+        "properties": {
+          "candidate_id": "MH-PFZ-13",
+          "location_reference": "Danda",
+          "depth_m": 39.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-14",
+        "latitude": 19.5344,
+        "longitude": 71.6458,
+        "properties": {
+          "candidate_id": "MH-PFZ-14",
+          "location_reference": "Shirgaon",
+          "depth_m": 41.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-15",
+        "latitude": 19.5142,
+        "longitude": 71.6039,
+        "properties": {
+          "candidate_id": "MH-PFZ-15",
+          "location_reference": "Edavan/Kore",
+          "depth_m": 51.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-16",
+        "latitude": 19.4728,
+        "longitude": 71.5836,
+        "properties": {
+          "candidate_id": "MH-PFZ-16",
+          "location_reference": "Kelwane",
+          "depth_m": 62.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-17",
+        "latitude": 19.4358,
+        "longitude": 71.555,
+        "properties": {
+          "candidate_id": "MH-PFZ-17",
+          "location_reference": "Kelwa/KelwaDadar",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-18",
+        "latitude": 19.4006,
+        "longitude": 71.5242,
+        "properties": {
+          "candidate_id": "MH-PFZ-18",
+          "location_reference": "Tembhi",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-19",
+        "latitude": 19.3581,
+        "longitude": 71.5047,
+        "properties": {
+          "candidate_id": "MH-PFZ-19",
+          "location_reference": "Arnalapada",
+          "depth_m": 66.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-20",
+        "latitude": 19.3231,
+        "longitude": 71.4742,
+        "properties": {
+          "candidate_id": "MH-PFZ-20",
+          "location_reference": "Datiware",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-21",
+        "latitude": 19.0489,
+        "longitude": 71.0258,
+        "properties": {
+          "candidate_id": "MH-PFZ-21",
+          "location_reference": "Arnala",
+          "depth_m": 93.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-22",
+        "latitude": 19.0089,
+        "longitude": 70.9878,
+        "properties": {
+          "candidate_id": "MH-PFZ-22",
+          "location_reference": "Madh",
+          "depth_m": 56.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-23",
+        "latitude": 18.9761,
+        "longitude": 70.9392,
+        "properties": {
+          "candidate_id": "MH-PFZ-23",
+          "location_reference": "YerangalBhati",
+          "depth_m": 77.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-24",
+        "latitude": 18.9383,
+        "longitude": 70.8933,
+        "properties": {
+          "candidate_id": "MH-PFZ-24",
+          "location_reference": "Malabar Port (Mumbai)",
+          "depth_m": 78.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-25",
+        "latitude": 18.9169,
+        "longitude": 70.8375,
+        "properties": {
+          "candidate_id": "MH-PFZ-25",
+          "location_reference": "Manori",
+          "depth_m": 83.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-26",
+        "latitude": 18.9031,
+        "longitude": 70.7792,
+        "properties": {
+          "candidate_id": "MH-PFZ-26",
+          "location_reference": "Patwadi",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-27",
+        "latitude": 18.8969,
+        "longitude": 70.7194,
+        "properties": {
+          "candidate_id": "MH-PFZ-27",
+          "location_reference": "Colaba Pt.(Mumbai)",
+          "depth_m": 70.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-28",
+        "latitude": 18.8917,
+        "longitude": 70.66,
+        "properties": {
+          "candidate_id": "MH-PFZ-28",
+          "location_reference": "Gorai",
+          "depth_m": 72.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-29",
+        "latitude": 18.8792,
+        "longitude": 70.6014,
+        "properties": {
+          "candidate_id": "MH-PFZ-29",
+          "location_reference": "Worli-Lotus",
+          "depth_m": 70.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-30",
+        "latitude": 18.855,
+        "longitude": 70.5467,
+        "properties": {
+          "candidate_id": "MH-PFZ-30",
+          "location_reference": "CuffPared",
+          "depth_m": 76.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-31",
+        "latitude": 18.7014,
+        "longitude": 72.5978,
+        "properties": {
+          "candidate_id": "MH-PFZ-31",
+          "location_reference": "Navgaon",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-32",
+        "latitude": 18.6653,
+        "longitude": 72.5769,
+        "properties": {
+          "candidate_id": "MH-PFZ-32",
+          "location_reference": "VarsoliChalmala",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-33",
+        "latitude": 18.6272,
+        "longitude": 72.5608,
+        "properties": {
+          "candidate_id": "MH-PFZ-33",
+          "location_reference": "Thal",
+          "depth_m": 30.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-34",
+        "latitude": 18.5858,
+        "longitude": 72.5594,
+        "properties": {
+          "candidate_id": "MH-PFZ-34",
+          "location_reference": "Alibag",
+          "depth_m": 32.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-35",
+        "latitude": 18.5533,
+        "longitude": 72.5844,
+        "properties": {
+          "candidate_id": "MH-PFZ-35",
+          "location_reference": "Nagaon",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-36",
+        "latitude": 18.53,
+        "longitude": 72.6189,
+        "properties": {
+          "candidate_id": "MH-PFZ-36",
+          "location_reference": "Revadanda",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-37",
+        "latitude": 18.5114,
+        "longitude": 72.6564,
+        "properties": {
+          "candidate_id": "MH-PFZ-37",
+          "location_reference": "Korlai",
+          "depth_m": 23.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-38",
+        "latitude": 18.4881,
+        "longitude": 72.6908,
+        "properties": {
+          "candidate_id": "MH-PFZ-38",
+          "location_reference": "Borli-Mandla",
+          "depth_m": 22.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-39",
+        "latitude": 18.4606,
+        "longitude": 72.7222,
+        "properties": {
+          "candidate_id": "MH-PFZ-39",
+          "location_reference": "Rewdanda",
+          "depth_m": 19.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-40",
+        "latitude": 18.4292,
+        "longitude": 72.7497,
+        "properties": {
+          "candidate_id": "MH-PFZ-40",
+          "location_reference": "Mazgaon",
+          "depth_m": 18.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-41",
+        "latitude": 17.8042,
+        "longitude": 72.7383,
+        "properties": {
+          "candidate_id": "MH-PFZ-41",
+          "location_reference": "Velas",
+          "depth_m": 34.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-42",
+        "latitude": 17.7406,
+        "longitude": 72.7481,
+        "properties": {
+          "candidate_id": "MH-PFZ-42",
+          "location_reference": "AadeUttambar",
+          "depth_m": 33.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-43",
+        "latitude": 17.6864,
+        "longitude": 72.7836,
+        "properties": {
+          "candidate_id": "MH-PFZ-43",
+          "location_reference": "HarnePort",
+          "depth_m": 33.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-44",
+        "latitude": 17.6244,
+        "longitude": 72.8017,
+        "properties": {
+          "candidate_id": "MH-PFZ-44",
+          "location_reference": "Kolthare",
+          "depth_m": 32.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-45",
+        "latitude": 17.5597,
+        "longitude": 72.7983,
+        "properties": {
+          "candidate_id": "MH-PFZ-45",
+          "location_reference": "Tolkeshwar Pt",
+          "depth_m": 36.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-46",
+        "latitude": 17.4978,
+        "longitude": 72.7794,
+        "properties": {
+          "candidate_id": "MH-PFZ-46",
+          "location_reference": "Anjanvel",
+          "depth_m": 40.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-47",
+        "latitude": 17.4394,
+        "longitude": 72.7503,
+        "properties": {
+          "candidate_id": "MH-PFZ-47",
+          "location_reference": "Kondkarul",
+          "depth_m": 49.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-48",
+        "latitude": 17.3775,
+        "longitude": 72.7314,
+        "properties": {
+          "candidate_id": "MH-PFZ-48",
+          "location_reference": "Budhal",
+          "depth_m": 63.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-49",
+        "latitude": 17.3131,
+        "longitude": 72.7233,
+        "properties": {
+          "candidate_id": "MH-PFZ-49",
+          "location_reference": "Jaigarh Head",
+          "depth_m": 69.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-50",
+        "latitude": 17.2489,
+        "longitude": 72.7317,
+        "properties": {
+          "candidate_id": "MH-PFZ-50",
+          "location_reference": "SakharJaigad",
+          "depth_m": 65.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-51",
+        "latitude": 16.8897,
+        "longitude": 73.0853,
+        "properties": {
+          "candidate_id": "MH-PFZ-51",
+          "location_reference": "Purnagad",
+          "depth_m": 41.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-52",
+        "latitude": 16.8481,
+        "longitude": 73.0853,
+        "properties": {
+          "candidate_id": "MH-PFZ-52",
+          "location_reference": "Purangad",
+          "depth_m": 42.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-53",
+        "latitude": 16.8064,
+        "longitude": 73.0833,
+        "properties": {
+          "candidate_id": "MH-PFZ-53",
+          "location_reference": "Bokarwadi",
+          "depth_m": 43.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-54",
+        "latitude": 16.7647,
+        "longitude": 73.0789,
+        "properties": {
+          "candidate_id": "MH-PFZ-54",
+          "location_reference": "Sakhri-Natye",
+          "depth_m": 44.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-55",
+        "latitude": 16.7244,
+        "longitude": 73.0681,
+        "properties": {
+          "candidate_id": "MH-PFZ-55",
+          "location_reference": "Wada Vetye",
+          "depth_m": 45.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-56",
+        "latitude": 16.6872,
+        "longitude": 73.0497,
+        "properties": {
+          "candidate_id": "MH-PFZ-56",
+          "location_reference": "Ambolgad",
+          "depth_m": 49.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-57",
+        "latitude": 16.6528,
+        "longitude": 73.0261,
+        "properties": {
+          "candidate_id": "MH-PFZ-57",
+          "location_reference": "Wagapur Pt",
+          "depth_m": 53.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-58",
+        "latitude": 16.6253,
+        "longitude": 72.995,
+        "properties": {
+          "candidate_id": "MH-PFZ-58",
+          "location_reference": "Sakharinate",
+          "depth_m": 57.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-59",
+        "latitude": 16.6006,
+        "longitude": 72.9614,
+        "properties": {
+          "candidate_id": "MH-PFZ-59",
+          "location_reference": "Vijaydurg",
+          "depth_m": 61.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-60",
+        "latitude": 16.5639,
+        "longitude": 72.9444,
+        "properties": {
+          "candidate_id": "MH-PFZ-60",
+          "location_reference": "Vijayadurg Hr",
+          "depth_m": 59.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-61",
+        "latitude": 16.3453,
+        "longitude": 72.8881,
+        "properties": {
+          "candidate_id": "MH-PFZ-61",
+          "location_reference": "Kalamaiwadi",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-62",
+        "latitude": 16.3053,
+        "longitude": 72.9008,
+        "properties": {
+          "candidate_id": "MH-PFZ-62",
+          "location_reference": "Devgarh",
+          "depth_m": 74.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-63",
+        "latitude": 16.2683,
+        "longitude": 72.9208,
+        "properties": {
+          "candidate_id": "MH-PFZ-63",
+          "location_reference": "Mithmumbri/Taramumbari",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-64",
+        "latitude": 16.2375,
+        "longitude": 72.9494,
+        "properties": {
+          "candidate_id": "MH-PFZ-64",
+          "location_reference": "Kunkeshwar",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-65",
+        "latitude": 16.2094,
+        "longitude": 72.9797,
+        "properties": {
+          "candidate_id": "MH-PFZ-65",
+          "location_reference": "Kunkeshwar/Katvan",
+          "depth_m": 64.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-66",
+        "latitude": 16.1683,
+        "longitude": 72.9878,
+        "properties": {
+          "candidate_id": "MH-PFZ-66",
+          "location_reference": "Munge",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-67",
+        "latitude": 16.1264,
+        "longitude": 72.9881,
+        "properties": {
+          "candidate_id": "MH-PFZ-67",
+          "location_reference": "Achra Pt",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-68",
+        "latitude": 16.0847,
+        "longitude": 72.9933,
+        "properties": {
+          "candidate_id": "MH-PFZ-68",
+          "location_reference": "Achara",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-69",
+        "latitude": 16.0469,
+        "longitude": 73.0117,
+        "properties": {
+          "candidate_id": "MH-PFZ-69",
+          "location_reference": "Dhurivada",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-70",
+        "latitude": 16.0117,
+        "longitude": 73.0347,
+        "properties": {
+          "candidate_id": "MH-PFZ-70",
+          "location_reference": "Sindhudurg (Malvan)",
+          "depth_m": 72.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
       }
     ],
-    "bulletin_date": "2026-09-06T04:20:06.304636+00:00",
-    "valid_to": "2030-01-01T00:00:00+00:00",
-    "source_name": "INCOIS PFZ Mission Snapshot Fixture",
-    "source_url": "https://incois.gov.in/portal/pfz"
+    "bulletin_date": "2026-09-23T00:00:00Z",
+    "valid_to": "2026-09-24T23:59:59Z",
+    "source_name": "INCOIS Maharashtra PFZ",
+    "source_url": "https://incois.gov.in"
   }
 }

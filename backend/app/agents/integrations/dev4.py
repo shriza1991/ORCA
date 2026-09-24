@@ -76,6 +76,7 @@ class PFZCandidatePayload(BaseModel):
     water_depth_m: Optional[float] = Field(None, description="Bathymetric water depth at location")
     sea_surface_temp_c: Optional[float] = Field(None, description="SST at PFZ coordinate")
     chlorophyll_mg_m3: Optional[float] = Field(None, description="Chlorophyll concentration")
+    location_reference: Optional[str] = Field(None, description="Human readable location reference from raw data")
     rank: int = Field(..., ge=1, description="1-indexed proximity and productivity ranking")
 
 

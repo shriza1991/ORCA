@@ -73,6 +73,7 @@ export interface PFZCandidate {
   status: string;
   confidence?: string;
   depth_m?: number | null;
+  location_reference?: string;
   valid_from: string;
   valid_to: string;
   source: string;
