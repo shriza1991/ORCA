@@ -90,7 +90,7 @@ def _select_hour_index(times: list[str], target_utc: datetime | None) -> int:
     if not times:
         return 0
     if target_utc is None:
-        return 0
+        target_utc = datetime.now(UTC)
 
     best_idx = 0
     best_delta: timedelta | None = None
