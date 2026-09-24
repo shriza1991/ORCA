@@ -116,27 +116,27 @@ class DeterministicRiskEngine:
         evidence_ids: List[str] = []
 
         if reference_time is not None:
-            if isinstance(reference_time, str):
-                try:
+            try:
+                if isinstance(reference_time, str):
                     ref_dt = datetime.fromisoformat(reference_time.replace("Z", "+00:00"))
-                except ValueError:
-                    ref_dt = datetime.now(UTC)
-            else:
-                ref_dt = reference_time
-            now_utc = ref_dt if ref_dt.tzinfo is not None else ref_dt.replace(tzinfo=timezone.utc)
+                else:
+                    ref_dt = reference_time
+                now_utc = ref_dt if ref_dt.tzinfo is not None else ref_dt.replace(tzinfo=timezone.utc)
+            except (ValueError, TypeError):
+                now_utc = datetime.now(UTC)
         else:
             now_utc = datetime.now(UTC)
 
         window_end_utc = now_utc
         if return_time is not None:
-            if isinstance(return_time, str):
-                try:
+            try:
+                if isinstance(return_time, str):
                     ret_dt = datetime.fromisoformat(return_time.replace("Z", "+00:00"))
-                except ValueError:
-                    ret_dt = now_utc
-            else:
-                ret_dt = return_time
-            window_end_utc = ret_dt if ret_dt.tzinfo is not None else ret_dt.replace(tzinfo=timezone.utc)
+                else:
+                    ret_dt = return_time
+                window_end_utc = ret_dt if ret_dt.tzinfo is not None else ret_dt.replace(tzinfo=timezone.utc)
+            except (ValueError, TypeError):
+                window_end_utc = now_utc
 
         # ---------------------------------------------------------------------
         # 1. Provenance & Stale / Missing Data Validation

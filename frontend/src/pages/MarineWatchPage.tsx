@@ -21,14 +21,17 @@ import {
   type LandingCentre,
 } from '../api/marinewatch-client';
 
+import { translateText, type SupportedLanguage } from '../i18n/translations';
+
 type MarineWatchTab = 'oceanwatch' | 'fisherwatch' | 'aquawatch' | 'hazards' | 'portwatch' | 'catalogue';
 
 interface MarineWatchPageProps {
   onBackToPortal?: () => void;
   theme?: 'light' | 'dark';
+  language?: SupportedLanguage;
 }
 
-export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: MarineWatchPageProps) {
+export default function MarineWatchPage({ onBackToPortal, theme = 'light', language = 'en' }: MarineWatchPageProps) {
   const [activeTab, setActiveTab] = useState<MarineWatchTab>('oceanwatch');
   const [aquacultureSites, setAquacultureSites] = useState<AquacultureSite[]>([]);
   const [hazards, setHazards] = useState<ActiveHazard[]>([]);
@@ -66,22 +69,22 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
                 type="button"
                 className="marinewatch-back-btn"
                 onClick={onBackToPortal}
-                title="Return to Main Portal"
+                title={translateText("Return to Main Portal", language)}
               >
                 <ArrowLeft size={16} />
-                <span>Portal</span>
+                <span>{translateText("Portal", language)}</span>
               </button>
             )}
             <div className="marinewatch-brand-title">
               <Compass size={22} className="text-primary" />
-              <h1>India MarineWatch</h1>
-              <span className="marinewatch-version-badge">National Ocean Intelligence</span>
+              <h1>{translateText("India MarineWatch", language)}</h1>
+              <span className="marinewatch-version-badge">{translateText("National Ocean Intelligence", language)}</span>
             </div>
           </div>
 
           <div className="marinewatch-pilot-tag">
             <span className="pilot-dot" />
-            <span>Pilot Region: <strong>Maharashtra & Goa Coastal Shelf</strong> {loading && <small>(Syncing…)</small>}</span>
+            <span>{translateText("Pilot Region:", language)} <strong>{translateText("Maharashtra & Goa Coastal Shelf", language)}</strong> {loading && <small>({translateText("Syncing…", language)})</small>}</span>
           </div>
         </div>
 
@@ -94,7 +97,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
             onClick={() => setActiveTab('oceanwatch')}
           >
             <Waves size={15} />
-            <span>OceanWatch (GIS)</span>
+            <span>{translateText("OceanWatch (GIS)", language)}</span>
           </button>
           <button
             role="tab"
@@ -103,7 +106,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
             onClick={() => setActiveTab('fisherwatch')}
           >
             <Fish size={15} />
-            <span>FisherWatch</span>
+            <span>{translateText("FisherWatch", language)}</span>
           </button>
           <button
             role="tab"
@@ -112,7 +115,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
             onClick={() => setActiveTab('aquawatch')}
           >
             <span>🦐</span>
-            <span>AquaWatch</span>
+            <span>{translateText("AquaWatch", language)}</span>
           </button>
           <button
             role="tab"
@@ -121,7 +124,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
             onClick={() => setActiveTab('hazards')}
           >
             <AlertTriangle size={15} />
-            <span>Marine Hazards</span>
+            <span>{translateText("Marine Hazards", language)}</span>
             {hazards.length > 0 && <span className="tab-counter">{hazards.length}</span>}
           </button>
           <button
@@ -131,7 +134,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
             onClick={() => setActiveTab('portwatch')}
           >
             <Anchor size={15} />
-            <span>PortWatch</span>
+            <span>{translateText("PortWatch", language)}</span>
           </button>
           <button
             role="tab"
@@ -140,16 +143,16 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
             onClick={() => setActiveTab('catalogue')}
           >
             <Database size={15} />
-            <span>Data Catalogue (§212)</span>
+            <span>{translateText("Data Catalogue (§212)", language)}</span>
           </button>
         </nav>
       </header>
 
       {/* Main Tab Content */}
       <main className="marinewatch-body-content">
-        {activeTab === 'oceanwatch' && <OceanWatchGIS theme={theme} />}
+        {activeTab === 'oceanwatch' && <OceanWatchGIS theme={theme} language={language} />}
 
-        {activeTab === 'fisherwatch' && <FisherWatchView />}
+        {activeTab === 'fisherwatch' && <FisherWatchView language={language} />}
 
         {/* AquaWatch Tab */}
         {activeTab === 'aquawatch' && (
@@ -315,7 +318,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light' }: Mar
         )}
 
         {/* Data Catalogue Tab */}
-        {activeTab === 'catalogue' && <DataCatalogueView />}
+        {activeTab === 'catalogue' && <DataCatalogueView language={language} />}
       </main>
     </div>
   );

@@ -37,7 +37,14 @@ const COASTAL_SECTORS = [
   'Lakshadweep',
 ];
 
-export default function FisherWatchView() {
+import { type SupportedLanguage } from '../../i18n/translations';
+
+interface FisherWatchViewProps {
+  language?: SupportedLanguage;
+}
+
+export default function FisherWatchView({ language = 'en' }: FisherWatchViewProps) {
+  void language; // Used to trigger re-renders or for future translation string wrapper
   const [selectedSector, setSelectedSector] = useState<string>('All India');
   const [pfzList, setPfzList] = useState<PFZAdvisory[]>([]);
   const [landingCentres, setLandingCentres] = useState<LandingCentre[]>([]);

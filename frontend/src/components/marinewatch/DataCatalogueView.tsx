@@ -46,7 +46,14 @@ const PROVIDERS = [
   'Global Fishing Watch',
 ];
 
-export default function DataCatalogueView() {
+import { type SupportedLanguage } from '../../i18n/translations';
+
+interface DataCatalogueViewProps {
+  language?: SupportedLanguage;
+}
+
+export default function DataCatalogueView({ language = 'en' }: DataCatalogueViewProps) {
+  void language; // Disable TS lint rule until strings are wrapped
   const [datasets, setDatasets] = useState<DatasetItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedProvider, setSelectedProvider] = useState<string>('All');

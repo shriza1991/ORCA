@@ -5,27 +5,67 @@ export interface SpokenGuidanceOptions {
   language: SupportedLanguage;
 }
 
+/**
+ * BCP-47 priority fallback chains.
+ * Each entry is tried in order until a matching installed voice is found.
+ * Marathi falls back to Hindi so Devnagari is always readable on Windows.
+ */
+const LANG_FALLBACK_CHAINS: Record<SupportedLanguage, string[]> = {
+  en: ['en-IN', 'en-US', 'en-GB', 'en'],
+  hi: ['hi-IN', 'hi'],
+  mr: ['mr-IN', 'hi-IN', 'hi', 'en-IN'],
+};
+
+/**
+ * Finds the best installed SpeechSynthesisVoice for a given BCP-47 priority chain.
+ * Returns null when no matching voice is available.
+ */
+function pickBestVoice(
+  voices: SpeechSynthesisVoice[],
+  chain: string[]
+): SpeechSynthesisVoice | null {
+  for (const tag of chain) {
+    // Exact locale match (e.g. hi-IN)
+    const exact = voices.find(
+      (v) => v.lang.replace('_', '-').toLowerCase() === tag.toLowerCase()
+    );
+    if (exact) return exact;
+
+    // Language-prefix match (e.g. "hi" matches "hi-IN")
+    const prefix = tag.split('-')[0].toLowerCase();
+    const partial = voices.find(
+      (v) => v.lang.replace('_', '-').toLowerCase().startsWith(prefix)
+    );
+    if (partial) return partial;
+  }
+  return null;
+}
+
 export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const synth = window.speechSynthesis;
-  
+
   // Keep track of the currently speaking utterance so we can cancel it
   const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Load voices on mount
+  // Load voices on mount and whenever the browser's voice list changes
   useEffect(() => {
     if (!synth) return;
-    const updateVoices = () => {
-      setVoices(synth.getVoices());
-    };
+    const updateVoices = () => setVoices(synth.getVoices());
     updateVoices();
-    if (synth.onvoiceschanged !== undefined) {
+    if (typeof synth.onvoiceschanged !== 'undefined') {
       synth.onvoiceschanged = updateVoices;
     }
+    return () => {
+      // Clean up listener on unmount
+      if (synth.onvoiceschanged === updateVoices) {
+        synth.onvoiceschanged = null;
+      }
+    };
   }, [synth]);
 
-  // Stop speaking when component unmounts
+  // Cancel speech when component unmounts
   useEffect(() => {
     return () => {
       if (synth) synth.cancel();
@@ -34,54 +74,43 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
 
   const speak = useCallback(
     (text: string) => {
-      if (!synth) return;
+      if (!synth || !text?.trim()) return;
 
-      // Cancel any ongoing speech
+      // Cancel any currently queued or playing utterance
       synth.cancel();
-      
+
       const utterance = new SpeechSynthesisUtterance(text);
       currentUtterance.current = utterance;
 
-      // Map our SupportedLanguage to BCP 47 language tags
-      const langMap: Record<SupportedLanguage, string> = {
-        en: 'en-IN',
-        hi: 'hi-IN',
-        mr: 'mr-IN',
-      };
-      
-      const targetLang = langMap[language] || 'en-IN';
-      utterance.lang = targetLang;
-      
-      // Explicitly try to select a matching voice if available, especially on Windows
+      const chain = LANG_FALLBACK_CHAINS[language] || LANG_FALLBACK_CHAINS.en;
+
+      // Use cached voices; also query directly in case state update is lagging
       const availableVoices = voices.length > 0 ? voices : synth.getVoices();
-      if (availableVoices.length > 0) {
-        // Try exact locale match first (e.g. hi-IN)
-        let bestVoice = availableVoices.find(v => v.lang.replace('_', '-') === targetLang);
-        
-        // Fallback to language prefix match (e.g. hi)
-        if (!bestVoice) {
-           const prefix = targetLang.split('-')[0];
-           bestVoice = availableVoices.find(v => v.lang.replace('_', '-').startsWith(prefix));
-        }
-        
-        if (bestVoice) {
-          utterance.voice = bestVoice;
-        } else {
-          console.warn(`No TTS voice found for language: ${targetLang}`);
-        }
+
+      const bestVoice = pickBestVoice(availableVoices, chain);
+
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        utterance.lang = bestVoice.lang; // keep lang consistent with chosen voice
+        console.debug(
+          `[TTS] language=${language} → voice="${bestVoice.name}" (${bestVoice.lang})`
+        );
       } else {
-         console.warn('No TTS voices available in the browser.');
+        // At minimum set the lang so the browser can try its internal routing
+        utterance.lang = chain[0];
+        console.warn(
+          `[TTS] No voice found for chain [${chain.join(', ')}]. Falling back to browser default.`
+        );
       }
-      
+
       utterance.onstart = () => setIsPlaying(true);
       utterance.onend = () => setIsPlaying(false);
       utterance.onerror = (e) => {
-        console.warn('Speech synthesis error:', e);
+        console.warn('[TTS] Speech synthesis error:', e.error);
         setIsPlaying(false);
       };
 
-      // Sometimes calling speak too quickly after initialization fails on some browsers.
-      // Small timeout helps ensure the voice engine is ready.
+      // 50 ms buffer gives the browser time to swap the TTS engine after cancel()
       setTimeout(() => {
         synth.speak(utterance);
       }, 50);
@@ -96,9 +125,6 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
     }
   }, [synth]);
 
-  return {
-    speak,
-    stop,
-    isPlaying,
-  };
+  return { speak, stop, isPlaying };
 }
+

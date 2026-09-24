@@ -199,8 +199,19 @@ class DeterministicRouteExposureEngine:
                 risk_rating = "MODERATE"
             else:
                 risk_rating = "LOW"
+            craft = context.craft_profile or 'motorized_boat'
+            if craft == 'traditional_non_motorized':
+                speed_knots = 3.0
+                fuel_rate = 0.0
+            elif craft == 'mechanized_trawler':
+                speed_knots = 10.0
+                fuel_rate = 20.0
+            else:
+                speed_knots = 8.0
+                fuel_rate = 3.0
                 
-            eta_hours = round((dist_km / 1.852) / self.nominal_speed_knots, 2)
+            eta_hours = round((dist_km / 1.852) / speed_knots, 2)
+            fuel_liters = round(eta_hours * fuel_rate, 1)
             
             evaluated_routes.append(
                 EvaluatedRouteItem(
@@ -212,9 +223,9 @@ class DeterministicRouteExposureEngine:
                     exposure_score=exposure,
                     waypoints=c_way,
                     eta_hours=eta_hours,
-                    eta_assumptions=f"Assumes nominal speed {self.nominal_speed_knots} knots. Currents unadjusted.",
-                    fuel_estimate_liters=None,
-                    fuel_assumptions="Unavailable without vessel-specific profile",
+                    eta_assumptions=f"Assumes speed {speed_knots} knots for {craft}. Currents unadjusted.",
+                    fuel_estimate_liters=fuel_liters,
+                    fuel_assumptions=f"Estimated at {fuel_rate} L/hr for {craft}",
                     is_feasible=len(infeasible_reasons) == 0,
                     infeasibility_reasons=infeasible_reasons,
                     is_synthetic=is_synthetic,
