@@ -34,7 +34,7 @@ export default function PFZDetails({ assessment, language = 'en' }: PFZDetailsPr
             {translateText('Distance & Direction', language)}
           </div>
           <div style={{ fontSize: '1.1rem', fontWeight: 500, color: '#334155' }}>
-            {pfz.distance_nm?.toFixed(1)} nm, {pfz.bearing_deg}°
+            {pfz.distance_nautical_miles !== undefined ? pfz.distance_nautical_miles?.toFixed(1) : (pfz.distance_nm?.toFixed(1) || '—')} nm, {pfz.bearing_degrees ?? pfz.bearing_deg ?? '—'}°
           </div>
         </div>
 
@@ -44,7 +44,7 @@ export default function PFZDetails({ assessment, language = 'en' }: PFZDetailsPr
             {translateText('Valid Until', language)}
           </div>
           <div style={{ fontSize: '1.1rem', fontWeight: 500, color: '#334155' }}>
-            {pfz.valid_until ? new Date(pfz.valid_until).toLocaleDateString() : translateText('Unknown', language)}
+            {pfz.valid_until || pfz.valid_to ? new Date(pfz.valid_until || pfz.valid_to).toLocaleDateString() : translateText('Unknown', language)}
           </div>
         </div>
       </div>
