@@ -11078,3 +11078,32 @@ button.fleet-alert-card.active {
   }
 }
 
+.map-popup-fisher { background-color: #0f172a; border-radius: 8px; margin: -10px -10px -15px -10px; padding: 12px; }
+
+.dark-theme-popup .maplibregl-popup-content,
+.dark-theme-popup .mapboxgl-popup-content {
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme-popup .maplibregl-popup-tip,
+.dark-theme-popup .mapboxgl-popup-tip {
+  border-top-color: #0f172a !important;
+  border-bottom-color: #0f172a !important;
+}
+
+.dark-theme-popup .maplibregl-popup-close-button,
+.dark-theme-popup .mapboxgl-popup-close-button {
+  color: #94a3b8;
+  padding: 4px 6px;
+  font-size: 16px;
+}
+
+.dark-theme-popup .maplibregl-popup-close-button:hover,
+.dark-theme-popup .mapboxgl-popup-close-button:hover {
+  background: transparent;
+  color: #f1f5f9;
+}
+

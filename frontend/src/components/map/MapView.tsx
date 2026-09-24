@@ -680,7 +680,13 @@ export default function MapView({
               html = `<div class="map-popup"><h5 style="margin:0 0 6px;color:#0284c7;font-size:12px;font-weight:700">${layer.name}</h5>${content}</div>`;
             }
 
-            const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px', offset: 10 })
+            const isFisherDark = html.includes('map-popup-fisher');
+            const popup = new maplibregl.Popup({ 
+              closeButton: true, 
+              maxWidth: '280px', 
+              offset: 10,
+              className: isFisherDark ? 'dark-theme-popup' : ''
+            })
               .setLngLat(e.lngLat)
               .setHTML(html)
               .addTo(map);
