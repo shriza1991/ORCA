@@ -9,6 +9,13 @@
 - Current version: `v0.2.2-features-main-integrated`
 - Active branch: `main`
 - Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**
+- Client Architecture Migration: **IN PROGRESS (Next.js Web Scaffold & Fisher Route Alignment)**
+  - Dual interface model locked: React Native + Expo (field mobile) & Next.js + React (web platform & demo).
+  - Migration principle: `REUSE → ADAPT → EXTRACT → REWRITE`.
+  - Next.js application scaffold initialized at `nextjs/` alongside existing `frontend/` (which remains untouched and fully functional).
+  - Pure contracts (`types/contracts.ts`, `mission.ts`, `assessment.ts`, `alerts.ts`), API clients, utilities, and i18n ported into `nextjs/`.
+  - State management rule enforced: existing React hooks (`useChat`, `useTripAssessment`, `useAlerts`) ported first; Zustand/TanStack Query deferred until justified by real friction.
+  - P0 priority: `/fisher` route established as the primary judging and operational experience.
 - Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 235 tests passing across 16 test suites; backend: 387 passed / 1 skipped in agent_eval, 19/19 passed in marinewatch; verified on 2026-09-23)
 - 13 Foundation API Contracts (§213): **100% IMPLEMENTED & PASSING** (`/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`, `/lighthouses/nearby`, `/lighthouses`, `/boundaries`)
 - Nationwide Reference Data Ingestion:

@@ -47,11 +47,17 @@ playwright-report/
 blob-report/
 playwright/.cache/
 
-# Node & Frontend
+# Node & Frontend (Vite + Next.js)
 node_modules/
 frontend/node_modules/
+nextjs/node_modules/
 frontend/dist/
 frontend/dist-ssr/
+nextjs/.next/
+.next/
+nextjs/out/
+out/
+.vercel/
 *.tsbuildinfo
 .npm
 .yarn/

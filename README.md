@@ -139,15 +139,25 @@ pip install sarvamai
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 2. Frontend Setup
+### 2. Frontend Execution (Web)
+
+#### A. Next.js Migration Application (`nextjs/` - Active Target)
 ```bash
 # In a new terminal
-cd frontend
+cd nextjs
 
 # Install dependencies
 npm install
 
-# Start Vite dev server
+# Start Next.js development server
+npm run dev
+```
+Open `http://localhost:3000` in your browser. Target routes: `/` (portal), `/fisher` (primary operational demo), `/authority`, `/researcher`, `/marinewatch`, `/settings`.
+
+#### B. Legacy Vite Frontend (`frontend/` - Preserved During Migration)
+```bash
+cd frontend
+npm install
 npm run dev
 ```
 Open `http://localhost:5173` in your browser.

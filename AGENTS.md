@@ -15,6 +15,7 @@ First inspect the existing implementation, identify the owning component and can
 ## Source of Truth
 
 - `docs/ORCA_AI_MASTER_CONTEXT.md` — strategic vision and target architecture
+- `ORCA_IMPLEMENTATION_BLUEPRINT.md` — active migration blueprint and client architecture execution
 - `docs/PROGRESS.md` — current implementation state
 - `docs/DECISIONS.md` — important engineering decisions and their rationale
 - `code + tests` — actual executable implementation truth

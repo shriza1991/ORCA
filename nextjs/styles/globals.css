@@ -1,0 +1,140 @@
+@import './variables.css';
+@import './components.css';
+@import './marinewatch.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9em;
+  padding: 2px 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* Modern Typography: Balance headings and prevent orphans in advisories */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+p, .chat-message-content, .recommendation-summary, .evidence-card-desc {
+  text-wrap: pretty;
+}
+
+/* Modern standard scrollbar styling (Firefox, modern Chromium, Safari) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* Fallback scrollbar styling for legacy WebKit/Blink */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
+}
+
+/* Fisher Accessibility Overrides */
+.fisher-large-action-btn {
+  min-height: 48px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.fisher-large-action-btn:active {
+  transform: scale(0.98);
+}
+
+.fisher-simple-map-controls button {
+  min-height: 48px;
+  cursor: pointer;
+}
+
+/* Fisher Responsive Layout Overrides */
+.app-main.fisher-page {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.fisher-content-column {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+}
+
+.fisher-map-column {
+  display: flex;
+  flex: 0 0 auto;
+  height: 60vh;
+  min-height: 400px;
+  position: relative;
+}
+
+/* Desktop side-by-side */
+@media (min-width: 769px) {
+  .app-main.fisher-page {
+    flex-direction: row;
+    overflow: hidden;
+  }
+  .fisher-content-column {
+    width: var(--sidebar-width, 400px);
+    height: 100%;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+  }
+  .fisher-map-column {
+    flex: 1 1 0%;
+    height: 100%;
+  }
+}

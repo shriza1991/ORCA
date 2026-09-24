@@ -446,6 +446,28 @@ The documentation and product narrative now distinguish web demo access from nat
 Owner: Product / Architecture
 Date: 2026-09-24
 
+## D033 — React to Next.js Incremental Web Migration and Dual-Platform Alignment
+Status: ACCEPTED
+
+Decision:
+1. Migration Strategy: Adopt an incremental "REUSE → ADAPT → EXTRACT → REWRITE" migration from React 18 / Vite to Next.js (App Router), creating `nextjs/` alongside the existing `frontend/` without deleting `frontend/` until the migration is fully verified.
+2. State Management & API: Do NOT force Zustand or TanStack Query on Day 1. Reuse existing hand-rolled fetch clients (`client.ts`), React hooks (`useChat`, `useTripAssessment`, `useAlerts`), and pure TypeScript domain contracts directly, adapting environment variables (`import.meta.env.VITE_*` → `process.env.NEXT_PUBLIC_*`). Introduce Zustand/TanStack Query later only where justified by real state-management friction.
+3. Page Migration Order: Migrate `/fisher` first as the primary operational demonstration and fisherman workflow, followed by `/authority`, `/researcher`, `/marinewatch`, and `/settings`.
+4. Shared Intelligence Core: Both Next.js (web institutional/demo) and React Native + Expo (field mobile) consume the exact same FastAPI backend intelligence and domain contracts (`POST /api/v1/chat`, `POST /api/v1/trip-assessments`, etc.). No decision logic, safety rules, or marine reasoning shall be duplicated on clients.
+5. Platform Adapter Boundaries: Isolate browser-specific libraries (MapLibre GL DOM, Deck.gl, Web Audio, IndexedDB) to web via client boundaries and dynamic imports (`ssr: false`); mobile will use dedicated native adapters (`@maplibre/maplibre-react-native`, Expo AV, Expo SQLite, Expo Location).
+
+Reason:
+Minimizes risk and avoids simultaneous rewrites of routing, UI, and state management while proving end-to-end portability of the working Fisher experience.
+
+Alternatives considered:
+- Immediate full rewrite with Zustand, TanStack Query, Tailwind, and shadcn component replacements on day one (rejected: excessive simultaneous change without baseline verification).
+- Maintaining separate backends or duplicate decision algorithms for mobile and web (rejected: creates drift, violates canonical safety invariants).
+
+Impact:
+`nextjs/` directory initialized for web; shared contracts reused verbatim; Fisher journey established as P0 priority; old `frontend/` preserved until verification is complete.
+Owner: Lead Engineer / Architecture
+Date: 2026-09-24
+
 ## Decision template
 
 ### D0XX — <title>
@@ -456,6 +478,7 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 
 
 
