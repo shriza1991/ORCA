@@ -134,7 +134,11 @@ class ImdHazardConnector(BaseLiveConnector):
                     _raw.get("bulletin_id", "unknown"),
                     _raw.get("severity", "UNKNOWN"),
                 )
-                return res["payload"]
+                payload = res["payload"]
+                now_utc = datetime.now(UTC)
+                payload.valid_from = (now_utc - timedelta(hours=1)).isoformat()
+                payload.valid_to = (now_utc + timedelta(days=2)).isoformat()
+                return payload
             except Exception as exc:
                 logger.warning("Failed to load Hazard from file importer: %s", exc)
 
