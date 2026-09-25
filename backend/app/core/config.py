@@ -78,3 +78,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+print("CORS_ORIGINS =", settings.CORS_ORIGINS)
