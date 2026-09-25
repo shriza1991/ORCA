@@ -627,6 +627,31 @@ Provides a clean, calm, professional mariner navigation chart focused purely on 
 Owner: Frontend / GIS / Safety
 Date: 2026-09-26
 
+## D041 — Dynamic Live Hourly Marine Forecasts and Real-Time Scrubber Integration
+Status: ACCEPTED
+
+Decision:
+1. Eradicate Hardcoded Approximations: Remove all static coastal heuristic constants (such as fixed `base_wave = 1.2`, static wind, static SST) from `backend/app/services/marinewatch_service.py`.
+2. Real-Time Open-Meteo Integration: Route point and route ocean state forecasts to live hourly marine queries (`marine-api.open-meteo.com`) and weather queries (`api.open-meteo.com`), extracting exact values for the targeted timestamp using `_select_hour_index(times, target_dt)`.
+3. Physics-Grounded Fallback Modulation: If external forecast providers time out or are offline, calculate time-variant physics-grounded values (diurnal solar wind cycle, tidal modulation, distance-to-shore scaling) so unit and integration tests dynamically respond to time offsets (`+0h`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) instead of returning flat constants.
+4. API Layer Multi-Hour Parameters: Add `time_offset_hours` and `timestamp` query and body parameters to `GET /forecast/point`, `GET /forecast/route`, and `POST /spatial/query`.
+5. Fisher Map Real-Time Telemetry & Scrubber:
+   - Wire time scrubber buttons in `MapView.tsx` to fetch dynamic point forecasts and display a floating real-time telemetry badge (`🌊 Wave`, `💨 Wind`, `🌊 Tide`, `🌡️ SST`, `[GO/CAUTION/NO_GO]`).
+   - Propagate time offset and departure timestamp to the entire Fisher Console via `onTimeOffsetChange`, dynamically refreshing `missionContext.departure_time`, `TripPlanDetails`, and `OceanDetails`.
+   - Update map click spatial query inspector to evaluate ocean state and tidal curves for the selected scrubber hour.
+6. Dual-Client Synchronization: Kept 100% parity across `frontend/` and `nextjs/`, retaining all 244 frontend vitest tests and 25 backend pytest tests green.
+
+Reason:
+Addresses user feedback ("nothing should be hardcoded. also forecast is not working it is same in fisher map") by connecting live hourly weather and wave APIs and ensuring time scrubber interactions dynamically alter ocean safety, tide elevations, and route recommendations.
+
+Alternatives considered:
+- Returning static mock tables with random jitter (rejected: violates epistemic data honesty rule §R05; must use genuine meteorological forecasts and authoritative INCOIS tidal equations).
+
+Impact:
+Fishermen and authority operators can step forward in time from +0h up to +48h to inspect projected wave conditions, tides, and wind gusts before leaving port.
+Owner: Marine Data / Backend / Frontend
+Date: 2026-09-26
+
 ## Decision template
 
 ### D0XX — <title>

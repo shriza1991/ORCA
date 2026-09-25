@@ -16,7 +16,7 @@ Provides the 10 core national marine endpoints inspired by BarentsWatch:
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -42,6 +42,14 @@ class SpatialQueryRequest(BaseModel):
         default=None,
         description="Filter specific layers: ['forecast', 'tide', 'bathymetry', 'hazards', 'ports', 'aquaculture', 'pfz']"
     )
+    timestamp: Optional[str] = Field(
+        default=None,
+        description="ISO-8601 target forecast timestamp"
+    )
+    time_offset_hours: Optional[int] = Field(
+        default=0,
+        description="Forecast offset in hours (e.g. 0, 3, 6, 12, 24, 48)"
+    )
 
 
 class RouteForecastRequest(BaseModel):
@@ -53,6 +61,14 @@ class RouteForecastRequest(BaseModel):
     craft_profile: str = Field(
         default="MOTORIZED_FIBERGLASS",
         description="Vessel craft profile (e.g. NON_MOTORIZED_CANOE, MOTORIZED_FIBERGLASS, MECHANIZED_TRAWLER)",
+    )
+    timestamp: Optional[str] = Field(
+        default=None,
+        description="ISO-8601 departure timestamp"
+    )
+    time_offset_hours: Optional[int] = Field(
+        default=0,
+        description="Departure time offset in hours"
     )
 
 
@@ -69,6 +85,7 @@ def get_point_forecast(
     lat: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
     lon: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
     timestamp: Optional[str] = Query(None, description="ISO-8601 target evaluation timestamp (defaults to current UTC)"),
+    time_offset_hours: Optional[int] = Query(0, description="Forecast offset in hours (e.g. 0, 3, 6, 12, 24, 48)"),
 ) -> Dict[str, Any]:
     target_dt = None
     if timestamp:
@@ -79,6 +96,8 @@ def get_point_forecast(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid ISO-8601 timestamp format: {timestamp}",
             )
+    elif time_offset_hours:
+        target_dt = datetime.now(UTC) + timedelta(hours=time_offset_hours)
 
     return marine_watch_service.get_point_forecast(lat=lat, lon=lon, dt=target_dt)
 
@@ -98,6 +117,8 @@ def get_route_forecast(
         description="Comma/semicolon delimited lat,lon waypoints: '16.99,73.28;16.82,72.95'",
     ),
     craft_profile: str = Query("MOTORIZED_FIBERGLASS", description="Vessel craft profile"),
+    timestamp: Optional[str] = Query(None, description="ISO-8601 departure timestamp"),
+    time_offset_hours: Optional[int] = Query(0, description="Departure time offset in hours"),
 ) -> Dict[str, Any]:
     try:
         parsed_waypoints: List[tuple[float, float]] = []
@@ -113,7 +134,16 @@ def get_route_forecast(
             detail=f"Invalid waypoints parameter format. Expected 'lat1,lon1;lat2,lon2': {exc}",
         )
 
-    return marine_watch_service.get_route_forecast(parsed_waypoints, craft_profile=craft_profile)
+    target_dt = None
+    if timestamp:
+        try:
+            target_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            target_dt = None
+    elif time_offset_hours:
+        target_dt = datetime.now(UTC) + timedelta(hours=time_offset_hours)
+
+    return marine_watch_service.get_route_forecast(parsed_waypoints, craft_profile=craft_profile, dt=target_dt)
 
 
 # ---------------------------------------------------------------------------
@@ -389,7 +419,16 @@ def search_marine_features(
     description="Cross-references ocean forecast, bathymetry, tides, hazards, nearby landing centres, and regulatory restrictions for a location.",
 )
 def execute_spatial_query(request: SpatialQueryRequest) -> Dict[str, Any]:
-    point_data = marine_watch_service.get_point_forecast(lat=request.lat, lon=request.lon)
+    target_dt = None
+    if request.timestamp:
+        try:
+            target_dt = datetime.fromisoformat(request.timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            target_dt = None
+    elif request.time_offset_hours:
+        target_dt = datetime.now(UTC) + timedelta(hours=request.time_offset_hours)
+
+    point_data = marine_watch_service.get_point_forecast(lat=request.lat, lon=request.lon, dt=target_dt)
     nearby_ports = marine_watch_service.get_nearby_ports(lat=request.lat, lon=request.lon, radius_km=request.radius_km)
     nearby_aqua = marine_watch_service.get_nearby_aquaculture(lat=request.lat, lon=request.lon, radius_km=request.radius_km)
     nearby_lighthouses = marine_watch_service.get_nearby_lighthouses(lat=request.lat, lon=request.lon, radius_km=request.radius_km)

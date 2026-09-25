@@ -22,11 +22,12 @@ export default function OceanDetails({ assessment, language = 'en' }: OceanDetai
       // getHarborCoordinates returns [lon, lat], executeSpatialQuery takes (lat, lon)
       const lat = coords[1];
       const lon = coords[0];
-      executeSpatialQuery(lat, lon)
+      const depTime = assessment?.trip_context?.departure_time;
+      executeSpatialQuery(lat, lon, 50, undefined, depTime)
         .then((res) => setSpatialData(res))
         .catch((err) => console.error('Spatial query error:', err));
     }
-  }, [originHarbor, assessment?.trip_context?.coordinates]);
+  }, [originHarbor, assessment?.trip_context?.coordinates, assessment?.trip_context?.departure_time]);
 
   if (!assessment) return null;
 

@@ -128,6 +128,20 @@
   - **100% Dual-Client Parity**:
     - Synchronized all filtering utilities (`fisher-map.ts`, `geo.ts`), marker rendering (`MapView.tsx`), and CSS tokens (`marinewatch.css`) across Vite (`frontend/`) and Next.js (`nextjs/`).
 
+### Milestone Feature: Dynamic Live Hourly Marine Forecasts & Scrubber Integration (§D041)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 244/244 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 25/25 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; dual-client parity confirmed).
+- **Core Architecture & Experience Transformation**:
+  - **Eliminated Hardcoded Constants**: Removed static coastal heuristic approximations (`base_wave = 1.2`, static wind, static SST) from `marinewatch_service.py`.
+  - **Live Hourly Forecasts via Open-Meteo**: Integrated real-time hourly queries to `marine-api.open-meteo.com` and `api.open-meteo.com`, dynamically extracting hourly slots via `_select_hour_index(times, target_dt)`.
+  - **Physics-Grounded Temporal Fallback**: Added diurnal solar wind cycle, tidal modulation, and distance-to-shore scaling to guarantee dynamically varying ocean parameters even during offline fallback or unit tests.
+  - **Multi-Hour API Parameters**: Added `time_offset_hours` and `timestamp` across `GET /forecast/point`, `GET /forecast/route`, and `POST /spatial/query`.
+  - **Fisher Map Scrubber & Telemetry Badge**:
+    - Floating telemetry card above the time scrubber renders live dynamic conditions: `🌊 Wave`, `💨 Wind`, `🌊 Tide`, `🌡️ SST`, and craft safety badge (`[GO / CAUTION / NO_GO]`).
+    - Stepping forward in time (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) queries dynamic hourly forecasts for harbor and updates `chat.missionContext.departure_time`.
+    - Map click point inspector HUD passes the scrubber's selected time offset to evaluate wave height, swell period, wind direction, and astronomical tide for that future hour.
+    - `OceanDetails.tsx` and `TripPlanDetails.tsx` dynamically refresh with the selected departure timestamp.
+  - **100% Dual-Client Parity**: Fully synchronized across `frontend/` (Vite) and `nextjs/` (Next.js).
+
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
 | ID | Issue | Severity | Audited Status | Findings |

@@ -7,7 +7,7 @@ import type { MapLayer } from '../../types/contracts';
 import type { OperationalMode } from '../../types/mission';
 import LayerManager from './LayerManager';
 import MissionMapBrief from './MissionMapBrief';
-import { Layers, Navigation, Play, Square, Ship, Sailboat, Clock, Waves, X, Bookmark } from 'lucide-react';
+import { Layers, Navigation, Play, Square, Ship, Sailboat, Clock, Waves, X, Bookmark, RefreshCw } from 'lucide-react';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
 import { executeSpatialQuery, type UnifiedSpatialQueryResponse } from '../../api/marinewatch-client';
 import { NATIONAL_COASTAL_BOOKMARKS } from '../../utils/geo';
@@ -49,6 +49,8 @@ interface MapViewProps {
   isTrackingLocation?: boolean;
   onToggleLocation?: () => void;
   craftProfile?: string;
+  timeOffsetHours?: number;
+  onTimeOffsetChange?: (hours: number) => void;
 }
 
 export default function MapView({
@@ -67,6 +69,8 @@ export default function MapView({
   isTrackingLocation,
   onToggleLocation,
   craftProfile = 'motorized_boat',
+  timeOffsetHours,
+  onTimeOffsetChange,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -79,7 +83,29 @@ export default function MapView({
   const simulationRootRef = useRef<Root | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [selectedCorridorMode, setSelectedCorridorMode] = useState<OperationalMode>('safest');
-  const [selectedTimeStep, setSelectedTimeStep] = useState<number>(0);
+  const [selectedTimeStep, setSelectedTimeStep] = useState<number>(timeOffsetHours ?? 0);
+  const selectedTimeStepRef = useRef(selectedTimeStep);
+  selectedTimeStepRef.current = selectedTimeStep;
+
+  useEffect(() => {
+    if (timeOffsetHours !== undefined && timeOffsetHours !== selectedTimeStep) {
+      setSelectedTimeStep(timeOffsetHours);
+    }
+  }, [timeOffsetHours]);
+
+  const [mapForecast, setMapForecast] = useState<{
+    loading: boolean;
+    wave_height_m: number;
+    wind_speed_kn: number;
+    wind_direction_deg: number;
+    swell_height_m: number;
+    swell_period_s: number;
+    sst_c: number;
+    tide_height_m: number;
+    tide_phase: string;
+    status: 'GO' | 'CAUTION' | 'NO_GO';
+  } | null>(null);
+
   const [inspectedPoint, setInspectedPoint] = useState<{
     lat: number;
     lon: number;
@@ -87,6 +113,55 @@ export default function MapView({
     loading: boolean;
   } | null>(null);
   const [showBookmarks, setShowBookmarks] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const targetLat = inspectedPoint ? inspectedPoint.lat : (center ? center[1] : 16.99);
+    const targetLon = inspectedPoint ? inspectedPoint.lon : (center ? center[0] : 73.28);
+
+    setMapForecast((prev) => (prev ? { ...prev, loading: true } : null));
+
+    executeSpatialQuery(targetLat, targetLon, 50, selectedTimeStep)
+      .then((res) => {
+        if (isCancelled) return;
+        const wave = res.ocean_state.wave_height_m;
+        const craftUpper = (craftProfile || 'motorized_boat').toUpperCase();
+        let limit = 2.2;
+        if (craftUpper.includes('NON_MOTORIZED') || craftUpper.includes('CANOE')) limit = 1.4;
+        else if (craftUpper.includes('MECHANIZED') || craftUpper.includes('TRAWLER')) limit = 3.5;
+
+        let status: 'GO' | 'CAUTION' | 'NO_GO' = 'GO';
+        if (wave > limit) status = 'NO_GO';
+        else if (wave > limit * 0.8) status = 'CAUTION';
+
+        setMapForecast({
+          loading: false,
+          wave_height_m: res.ocean_state.wave_height_m,
+          wind_speed_kn: res.ocean_state.wind_speed_kn,
+          wind_direction_deg: res.ocean_state.wind_direction_deg,
+          swell_height_m: res.ocean_state.swell_height_m,
+          swell_period_s: res.ocean_state.swell_period_s,
+          sst_c: res.ocean_state.sst_c,
+          tide_height_m: res.astronomical_tide.current_height_m,
+          tide_phase: res.astronomical_tide.phase,
+          status,
+        });
+
+        if (inspectedPoint) {
+          setInspectedPoint((curr) => curr ? { ...curr, data: res, loading: false } : null);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to update forecast for time step:', err);
+        if (!isCancelled) {
+          setMapForecast((prev) => (prev ? { ...prev, loading: false } : null));
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedTimeStep, center?.[0], center?.[1], craftProfile]);
 
   const activeStyle = theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
   const currentStyleRef = useRef(activeStyle);
@@ -388,7 +463,7 @@ export default function MapView({
       const lon = parseFloat(e.lngLat.lng.toFixed(4));
       setInspectedPoint({ lat, lon, data: null, loading: true });
       try {
-        const queryRes = await executeSpatialQuery(lat, lon);
+        const queryRes = await executeSpatialQuery(lat, lon, 50, selectedTimeStepRef.current);
         setInspectedPoint({ lat, lon, data: queryRes, loading: false });
       } catch (err) {
         console.error('Failed to inspect ocean point:', err);
@@ -1169,6 +1244,67 @@ export default function MapView({
         )}
       </div>
 
+      {/* Floating Active Forecast Telemetry Card (Anchored above Time Scrubber) */}
+      <div
+        className="map-forecast-telemetry"
+        style={{
+          position: 'absolute',
+          bottom: '66px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          background: theme === 'dark' ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid var(--border, #334155)',
+          borderRadius: '16px',
+          padding: '5px 14px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
+          fontSize: '11px',
+          whiteSpace: 'nowrap',
+          color: 'var(--foreground, #0f172a)',
+        }}
+      >
+        {mapForecast?.loading ? (
+          <span style={{ color: 'var(--muted-foreground, #94a3b8)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <RefreshCw size={12} className="spin" /> Updating forecast (+{selectedTimeStep}h)…
+          </span>
+        ) : mapForecast ? (
+          <>
+            <span
+              style={{
+                padding: '2px 7px',
+                borderRadius: '9999px',
+                fontWeight: 700,
+                fontSize: '10px',
+                background:
+                  mapForecast.status === 'GO' ? '#dcfce7' : mapForecast.status === 'CAUTION' ? '#fef3c7' : '#fee2e2',
+                color:
+                  mapForecast.status === 'GO' ? '#166534' : mapForecast.status === 'CAUTION' ? '#92400e' : '#991b1b',
+              }}
+            >
+              {mapForecast.status}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              🌊 {mapForecast.wave_height_m}m <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontWeight: 400 }}>Wave</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              💨 {mapForecast.wind_speed_kn}kn <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontWeight: 400 }}>({mapForecast.wind_direction_deg}°)</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              🌊 {mapForecast.tide_height_m}m <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontWeight: 400 }}>({mapForecast.tide_phase})</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              🌡️ {mapForecast.sst_c}°C
+            </span>
+          </>
+        ) : (
+          <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Forecast ready</span>
+        )}
+      </div>
+
       {/* Floating Time Scrubber (+0h to +48h) */}
       <div
         className="map-time-scrubber"
@@ -1197,7 +1333,10 @@ export default function MapView({
           <button
             type="button"
             key={step.hours}
-            onClick={() => setSelectedTimeStep(step.hours)}
+            onClick={() => {
+              setSelectedTimeStep(step.hours);
+              onTimeOffsetChange?.(step.hours);
+            }}
             style={{
               padding: '3px 9px',
               fontSize: '11px',
@@ -1277,6 +1416,26 @@ export default function MapView({
                   {inspectedPoint.data.astronomical_tide.current_height_m} m CD ({inspectedPoint.data.astronomical_tide.phase})
                 </strong>
               </div>
+              {inspectedPoint.data.ocean_state && (
+                <>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Wave Height:</span>
+                    <strong style={{ color: inspectedPoint.data.ocean_state.wave_height_m > 2.0 ? '#ef4444' : '#10b981' }}>
+                      {inspectedPoint.data.ocean_state.wave_height_m} m (Swell {inspectedPoint.data.ocean_state.swell_height_m}m @ {inspectedPoint.data.ocean_state.swell_period_s}s)
+                    </strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Wind Speed:</span>
+                    <span style={{ fontWeight: 600 }}>
+                      {inspectedPoint.data.ocean_state.wind_speed_kn} kn ({inspectedPoint.data.ocean_state.wind_direction_deg}°)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Sea Surface Temp:</span>
+                    <span style={{ fontWeight: 600 }}>{inspectedPoint.data.ocean_state.sst_c} °C</span>
+                  </div>
+                </>
+              )}
               {inspectedPoint.data.nearby_lighthouses?.[0] && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Nearest Light:</span>
