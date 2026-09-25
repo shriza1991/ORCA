@@ -155,4 +155,6 @@ def map_state_to_response(
         warnings=state.get("warnings") or [],
         suggested_followups=state.get("suggested_followups") or [],
         agent_collaboration=state.get("agent_collaboration"),
+        decision_object=state.get("decision_object"),
+        decision_delta=state.get("decision_delta"),
     )

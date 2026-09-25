@@ -127,6 +127,8 @@ export interface ChatResponse {
   warnings: string[];
   suggested_followups: string[];
   agent_collaboration?: AgentCollaborationPayload;
+  decision_object?: any;
+  decision_delta?: any;
 }
 
 export type DataQualityRating = 'Verified' | 'Partial' | 'Snapshot Fallback' | 'Limited';

@@ -239,6 +239,14 @@ class ChatResponse(BaseModel):
         None,
         description="Multi-agent reasoning, evidence provenance, conflict arbitration, and causal timeline",
     )
+    decision_object: Optional[Any] = Field(
+        None,
+        description="Canonical M3 DecisionObject produced by deterministic reasoning pipeline",
+    )
+    decision_delta: Optional[Any] = Field(
+        None,
+        description="Structured M3 DecisionDelta comparing counterfactual/current to baseline",
+    )
 
 
 class DataQualityRating(str, Enum):
