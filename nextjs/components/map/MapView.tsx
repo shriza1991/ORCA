@@ -71,6 +71,7 @@ export default function MapView({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const activeLayersRef = useRef<{ layers: string[]; sources: string[] }>({ layers: [], sources: [] });
+  const domMarkersRef = useRef<maplibregl.Marker[]>([]);
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>({});
   const [isSimulating, setIsSimulating] = useState(false);
@@ -395,6 +396,15 @@ export default function MapView({
       }
     });
 
+    const updateZoomTier = () => {
+      if (!containerRef.current) return;
+      const z = map.getZoom();
+      const tier = z < 7 ? 'overview' : z < 10 ? 'regional' : 'detail';
+      containerRef.current.setAttribute('data-zoom-tier', tier);
+    };
+    map.on('zoom', updateZoomTier);
+    updateZoomTier();
+
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
     });
@@ -403,7 +413,10 @@ export default function MapView({
     mapRef.current = map;
 
     return () => {
+      map.off('zoom', updateZoomTier);
       resizeObserver.disconnect();
+      domMarkersRef.current.forEach((m) => m.remove());
+      domMarkersRef.current = [];
       map.remove();
       mapRef.current = null;
     };
@@ -506,6 +519,9 @@ export default function MapView({
     if (!map) return;
 
     const syncLayers = () => {
+      domMarkersRef.current.forEach((m) => m.remove());
+      domMarkersRef.current = [];
+
       const vis: Record<string, boolean> = {};
       const newRegisteredLayers: string[] = [];
       const newRegisteredSources: string[] = [];
@@ -638,7 +654,7 @@ export default function MapView({
           newRegisteredLayers.push(lineLayerId);
         }
 
-        // 3. Point positions & markers
+        // 3. Point positions & markers (DOM icon markers with suppressed canvas dots)
         if (hasPointFeature) {
           const pointLayerId = (hasPolygonFeature || hasLineFeature) ? `${layerId}-circle` : layerId;
           if (!map.getLayer(pointLayerId)) {
@@ -648,19 +664,96 @@ export default function MapView({
               source: sourceId,
               filter: ['in', '$type', 'Point'],
               paint: {
-                'circle-radius': circleRadius,
+                'circle-radius': 0, // Suppress canvas dot in favor of custom DOM icon markers
                 'circle-color': color,
-                'circle-opacity': opacity,
-                'circle-stroke-width': 2,
+                'circle-opacity': 0,
+                'circle-stroke-width': 0,
                 'circle-stroke-color': '#ffffff',
               },
             });
           } else {
-            map.setPaintProperty(pointLayerId, 'circle-radius', circleRadius);
+            map.setPaintProperty(pointLayerId, 'circle-radius', 0);
             map.setPaintProperty(pointLayerId, 'circle-color', color);
-            map.setPaintProperty(pointLayerId, 'circle-opacity', opacity);
+            map.setPaintProperty(pointLayerId, 'circle-opacity', 0);
           }
           newRegisteredLayers.push(pointLayerId);
+
+          // Build custom interactive DOM icon markers
+          if (layer.visible !== false) {
+            const pointFeatures: any[] = [];
+            if (geojson.type === 'Feature' && (geojson.geometry?.type === 'Point' || geojson.geometry?.type === 'MultiPoint')) {
+              pointFeatures.push(geojson);
+            } else if (geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+              for (const f of geojson.features) {
+                if (f && f.geometry && (f.geometry.type === 'Point' || f.geometry.type === 'MultiPoint')) {
+                  pointFeatures.push(f);
+                }
+              }
+            }
+
+            for (const f of pointFeatures) {
+              const rawCoords = f.geometry.coordinates;
+              const coordsList: [number, number][] =
+                f.geometry.type === 'Point' ? [rawCoords] : Array.isArray(rawCoords) ? rawCoords : [];
+
+              for (const pt of coordsList) {
+                if (!Array.isArray(pt) || pt.length < 2) continue;
+                const [lng, lat] = pt;
+                if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) continue;
+
+                const cfg = getPointMarkerConfig(f, layer);
+                const el = document.createElement('div');
+                el.className = 'marinewatch-custom-marker';
+                const inner = document.createElement('div');
+                inner.className = `marinewatch-marker-inner ${cfg.className}`;
+                inner.innerHTML = `<span class="marker-emoji" style="filter: drop-shadow(0 0 3px ${cfg.color});">${cfg.emoji}</span>`;
+                el.appendChild(inner);
+                el.title = cfg.title;
+
+                el.onclick = (e) => {
+                  e.stopPropagation();
+                  activePopupRef.current?.remove();
+
+                  let html: string | null = null;
+                  if (customPopupRendererRef.current) {
+                    try {
+                      html = customPopupRendererRef.current(f, layer);
+                    } catch {
+                      html = null;
+                    }
+                  }
+
+                  if (!html) {
+                    const ignoredKeys = new Set([
+                      'polygon_id', 'id', 'polygon_type', 'is_hard_restriction', 'objectid', 'object_id',
+                      'layer_id', 'layer_type', 'source', 'type', 'geometry_type', 'home_harbor_id'
+                    ]);
+                    const fProps = f.properties || {};
+                    const entries = Object.entries(fProps).filter(([k]) => !ignoredKeys.has(k.toLowerCase()));
+
+                    const content = entries.length > 0
+                      ? entries
+                          .slice(0, 6)
+                          .map(([k, v]) => `<div style="margin-bottom:2px"><strong>${k.replace(/_/g, ' ')}:</strong> ${formatPropValue(v)}</div>`)
+                          .join('')
+                      : `<div><em>${layer.name}</em></div>`;
+
+                    html = `<div class="map-popup"><h5 style="margin:0 0 6px;color:${cfg.color};font-size:12px;font-weight:700">${layer.name}</h5>${content}</div>`;
+                  }
+
+                  const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '300px', offset: 12, className: 'fisher-map-popup' })
+                    .setLngLat([lng, lat])
+                    .setHTML(html)
+                    .addTo(map);
+
+                  activePopupRef.current = popup;
+                };
+
+                const marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
+                domMarkersRef.current.push(marker);
+              }
+            }
+          }
 
           // Register active vessel marker for calm telemetry tracking pulse
           const isVesselPoint = layerId === 'layer_fleet_vessel_replay' || layer.style?.layer_category === 'fleet_replay' || layerId === 'layer_vessel_position';
@@ -1238,6 +1331,145 @@ function getGeometryType(geojson: MapLayer['geojson']): string {
     return (geojson as GeoJSON.Feature).geometry?.type || 'Point';
   }
   return (geojson as any)?.geometry?.type || 'Point';
+}
+
+/**
+ * Maps point features to MarineWatch-style DOM icon markers:
+ * ⚓ Landing Harbour / Departure Station
+ * 🎯 Voyage Target / Destination Point
+ * 🗼 DGLL Coastal Lighthouse
+ * 🐟 Potential Fishing Zone (PFZ)
+ * 🦐 CAA Aquaculture Farm
+ * ⚠️ Marine Hazard Alert
+ * ⛵ Live Vessel / Monitored Craft
+ */
+function getPointMarkerConfig(
+  feature: any,
+  layer: MapLayer,
+): { emoji: string; className: string; color: string; title: string } {
+  const props = feature.properties || {};
+  const layerId = (layer.layer_id || '').toLowerCase();
+  const layerCategory = (layer.style?.layer_category || '').toLowerCase();
+  const pointType = (props.point_type || props.type || '').toLowerCase();
+  const name = props.name || props.harbor || props.location || layer.name || '';
+
+  // 1. Departure Station / Port / Landing Harbour
+  if (
+    pointType.includes('departure') ||
+    pointType.includes('harbor') ||
+    layerId.includes('harbor') ||
+    layerId.includes('port') ||
+    layerCategory === 'navigation_terminal' ||
+    layerId === 'layer_route_start_marker'
+  ) {
+    return {
+      emoji: '⚓',
+      className: 'port-marker',
+      color: '#0284c7',
+      title: `${name} (Departure Station / Landing Centre)`,
+    };
+  }
+
+  // 2. Destination / Target
+  if (
+    pointType.includes('destination') ||
+    layerId === 'layer_route_end_marker' ||
+    pointType.includes('target') ||
+    name.toLowerCase().includes('target')
+  ) {
+    return {
+      emoji: '🎯',
+      className: 'destination-marker',
+      color: '#f59e0b',
+      title: `${name} (Voyage Target / Destination)`,
+    };
+  }
+
+  // 3. DGLL Navigational Lighthouse
+  if (
+    pointType.includes('lighthouse') ||
+    layerId.includes('lighthouse') ||
+    layerCategory === 'navigation_aid'
+  ) {
+    const range = props.optical_range_nm || props.range_nm || 15;
+    return {
+      emoji: '🗼',
+      className: 'lighthouse-marker',
+      color: '#eab308',
+      title: `${name} (DGLL Coastal Lighthouse · ${range}nm)`,
+    };
+  }
+
+  // 4. Potential Fishing Zone (PFZ)
+  if (
+    layerId.includes('pfz') ||
+    layerCategory === 'pfz' ||
+    props.candidate_id ||
+    (props.public_id && String(props.public_id).startsWith('pfz'))
+  ) {
+    const rank = props.rank ? ` #${props.rank}` : '';
+    const dist = props.distance_km ? ` · ${props.distance_km.toFixed(1)} km` : '';
+    return {
+      emoji: '🐟',
+      className: 'pfz-marker',
+      color: '#10b981',
+      title: `PFZ Candidate${rank}${dist}`,
+    };
+  }
+
+  // 5. CAA Aquaculture Farm
+  if (
+    layerId.includes('aqua') ||
+    layerCategory === 'aquaculture' ||
+    props.farm_name ||
+    props.farm_code
+  ) {
+    return {
+      emoji: '🦐',
+      className: 'aqua-marker',
+      color: '#f97316',
+      title: `${props.farm_name || name} (CAA Aquaculture)`,
+    };
+  }
+
+  // 6. Point Hazard / Warning
+  if (
+    layerId.includes('hazard') ||
+    layerCategory === 'hazard' ||
+    props.severity ||
+    props.headline
+  ) {
+    return {
+      emoji: '⚠️',
+      className: 'hazard-marker',
+      color: '#ef4444',
+      title: `${props.headline || name || 'Hazard Alert'}`,
+    };
+  }
+
+  // 7. Live Vessel / Monitored Craft
+  if (
+    pointType.includes('location') ||
+    pointType.includes('vessel') ||
+    layerId.includes('vessel') ||
+    layerId === 'layer_live_location' ||
+    layerId === 'layer_fleet_vessel_replay'
+  ) {
+    return {
+      emoji: '⛵',
+      className: 'vessel-marker',
+      color: '#2563eb',
+      title: `${name || 'Monitored Vessel'}`,
+    };
+  }
+
+  // Default fallback icon
+  return {
+    emoji: '📍',
+    className: 'port-marker',
+    color: layer.style?.color || '#0284c7',
+    title: name || layer.name,
+  };
 }
 
 function formatPropValue(val: unknown): string {

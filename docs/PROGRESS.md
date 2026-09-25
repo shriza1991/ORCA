@@ -103,6 +103,31 @@
   - **FleetDeck Utility Standardization**: Added semantic classes for `.fleet-offline-banner`, `.fleet-replay-unavailable-card`, `.fleet-empty-state`, `.fleet-alert-inspection`, `.fleet-alerts-empty`, `.telemetry-icon-start`, and `.telemetry-icon-dest`.
   - **100% Dual-Client Parity**: Synchronized all component refactors and CSS definitions to `nextjs/` (`components/authority/`, `components/map/`, `views/`, and `styles/components.css`).
 
+### Milestone Feature: Fisher Console Clutter Pruning & Interactive DOM Icon Markers (§D040)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 244/244 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; visual verification complete via Chrome DevTools MCP across light & dark themes).
+- **Core Visual & Operational Refactor**:
+  - **Pruning Excessive Macro-Areas & Nationwide Polygons**:
+    - Filtered out 200nm sovereign Exclusive Economic Zone (EEZ) polygon fills and 12nm Territorial Waters fills from the Fisher Console (`/fisher`) map layers.
+    - Filtered out 8km concentric circle PFZ thermal front polygons (`layer_pfz_thermal_fronts`).
+    - Filtered out macro-regional weather hazard polygons spanning > 2.0 degrees (e.g. 700km IMD squall corridors covering 14°N to 21°N) and opposite-coast hazards, while retaining local navigation hazards with subtle opacity (`fill: 0.15`, `line_width: 2.0`).
+    - Scoped base boundaries and marine protected areas (e.g. Malvan MPA) to local harbor operational vicinity (< 1.5° bbox) with clean, subtle outlines (`opacity: 0.08`, `line_width: 1.5`).
+  - **Interactive DOM Icon Markers**:
+    - Suppressed MapLibre canvas circle point layers (`circle-radius: 0`, `circle-opacity: 0`) to eliminate plain, generic colored dots.
+    - Replaced with interactive DOM markers styled with `.marinewatch-custom-marker` and `.marinewatch-marker-inner`:
+      - ⚓ `port-marker` for Departure Harbor Stations and Landing Harbours (`#0284c7`)
+      - 🎯 `destination-marker` for Voyage Targets & Waypoint Destinations (`#f59e0b`)
+      - 🗼 `lighthouse-marker` for DGLL Coastal Landfall Lighthouses (`#eab308`)
+      - 🐟 `pfz-marker` for Potential Fishing Zone advisory locations (`#10b981`)
+      - 🦐 `aqua-marker` for CAA Coastal Aquaculture facilities (`#f97316`)
+      - ⚠️ `hazard-marker` for Point Marine Hazards (`#ef4444`)
+      - ⛵ `vessel-marker` for Live Vessel Positions and Fleet Tracking (`#2563eb`)
+  - **Mariner Interactivity & Zoom Adaptation**:
+    - Marker click opens mariner popup cards (`formatFishermanPopup`) with operational data (depth, distance, VHF channel, coordinates).
+    - Marker hover scales markers by 1.32x with CSS drop-shadows without jitter.
+    - Dynamic zoom listener assigns `[data-zoom-tier="overview" | "regional" | "detail"]` on container for smooth scaling.
+  - **100% Dual-Client Parity**:
+    - Synchronized all filtering utilities (`fisher-map.ts`, `geo.ts`), marker rendering (`MapView.tsx`), and CSS tokens (`marinewatch.css`) across Vite (`frontend/`) and Next.js (`nextjs/`).
+
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
 | ID | Issue | Severity | Audited Status | Findings |

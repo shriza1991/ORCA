@@ -673,7 +673,7 @@ function isNationalMaritimeBoundary(layer: MapLayer): boolean {
 /**
  * Extracts a bounding box from a GeoJSON Feature or FeatureCollection.
  */
-function extractGeojsonBBox(geojson: any): [number, number, number, number] | null {
+export function extractGeojsonBBox(geojson: any): [number, number, number, number] | null {
   if (!geojson) return null;
 
   const coords: [number, number][] = [];
@@ -709,6 +709,16 @@ function extractGeojsonBBox(geojson: any): [number, number, number, number] | nu
     if (lat > maxLat) maxLat = lat;
   }
   return [minLng, minLat, maxLng, maxLat];
+}
+
+/**
+ * Checks whether two 2D bounding boxes [minLng, minLat, maxLng, maxLat] intersect.
+ */
+export function bboxIntersects(
+  a: [number, number, number, number],
+  b: [number, number, number, number],
+): boolean {
+  return a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
 }
 
 /**

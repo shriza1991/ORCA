@@ -597,6 +597,36 @@ Guarantees robust responsive presentation, restores tabular and grid formatting 
 Owner: Frontend / Architecture
 Date: 2026-09-26
 
+## D040 — Fisher Console Clutter Pruning & Interactive DOM Icon Markers
+Status: ACCEPTED
+
+Decision:
+1. Operational Ocean Scoping: Completely prune 200nm sovereign Exclusive Economic Zone (EEZ) polygon fills, 12nm Territorial Waters fills, and 8km concentric circle PFZ thermal front polygons from the Fisher Console (`/fisher`) map layers.
+2. Macro-Regional Weather Corridor Pruning: Filter active hazard GeoJSON layers so that macro-regional weather corridors spanning > 2.0 degrees (e.g. 700km IMD squall corridors covering 14°N to 21°N) and opposite-coast hazards are excluded from the local mariner map, while local hazards within harbor bounding box (~1.5°) are retained with subtle opacity (0.15 fill, 2.0px stroke).
+3. Local Geofence Containment: Scope base boundaries and marine protected areas to local harbor operational vicinity (< 1.5° bbox), styled with subtle outlines (opacity 0.08, line width 1.5).
+4. Replacement of Canvas Dots with DOM Icon Markers: Suppress MapLibre canvas circle point layers (`circle-radius: 0`, `circle-opacity: 0`) and render interactive DOM markers with `.marinewatch-custom-marker` and `.marinewatch-marker-inner`:
+   - ⚓ `port-marker` for Departure Harbor Stations & Landing Harbours (`#0284c7`)
+   - 🎯 `destination-marker` for Voyage Targets & Waypoint Destinations (`#f59e0b`)
+   - 🗼 `lighthouse-marker` for DGLL Coastal Landfall Lighthouses (`#eab308`)
+   - 🐟 `pfz-marker` for Potential Fishing Zone advisory locations (`#10b981`)
+   - 🦐 `aqua-marker` for CAA Aquaculture facilities (`#f97316`)
+   - ⚠️ `hazard-marker` for Point Marine Hazards (`#ef4444`)
+   - ⛵ `vessel-marker` for Live Vessel Positions and Fleet Replay Tracking (`#2563eb`)
+5. Interactive Mariner Experience: Click handlers on all markers open formatted mariner popup cards (`formatFishermanPopup`), hover scales markers by 1.32x with CSS drop-shadows, and container zoom listeners dynamically assign `[data-zoom-tier="overview" | "regional" | "detail"]`.
+6. 100% Dual-Client Parity: Synchronized across Vite (`frontend/`) and Next.js (`nextjs/`).
+
+Reason:
+Eliminates extreme visual clutter that overwhelmed the fisherman's operational chart with multiple giant overlapping polygon fills, and replaces generic colored dots with intuitive nautical symbols directly recognizable by coastal fishermen.
+
+Alternatives considered:
+- Keeping 200nm EEZ with ultra-low opacity (rejected: fishermen operate within nearshore coastal waters; nationwide polygons still trigger zoom distortion and cognitive overload).
+- Rendering icons on MapLibre canvas via SDF symbol sprites (rejected: requires external image loading and lacks hardware-accelerated CSS hover transitions, drop-shadows, and dynamic zoom tier adaptation).
+
+Impact:
+Provides a clean, calm, professional mariner navigation chart focused purely on the departure station, safe passage routes, lighthouses, and fishing zones.
+Owner: Frontend / GIS / Safety
+Date: 2026-09-26
+
 ## Decision template
 
 ### D0XX — <title>

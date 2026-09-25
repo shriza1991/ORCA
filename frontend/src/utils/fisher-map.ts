@@ -2,7 +2,7 @@ import type { MapLayer } from '../types/contracts';
 import type { PFZCandidate, HazardBulletin } from '../api/researcher-client';
 import { buildPFZGeoJSON } from '../components/researcher/PFZSpatialMap';
 import { buildHazardGeoJSON } from '../components/researcher/HazardSpatialMap';
-import { createHarborLayer, filterLayersByRegion } from './geo';
+import { createHarborLayer, extractGeojsonBBox, bboxIntersects } from './geo';
 
 /**
  * Creates a canonical MapLayer from PFZ candidates using the existing pure buildPFZGeoJSON transformer.
@@ -58,6 +58,174 @@ export function createHazardMapLayers(hazards: HazardBulletin[]): MapLayer[] {
   ];
 }
 
+/**
+ * Specifically scopes base and environmental layers for the Fisherman Console:
+ * 1. Excludes 200nm sovereign EEZ and 12nm Territorial Waters polygon fills to prevent cluttering the sea.
+ * 2. Excludes 8km concentric circle PFZ thermal front polygons (PFZ point markers already display location and telemetry).
+ * 3. Scopes hazards to only those that locally intersect the fisherman's operational departure zone (~1.5° bbox),
+ *    applying subtle styling (opacity: 0.15, line_width: 2.0).
+ * 4. Scopes local geofences (MPAs, naval ranges) to those intersecting the operational zone, with clean outlines
+ *    (opacity: 0.08, line_width: 1.5).
+ * 5. Retains coastal lighthouses and landing aids.
+ */
+export function filterFisherBaseLayers(
+  layers: MapLayer[],
+  harborCoords: [number, number],
+  paddingDeg: number = 1.5,
+): MapLayer[] {
+  if (!layers || layers.length === 0) return [];
+
+  const [centerLng, centerLat] = harborCoords;
+  const harborBbox: [number, number, number, number] = [
+    centerLng - paddingDeg,
+    centerLat - paddingDeg,
+    centerLng + paddingDeg,
+    centerLat + paddingDeg,
+  ];
+
+  const filtered: MapLayer[] = [];
+
+  for (const layer of layers) {
+    const id = (layer.layer_id || '').toLowerCase();
+    const name = (layer.name || '').toLowerCase();
+    const cat = (layer.style?.layer_category || '').toLowerCase();
+
+    // 1. Exclude 200nm EEZ and 12nm Territorial Waters fills
+    const isEEZ =
+      id.includes('eez') ||
+      name.includes('eez') ||
+      name.includes('exclusive economic zone') ||
+      cat === 'national_eez';
+    const isTerritorial =
+      id.includes('territorial') ||
+      name.includes('territorial') ||
+      cat === 'national_boundary';
+
+    if (isEEZ || isTerritorial) {
+      continue;
+    }
+
+    // 2. Exclude 8km concentric PFZ thermal front circles
+    const isPFZThermalFronts =
+      id.includes('pfz_thermal_front') ||
+      id.includes('thermal_front') ||
+      name.includes('thermal front');
+
+    if (isPFZThermalFronts) {
+      continue;
+    }
+
+    // 3. Navigation aids (DGLL Lighthouses, Ports, Departure Stations) — always keep
+    const isNavAid =
+      id.includes('lighthouse') ||
+      cat === 'navigation_aid' ||
+      id.includes('harbor') ||
+      id.includes('port');
+
+    if (isNavAid) {
+      filtered.push(layer);
+      continue;
+    }
+
+    // 4. Passage routes — keep if intersecting operational area
+    const isRoute = id.includes('route') || cat === 'route' || cat === 'navigation';
+    if (isRoute) {
+      if (!layer.geojson) {
+        filtered.push(layer);
+        continue;
+      }
+      const rBox = extractGeojsonBBox(layer.geojson);
+      if (!rBox || bboxIntersects(rBox, harborBbox)) {
+        filtered.push(layer);
+      }
+      continue;
+    }
+
+    // 5. PFZ point markers — keep if intersecting operational area
+    const isPFZPoints = id.includes('pfz') || cat === 'pfz';
+    if (isPFZPoints) {
+      if (!layer.geojson) {
+        filtered.push(layer);
+        continue;
+      }
+      const pBox = extractGeojsonBBox(layer.geojson);
+      if (!pBox || bboxIntersects(pBox, harborBbox)) {
+        filtered.push(layer);
+      }
+      continue;
+    }
+
+    // 6. Hazards: filter to only those intersecting harbor operational bounding box
+    const isHazard =
+      id.includes('hazard') ||
+      cat === 'hazard' ||
+      id.includes('cyclone') ||
+      id.includes('squall');
+
+    if (isHazard) {
+      if (!layer.geojson) continue;
+
+      if (layer.geojson.type === 'FeatureCollection' && Array.isArray(layer.geojson.features)) {
+        const localFeatures = layer.geojson.features.filter((f: any) => {
+          const fBox = extractGeojsonBBox(f);
+          if (!fBox) return false;
+          // Filter out macro-regional weather polygons spanning > 2.0 degrees (e.g. 700km nationwide corridors)
+          const isMacroRegion = (fBox[2] - fBox[0] > 2.0) || (fBox[3] - fBox[1] > 2.0);
+          if (isMacroRegion) return false;
+          return bboxIntersects(fBox, harborBbox);
+        });
+
+        if (localFeatures.length > 0) {
+          filtered.push({
+            ...layer,
+            geojson: {
+              ...layer.geojson,
+              features: localFeatures,
+            },
+            style: {
+              ...layer.style,
+              opacity: 0.15, // Subtle, readable fill
+              line_width: 2.0,
+            },
+          });
+        }
+      } else {
+        const bBox = extractGeojsonBBox(layer.geojson);
+        if (bBox) {
+          const isMacroRegion = (bBox[2] - bBox[0] > 2.0) || (bBox[3] - bBox[1] > 2.0);
+          if (!isMacroRegion && bboxIntersects(bBox, harborBbox)) {
+            filtered.push({
+              ...layer,
+              style: {
+                ...layer.style,
+                opacity: 0.15,
+                line_width: 2.0,
+              },
+            });
+          }
+        }
+      }
+      continue;
+    }
+
+    // 7. Geofences (MPAs, Naval Firing Ranges, etc.)
+    if (!layer.geojson) continue;
+    const layerBBox = extractGeojsonBBox(layer.geojson);
+    if (layerBBox && bboxIntersects(layerBBox, harborBbox)) {
+      filtered.push({
+        ...layer,
+        style: {
+          ...layer.style,
+          opacity: 0.08, // Subtle boundary outline and fill
+          line_width: 1.5,
+        },
+      });
+    }
+  }
+
+  return filtered;
+}
+
 export interface MergeFisherLayersParams {
   baseLayers: MapLayer[];
   harborCoords: [number, number];
@@ -75,7 +243,7 @@ export interface MergeFisherLayersParams {
  * - If chat response contains PFZ layers, they take precedence over baseline PFZ.
  * - If chat response contains hazard layers, they take precedence over baseline hazards.
  * - If chat response contains origin/harbor layer, it takes precedence over baseline harbor marker.
- * - Base geofences are scoped to the harbor region.
+ * - Base geofences are scoped to the harbor region, removing giant sovereign fills and 8km circles.
  */
 export function mergeFisherLayers({
   baseLayers,
@@ -88,7 +256,7 @@ export function mergeFisherLayers({
   chatLayers = [],
 }: MergeFisherLayersParams): MapLayer[] {
   // Scoped baseline boundaries around departure harbor
-  const regionBaseLayers = filterLayersByRegion(baseLayers, harborCoords, 2.0);
+  const regionBaseLayers = filterFisherBaseLayers(baseLayers, harborCoords, 1.5);
 
   // Check what categories are present in the chat response layers
   const hasChatRoutes = chatLayers.some(
@@ -127,8 +295,8 @@ export function mergeFisherLayers({
   // Effective harbor layer
   const effectiveHarborLayers = hasChatOrigin ? [] : [createHarborLayer(originHarbor, status)];
 
-  // Filter response layers geographically where appropriate (preserves national boundaries)
-  const regionChatLayers = filterLayersByRegion(chatLayers, harborCoords, 2.5);
+  // Filter response layers geographically where appropriate (also filtering out EEZ and 8km circles)
+  const regionChatLayers = filterFisherBaseLayers(chatLayers, harborCoords, 2.0);
 
   return [
     ...regionBaseLayers,
