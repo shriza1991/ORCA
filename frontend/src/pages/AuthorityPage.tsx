@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Activity,
   AlertTriangle,
+  Anchor,
   Building2,
   FileCheck2,
   FlaskConical,
@@ -16,6 +17,8 @@ import AgentTimeline from '../components/trace/AgentTimeline';
 import ScenarioBenchmarkDeck from '../components/authority/ScenarioBenchmarkDeck';
 import FleetTrackingDeck from '../components/authority/FleetTrackingDeck';
 import AgentCollaborationPanel from '../components/collaboration/AgentCollaborationPanel';
+import PortWatchRegistry from '../components/authority/PortWatchRegistry';
+import AquaWatchRegistry from '../components/authority/AquaWatchRegistry';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
 import {
@@ -47,7 +50,7 @@ export interface AuthorityPageProps {
   onBack: () => void;
 }
 
-export type AuthorityTab = 'terminal' | 'fleet' | 'benchmarks' | 'audit';
+export type AuthorityTab = 'terminal' | 'fleet' | 'ports' | 'aquaculture' | 'benchmarks' | 'audit';
 
 /**
  * Authority Command Deck Page
@@ -292,6 +295,26 @@ export default function AuthorityPage({
           </button>
           <button
             type="button"
+            className={`authority-segment-btn ${authorityTab === 'ports' ? 'active' : ''}`}
+            onClick={() => setAuthorityTab('ports')}
+            role="tab"
+            aria-selected={authorityTab === 'ports'}
+          >
+            <Anchor size={13} />
+            <span>{translateText('Port Census', chat.language)}</span>
+          </button>
+          <button
+            type="button"
+            className={`authority-segment-btn ${authorityTab === 'aquaculture' ? 'active' : ''}`}
+            onClick={() => setAuthorityTab('aquaculture')}
+            role="tab"
+            aria-selected={authorityTab === 'aquaculture'}
+          >
+            <ShieldCheck size={13} />
+            <span>{translateText('Aquaculture', chat.language)}</span>
+          </button>
+          <button
+            type="button"
             className={`authority-segment-btn ${authorityTab === 'benchmarks' ? 'active' : ''}`}
             onClick={() => setAuthorityTab('benchmarks')}
             role="tab"
@@ -463,6 +486,18 @@ export default function AuthorityPage({
                 language={chat.language}
               />
             </div>
+          </div>
+        )}
+
+        {authorityTab === 'ports' && (
+          <div className="authority-benchmarks-container" style={{ background: 'var(--background)' }}>
+            <PortWatchRegistry />
+          </div>
+        )}
+
+        {authorityTab === 'aquaculture' && (
+          <div className="authority-benchmarks-container" style={{ background: 'var(--background)' }}>
+            <AquaWatchRegistry />
           </div>
         )}
 

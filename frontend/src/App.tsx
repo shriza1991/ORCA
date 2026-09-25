@@ -4,7 +4,6 @@ import PortalPage from './pages/PortalPage';
 import FisherPage from './pages/FisherPage';
 import AuthorityPage from './pages/AuthorityPage';
 import ResearcherPage from './pages/ResearcherPage';
-import MarineWatchPage from './pages/MarineWatchPage';
 import SettingsPage from './pages/SettingsPage';
 import EvidenceDrawer from './components/evidence/EvidenceDrawer';
 import CallModal from './components/call/CallModal';
@@ -12,7 +11,7 @@ import DeckGLExperimentView from './components/experimental/DeckGLExperimentView
 import { useChat } from './hooks/useChat';
 import { MessageSquare, Map as MapIcon } from 'lucide-react';
 
-export type PortalMode = 'selection' | 'fisher' | 'authority' | 'researcher' | 'marinewatch' | 'settings' | 'deckgl-experiment';
+export type PortalMode = 'selection' | 'fisher' | 'authority' | 'researcher' | 'settings' | 'deckgl-experiment';
 
 /**
  * SAMUDRA Main Application Shell
@@ -121,8 +120,6 @@ export default function App() {
           onOpenEvidence={() => setIsDrawerOpen(true)}
           onBack={handleBack}
         />
-      ) : portal === 'marinewatch' ? (
-        <MarineWatchPage onBackToPortal={() => setPortal('selection')} theme={theme} language={chat.language} />
       ) : portal === 'researcher' ? (
         <ResearcherPage />
       ) : portal === 'deckgl-experiment' ? (

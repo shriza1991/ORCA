@@ -54,6 +54,21 @@
     - `AuthorityPage.tsx`: Statutory Decision Authority & Multi-Agent Arbitration audit section.
     - Adaptive stakeholder views for Fisherman, Authority, and Researcher.
 
+### Milestone Feature: Operational Integration of India MarineWatch & Dashboard Consolidation (§D037)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Vite production build: succeeded cleanly; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`).
+- **Core Architecture & Experience Transformation**:
+  - Eliminated standalone `/marinewatch` dashboard and removed its 4th portal card to unify all ocean intelligence under the 3 authoritative operational personas: **Fisher Console (`/fisher`)**, **Authority Command Deck (`/authority`)**, and **Researcher Lab (`/researcher`)**.
+  - **Researcher Lab (`/researcher`)**:
+    - Embedded `Unified GIS Explorer` (`gis` tab) featuring MapLibre GL nationwide interactive map, click-to-query depth profiles, INCOIS astronomical predicted tides (PAT), 13 geographic bookmark presets, time scrubber, and zoom-invariant clickable vector geometries (MPAs, 12nm territorial sea, 200nm EEZ, IMD/INCOIS hazard alerts, PFZ thermal fronts, bathymetric contours).
+    - Embedded `Data Catalogue (§212)` (`catalogue` tab) showcasing the complete registry of 30 institutional marine datasets.
+  - **Authority Command Deck (`/authority`)**:
+    - Embedded `PortWatch Registry` (`ports` tab): CMFRI 30-Harbour Census detailing mechanized/motorized vessel capacity, quay berths, draft limits, and VHF monitoring channels.
+    - Embedded `AquaWatch Registry` (`aquaculture` tab): Coastal Aquaculture Authority (CAA) registered farms with salinity (ppt), culture species, water source, and biosecurity audit tracking.
+  - **Fisher Console (`/fisher`)**:
+    - Enriched `OceanDetails.tsx`: Live INCOIS Astronomical Predicted Tide (PAT) water elevation above Chart Datum, tidal trend (Flood/Ebb), Next High Water, Next Low Water, nearest DGLL Coastal Lighthouse aid, and GEBCO bathymetric seabed depth.
+    - Enriched `PFZDetails.tsx`: Target pelagic catch recommendations, optimal fishing gears (gillnet/purse seine/longline), distance/bearing from harbour, and thermal front indices.
+  - **Dual-Client Synchronization**: Updated both `frontend/` (Vite) and `nextjs/` (Next.js) codebases to maintain 100% design and behavioral parity.
+
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
 | ID | Issue | Severity | Audited Status | Findings |

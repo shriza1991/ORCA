@@ -528,7 +528,27 @@ Alternatives considered:
 Impact:
 Next.js and Expo P0 roadmaps proceed without impediment; contract schema is prepared for seamless P1 integration.
 Owner: Lead Architect
-Date: 2026-09-24
+## D037 — Integration of India MarineWatch into Operational Dashboards & Standalone Route Retirement
+Status: ACCEPTED
+
+Decision:
+1. Standalone Route Retirement: Retire the standalone `/marinewatch` route and portal card, eliminating persona bifurcation and redundant map surfaces.
+2. Operational Persona Integration:
+   - **Researcher Lab (`/researcher`)**: Unified GIS Explorer (`gis` tab with MapLibre GL nationwide interactive map, click-to-query depth profiles, PAT tides, bookmark presets, and time scrubber) and Data Catalogue (§212) (`catalogue` tab with 30 institutional marine datasets).
+   - **Authority Command Deck (`/authority`)**: CMFRI 30-Harbour Port Census Registry (`ports` tab with fleet breakdown, quays, VHF radio channels) and CAA Aquaculture Biosecurity Watch (`aquaculture` tab with certified brackishwater farms, salinity, water sources, audit compliance).
+   - **Fisher Console (`/fisher`)**: INCOIS Astronomical Predicted Tide (PAT) water elevation above Chart Datum, tidal trends (Flood/Ebb), Next High/Low Water, DGLL coastal lighthouses, GEBCO bathymetric seabed depth in `OceanDetails.tsx`; and pelagic catch targets, recommended gear, distance/bearing in `PFZDetails.tsx`.
+3. Dual-Client Parity: Enforce identical architectural parity across both Vite (`frontend/`) and Next.js (`nextjs/`) applications.
+
+Reason:
+Puts high-value institutional oceanographic intelligence directly at the point of action for each persona, eliminates navigation clutter, and aligns with the 3 core personas (Fisher, Authority, Researcher).
+
+Alternatives considered:
+- Retaining a separate 4th portal dashboard (rejected: disjointed UX, redundant GIS layers, split cognitive load).
+
+Impact:
+Portal simplified to 3 core operational cards; `/fisher`, `/authority`, and `/researcher` gain deep nationwide telemetry without regressions.
+Owner: Product / Architecture
+Date: 2026-09-25
 
 ## Decision template
 
