@@ -9,6 +9,7 @@ import asyncio
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from backend.app.agents.memory import memory_manager
 from backend.app.api.v1.marinewatch import router as marinewatch_router
@@ -74,13 +75,21 @@ def create_app() -> FastAPI:
     app.include_router(api_v1_router)
     app.include_router(marinewatch_router)
 
-    # Configure persistence
+    # Configure persistence. Production requires the managed PostgreSQL/PostGIS
+    # connection; only local/demo environments retain the explicit offline
+    # fallback used by hermetic tests and snapshot demonstrations.
     try:
         from backend.app.db.models import Base
         from backend.app.db.session import engine
-        Base.metadata.create_all(bind=engine)
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        if settings.APP_ENV.lower() not in {"production", "staging"}:
+            Base.metadata.create_all(bind=engine)
         memory_manager.set_store(SQLAlchemyConversationStore())
     except Exception as e:
+        if settings.APP_ENV.lower() in {"production", "staging"}:
+            logger.critical("Required PostgreSQL/PostGIS database unavailable: %s", e)
+            raise RuntimeError("Required PostgreSQL/PostGIS database is unavailable") from e
         logger.warning("Database init skipped or unavailable on startup: %s", e)
 
     # Register Dev 2 providers

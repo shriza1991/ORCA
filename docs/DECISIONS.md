@@ -562,3 +562,20 @@ Vercel-hosted clients route backend calls consistently, Ratnagiri and other cano
 
 Owner: Platform / UX
 Date: 2026-09-26
+
+## D038 - Production Persistence Boundary
+Status: ACCEPTED
+
+Decision:
+1. Render production and staging require PostgreSQL/PostGIS during application startup and do not silently downgrade persistence to the in-memory offline store.
+2. `DATABASE_URL` is the managed-service input; `SYNC_DATABASE_URL` is derived as a psycopg2 URL when not explicitly set, preserving local/test overrides.
+3. Schema creation in production is migration-owned (`alembic upgrade head`); development/demo may retain `create_all` for hermetic setup.
+
+Reason:
+Silent persistence degradation is unsafe for an operational intelligence system. Render Managed PostgreSQL/PostGIS is the supported production path, while offline stores remain explicitly scoped to local/demo/test environments.
+
+Impact:
+Deployment failures become visible at startup, Alembic remains the production schema authority, and no database credentials are introduced into source control.
+
+Owner: Platform / Infrastructure
+Date: 2026-09-26

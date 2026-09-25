@@ -997,7 +997,8 @@ def _resolve_sector_to_harbor_id(sector: str | None) -> str | None:
     if harbor_id:
         return harbor_id
 
-    s_lower = sector.strip().lower()
+    s = sector.strip()
+    s_lower = s.lower()
     # Keep compatibility with historical display-name inputs that are not
     # present in the canonical sector registry.
     try:
