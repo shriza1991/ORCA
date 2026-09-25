@@ -45,7 +45,7 @@ LABEL org.opencontainers.image.source="https://github.com/shriza1991/SAMUDRA"
 # Runtime system libraries for PostGIS/Shapely
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
-    libgdal32 \
+    libgdal36 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder stage
