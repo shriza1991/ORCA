@@ -2755,3 +2755,114 @@ That is the ORCA transformation.
 The project is not trying to make the biggest marine AI.
 
 It is trying to make the system that can take a real marine mission, reason over the right evidence, make a defensible decision, explain it, and adapt when the mission changes.
+
+---
+
+# 31. ORCA FIELD INTELLIGENCE NETWORK (PLANNED)
+
+> STATUS: ARCHITECTURAL SPECIFICATION & CANONICAL CONTRACT  
+> TARGET INTEGRATION: P1 (Foundation in P0 contract alignment)
+
+## 31.1 Definition and Strategic Identity
+
+The ORCA Field Intelligence Network turns participating fishermen and field users into trusted, privacy-controlled sources of local marine observations, while returning aggregated intelligence and personalized insights to the same community.
+
+It is strictly **NOT** social media, a follower/like graph, or an uncurated bulletin board.
+
+Core loop:
+```text
+OBSERVE → REPORT → VERIFY → CORROBORATE → FUSE → REASON → INFORM → LEARN
+```
+
+## 31.2 Field Signal Concept
+
+Community observations do not enter ORCA reasoning as raw social posts. They enter as **Field Signals** within the canonical Source Registry.
+
+Source classification taxonomy:
+- `OFFICIAL`: INCOIS, IMD, SACHET, DGLL, Navy/Coast Guard restrictions (Primary safety authority)
+- `SCIENTIFIC`: CMFRI, MOSDAC, VLIZ, GEBCO (Ecosystem baselines)
+- `OPERATIONAL`: Fleet telemetry, active replay, corridor models
+- `COMMUNITY`: Verified participatory observations from mariners (**Field Signals**)
+- `DERIVED`: Aggregates, counterfactuals, scenario deltas
+
+## 31.3 Canonical CommunityObservation Schema (Target)
+
+```yaml
+CommunityObservation:
+  id: UUID
+  observer_id: UUID                 # Pseudonymous/hashed
+  identity_state: UNVERIFIED | PHONE_VERIFIED | ESTABLISHED
+  observation_type: CATCH | SEA_CONDITION | CURRENT | WAVE | WIND | FISH_ACTIVITY | HAZARD | UNUSUAL_EVENT | OTHER
+  observed_at: ISO-8601 UTC
+  reported_at: ISO-8601 UTC
+  location_lat: float               # Stored server-side; protected by privacy policy
+  location_lon: float
+  location_precision: EXACT | APPROXIMATE | ZONE
+  location_zone: string             # Resolved sector/harbour name
+  location_grid_cell: string        # 5km / H3 aggregation index
+  sea_state: CALM | MODERATE | ROUGH | VERY_ROUGH
+  current_strength: LIGHT | MODERATE | STRONG | VERY_STRONG
+  wave_height_approx: LOW | MODERATE | HIGH | VERY_HIGH
+  wind_strength: LIGHT | MODERATE | STRONG
+  visibility: GOOD | MODERATE | POOR
+  fish_activity: LOW | MODERATE | HIGH        # Private by default
+  species: string                             # Private by default
+  catch_indication: LOW | MODERATE | HIGH     # Private by default
+  description: string (max 280 chars)
+  has_photo: bool
+  has_gps: bool
+  media_ids: list[UUID]
+  privacy_level: PRIVATE | APPROXIMATE | ZONE | RESEARCH
+  catch_is_private: bool (default true)
+  corroboration_count: int
+  agreement_with_official: CONSISTENT | INCONSISTENT | UNKNOWN
+  status: PENDING | ACCEPTED | REJECTED | FLAGGED
+  rejection_reason: string
+  trip_id: UUID | null
+```
+
+## 31.4 Trust & Evidence Hierarchy (Safety Invariants)
+
+1. **Deterministic Official Supremacy (Invariant C-1)**: Community signals NEVER override deterministic hard safety constraints (IMD cyclone warnings, prohibited naval/sanctuary geofences, vessel craft swamping thresholds).
+2. **Missing Evidence Principle (Invariant C-2)**: Absence of community reports in a sector NEVER implies safety (`Missing community reports != safe`).
+3. **Explicit Labeling (Invariant C-3)**: Community evidence in reasoning outputs must always bear the explicit tag `[FIELD SIGNAL]` and display corroboration count and freshness.
+4. **No Artificial Trust Scores (Invariant C-4)**: Trust is rendered via verifiable categorical facts (`GPS captured`, `Evidence attached`, `Recently reported < 3h`, `Corroborated by N reports`, `Unconfirmed field report`), never arbitrary decimal percentages (`87.4% trusted`).
+5. **Single-Observer Containment (Invariant C-5)**: An uncorroborated report from an unverified contributor cannot alter safety decision status or lower risk thresholds.
+
+## 31.5 Privacy by Design
+
+- **Fishing Ground Secrecy**: Location precision defaults to `APPROXIMATE` (5km grid / zone level). Exact coordinates are never exposed to peer fishers.
+- **Catch Privacy**: Catch volume and species indications are `PRIVATE` by default. Contributor must explicitly opt in to share aggregated catch indicators.
+- **Vessel Protection**: Contributor identities and vessel registrations are strictly scrubbed from public community aggregates.
+
+## 31.6 Community → MarineContext Integration
+
+```text
+Field Observations (Mobile/Web)
+       │
+       ▼
+Auto-Sanitization & Grid Aggregation (Backend)
+       │
+       ▼
+CommunitySignalConnector (Source Registry: COMMUNITY)
+       │
+       ▼
+Unified ObservationBundle (ObservationBundle.community_signals)
+       │
+       ▼
+Validation & Evidence Engine
+       │
+       ├── Official Hard Constraints Evaluated (Risk Engine)
+       │
+       ├── Confidence Calibration (Medium ↔ High modulation only)
+       │
+       ▼
+Reasoning & Explanation Engine ("[FIELD SIGNAL] 9 reports in Malvan indicate...")
+```
+
+## 31.7 Phased Implementation Roadmap
+
+- **P0 Foundation**: Contract extension (`source_type` on `EvidenceItem`), privacy bounds definition, mock community signal in test harness. Does NOT block React → Next.js or Expo core MVP.
+- **P1 Active Field Signals**: 10-15s mobile reporting flow, 5km grid spatial clustering, community signal card on Fisher Decision Surface, researcher spatial signal overlay.
+- **P2 Ecosystem Expansion**: Personal historical catch insights ("My Trips"), cooperative fleet circles, offline SMS/packet bridge.
+

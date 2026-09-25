@@ -446,29 +446,88 @@ The documentation and product narrative now distinguish web demo access from nat
 Owner: Product / Architecture
 Date: 2026-09-24
 
-## D033 — Deterministic Multi-Agent Collaboration and Decision Authority Visibility
+## D033 — React to Next.js Incremental Web Migration and Dual-Platform Alignment
 Status: ACCEPTED
 
 Decision:
-1. Transform the end-user, authority, and research experience from a black-box final answer (`User → Final Answer`) into a fully observable multi-agent collaboration trail: `User → Agent Collaboration → Evidence Gathering → Risk Assessment → Arbitration → Final Answer`.
-2. Do not introduce new LLM loops, asynchronous agent overhead, or redundant background tasks. The collaboration payload is derived 100% deterministically in Python (`AgentCollaborationEngine`) from the already evaluated cognitive graph state in < 5ms.
-3. Terminology: Refer to the arbitration entity strictly as **Decision Authority** (or Final Recommendation Engine) in all UI surfaces, eliminating synthetic AI buzzwords like "Arbiter Agent".
-4. Epistemic data honesty: Forbid arbitrary percentage confidence scores (e.g., "87%"). Use deterministic `Evidence Strength: HIGH / MEDIUM / LOW / UNKNOWN` and `Data Quality: Verified / Partial / Snapshot Fallback / Limited`.
-5. Timeline lifecycle: Enforce an 8-step cognitive lifecycle (`Mission Received` → `Data Collection` → `Marine Analysis` → `Weather Analysis` → `Boundary Analysis` → `Safety Assessment` → `Conflict Resolution` → `Final Recommendation`).
-6. Conflict arbitration: Ground conflict arbitration in statutory Protocol D010 (safety hard-stops unconditionally supersede resource abundance opportunities).
-7. Causal explanation: Structure transparent explanations across 5 sequential tiers: FACTS → INFERENCES → CONSTRAINTS → DECISION → ACTION.
-8. Adapt multi-stakeholder perspectives natively for Fisherman, Port/Enforcement Authority, and Marine Researcher.
+1. Migration Strategy: Adopt an incremental "REUSE → ADAPT → EXTRACT → REWRITE" migration from React 18 / Vite to Next.js (App Router), creating `nextjs/` alongside the existing `frontend/` without deleting `frontend/` until the migration is fully verified.
+2. State Management & API: Do NOT force Zustand or TanStack Query on Day 1. Reuse existing hand-rolled fetch clients (`client.ts`), React hooks (`useChat`, `useTripAssessment`, `useAlerts`), and pure TypeScript domain contracts directly, adapting environment variables (`import.meta.env.VITE_*` → `process.env.NEXT_PUBLIC_*`). Introduce Zustand/TanStack Query later only where justified by real state-management friction.
+3. Page Migration Order: Migrate `/fisher` first as the primary operational demonstration and fisherman workflow, followed by `/authority`, `/researcher`, `/marinewatch`, and `/settings`.
+4. Shared Intelligence Core: Both Next.js (web institutional/demo) and React Native + Expo (field mobile) consume the exact same FastAPI backend intelligence and domain contracts (`POST /api/v1/chat`, `POST /api/v1/trip-assessments`, etc.). No decision logic, safety rules, or marine reasoning shall be duplicated on clients.
+5. Platform Adapter Boundaries: Isolate browser-specific libraries (MapLibre GL DOM, Deck.gl, Web Audio, IndexedDB) to web via client boundaries and dynamic imports (`ssr: false`); mobile will use dedicated native adapters (`@maplibre/maplibre-react-native`, Expo AV, Expo SQLite, Expo Location).
 
 Reason:
-Judges, domain experts, and mariners must see verifiable agent evidence provenance and statutory arbitration rather than opaque generative outputs.
+Minimizes risk and avoids simultaneous rewrites of routing, UI, and state management while proving end-to-end portability of the working Fisher experience.
 
-Alternatives:
-- Spawn real-time multi-agent conversational LLM loops for debate (rejected: introduces non-deterministic latency, potential hallucination of safety bounds, and breaks deterministic safety authority).
-- Display arbitrary confidence percentages (rejected: misleading, ungrounded, and vulnerable to expert scrutiny).
+Alternatives considered:
+- Immediate full rewrite with Zustand, TanStack Query, Tailwind, and shadcn component replacements on day one (rejected: excessive simultaneous change without baseline verification).
+- Maintaining separate backends or duplicate decision algorithms for mobile and web (rejected: creates drift, violates canonical safety invariants).
 
 Impact:
-Integrated seamlessly across Chat messages, Fisherman Decision Surface, Researcher Query Workbench, and Authority Command Audit Deck with 100% backward compatibility.
-Owner: Product / Multi-Agent Architecture
+`nextjs/` directory initialized for web; shared contracts reused verbatim; Fisher journey established as P0 priority; old `frontend/` preserved until verification is complete.
+Owner: Lead Engineer / Architecture
+Date: 2026-09-24
+
+## D034 — Field Intelligence Network & Participatory Marine Observation Architecture
+Status: ACCEPTED
+
+Decision:
+1. Architectural Framing: Introduce the "ORCA Field Intelligence Network" as a structured, privacy-preserving, trust-graded participatory marine observation layer. Reject framing as a generic social network, follower graph, or public social feed.
+2. Domain Abstraction: Define canonical `CommunityObservation` and `AggregatedCommunitySignal` domain models within the Source Registry under the new `COMMUNITY` source category (`DataMode.USER_GENERATED`).
+3. Core Interaction Loop: Implement the closed intelligence loop: `OBSERVE → REPORT → VERIFY → CORROBORATE → FUSE → REASON → INFORM → LEARN`. Fishermen contribute structured observations in 10-15 seconds and receive aggregated field signals and personal insights in return.
+4. Privacy by Design: Enforce `APPROXIMATE` location sharing (5km / H3 spatial grid cell) by default to safeguard artisanal fishing grounds; catch quantities and targeted species are marked `PRIVATE` by default unless contributor explicitly opts in; contributor IDs and vessel identities are strictly scrubbed from peer-facing aggregates.
+
+Reason:
+Empowers mariners to act as distributed ground-truth sensors for localized ocean conditions without turning ORCA into an uncurated social network or exposing commercial fishing secrets.
+
+Alternatives considered:
+- Building an open social media feed with likes and followers (rejected: distracts from mission intelligence, introduces toxic engagement incentives, lacks scientific validity).
+- Keeping ORCA as a pure one-way consumer of government satellite/model data (rejected: ignores invaluable hyper-local mariner knowledge and ground-truth validation).
+
+Impact:
+Extends Source Registry with `COMMUNITY` class; establishes `community_observations` DB schema and privacy bounds.
+Owner: Product / Architecture
+Date: 2026-09-24
+
+## D035 — Strict Evidence Hierarchy and Deterministic Official Supremacy over Community Signals
+Status: ACCEPTED
+
+Decision:
+1. Inviolable Invariant (C-1): Deterministic official safety constraints (IMD cyclone bulletins, prohibited naval/sanctuary geofences, vessel-specific wave height swamping ceilings) possess absolute authority. Community reports can NEVER override or soften an official `NO_GO` or `RESTRICTED` decision.
+2. Invariant C-2 (Epistemic Honesty): The absence of community reports in a sector never implies safety (`Missing community reports != safe`).
+3. Invariant C-3 (Explicit Lineage): All community observations surfaced in conversational reasoning or evidence drawers must be explicitly tagged as `[FIELD SIGNAL]`, displaying corroboration count, freshness window, and agreement status.
+4. Invariant C-4 (Verifiable Trust Dimensions): Prohibit ungrounded decimal trust percentages (e.g. "87.4% trusted"). Trust is articulated strictly via categorical factual dimensions: identity state (`UNVERIFIED`, `PHONE_VERIFIED`, `ESTABLISHED`), evidence completeness (GPS, media), corroboration count ($N \ge 3$), and agreement with authoritative forecasts.
+5. Invariant C-5 (Confidence Modulation Bounds): Community field signals may only modulate confidence between `MEDIUM` and `HIGH` (e.g. lowering confidence when credible field reports contradict an optimistic forecast, or raising confidence for a `CAUTION` advisory when multiple reports corroborate rough currents). Single uncorroborated reports cannot alter decisions.
+
+Reason:
+Maritime safety is safety-critical and legally defensible. Crowdsourced observations must inform situational awareness without compromising physical safety or introducing crowd-manipulation attack vectors.
+
+Alternatives considered:
+- Allowing crowdsourced reports to vote down an official IMD storm warning (rejected: catastrophic safety and liability risk).
+- Collapsing trust into an opaque single score (rejected: creates false sense of precision and obscures provenance).
+
+Impact:
+Protects deterministic risk engine; codifies rules C-1 through C-5 across agent reasoning and explanation composing.
+Owner: Safety / Architecture
+Date: 2026-09-24
+
+## D036 — Non-Blocking Phased Integration of Field Signals
+Status: ACCEPTED
+
+Decision:
+1. Non-Blocking Status: The Field Intelligence Network is classified as a P1 feature stream. It MUST NOT block the ongoing React 18 → Next.js App Router migration (`W0`–`W8`) or the React Native + Expo fisherman MVP (`M0`–`M9`).
+2. P0 Contract Alignment: The only P0 code touchpoint is an optional `source_type` enumeration attribute added to the shared canonical `EvidenceItem` contract (`"OFFICIAL" | "SCIENTIFIC" | "OPERATIONAL" | "COMMUNITY" | "DERIVED"`), with default `"OFFICIAL"` preserving 100% backward compatibility.
+3. Execution Phasing: Full implementation (DB schema, API routes, mobile 3-step reporting, grid aggregation) begins during P1 after the core dual-client architecture is verified.
+
+Reason:
+Prevents scope creep from delaying the primary judging and demo milestones while guaranteeing clean architectural alignment in advance.
+
+Alternatives considered:
+- Forcing full community reporting into the initial P0 mobile MVP (rejected: excessive complexity that risks missing the P0 delivery timeline).
+
+Impact:
+Next.js and Expo P0 roadmaps proceed without impediment; contract schema is prepared for seamless P1 integration.
+Owner: Lead Architect
 Date: 2026-09-24
 
 ## Decision template
@@ -481,6 +540,7 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 
 
 

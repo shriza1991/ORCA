@@ -1,0 +1,16 @@
+@import 'maplibre-gl/dist/maplibre-gl.css';
+@import '../styles/variables.css';
+@import '../styles/components.css';
+@import '../styles/marinewatch.css';
+@import '../styles/globals.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Additional Next.js root layout stability */
+html, body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}

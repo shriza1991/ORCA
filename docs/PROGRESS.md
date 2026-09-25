@@ -9,6 +9,13 @@
 - Current version: `v0.2.2-features-main-integrated`
 - Active branch: `main`
 - Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**
+- Client Architecture Migration: **IN PROGRESS (Next.js Web Scaffold & Fisher Route Alignment)**
+  - Dual interface model locked: React Native + Expo (field mobile) & Next.js + React (web platform & demo).
+  - Migration principle: `REUSE → ADAPT → EXTRACT → REWRITE`.
+  - Next.js application scaffold initialized at `nextjs/` alongside existing `frontend/` (which remains untouched and fully functional).
+  - Pure contracts (`types/contracts.ts`, `mission.ts`, `assessment.ts`, `alerts.ts`), API clients, utilities, and i18n ported into `nextjs/`.
+  - State management rule enforced: existing React hooks (`useChat`, `useTripAssessment`, `useAlerts`) ported first; Zustand/TanStack Query deferred until justified by real friction.
+  - P0 priority: `/fisher` route established as the primary judging and operational experience.
 - Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 235 tests passing across 16 test suites; backend: 387 passed / 1 skipped in agent_eval, 19/19 passed in marinewatch; verified on 2026-09-23)
 - 13 Foundation API Contracts (§213): **100% IMPLEMENTED & PASSING** (`/forecast/point`, `/forecast/route`, `/hazards/active`, `/fisheries/pfz`, `/ports/nearby`, `/aquaculture/sites/nearby`, `/coast/profile`, `/datasets`, `/search`, `/spatial/query`, `/lighthouses/nearby`, `/lighthouses`, `/boundaries`)
 - Nationwide Reference Data Ingestion:
@@ -65,6 +72,7 @@
 | G-4 | `Decision Delta` backend computation | P1 | **RESOLVED & VERIFIED** |
 | G-5 | Source conflict resolution policy | P1 | COMPLETE (`D010` authoritative hierarchy + fallback confidence) |
 | G-6 | Hard constraint ordering (safety→legal→vessel→operational) | P0 | **RESOLVED & VERIFIED** |
+| G-7 | ORCA Field Intelligence Network (Community Observations) | P1 | PLANNED (Architectural Spec §31, D034-D036) |
 
 #### P0-11 — Chat Context State Integrity (Fisher What-If Controls)
 - Fixed conversational logic to parse relative timestamps into absolute ISO references and compute true scenario offsets without overriding operational rules.
