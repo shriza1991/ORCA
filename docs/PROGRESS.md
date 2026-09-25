@@ -9,11 +9,16 @@
 - Current version: `v0.2.2-features-main-integrated`
 - Active branch: `main`
 - Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**
-- Client Architecture Migration: **IN PROGRESS (Next.js Web Scaffold & Fisher Route Alignment)**
+- Client Architecture Migration: **IN PROGRESS (Next.js Multi-Agent Reasoning Port & Full Route Support)**
   - Dual interface model locked: React Native + Expo (field mobile) & Next.js + React (web platform & demo).
   - Migration principle: `REUSE → ADAPT → EXTRACT → REWRITE`.
   - Next.js application scaffold initialized at `nextjs/` alongside existing `frontend/` (which remains untouched and fully functional).
   - Pure contracts (`types/contracts.ts`, `mission.ts`, `assessment.ts`, `alerts.ts`), API clients, utilities, and i18n ported into `nextjs/`.
+  - Multi-Agent Reasoning & Decision Authority UI ported with 100% parity from `frontend/` into `nextjs/`:
+    - Components: `AgentCollaborationPanel`, `AgentCardsGrid`, `AgentEvidenceCard`, `CausalExplanationCards`, `ConflictArbitrationCard`, `ReasoningTimelineView`, `StakeholderPerspectiveSelector`.
+    - Integrated across `ChatMessage.tsx`, `FisherDecisionSurface.tsx`, `QueryWorkbench.tsx`, and `AuthorityPage.tsx`.
+    - Routes supported: `/fisher`, `/authority`, `/researcher`, `/marinewatch`, `/settings`.
+    - Verification: Next.js `npm run typecheck` and `npm run build` passing with 0 errors (9/9 static pages generated). Frontend vitest suite untouched (242 tests passing across 17 suites).
   - State management rule enforced: existing React hooks (`useChat`, `useTripAssessment`, `useAlerts`) ported first; Zustand/TanStack Query deferred until justified by real friction.
   - P0 priority: `/fisher` route established as the primary judging and operational experience.
 - Real Data Foundation: **COMPLETE & VERIFIED** (frontend: 235 tests passing across 16 test suites; backend: 387 passed / 1 skipped in agent_eval, 19/19 passed in marinewatch; verified on 2026-09-23)

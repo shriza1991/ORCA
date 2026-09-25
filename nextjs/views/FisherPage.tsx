@@ -142,6 +142,7 @@ export default function FisherPage({
               activeDiff={chat.activeDiff}
               missionContext={chat.missionContext}
               language={chat.language}
+              collaboration={chat.activeResponse?.agent_collaboration || (assessment as any)?.agent_collaboration}
               onOpenVoyageSettings={() => setSidebarTab('voyage')}
               onViewMap={onViewMap}
             />

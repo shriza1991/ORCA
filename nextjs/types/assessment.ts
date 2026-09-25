@@ -1,4 +1,4 @@
-import type { UserContext, Recommendation, MapLayer } from './contracts';
+import type { UserContext, Recommendation, MapLayer, AgentCollaborationPayload } from './contracts';
 
 export interface TripAssessmentRequest {
   origin_harbor?: string;
@@ -44,4 +44,5 @@ export interface TripAssessmentResponse {
   evidence: Record<string, any>[];
   source_status: AssessmentSourceStatus[];
   is_durable: boolean;
+  agent_collaboration?: AgentCollaborationPayload;
 }

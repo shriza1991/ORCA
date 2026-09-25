@@ -7,6 +7,7 @@ import {
   FlaskConical,
   RadioTower,
   Ship,
+  ShieldCheck,
 } from 'lucide-react';
 import ChatPanel from '../components/chat/ChatPanel';
 import AuthorityDeckGLMap from '../components/authority/AuthorityDeckGLMap';
@@ -14,6 +15,7 @@ import EvidenceCard from '../components/evidence/EvidenceCard';
 import AgentTimeline from '../components/trace/AgentTimeline';
 import ScenarioBenchmarkDeck from '../components/authority/ScenarioBenchmarkDeck';
 import FleetTrackingDeck from '../components/authority/FleetTrackingDeck';
+import AgentCollaborationPanel from '../components/collaboration/AgentCollaborationPanel';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
 import {
@@ -345,6 +347,23 @@ export default function AuthorityPage({
             </span>
           </div>
 
+          {/* Decision Authority Button */}
+          {authorityActiveResponse?.agent_collaboration && (
+            <button
+              type="button"
+              className={`authority-kpi-chip authority-evidence-btn ${authorityTab === 'audit' ? 'active' : ''}`}
+              onClick={() => setAuthorityTab('audit')}
+              title={translateText('Inspect Decision Authority & Multi-Agent Arbitration', chat.language)}
+              data-testid="kpi-decision-authority"
+              style={{ borderColor: '#86efac', background: '#f0fdf4', color: '#166534' }}
+            >
+              <ShieldCheck size={13} className="status-accent" />
+              <span>
+                <strong>{authorityActiveResponse.agent_collaboration.arbitration?.winning_decision || 'AUDITED'}</strong> ({authorityActiveResponse.agent_collaboration.agents.length} Agents)
+              </span>
+            </button>
+          )}
+
           {/* Grounded Evidence Button */}
           {evidenceList.length > 0 && (
             <button
@@ -456,6 +475,37 @@ export default function AuthorityPage({
         {authorityTab === 'audit' && (
           /* Audit View: Direct In-Page Evidence & Agent Trace Logs */
           <div className="authority-audit-view">
+            {authorityActiveResponse?.agent_collaboration && (
+              <div className="authority-collaboration-audit-section" style={{ gridColumn: '1 / -1', marginBottom: '20px' }} data-testid="authority-collaboration-section">
+                <div className="audit-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ShieldCheck size={18} color="#0284c7" />
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
+                      {translateText('Statutory Decision Authority & Multi-Agent Arbitration Audit', chat.language)}
+                    </h3>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      padding: '4px 10px',
+                      borderRadius: '9999px',
+                      background: authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? '#fef3c7' : '#dcfce7',
+                      color: authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? '#92400e' : '#166534',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected
+                      ? translateText('Protocol D010 Invoked', chat.language)
+                      : translateText('Full Consensus', chat.language)}
+                  </span>
+                </div>
+                <AgentCollaborationPanel
+                  collaboration={authorityActiveResponse.agent_collaboration}
+                  defaultRole="authority"
+                />
+              </div>
+            )}
+
             <div className="authority-audit-column">
               {selectedOperationalAlert && (
                 <section className="fleet-alert-inspection" aria-label="Alert evidence" style={{ marginBottom: '14px', padding: '12px', border: '1px solid rgba(250, 204, 21, 0.5)', borderRadius: '8px' }}>
