@@ -35,16 +35,90 @@ logger = logging.getLogger(__name__)
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "samudra"
 
+# ---------------------------------------------------------------------------
+# In-memory canonical sector + harbor registry
+# ---------------------------------------------------------------------------
+# This mirrors the data/fixtures/synthetic/samudra/sectors.json and
+# harbors.json data and is used as a hardened final fallback when the fixture
+# files cannot be resolved at runtime (e.g., Render working-directory).
+# UPDATE this registry whenever the fixture data changes.
+_CANONICAL_SECTORS_FALLBACK: List[Dict[str, Any]] = [
+    {
+        "public_id": "sector-ratnagiri",
+        "name": "Ratnagiri Sector (MH-03)",
+        "harbor_id": "harbor-ratnagiri",
+        "center": [73.28, 16.99],
+        "zoom": 8.8,
+        "station_name": "Ratnagiri Coast Guard & Fisheries Post",
+        "code": "MH-03",
+        "polygon": [[72.5, 16.45], [73.35, 16.5], [73.34, 16.7], [73.3, 16.88], [73.3, 17.05],
+                    [73.24, 17.32], [73.18, 17.55], [72.55, 17.55], [72.45, 17.0], [72.5, 16.45]],
+    },
+    {
+        "public_id": "sector-malvan",
+        "name": "Malvan Marine Zone (MH-04)",
+        "harbor_id": "harbor-malvan",
+        "center": [73.47, 16.06],
+        "zoom": 9.5,
+        "station_name": "Malvan Marine Surveillance Unit",
+        "code": "MH-04",
+        "polygon": [[73.25, 15.9], [73.55, 15.9], [73.52, 16.0], [73.49, 16.07],
+                    [73.48, 16.16], [73.42, 16.25], [73.2, 16.25], [73.2, 16.05], [73.25, 15.9]],
+    },
+    {
+        "public_id": "sector-goa",
+        "name": "Goa Naval Corridor (GA-01)",
+        "harbor_id": "harbor-panaji",
+        "center": [73.83, 15.49],
+        "zoom": 9.0,
+        "station_name": "Goa Port & Naval Traffic Center",
+        "code": "GA-01",
+        "polygon": [[73.35, 15.05], [74.05, 15.05], [73.98, 15.25], [73.83, 15.42],
+                    [73.82, 15.52], [73.74, 15.72], [73.68, 15.82], [73.38, 15.82],
+                    [73.3, 15.45], [73.35, 15.05]],
+    },
+    {
+        "public_id": "sector-mumbai",
+        "name": "Mumbai Offshore (MH-01)",
+        "harbor_id": "harbor-mumbai",
+        "center": [72.87, 18.92],
+        "zoom": 8.8,
+        "station_name": "Mumbai Maritime Rescue Coordination Centre",
+        "code": "MH-01",
+        "polygon": [[72.1, 18.45], [72.95, 18.45], [72.9, 18.7], [72.85, 18.95],
+                    [72.84, 19.18], [72.8, 19.38], [72.15, 19.38], [72.05, 18.95], [72.1, 18.45]],
+    },
+    {
+        "public_id": "sector-veraval",
+        "name": "Veraval Coastal Zone (GJ-02)",
+        "harbor_id": "harbor-veraval",
+        "center": [70.37, 20.90],
+        "zoom": 8.5,
+        "station_name": "Veraval Coastal Police & Fisheries Command",
+        "code": "GJ-02",
+        "polygon": [[69.75, 20.6], [70.92, 20.35], [70.95, 20.72], [70.75, 20.8],
+                    [70.4, 20.92], [70.12, 21.15], [69.75, 21.32], [69.65, 20.95], [69.75, 20.6]],
+    },
+]
+
+_CANONICAL_HARBORS_FALLBACK: List[Dict[str, Any]] = [
+    {"public_id": "harbor-ratnagiri", "name": "Ratnagiri", "latitude": 16.99, "longitude": 73.28},
+    {"public_id": "harbor-malvan", "name": "Malvan", "latitude": 16.06, "longitude": 73.47},
+    {"public_id": "harbor-panaji", "name": "Panaji", "latitude": 15.49, "longitude": 73.83},
+    {"public_id": "harbor-mumbai", "name": "Mumbai", "latitude": 18.92, "longitude": 72.87},
+    {"public_id": "harbor-veraval", "name": "Veraval", "latitude": 20.90, "longitude": 70.37},
+]
+
 
 def _load_canonical_sectors() -> List[Dict[str, Any]]:
-    """Loads canonical surveillance sectors from DB or fixture file."""
-    sectors_path = FIXTURES_DIR / "sectors.json"
-    if sectors_path.exists():
-        try:
-            with open(sectors_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as exc:
-            logger.debug("Failed reading sectors fixture: %s", exc)
+    """Loads canonical surveillance sectors.
+
+    Priority order:
+    1. DB (canonical truth when seeded)
+    2. sectors.json fixture file
+    3. In-memory hardened fallback (always succeeds — no Render path issues)
+    """
+    # 1. Try database first
     try:
         from backend.app.db.repositories import SyntheticDemoRepository
         from backend.app.db.session import SessionLocal
@@ -56,7 +130,38 @@ def _load_canonical_sectors() -> List[Dict[str, Any]]:
                 return [_model_to_dict(i) for i in items]
     except Exception as exc:
         logger.debug("Database get_sectors failed: %s", exc)
-    return []
+
+    # 2. Try fixture file (local dev / Docker)
+    sectors_path = FIXTURES_DIR / "sectors.json"
+    if sectors_path.exists():
+        try:
+            with open(sectors_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as exc:
+            logger.debug("Failed reading sectors fixture: %s", exc)
+
+    # 3. Hardened in-memory fallback — never returns empty
+    logger.warning(
+        "sectors.json not found at %s — using in-memory canonical fallback.",
+        sectors_path,
+    )
+    return _CANONICAL_SECTORS_FALLBACK
+
+
+def get_canonical_sectors() -> List[Dict[str, Any]]:
+    """Return canonical sectors for API consumers.
+
+    The loader keeps fixture-backed data authoritative and only returns the
+    in-memory registry when the database and package-relative fixture are not
+    available.  Returning a copy prevents callers from mutating the registry.
+    """
+    return [dict(sector) for sector in _load_canonical_sectors()]
+
+
+def resolve_sector_harbor_id(sector_id: str) -> Optional[str]:
+    """Resolve a sector identifier or display name to its canonical harbor."""
+    sector = _resolve_canonical_sector(sector_id)
+    return sector.get("harbor_id") if sector else None
 
 
 def _resolve_canonical_sector(sector_id: str) -> Optional[Dict[str, Any]]:
@@ -90,16 +195,27 @@ def resolve_authority_sector_context(sector_id: str) -> Optional[Dict[str, Any]]
         return None
 
     harbor_id = sector.get("harbor_id")
+
+    # Try fixture file first, then in-memory fallback
+    harbor = None
     harbors_path = FIXTURES_DIR / "harbors.json"
-    try:
-        with open(harbors_path, "r", encoding="utf-8") as fixture:
-            harbor = next(
-                (item for item in json.load(fixture) if item.get("public_id") == harbor_id),
-                None,
-            )
-    except Exception as exc:
-        logger.debug("Failed reading canonical harbors fixture: %s", exc)
-        harbor = None
+    if harbors_path.exists():
+        try:
+            with open(harbors_path, "r", encoding="utf-8") as fixture:
+                harbor = next(
+                    (item for item in json.load(fixture) if item.get("public_id") == harbor_id),
+                    None,
+                )
+        except Exception as exc:
+            logger.debug("Failed reading canonical harbors fixture: %s", exc)
+
+    if harbor is None:
+        # Hardened in-memory fallback
+        harbor = next(
+            (h for h in _CANONICAL_HARBORS_FALLBACK if h.get("public_id") == harbor_id),
+            None,
+        )
+
     if harbor is None:
         return None
 

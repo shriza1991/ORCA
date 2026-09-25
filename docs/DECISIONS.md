@@ -652,6 +652,41 @@ Fishermen and authority operators can step forward in time from +0h up to +48h t
 Owner: Marine Data / Backend / Frontend
 Date: 2026-09-26
 
+## D042 — Production Demo API and Canonical Geography Hardening
+Status: ACCEPTED
+
+Decision:
+1. All browser API clients must derive their backend base from `VITE_API_BASE_URL` (or the existing Next.js equivalent), with a relative `/api/v1` fallback only for local development proxies.
+2. Canonical sector resolution is owned by `backend.app.domain.situation`; demo routes reuse that loader rather than maintaining independent fixture paths or display-name maps.
+3. Fixture data remains authoritative when available. The in-memory sector/harbor registry is a geography-only degraded fallback and cannot provide live marine observations or alter deterministic safety decisions.
+4. Intentional speech cancellation is not an application error; delayed utterances are invalidated when replaced or stopped so rapid UI transitions cannot enqueue stale guidance.
+
+Reason:
+Production failures were caused by mixed frontend origins, cwd-sensitive fixture consumers, and browser cancellation events being treated as failures. These changes harden deployment boundaries without changing the deterministic risk engine or epistemic safety states.
+
+Impact:
+Vercel-hosted clients route backend calls consistently, Ratnagiri and other canonical demo sectors remain resolvable when fixture paths are unavailable, and degraded states remain explicit and conservative.
+
+Owner: Platform / UX
+Date: 2026-09-26
+
+## D043 — Production Persistence Boundary
+Status: ACCEPTED
+
+Decision:
+1. Render production and staging require PostgreSQL/PostGIS during application startup and do not silently downgrade persistence to the in-memory offline store.
+2. `DATABASE_URL` is the managed-service input; `SYNC_DATABASE_URL` is derived as a psycopg2 URL when not explicitly set, preserving local/test overrides.
+3. Schema creation in production is migration-owned (`alembic upgrade head`); development/demo may retain `create_all` for hermetic setup.
+
+Reason:
+Silent persistence degradation is unsafe for an operational intelligence system. Render Managed PostgreSQL/PostGIS is the supported production path, while offline stores remain explicitly scoped to local/demo/test environments.
+
+Impact:
+Deployment failures become visible at startup, Alembic remains the production schema authority, and no database credentials are introduced into source control.
+
+Owner: Platform / Infrastructure
+Date: 2026-09-26
+
 ## Decision template
 
 ### D0XX — <title>
@@ -662,9 +697,3 @@ Alternatives:
 Impact:
 Owner:
 Date:
-
-
-
-
-
-

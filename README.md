@@ -162,6 +162,15 @@ npm run dev
 ```
 Open `http://localhost:5173` in your browser.
 
+### Production topology
+
+Local development uses `Docker Postgres/PostGIS → FastAPI → Vite or Next.js`.
+Production uses `Vercel frontend → Render FastAPI → Render Managed PostgreSQL/PostGIS`.
+The browser never connects directly to PostgreSQL. Render supplies the real
+`DATABASE_URL`; run Alembic migrations against that database during deployment.
+The frontend receives only the public backend base through
+`VITE_API_BASE_URL` (Vite) or `NEXT_PUBLIC_API_BASE_URL` (Next.js).
+
 ---
 
 ## 🧪 Verification & Testing Commands

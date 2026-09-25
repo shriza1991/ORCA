@@ -649,3 +649,18 @@ None
 - [x] **Phase 3: Real Database / PostGIS Integration & SACHET CAP Feed** (Alembic migrations, spatial repos, SACHET CAP, rate limiting, observability)
 - [ ] **Phase 4: Mission Twin Simulation Engine** (P1 — Counterfactual evaluation & temporal forecasting)
 - [ ] **Phase 5: Vernacular Voice & Audio Pipelines** (P1 — Whisper / Sarvam AI integration)
+## 2026-09-26 - Production Demo Hardening
+
+- Status: IMPLEMENTED / VERIFIED (focused).
+- Centralized legacy Vite MarineWatch and alert requests on `VITE_API_BASE_URL`, preserving the `/api/v1` local fallback.
+- Reused the package-relative canonical sector loader for demo sector listing and sector-to-harbor vessel filtering; the existing fixture-first, in-memory fallback remains deterministic for Render working-directory differences.
+- Preserved conservative chat failure behavior: provider/runtime failures remain structured and never become a GO/SAFE decision; existing route-level error envelopes were retained for contract compatibility.
+- Suppressed intentional SpeechSynthesis `interrupted`/`canceled` events and cancelled stale delayed utterances during rapid navigation.
+- Verification: focused backend tests `58 passed, 11 skipped` (PostgreSQL-gated); Vite frontend `242 passed` and build passed; Next.js production build passed.
+
+## 2026-09-26 - Render PostgreSQL/PostGIS Readiness
+
+- Render-compatible `DATABASE_URL` now derives `SYNC_DATABASE_URL` when no explicit sync override is supplied.
+- Production and staging startup now require a reachable PostgreSQL/PostGIS connection; development/demo retains the intentional offline test fallback.
+- Added safe Render/Vercel environment guidance and documented the backend-only database topology.
+- Alembic head verified at `e1a2b3c4d5e6`; no live PostgreSQL/PostGIS instance was available in this environment for upgrade execution.

@@ -5,7 +5,10 @@
  * connecting frontend to real INCOIS, IMD, GEBCO, CMFRI, and CAA datasets.
  */
 
-const API_BASE = '/api/v1';
+// Keep MarineWatch requests on the same backend origin as the shared client.
+// In production this is the Render API; the relative fallback preserves Vite
+// proxy behaviour for local development.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
 
 // ---------------------------------------------------------------------------
 // TypeScript Interfaces
