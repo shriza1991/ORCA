@@ -11,6 +11,7 @@ LangGraph state graph conventions without redundant model duplication.
 from typing import Any, Dict, List, Optional, TypedDict
 
 from backend.app.contracts.chat import (
+    AgentCollaborationPayload,
     AgentTraceItem,
     Confidence,
     EvidenceItem,
@@ -143,6 +144,9 @@ class ORCAState(TypedDict, total=False):
 
     suggested_followups: List[str]
     """Contextual quick-reply suggestions for the mariner."""
+
+    agent_collaboration: Optional[AgentCollaborationPayload]
+    """Multi-agent reasoning, evidence provenance, conflict arbitration, and causal timeline."""
 
     # -------------------------------------------------------------------------
     # 7. Audit Telemetry (Sanitized)

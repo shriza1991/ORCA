@@ -154,4 +154,5 @@ def map_state_to_response(
         trace=state.get("trace") or [],
         warnings=state.get("warnings") or [],
         suggested_followups=state.get("suggested_followups") or [],
+        agent_collaboration=state.get("agent_collaboration"),
     )

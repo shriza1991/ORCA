@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -17,8 +17,10 @@ import {
 } from 'lucide-react';
 import type { TripAssessmentResponse } from '../../types/assessment';
 import type { DecisionDiff, MissionContext } from '../../types/mission';
+import type { AgentCollaborationPayload } from '../../types/contracts';
 import { translateText, type SupportedLanguage, TRANSLATIONS } from '../../i18n/translations';
 import { useSpokenGuidance } from '../../hooks/useSpokenGuidance';
+import AgentCollaborationPanel from '../collaboration/AgentCollaborationPanel';
 
 export type FisherDecisionStatus = 'SAFE_TO_GO' | 'CAUTION' | 'DO_NOT_GO' | 'UNKNOWN';
 
@@ -38,6 +40,7 @@ export interface FisherDecisionSurfaceProps {
   activeDiff?: DecisionDiff | null;
   missionContext?: MissionContext;
   language?: SupportedLanguage;
+  collaboration?: AgentCollaborationPayload | null;
   onOpenVoyageSettings?: () => void;
   onViewMap?: () => void;
   isOffline?: boolean;
@@ -238,16 +241,19 @@ export default function FisherDecisionSurface({
   isLoading = false,
   error = null,
   language = 'en',
+  collaboration = null,
   onOpenVoyageSettings,
   onViewMap,
   isOffline = false,
   isExpired = false,
 }: FisherDecisionSurfaceProps) {
+  const [showCollaboration, setShowCollaboration] = useState(false);
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const status = getFisherDecisionStatus(assessment, error);
   const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
   const conditions = extractFisherConditions(isLoading || error ? null : assessment);
   const { speak, stop, isPlaying } = useSpokenGuidance({ language });
+  const collab = collaboration || (assessment as any)?.agent_collaboration;
 
   const statusConfig: Record<
     FisherDecisionStatus,
@@ -428,6 +434,61 @@ export default function FisherDecisionSurface({
             <Volume2 size={24} />
             {translateText('Hear the official advisory', language)}
           </button>
+        </div>
+      )}
+
+      {collab && (
+        <div className="fisher-collaboration-container" style={{ marginTop: '16px' }} data-testid="fisher-collaboration-container">
+          <button
+            type="button"
+            onClick={() => setShowCollaboration(!showCollaboration)}
+            className="fisher-collaboration-toggle"
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              borderRadius: '12px',
+              border: '1px solid #cbd5e1',
+              background: showCollaboration ? '#f8fafc' : '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#0f172a',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            }}
+            aria-expanded={showCollaboration}
+            data-testid="toggle-fisher-collaboration"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ShieldCheck size={20} color="#0284c7" />
+              <span>{translateText('Decision Authority & Agent Reasoning', language)}</span>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '3px 8px',
+                  borderRadius: '9999px',
+                  background: collab.arbitration?.conflict_detected ? '#fef3c7' : '#dcfce7',
+                  color: collab.arbitration?.conflict_detected ? '#92400e' : '#166534',
+                  fontWeight: 700,
+                }}
+              >
+                {collab.arbitration?.conflict_detected
+                  ? translateText('Protocol D010 Overridden', language)
+                  : translateText('4 Agents Consensus', language)}
+              </span>
+            </div>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              {showCollaboration ? translateText('Hide Details ▲', language) : translateText('Inspect Agents ▼', language)}
+            </span>
+          </button>
+
+          {showCollaboration && (
+            <div style={{ marginTop: '12px' }} data-testid="fisher-collaboration-drawer">
+              <AgentCollaborationPanel collaboration={collab} defaultRole="fisherman" />
+            </div>
+          )}
         </div>
       )}
 

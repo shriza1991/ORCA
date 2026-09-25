@@ -29,6 +29,7 @@ import DeckGLMapFoundation from '../map/DeckGLMapFoundation';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import type { MapLayer, AgentTraceItem } from '../../types/contracts';
 import { CANONICAL_DATA_MODE_LABEL, CANONICAL_DATA_MODE_TOOLTIP } from '../../api/researcher-client';
+import AgentCollaborationPanel from '../collaboration/AgentCollaborationPanel';
 
 function parseHexOrRgb(colorStr?: string, defaultAlpha = 200): [number, number, number, number] {
   if (!colorStr) return [56, 189, 248, defaultAlpha];
@@ -147,6 +148,7 @@ export default function QueryWorkbench() {
   const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});
   const [expandedTrace, setExpandedTrace] = useState<Record<string, boolean>>({});
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
+  const [expandedCollaboration, setExpandedCollaboration] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -173,6 +175,7 @@ export default function QueryWorkbench() {
     setExpandedEvidence({});
     setExpandedTrace({});
     setExpandedMap({});
+    setExpandedCollaboration({});
     inputRef.current?.focus();
   }
 
@@ -186,6 +189,10 @@ export default function QueryWorkbench() {
 
   function toggleMap(msgId: string) {
     setExpandedMap(prev => ({ ...prev, [msgId]: prev[msgId] === undefined ? false : !prev[msgId] }));
+  }
+
+  function toggleCollaboration(msgId: string) {
+    setExpandedCollaboration(prev => ({ ...prev, [msgId]: !prev[msgId] }));
   }
 
   return (
@@ -284,6 +291,7 @@ export default function QueryWorkbench() {
               const isEvidenceOpen = expandedEvidence[msg.id] ?? false;
               const isTraceOpen = expandedTrace[msg.id] ?? false;
               const isMapOpen = expandedMap[msg.id] ?? true; // Default open if layers exist
+              const isCollaborationOpen = expandedCollaboration[msg.id] ?? false;
               const isUnknownConfidence = resp?.confidence?.level === 'UNKNOWN' || resp?.recommendation?.status === 'UNKNOWN';
 
               return (
@@ -361,6 +369,28 @@ export default function QueryWorkbench() {
                             <div className={`kpi-badge confidence-${(resp.confidence.level || 'UNKNOWN').toLowerCase()}`}>
                               <span className="kpi-label">Confidence:</span>
                               <span className="kpi-val">{resp.confidence.level || 'UNKNOWN'}</span>
+                            </div>
+                          )}
+
+                          {/* Decision Authority Badge */}
+                          {resp.agent_collaboration && (
+                            <div
+                              className="kpi-badge collaboration-badge"
+                              style={{
+                                background: '#f0fdf4',
+                                borderColor: '#86efac',
+                                color: '#166534',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                              onClick={() => toggleCollaboration(msg.id)}
+                              title="Inspect Multi-Agent Decision Authority & Reasoning"
+                              data-testid="kpi-collaboration-badge"
+                            >
+                              <Shield size={12} />
+                              <span>Decision Authority: {resp.agent_collaboration.arbitration?.winning_decision || resp.recommendation?.status} ({resp.agent_collaboration.agents.length} Agents)</span>
                             </div>
                           )}
 
@@ -491,6 +521,45 @@ export default function QueryWorkbench() {
                                     ))}
                                   </tbody>
                                 </table>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Decision Authority & Multi-Agent Collaboration (Collapsible) */}
+                        {resp.agent_collaboration && (
+                          <div className="response-collapsible-section collaboration-section" data-testid="query-collaboration-section">
+                            <button
+                              className="section-toggle-btn"
+                              onClick={() => toggleCollaboration(msg.id)}
+                              aria-expanded={isCollaborationOpen}
+                              style={{
+                                background: isCollaborationOpen ? '#f0fdf4' : undefined,
+                                borderColor: isCollaborationOpen ? '#86efac' : undefined,
+                              }}
+                            >
+                              <div className="toggle-btn-left">
+                                <Shield size={14} className="section-icon" color="#16a34a" />
+                                <span className="section-title">
+                                  Decision Authority & Multi-Agent Reasoning ({resp.agent_collaboration.agents.length} Agents)
+                                </span>
+                                <span
+                                  className="grounded-badge"
+                                  style={{
+                                    background: resp.agent_collaboration.arbitration?.conflict_detected ? '#fef3c7' : '#dcfce7',
+                                    color: resp.agent_collaboration.arbitration?.conflict_detected ? '#92400e' : '#166534',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {resp.agent_collaboration.arbitration?.conflict_detected ? 'Arbitrated Conflict' : 'Consensus Verdict'}
+                                </span>
+                              </div>
+                              {isCollaborationOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            </button>
+
+                            {isCollaborationOpen && (
+                              <div className="section-body" style={{ padding: '14px', background: '#f8fafc', borderRadius: '0 0 8px 8px', border: '1px solid #e2e8f0', borderTop: 'none' }}>
+                                <AgentCollaborationPanel collaboration={resp.agent_collaboration} defaultRole="researcher" />
                               </div>
                             )}
                           </div>

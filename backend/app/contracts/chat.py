@@ -235,6 +235,81 @@ class ChatResponse(BaseModel):
     suggested_followups: List[str] = Field(
         default_factory=list, description="Contextual quick-reply suggestions for the user"
     )
+    agent_collaboration: Optional["AgentCollaborationPayload"] = Field(
+        None,
+        description="Multi-agent reasoning, evidence provenance, conflict arbitration, and causal timeline",
+    )
+
+
+class DataQualityRating(str, Enum):
+    VERIFIED = "Verified"
+    PARTIAL = "Partial"
+    SNAPSHOT_FALLBACK = "Snapshot Fallback"
+    LIMITED = "Limited"
+
+
+class AgentEvidenceSource(BaseModel):
+    source_name: str = Field(..., description="Official feed name, e.g. 'INCOIS OSF'")
+    provider: str = Field(..., description="Issuing authority, e.g. 'INCOIS'")
+    last_updated: Optional[str] = Field(None, description="Observation or bulletin timestamp")
+    valid_to: Optional[str] = Field(None, description="Forecast validity window end")
+    coverage: str = Field(..., description="Geographical coverage, e.g. 'Arabian Sea · Konkan Corridor'")
+    quality_rating: DataQualityRating = Field(DataQualityRating.VERIFIED, description="Data assurance level")
+
+
+class IndividualAgentReasoning(BaseModel):
+    agent_id: str = Field(..., description="Internal identifier, e.g. 'marine_agent'")
+    agent_name: str = Field(..., description="Display label, e.g. 'Marine Intelligence Agent'")
+    role_description: str = Field(..., description="Functional specialization")
+    status: str = Field("COMPLETE", description="Agent state: RUNNING | COMPLETE | WARNING | CONFLICT")
+    recommendation: RecommendationStatus = Field(..., description="Agent stance: GO | CAUTION | NO_GO | UNKNOWN | INFORMATIONAL")
+    evidence_strength: ConfidenceLevel = Field(ConfidenceLevel.HIGH, description="HIGH | MEDIUM | LOW")
+    data_quality: DataQualityRating = Field(DataQualityRating.VERIFIED, description="Verified | Partial | Snapshot Fallback | Limited")
+    sources: List[AgentEvidenceSource] = Field(default_factory=list, description="Authoritative upstream feeds")
+    observations: Dict[str, Any] = Field(default_factory=dict, description="Observed variables")
+    summary: str = Field(..., description="Concise assessment summary")
+    key_findings: List[str] = Field(default_factory=list, description="Key environmental drivers")
+
+
+class ConflictArbitration(BaseModel):
+    conflict_detected: bool = Field(False, description="True if agent stances diverged")
+    conflict_type: Optional[str] = Field(None, description="Category of conflict, e.g. 'SAFETY_OVERRIDE_OPPORTUNITY'")
+    reason: Optional[str] = Field(None, description="Summary of the conflicting conditions")
+    agent_positions: Dict[str, str] = Field(default_factory=dict, description="Summary map of agent positions")
+    winning_agent: str = Field(..., description="Prevailing agent or 'Decision Authority'")
+    winning_decision: RecommendationStatus = Field(..., description="Final arbitrated recommendation")
+    winning_rule: str = Field(..., description="Statutory precedence rule applied")
+    accepted_reasons: List[str] = Field(default_factory=list, description="Why the winning decision was accepted")
+    rejected_reasons: List[str] = Field(default_factory=list, description="Why opposing positions were overridden")
+
+
+class CausalReasoningExplanation(BaseModel):
+    facts: List[Dict[str, Any]] = Field(default_factory=list, description="Verified factual telemetry points")
+    inferences: List[str] = Field(default_factory=list, description="Derived relations and environmental implications")
+    constraints: List[str] = Field(default_factory=list, description="Vessel limits, boundary rules, and legal mandates")
+    decision: str = Field(..., description="The definitive operational verdict")
+    recommendation: str = Field(..., description="Actionable directive for the user")
+
+
+class ReasoningTimelineStep(BaseModel):
+    step_number: int = Field(..., description="1-8 sequence index")
+    agent_id: str = Field(..., description="Agent or engine key")
+    label: str = Field(..., description="Human-readable milestone name")
+    timestamp: str = Field(..., description="ISO or localized execution timestamp")
+    duration_ms: float = Field(0.0, description="Step duration in milliseconds")
+    status: str = Field("completed", description="completed | warning | conflict | in_progress")
+    detail: str = Field(..., description="Milestone action or payload summary")
+
+
+class AgentCollaborationPayload(BaseModel):
+    agents: List[IndividualAgentReasoning] = Field(default_factory=list, description="Individual agent stances and evidence")
+    arbitration: ConflictArbitration = Field(..., description="Decision Authority conflict resolution")
+    explanation: CausalReasoningExplanation = Field(..., description="5-stage causal explainability breakdown")
+    timeline: List[ReasoningTimelineStep] = Field(default_factory=list, description="8-step agentic lifecycle timeline")
+    stakeholder_perspectives: Dict[str, Dict[str, Any]] = Field(default_factory=dict, description="Tailored views for fisherman, authority, researcher")
+
+
+ChatResponse.model_rebuild()
 
 
 class TranscribeResponse(BaseModel):

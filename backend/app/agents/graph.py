@@ -2417,8 +2417,27 @@ def terminal_node(state: ORCAState) -> Dict[str, Any]:
         evidence_ids=evidence_ids,
     )
 
+    harbor = state.get("origin_harbor") or state.get("location", {}).get("harbor", "Ratnagiri")
+    collaboration = None
+    try:
+        from backend.app.domain.agent_collaboration import AgentCollaborationEngine
+        collaboration = AgentCollaborationEngine.derive_collaboration(
+            observations=state.get("observations", {}),
+            risk_assessment=state.get("risk_assessment"),
+            evidence=evidence,
+            trace=trace,
+            user_profile=state.get("user_profile", {}),
+            tool_results=state.get("tool_results", {}),
+            intent=state.get("intent"),
+            language=state.get("language", "en"),
+            harbor=harbor,
+        )
+    except Exception as exc:
+        logger.warning("Failed to derive agent collaboration payload: %s", exc)
+
     return {
         "trace": trace,
+        "agent_collaboration": collaboration,
     }
 
 

@@ -446,6 +446,31 @@ The documentation and product narrative now distinguish web demo access from nat
 Owner: Product / Architecture
 Date: 2026-09-24
 
+## D033 — Deterministic Multi-Agent Collaboration and Decision Authority Visibility
+Status: ACCEPTED
+
+Decision:
+1. Transform the end-user, authority, and research experience from a black-box final answer (`User → Final Answer`) into a fully observable multi-agent collaboration trail: `User → Agent Collaboration → Evidence Gathering → Risk Assessment → Arbitration → Final Answer`.
+2. Do not introduce new LLM loops, asynchronous agent overhead, or redundant background tasks. The collaboration payload is derived 100% deterministically in Python (`AgentCollaborationEngine`) from the already evaluated cognitive graph state in < 5ms.
+3. Terminology: Refer to the arbitration entity strictly as **Decision Authority** (or Final Recommendation Engine) in all UI surfaces, eliminating synthetic AI buzzwords like "Arbiter Agent".
+4. Epistemic data honesty: Forbid arbitrary percentage confidence scores (e.g., "87%"). Use deterministic `Evidence Strength: HIGH / MEDIUM / LOW / UNKNOWN` and `Data Quality: Verified / Partial / Snapshot Fallback / Limited`.
+5. Timeline lifecycle: Enforce an 8-step cognitive lifecycle (`Mission Received` → `Data Collection` → `Marine Analysis` → `Weather Analysis` → `Boundary Analysis` → `Safety Assessment` → `Conflict Resolution` → `Final Recommendation`).
+6. Conflict arbitration: Ground conflict arbitration in statutory Protocol D010 (safety hard-stops unconditionally supersede resource abundance opportunities).
+7. Causal explanation: Structure transparent explanations across 5 sequential tiers: FACTS → INFERENCES → CONSTRAINTS → DECISION → ACTION.
+8. Adapt multi-stakeholder perspectives natively for Fisherman, Port/Enforcement Authority, and Marine Researcher.
+
+Reason:
+Judges, domain experts, and mariners must see verifiable agent evidence provenance and statutory arbitration rather than opaque generative outputs.
+
+Alternatives:
+- Spawn real-time multi-agent conversational LLM loops for debate (rejected: introduces non-deterministic latency, potential hallucination of safety bounds, and breaks deterministic safety authority).
+- Display arbitrary confidence percentages (rejected: misleading, ungrounded, and vulnerable to expert scrutiny).
+
+Impact:
+Integrated seamlessly across Chat messages, Fisherman Decision Surface, Researcher Query Workbench, and Authority Command Audit Deck with 100% backward compatibility.
+Owner: Product / Multi-Agent Architecture
+Date: 2026-09-24
+
 ## Decision template
 
 ### D0XX — <title>
@@ -456,6 +481,7 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 
 
 

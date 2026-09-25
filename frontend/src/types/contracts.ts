@@ -126,6 +126,70 @@ export interface ChatResponse {
   trace: AgentTraceItem[];
   warnings: string[];
   suggested_followups: string[];
+  agent_collaboration?: AgentCollaborationPayload;
+}
+
+export type DataQualityRating = 'Verified' | 'Partial' | 'Snapshot Fallback' | 'Limited';
+
+export interface AgentEvidenceSource {
+  source_name: string;
+  provider: string;
+  last_updated?: string;
+  valid_to?: string;
+  coverage: string;
+  quality_rating: DataQualityRating;
+}
+
+export interface IndividualAgentReasoning {
+  agent_id: string;
+  agent_name: string;
+  role_description: string;
+  status: 'RUNNING' | 'COMPLETE' | 'WARNING' | 'CONFLICT' | string;
+  recommendation: RecommendationStatus;
+  evidence_strength: ConfidenceLevel;
+  data_quality: DataQualityRating;
+  sources: AgentEvidenceSource[];
+  observations: Record<string, any>;
+  summary: string;
+  key_findings: string[];
+}
+
+export interface ConflictArbitration {
+  conflict_detected: boolean;
+  conflict_type?: string;
+  reason?: string;
+  agent_positions: Record<string, string>;
+  winning_agent: string;
+  winning_decision: RecommendationStatus;
+  winning_rule: string;
+  accepted_reasons: string[];
+  rejected_reasons: string[];
+}
+
+export interface CausalReasoningExplanation {
+  facts: Array<{ metric: string; value: string; source?: string; [key: string]: any }>;
+  inferences: string[];
+  constraints: string[];
+  decision: string;
+  recommendation: string;
+}
+
+export interface ReasoningTimelineStep {
+  step_number: number;
+  agent_id: string;
+  label: string;
+  timestamp: string;
+  duration_ms: number;
+  status: string;
+  detail: string;
+}
+
+export interface AgentCollaborationPayload {
+  agents: IndividualAgentReasoning[];
+  arbitration: ConflictArbitration;
+  explanation: CausalReasoningExplanation;
+  timeline: ReasoningTimelineStep[];
+  stakeholder_perspectives: Record<string, any>;
 }
 
 export interface TranscribeResponse {
@@ -140,3 +204,4 @@ export interface VoiceChatResponse extends ChatResponse {
   audio_base64?: string;
   audio_format?: string;
 }
+
