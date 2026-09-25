@@ -521,8 +521,38 @@ None
 
 | **M1** | Frontend & UI | READY | MapLayer schema alignment, voice call interface, Fisher/Authority separate pages, single portal switching, header logout button, dynamic MapView with harbor auto-pan & sector surveillance layers, base operational geofences integration, canonical scenario benchmark runner (S1–S8), data-driven fleet trajectory replay scrubber & notifications driven by canonical backend dataset (`GET /api/v1/demo/sectors`, `vessels`, `replay`, `notifications`, `hazards`), removal of all fabricated mock telemetry, strict offline banners, full coverage for 8 monitored vessels across Ratnagiri and Malvan, inline voice audio/TTS listen button, UI decluttering, end-to-end multilingual localization (EN, HI, MR) across all pages, decks, and simulators, modern web standards integration (standard thin scrollbars, text-wrap balancing & orphan prevention, container queries), Radix UI/shadcn overlay primitives integration (Dialog, Sheet, Popover for EvidenceDrawer, CallModal, LayerManager), sidebar layout stabilization (eliminated horizontal/vertical overflow, unified single-row tab & context header, resilient 2-row chat card), CallModal design system alignment (replaced hardcoded skeuomorphic dark styles with native theme tokens across Light and Dark modes), header decluttering (removed redundant Call SAMUDRA button from header, anchored exclusively in chat toolbar), dedicated Settings Page (centralized theme toggle, vernacular language cards, operational voyage defaults, voice assistance/VAD parameters, feed diagnostics, seamless two-way portal return routing), authority page decluttering (consolidated dual command and tab bars into unified command bar with segmented pill switcher, removed redundant empty evidence tab and double terminal headers, fully styled S1–S8 Benchmark Runner deck with 2-column layout, spec cards, and live execution audit metrics), Fisher Console CTA text contrast fix (high-contrast white in light mode, dark navy in dark mode), end-to-end mobile/tablet responsive layout stabilization across portal, fisher, authority, and settings views, unified 3-column single row layout for Fisher, Authority, and Researcher persona cards on the portal selection page (`max-width: 1320px`, `repeat(3, 1fr)`), dedicated Researcher Lab persona dashboard with 4 modular decks (Ocean Data Explorer, Data Source Monitor, Scenario Lab with S1–S8 benchmark evaluation, and Query Workbench with inline evidence & trace) strictly preserving Fisher and Authority dashboards untouched, hardened with deck error boundaries, resilient backend payload normalization, and multi-day EO cell de-duplication | Vitest (93 passed) |
 | **M2** | Backend Platform & Connectors | OFFLINE_VERIFIED | Harbors loader, INCOIS OSF/PFZ/SVAS, IMD weather/hazard, Open-Meteo fallback, ConnectorManager, P0-3 non-fabricating partial payload contracts | pytest connectors & contracts (71 passed) |
-| **M3** | Agent Orchestration & Explainability | OFFLINE_VERIFIED | Tool adapters, capability catalog registration, trace & evidence contracts, P0-2 Benchmark Runner runtime state isolation, P0-3 robust partial payload extraction in specialist_tools_node & conftest contract mock isolation | pytest scenario & isolation (30 passed), agent_eval (47 passed), domain (25 passed) |
+| **M3** | Agent Orchestration, Decision Reasoning & Explainability | READY | Canonical DecisionObject emission, structured DecisionDelta for WHAT_CHANGED and WHAT_IF, real ALTERNATIVE intent branch with validated departure windows and corridors, route exposure inference integration, 100% backward-compatible Recommendation preservation, graceful degradation | pytest agent_eval (405 passed, 1 skipped), test_m3_decision_object (17 passed), domain (85 passed) |
 | **M4** | Marine, Geo, Risk & Route Domain | OFFLINE_VERIFIED | Deterministic risk engine (with P0-4 time-stable reference clock support for deterministic regression testing), Shapely geofence evaluation, PFZ Haversine ranking engine, Synthetic demo dataset generator with 5 sectors, 14 canonical monitored vessels, and 420 replay positions across Ratnagiri, Malvan, Goa, Mumbai, and Veraval, and P0-8G three evaluated route alternatives (Safest, Balanced, Direct) via RouteExposureEngine | pytest domain & synthetic (26 passed), observation_bundle (7 passed), route_balanced (53 passed) |
+
+---
+
+### M3 — Canonical DecisionObject, Structured DecisionDelta, Alternatives & Route Exposure
+- Status: **COMPLETE & VERIFIED** (P0 & P1 MVP features fully implemented, tested, and backward-compatible).
+- **GAP-1: Canonical DecisionObject Emitted by Runtime**:
+  - Implemented deterministic `DecisionObject` creation in `response_composer_node` within `backend/app/agents/graph.py`.
+  - Populated all canonical fields (`decision`, `confidence`, `mission`, `decisive_factor`, `supporting_factors`, `constraints`, `evidence`, `inferences`, `provenance`, `uncertainty`, `alternatives`) directly from deterministic risk assessment state, route exposure metrics, and observation bundle evidence.
+  - Zero LLM generation of safety decisions or constraints. Additively attached to `ORCAState["decision_object"]` and serialized in `ChatResponse.decision_object`.
+- **GAP-2 & GAP-4: Structured DecisionDelta for WHAT_CHANGED & WHAT_IF**:
+  - Replaced legacy string diffing with canonical Pydantic `DecisionDelta` in `backend/app/agents/graph.py`.
+  - Evaluates baseline vs current risk assessments to populate `added_factors`, `removed_factors`, `changed_factors`, `temporal_changes`, and generates a deterministic mariner synthesis summary.
+  - WHAT_IF simulations cleanly run through the same deterministic engine and output structured deltas into `ORCAState["decision_delta"]` and `ChatResponse.decision_delta`.
+- **GAP-3: Dedicated ALTERNATIVE Response Branch**:
+  - Implemented explicit `IntentCategory.ALTERNATIVE.value` handling in `response_composer_node`.
+  - Reuses existing risk assessment and route exposure candidates to recommend validated departure time windows and corridor alternatives without fallback to demo data.
+  - Returns honest "No validated alternative available with current evidence." if no safe alternatives exist.
+- **GAP-5: Route Corridor Exposure Surfacing**:
+  - Integrated `RouteExposureEngine` route candidates directly into `DecisionObject.inferences` and `alternatives` with exposure metrics and wave limits.
+- **Backward Compatibility & Safety Invariants**:
+  - Legacy `risk_assessment` (`Recommendation`) and `ChatResponse` structure preserved 100% intact.
+  - Graceful degradation: wrapped all M3 construction in exception-safe fallbacks logging errors without failing missions.
+  - Updated CORS configuration in `backend/app/core/config.py` to allow deployed Vercel frontend (`https://samudra-qxx1.vercel.app`).
+- **Verification**:
+  - `tests/agent_eval/test_m3_decision_object.py`: 17/17 passed.
+  - `tests/agent_eval/test_flagship_flow.py`: 1/1 passed.
+  - `tests/agent_eval/`: 405 passed, 1 skipped, 0 failed.
+  - `tests/domain/`: 85 passed, 0 failed.
+  - Frontend typecheck (`npm run typecheck`): 0 errors.
+  - Frontend production build (`npm run build`): Clean build (`✓ built in 43.16s`).
 
 ---
 
@@ -559,5 +589,7 @@ None
 - [x] **Phase 1: Reference Data Loaders** (`harbors.py` typed loaders & indexing verified)
 - [x] **Phase 2: P0 Connectors & Fallback Foundation** (INCOIS OSF/PFZ/SVAS, IMD, Pilot GIS, Open-Meteo)
 - [x] **Phase 3: Real Database / PostGIS Integration & SACHET CAP Feed** (Alembic migrations, spatial repos, SACHET CAP, rate limiting, observability)
-- [ ] **Phase 4: Mission Twin Simulation Engine** (P1 — Counterfactual evaluation & temporal forecasting)
-- [ ] **Phase 5: Vernacular Voice & Audio Pipelines** (P1 — Whisper / Sarvam AI integration)
+- [x] **Phase 4: M3 Decision/Risk/Reasoning MVP** (Canonical DecisionObject, structured DecisionDelta, ALTERNATIVE branch, WHAT_IF reasoning, route exposure)
+- [ ] **Phase 5: Mission Twin Simulation Engine** (P1 — Counterfactual evaluation & temporal forecasting)
+- [ ] **Phase 6: Vernacular Voice & Audio Pipelines** (P1 — Whisper / Sarvam AI integration)
+
