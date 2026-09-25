@@ -545,3 +545,20 @@ Date:
 
 
 
+## D037 - Production Demo API and Canonical Geography Hardening
+Status: ACCEPTED
+
+Decision:
+1. All browser API clients must derive their backend base from `VITE_API_BASE_URL` (or the existing Next.js equivalent), with a relative `/api/v1` fallback only for local development proxies.
+2. Canonical sector resolution is owned by `backend.app.domain.situation`; demo routes reuse that loader rather than maintaining independent fixture paths or display-name maps.
+3. Fixture data remains authoritative when available. The in-memory sector/harbor registry is a geography-only degraded fallback and cannot provide live marine observations or alter deterministic safety decisions.
+4. Intentional speech cancellation is not an application error; delayed utterances are invalidated when replaced or stopped so rapid UI transitions cannot enqueue stale guidance.
+
+Reason:
+Production failures were caused by mixed frontend origins, cwd-sensitive fixture consumers, and browser cancellation events being treated as failures. These changes harden deployment boundaries without changing the deterministic risk engine or epistemic safety states.
+
+Impact:
+Vercel-hosted clients route backend calls consistently, Ratnagiri and other canonical demo sectors remain resolvable when fixture paths are unavailable, and degraded states remain explicit and conservative.
+
+Owner: Platform / UX
+Date: 2026-09-26
