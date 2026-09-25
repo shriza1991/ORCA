@@ -7,8 +7,19 @@ import type { MapLayer } from '../../types/contracts';
 import type { OperationalMode } from '../../types/mission';
 import LayerManager from './LayerManager';
 import MissionMapBrief from './MissionMapBrief';
-import { Layers, Navigation, Play, Square, Ship, Sailboat } from 'lucide-react';
+import { Layers, Navigation, Play, Square, Ship, Sailboat, Clock, Waves, X, Bookmark } from 'lucide-react';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { executeSpatialQuery, type UnifiedSpatialQueryResponse } from '../../api/marinewatch-client';
+import { NATIONAL_COASTAL_BOOKMARKS } from '../../utils/geo';
+
+const TIME_STEPS = [
+  { label: 'Now', hours: 0 },
+  { label: '+3h', hours: 3 },
+  { label: '+6h', hours: 6 },
+  { label: '+12h', hours: 12 },
+  { label: '+24h', hours: 24 },
+  { label: '+48h', hours: 48 },
+];
 
 /** Initial fallback center (Indian coastal waters) */
 const INITIAL_CENTER: [number, number] = [73.28, 16.99];
@@ -67,6 +78,14 @@ export default function MapView({
   const simulationRootRef = useRef<Root | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [selectedCorridorMode, setSelectedCorridorMode] = useState<OperationalMode>('safest');
+  const [selectedTimeStep, setSelectedTimeStep] = useState<number>(0);
+  const [inspectedPoint, setInspectedPoint] = useState<{
+    lat: number;
+    lon: number;
+    data: UnifiedSpatialQueryResponse | null;
+    loading: boolean;
+  } | null>(null);
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
   const activeStyle = theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
   const currentStyleRef = useRef(activeStyle);
@@ -362,6 +381,19 @@ export default function MapView({
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+    map.on('click', async (e) => {
+      const lat = parseFloat(e.lngLat.lat.toFixed(4));
+      const lon = parseFloat(e.lngLat.lng.toFixed(4));
+      setInspectedPoint({ lat, lon, data: null, loading: true });
+      try {
+        const queryRes = await executeSpatialQuery(lat, lon);
+        setInspectedPoint({ lat, lon, data: queryRes, loading: false });
+      } catch (err) {
+        console.error('Failed to inspect ocean point:', err);
+        setInspectedPoint(null);
+      }
+    });
 
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
@@ -958,6 +990,211 @@ export default function MapView({
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
+      )}
+
+      {/* Quick Jump Coastal Bookmarks */}
+      <div
+        className="map-coastal-bookmarks"
+        style={{
+          position: 'absolute',
+          top: '16px',
+          left: hideAdvancedControls ? '180px' : '16px',
+          zIndex: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowBookmarks(!showBookmarks)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            background: theme === 'dark' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid var(--border, #334155)',
+            borderRadius: '8px',
+            color: 'var(--foreground, #0f172a)',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+          }}
+          aria-label="Toggle coastal landmarks"
+        >
+          <Bookmark size={14} style={{ color: '#0ea5e9' }} />
+          <span>Coastal Bookmarks</span>
+        </button>
+
+        {showBookmarks && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '42px',
+              left: 0,
+              background: theme === 'dark' ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.98)',
+              border: '1px solid var(--border, #334155)',
+              borderRadius: '8px',
+              padding: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '3px',
+              maxHeight: '260px',
+              overflowY: 'auto',
+              width: '210px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+              zIndex: 30,
+            }}
+          >
+            {NATIONAL_COASTAL_BOOKMARKS.map((b) => (
+              <button
+                type="button"
+                key={b.name}
+                onClick={() => {
+                  mapRef.current?.flyTo({ center: [b.lon, b.lat], zoom: b.zoom, duration: 900 });
+                  setShowBookmarks(false);
+                }}
+                style={{
+                  textAlign: 'left',
+                  padding: '6px 8px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--foreground, #0f172a)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{b.name}</span>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontSize: '10px' }}>{b.state?.slice(0, 6)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Floating Time Scrubber (+0h to +48h) */}
+      <div
+        className="map-time-scrubber"
+        style={{
+          position: 'absolute',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          background: theme === 'dark' ? 'rgba(15, 23, 42, 0.90)' : 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid var(--border, #334155)',
+          borderRadius: '24px',
+          padding: '4px 10px',
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: 'var(--muted-foreground, #94a3b8)', marginRight: '4px' }}>
+          <Clock size={13} />
+          <span>Forecast:</span>
+        </span>
+        {TIME_STEPS.map((step) => (
+          <button
+            type="button"
+            key={step.hours}
+            onClick={() => setSelectedTimeStep(step.hours)}
+            style={{
+              padding: '3px 9px',
+              fontSize: '11px',
+              fontWeight: selectedTimeStep === step.hours ? 700 : 500,
+              borderRadius: '16px',
+              border: 'none',
+              background: selectedTimeStep === step.hours ? '#2563eb' : 'transparent',
+              color: selectedTimeStep === step.hours ? '#ffffff' : 'var(--foreground, #0f172a)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {step.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Floating Point Depth & Ocean Telemetry Inspector HUD */}
+      {inspectedPoint && (
+        <div
+          className="map-point-inspector"
+          style={{
+            position: 'absolute',
+            bottom: '72px',
+            right: '16px',
+            zIndex: 15,
+            width: '290px',
+            background: theme === 'dark' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid var(--border, #334155)',
+            borderRadius: '10px',
+            padding: '12px',
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.22)',
+            fontSize: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px' }}>
+            <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', color: '#0ea5e9' }}>
+              <Waves size={15} />
+              Ocean Depth & Tide Telemetry
+            </span>
+            <button
+              type="button"
+              onClick={() => setInspectedPoint(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground, #94a3b8)', padding: '2px' }}
+              aria-label="Close telemetry HUD"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div style={{ color: 'var(--muted-foreground, #94a3b8)', fontFamily: 'monospace', fontSize: '11px', marginBottom: '8px' }}>
+            📍 {inspectedPoint.lat.toFixed(4)}°N, {inspectedPoint.lon.toFixed(4)}°E
+          </div>
+
+          {inspectedPoint.loading ? (
+            <div style={{ padding: '12px 0', textAlign: 'center', color: '#94a3b8' }}>
+              Querying bathymetry & tides…
+            </div>
+          ) : inspectedPoint.data ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Seabed Depth:</span>
+                <strong style={{ color: '#38bdf8' }}>{inspectedPoint.data.bathymetry_and_shelf.bathymetry_depth_m} m</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Shelf Zone:</span>
+                <span style={{ fontWeight: 600 }}>{inspectedPoint.data.bathymetry_and_shelf.shelf_zone}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Distance to Shore:</span>
+                <span style={{ fontWeight: 600 }}>{inspectedPoint.data.bathymetry_and_shelf.distance_to_shore_km} km</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Predicted Tide:</span>
+                <strong style={{ color: '#10b981' }}>
+                  {inspectedPoint.data.astronomical_tide.current_height_m} m CD ({inspectedPoint.data.astronomical_tide.phase})
+                </strong>
+              </div>
+              {inspectedPoint.data.nearby_lighthouses?.[0] && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Nearest Light:</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {inspectedPoint.data.nearby_lighthouses[0].name} ({inspectedPoint.data.nearby_lighthouses[0].range_nm} nm range)
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
       )}
     </section>
   );

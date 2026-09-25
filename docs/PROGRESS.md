@@ -69,6 +69,28 @@
     - Enriched `PFZDetails.tsx`: Target pelagic catch recommendations, optimal fishing gears (gillnet/purse seine/longline), distance/bearing from harbour, and thermal front indices.
   - **Dual-Client Synchronization**: Updated both `frontend/` (Vite) and `nextjs/` (Next.js) codebases to maintain 100% design and behavioral parity.
 
+### Milestone Feature: Granular Dissolution of MarineWatch GIS into Fisher & Authority Dashboards (§D038)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Vite production build: succeeded cleanly in 11.4s; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`).
+- **Core Architecture & Experience Transformation**:
+  - Removed GIS Explorer map tab (`OceanWatchGIS`) entirely from `ResearcherPage.tsx` and `nextjs/views/ResearcherPage.tsx`. Researcher Lab is now exclusively focused on its 5 core scientific/analytical tools:
+    1. Research Query Workbench (multi-agent evidence gathering and causal reasoning)
+    2. Ocean Data Explorer (time-series marine observations, EO satellite grids, PFZ candidates, active hazards)
+    3. Data Source Monitor (authoritative source health, freshness indicators, precedence hierarchy)
+    4. Scenario Lab (S1–S8 benchmark evaluation suite with execution KPIs)
+    5. Data Catalogue (§212) (30 institutional marine datasets across INCOIS, IMD, CMFRI, DGLL, and ISRO)
+  - Granular distribution of all 8 MarineWatch map features into operational dashboards:
+    1. **Maritime Boundaries & Restricted Zones**: Integrated 12nm Territorial Waters, 24nm Contiguous Zones, 200nm EEZ, MPAs, Naval Firing Ranges, and Sir Creek IMBL buffer into Fisher `MapView` base layers and popup formatters (`🛡️ Marine Sanctuary / Naval Range`).
+    2. **DGLL Navigational Lighthouses**: 15 primary landfall lighthouses integrated into Fisher `MapView` with custom popups displaying optical range (nm), focal elevation, light character, and VHF Ch 16.
+    3. **Bathymetry & Interactive Point Depth Inspector**: Added interactive Ocean Telemetry & Depth Inspector HUD to Fisher `MapView`. Clicking anywhere on the ocean triggers real-time spatial queries showing depth (m), distance to shore, continental shelf categorization, tidal elevation, and nearest lighthouse.
+    4. **Astronomical Predicted Tides (PAT)**: Surfaced in Fisher Point Depth HUD and `OceanDetails.tsx`, as well as Authority Command Deck `PortWatchRegistry` with real-time draught clearance indicators.
+    5. **PFZ Advisory Thermal Front Polygons**: Geodesic concentric thermal front circles generated and rendered on Fisher `MapView` with pelagic species, gear recommendations, and SST/Chl-a gradients.
+    6. **Active Hazard Alert Corridors**: IMD/INCOIS cyclone tracks, squalls, and high swell warning polygons dynamically rendered on Fisher `MapView` and monitored on Authority Deck.
+    7. **Multi-Hour Time Scrubber**: Floating time scrubber pill (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) directly embedded into Fisher `MapView` for departure and voyage planning.
+    8. **National Coastal Bookmarks**: 13 quick-jump coastal landmark selector chips (Ratnagiri, Mumbai, Kochi, Mannar, Chennai, Vizag, etc.) embedded as a floating control on Fisher `MapView` and as a dropdown in Authority Command Deck.
+  - Nationwide Harbours expansion in `GuidedTripSetup.tsx` across both west and east coasts.
+  - Maintained 100% architectural parity across `frontend/src/` and `nextjs/`.
+
+
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
 | ID | Issue | Severity | Audited Status | Findings |

@@ -1,16 +1,15 @@
 import { useState, Component, type ErrorInfo, type ReactNode } from 'react';
 import {
-  Beaker, Waves, Database, FlaskConical, MessageSquareText, AlertOctagon, RotateCcw, Globe, BookOpen,
+  Beaker, Waves, Database, FlaskConical, MessageSquareText, AlertOctagon, RotateCcw, BookOpen,
 } from 'lucide-react';
 import OceanDataExplorer from '../components/researcher/OceanDataExplorer';
 import DataSourceMonitor from '../components/researcher/DataSourceMonitor';
 import ScenarioLab from '../components/researcher/ScenarioLab';
 import QueryWorkbench from '../components/researcher/QueryWorkbench';
-import OceanWatchGIS from '../components/marinewatch/OceanWatchGIS';
 import DataCatalogueView from '../components/marinewatch/DataCatalogueView';
 import { CANONICAL_DATA_MODE_LABEL, CANONICAL_DATA_MODE_TOOLTIP } from '../api/researcher-client';
 
-type ResearcherDeck = 'gis' | 'ocean' | 'sources' | 'catalogue' | 'scenarios' | 'query';
+type ResearcherDeck = 'ocean' | 'sources' | 'catalogue' | 'scenarios' | 'query';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -68,7 +67,6 @@ class DeckErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 }
 
 const DECKS: { id: ResearcherDeck; label: string; icon: typeof Waves }[] = [
-  { id: 'gis', label: 'Unified GIS Explorer', icon: Globe as typeof Waves },
   { id: 'ocean', label: 'Ocean Data', icon: Waves },
   { id: 'sources', label: 'Data Sources', icon: Database },
   { id: 'catalogue', label: 'Data Catalogue (§212)', icon: BookOpen as typeof Waves },
@@ -77,7 +75,7 @@ const DECKS: { id: ResearcherDeck; label: string; icon: typeof Waves }[] = [
 ];
 
 export default function ResearcherPage() {
-  const [activeDeck, setActiveDeck] = useState<ResearcherDeck>('gis');
+  const [activeDeck, setActiveDeck] = useState<ResearcherDeck>('ocean');
 
   return (
     <div className="researcher-page">
@@ -118,7 +116,6 @@ export default function ResearcherPage() {
       {/* Active Deck Content */}
       <div className="researcher-deck-content">
         <DeckErrorBoundary key={activeDeck}>
-          {activeDeck === 'gis' && <OceanWatchGIS />}
           {activeDeck === 'ocean' && <OceanDataExplorer />}
           {activeDeck === 'sources' && <DataSourceMonitor />}
           {activeDeck === 'catalogue' && <DataCatalogueView />}

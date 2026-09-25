@@ -9,6 +9,7 @@ import {
   RadioTower,
   Ship,
   ShieldCheck,
+  Bookmark,
 } from 'lucide-react';
 import ChatPanel from '../components/chat/ChatPanel';
 import AuthorityDeckGLMap from '../components/authority/AuthorityDeckGLMap';
@@ -39,6 +40,7 @@ import {
   createAuthorityRouteLayers,
   FALLBACK_DEMO_SECTORS,
   fetchAndFormatBaseLayers,
+  NATIONAL_COASTAL_BOOKMARKS,
 } from '../utils/geo';
 import { translateText } from '../i18n/translations';
 
@@ -266,6 +268,31 @@ export default function AuthorityPage({
             >
               {sectors.map((s) => (
                 <option key={s.public_id || s.name} value={s.public_id}>{s.name}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="authority-sector-selector" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Bookmark size={13} className="text-muted-foreground shrink-0" />
+            <select
+              value=""
+              onChange={(e) => {
+                const b = NATIONAL_COASTAL_BOOKMARKS.find((item) => item.name === e.target.value);
+                if (b) {
+                  const matchedSector = sectors.find(
+                    (s) => s.name.toLowerCase().includes(b.name.split(' ')[0].toLowerCase()) || (b.harbor && s.harbor_id?.includes(b.harbor.toLowerCase()))
+                  );
+                  if (matchedSector) {
+                    setSelectedSector(matchedSector.public_id);
+                  }
+                }
+              }}
+              className="authority-sector-select"
+              aria-label="National Coastal Landmark Jump"
+            >
+              <option value="" disabled>Jump to Coast…</option>
+              {NATIONAL_COASTAL_BOOKMARKS.map((b) => (
+                <option key={b.name} value={b.name}>{b.name}</option>
               ))}
             </select>
           </label>

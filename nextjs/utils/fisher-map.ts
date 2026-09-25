@@ -265,5 +265,78 @@ export function formatFishermanPopup(feature: any, layer: MapLayer): string | nu
     `;
   }
 
+  // 5. DGLL Navigational Lighthouses
+  if (layerId.includes('lighthouse') || layerCategory === 'navigation_aid' || props.optical_range_nm !== undefined) {
+    const name = props.name || 'DGLL Landfall Lighthouse';
+    const state = props.state || '';
+    const range = props.optical_range_nm !== undefined ? `${props.optical_range_nm} nm` : '—';
+    const character = props.character || 'White Flash';
+    const elevation = props.elevation_m !== undefined ? `${props.elevation_m} m` : '—';
+    const vhf = props.vhf_channel !== undefined ? `Ch ${props.vhf_channel}` : 'Ch 16';
+
+    return `
+      <div class="map-popup-fisher">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+          <strong style="color:#f59e0b;font-size:13px;">🏮 ${name}</strong>
+          <span style="background:#78350f;color:#fde047;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">LANDFALL AID</span>
+        </div>
+        ${state ? `<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">${state} Coast</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;">
+          <div><span style="color:#64748b;">Optical Range:</span> <strong style="color:#e2e8f0;font-family:monospace;">${range}</strong></div>
+          <div><span style="color:#64748b;">Elevation:</span> <strong style="color:#e2e8f0;font-family:monospace;">${elevation}</strong></div>
+          <div><span style="color:#64748b;">Light Char:</span> <strong style="color:#e2e8f0;font-family:monospace;">${character}</strong></div>
+          <div><span style="color:#64748b;">VHF Radio:</span> <strong style="color:#e2e8f0;font-family:monospace;">${vhf}</strong></div>
+        </div>
+        <div style="margin-top:6px;font-size:10px;color:#64748b;">DGLL coastal visual & radio aid for night navigation</div>
+      </div>
+    `;
+  }
+
+  // 6. PFZ Thermal Front Geodesic Polygons
+  if (layerId.includes('pfz_thermal_front') || props.type === 'Potential Fishing Zone Thermal Front') {
+    const species = props.target_species || 'Pelagic Fish (Tuna, Mackerel)';
+    const gear = props.recommended_gear || 'Gillnet / Hook & Line';
+    const sst = props.sst_celsius !== undefined ? `${props.sst_celsius}°C` : '—';
+    const chla = props.chlorophyll_a !== undefined ? `${props.chlorophyll_a} mg/m³` : '—';
+    const dist = props.distance_km !== undefined ? `${Number(props.distance_km).toFixed(1)} km` : '—';
+    const bearing = props.bearing_deg !== undefined ? `${props.bearing_deg}°` : '—';
+
+    return `
+      <div class="map-popup-fisher">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+          <strong style="color:#10b981;font-size:13px;">🐟 PFZ Thermal Front</strong>
+          <span style="background:#065f46;color:#34d399;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">ACTIVE FRONT</span>
+        </div>
+        <div style="font-size:11px;color:#f1f5f9;margin-bottom:4px;"><strong>Target:</strong> ${species}</div>
+        <div style="font-size:11px;color:#cbd5e1;margin-bottom:6px;"><strong>Gear:</strong> ${gear}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;">
+          <div><span style="color:#64748b;">SST:</span> <strong style="color:#e2e8f0;font-family:monospace;">${sst}</strong></div>
+          <div><span style="color:#64748b;">Chl-a:</span> <strong style="color:#e2e8f0;font-family:monospace;">${chla}</strong></div>
+          <div><span style="color:#64748b;">Distance:</span> <strong style="color:#e2e8f0;font-family:monospace;">${dist}</strong></div>
+          <div><span style="color:#64748b;">Bearing:</span> <strong style="color:#e2e8f0;font-family:monospace;">${bearing}</strong></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 7. Restricted Waters, MPAs & National Boundaries
+  if (layerId.startsWith('base_') || layerCategory === 'base_geofence' || props.restriction_level !== undefined) {
+    const name = props.name || layer.name;
+    const level = props.restriction_level || 'ADVISORY';
+    const desc = props.description || props.regulations || '';
+    const isNoGo = level === 'NO_GO';
+
+    return `
+      <div class="map-popup-fisher">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+          <strong style="color:${isNoGo ? '#ef4444' : '#38bdf8'};font-size:13px;">🛡️ ${name}</strong>
+          <span style="background:${isNoGo ? '#7f1d1d' : '#075985'};color:${isNoGo ? '#fca5a5' : '#7dd3fc'};padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">${level}</span>
+        </div>
+        ${desc ? `<div style="font-size:11px;color:#cbd5e1;margin-bottom:4px;">${desc}</div>` : ''}
+        <div style="margin-top:6px;font-size:10px;color:#94a3b8;">Maritime boundary / protected ecological zone — maintain statutory compliance</div>
+      </div>
+    `;
+  }
+
   return null;
 }

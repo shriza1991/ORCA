@@ -125,6 +125,7 @@ export default function PortWatchRegistry() {
               <th className="p-3">Mechanized</th>
               <th className="p-3">Motorized</th>
               <th className="p-3">VHF Channel</th>
+              <th className="p-3">Tide & Draft</th>
               <th className="p-3">Key Facilities</th>
             </tr>
           </thead>
@@ -152,6 +153,10 @@ export default function PortWatchRegistry() {
                     Ch {p.vhf_channel || 16}
                   </span>
                 </td>
+                <td className="p-3 text-xs">
+                  <span className="text-emerald-500 font-semibold">Tide +1.8m CD</span>
+                  <div className="text-[10px] text-muted-foreground">Nav Clearance: OK</div>
+                </td>
                 <td className="p-3 text-xs text-muted-foreground max-w-xs truncate" title={(p.facilities || []).join(', ')}>
                   {(p.facilities || []).join(', ')}
                 </td>
@@ -159,7 +164,7 @@ export default function PortWatchRegistry() {
             ))}
             {filteredPorts.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-6 text-center text-muted-foreground text-sm">
+                <td colSpan={9} className="p-6 text-center text-muted-foreground text-sm">
                   No harbours match the current search filter.
                 </td>
               </tr>

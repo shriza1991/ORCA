@@ -1,6 +1,12 @@
 import type { MapLayer } from '../types/contracts';
 import type { EvaluatedRouteItem, SectorHazard, VesselHazardAssociation } from '../api/client';
 import { getBaseLayers } from '../api/client';
+import {
+  fetchAllLighthouses,
+  fetchPFZAdvisories,
+  fetchHazardsGeoJson,
+  fetchMaritimeBoundaries,
+} from '../api/marinewatch-client';
 
 /**
  * Authoritative Indian Coastal Harbor Coordinates [longitude, latitude] (EPSG:4326)
@@ -13,7 +19,39 @@ export const HARBOR_COORDINATES: Record<string, [number, number]> = {
   Mumbai: [72.87, 18.92],
   Veraval: [70.37, 20.90],
   Porbandar: [69.60, 21.64],
+  Cochin: [76.24, 9.97],
+  Chennai: [80.30, 13.08],
+  Visakhapatnam: [83.22, 17.69],
+  Paradip: [86.61, 20.26],
+  Tuticorin: [78.16, 8.75],
+  Mangalore: [74.82, 12.92],
+  Kandla: [70.22, 23.01],
 };
+
+export interface CoastalBookmark {
+  name: string;
+  lat: number;
+  lon: number;
+  zoom: number;
+  harbor?: string;
+  state?: string;
+}
+
+export const NATIONAL_COASTAL_BOOKMARKS: CoastalBookmark[] = [
+  { name: 'Ratnagiri (MH)', lat: 16.9942, lon: 73.2847, zoom: 10, harbor: 'Ratnagiri', state: 'Maharashtra' },
+  { name: 'Angria Bank Atoll', lat: 16.5000, lon: 72.1000, zoom: 9, harbor: 'Malvan', state: 'Maharashtra' },
+  { name: 'Mumbai (MH)', lat: 18.9158, lon: 72.8258, zoom: 10, harbor: 'Mumbai', state: 'Maharashtra' },
+  { name: 'Goa / Mormugao', lat: 15.4125, lon: 73.8056, zoom: 10, harbor: 'Panaji', state: 'Goa' },
+  { name: 'Kochi (Kerala)', lat: 9.9667, lon: 76.2400, zoom: 10, harbor: 'Cochin', state: 'Kerala' },
+  { name: 'Gulf of Mannar (TN)', lat: 9.1500, lon: 79.1000, zoom: 9, harbor: 'Tuticorin', state: 'Tamil Nadu' },
+  { name: 'Chennai (TN)', lat: 13.0827, lon: 80.2989, zoom: 10, harbor: 'Chennai', state: 'Tamil Nadu' },
+  { name: 'Visakhapatnam (AP)', lat: 17.6868, lon: 83.2185, zoom: 10, harbor: 'Visakhapatnam', state: 'Andhra Pradesh' },
+  { name: 'Gahirmatha / Paradip (OD)', lat: 20.4500, lon: 86.8500, zoom: 9, harbor: 'Paradip', state: 'Odisha' },
+  { name: 'Sundarbans (WB)', lat: 21.6500, lon: 88.0500, zoom: 9, harbor: 'Sagar Island', state: 'West Bengal' },
+  { name: 'Port Blair (A&N)', lat: 11.6667, lon: 92.7333, zoom: 9, harbor: 'Port Blair', state: 'Andaman & Nicobar' },
+  { name: 'Lakshadweep / Minicoy', lat: 8.2717, lon: 73.0539, zoom: 10, harbor: 'Minicoy', state: 'Lakshadweep' },
+  { name: 'Dwarka / Kutch (GJ)', lat: 22.2389, lon: 68.9556, zoom: 10, harbor: 'Veraval', state: 'Gujarat' },
+];
 
 export function getHarborCoordinates(harborName?: string): [number, number] {
   if (!harborName) return HARBOR_COORDINATES.Ratnagiri;
@@ -410,51 +448,194 @@ export function createHazardAssociationLayers(
 }
 
 /**
- * Fetches official base operational boundaries (IMBL, Naval ranges, MPAs)
- * from GET /api/v1/layers/base and maps them to canonical MapLayers.
+ * Helper to generate smooth circular geodesic polygons for PFZ advisory thermal fronts.
+ */
+export function generateCirclePolygon(centerLon: number, centerLat: number, radiusKm: number, points = 24): number[][] {
+  const coords: number[][] = [];
+  const distanceX = radiusKm / (111.32 * Math.cos((centerLat * Math.PI) / 180));
+  const distanceY = radiusKm / 110.574;
+
+  for (let i = 0; i <= points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    coords.push([parseFloat((centerLon + x).toFixed(5)), parseFloat((centerLat + y).toFixed(5))]);
+  }
+  return coords;
+}
+
+/**
+ * Fetches official base operational boundaries (IMBL, Naval ranges, MPAs),
+ * DGLL landfall lighthouses, PFZ thermal fronts, and active IMD/INCOIS hazard corridors.
  */
 export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
+  const layers: MapLayer[] = [];
+
   try {
-    const fc = await getBaseLayers();
-    if (!fc || !Array.isArray(fc.features)) return [];
+    const [baseRes, lhRes, pfzRes, hazRes, boundRes] = await Promise.allSettled([
+      getBaseLayers(),
+      fetchAllLighthouses(),
+      fetchPFZAdvisories('All'),
+      fetchHazardsGeoJson(),
+      fetchMaritimeBoundaries(),
+    ]);
 
-    return fc.features.map((f: any, idx: number) => {
-      const props = f.properties || {};
-      const level = props.restriction_level || 'INFORMATIONAL';
-      const polyType = (props.polygon_type || '').toUpperCase();
-      const isEEZ = polyType === 'EEZ_BOUNDARY' || (props.name && String(props.name).includes('EEZ'));
-      const isTerritorial = polyType === 'TERRITORIAL_WATERS' || (props.name && String(props.name).includes('Territorial'));
-      const isNational = isEEZ || isTerritorial;
-      const color =
-        level === 'NO_GO'
-          ? '#ef4444'
-          : level === 'NO_GO_TRAWLING'
-          ? '#f97316'
-          : level === 'ADVISORY_ALERT'
-          ? '#eab308'
-          : isTerritorial
-          ? '#0ea5e9'
-          : isEEZ
-          ? '#38bdf8'
-          : '#38bdf8';
+    // 1. Official Base Boundaries
+    let boundaryFeatures: any[] = [];
+    if (baseRes.status === 'fulfilled' && baseRes.value && Array.isArray(baseRes.value.features)) {
+      boundaryFeatures = baseRes.value.features;
+    } else if (boundRes.status === 'fulfilled' && boundRes.value && Array.isArray(boundRes.value.features)) {
+      boundaryFeatures = boundRes.value.features;
+    }
 
-      return {
-        layer_id: `base_${props.polygon_id || idx}`,
-        name: props.name || `Operational Zone ${idx + 1}`,
-        layer_type: 'geojson' as const,
+    if (boundaryFeatures.length > 0) {
+      const boundaryLayers = boundaryFeatures.map((f: any, idx: number) => {
+        const props = f.properties || {};
+        const level = props.restriction_level || 'INFORMATIONAL';
+        const polyType = (props.polygon_type || '').toUpperCase();
+        const isEEZ = polyType === 'EEZ_BOUNDARY' || (props.name && String(props.name).includes('EEZ'));
+        const isTerritorial = polyType === 'TERRITORIAL_WATERS' || (props.name && String(props.name).includes('Territorial'));
+        const isNational = isEEZ || isTerritorial;
+        const color =
+          level === 'NO_GO'
+            ? '#ef4444'
+            : level === 'NO_GO_TRAWLING'
+            ? '#f97316'
+            : level === 'ADVISORY_ALERT'
+            ? '#eab308'
+            : isTerritorial
+            ? '#0ea5e9'
+            : isEEZ
+            ? '#38bdf8'
+            : '#38bdf8';
+
+        return {
+          layer_id: `base_${props.polygon_id || idx}`,
+          name: props.name || `Operational Zone ${idx + 1}`,
+          layer_type: 'geojson' as const,
+          visible: true,
+          style: {
+            color,
+            opacity: isTerritorial ? 0.08 : isEEZ ? 0.04 : 0.22,
+            line_width: isTerritorial ? 2 : isEEZ ? 1.5 : 2,
+            layer_category: isNational ? 'national_boundary' : 'base_geofence',
+          },
+          geojson: f,
+        };
+      });
+      layers.push(...boundaryLayers);
+    }
+
+    // 2. DGLL Navigational Landfall Lighthouses (15 Lighthouses across India)
+    if (lhRes.status === 'fulfilled' && lhRes.value && Array.isArray(lhRes.value.lighthouses)) {
+      const lhFeatures = lhRes.value.lighthouses.map((lh) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [lh.longitude, lh.latitude], // [lon, lat]
+        },
+        properties: {
+          name: lh.name,
+          state: lh.state,
+          district: lh.district,
+          elevation_m: lh.focal_height_m,
+          optical_range_nm: lh.range_nm,
+          character: lh.light_character,
+          vhf_channel: 16,
+          type: 'DGLL Navigational Lighthouse',
+          aid_type: 'Landfall Light',
+        },
+      }));
+
+      layers.push({
+        layer_id: 'layer_navigational_lighthouses',
+        name: 'Navigational Lighthouses (DGLL)',
+        layer_type: 'geojson',
         visible: true,
         style: {
-          color,
-          opacity: isTerritorial ? 0.08 : isEEZ ? 0.04 : 0.22,
-          line_width: isTerritorial ? 2 : isEEZ ? 1.5 : 2,
-          layer_category: isNational ? 'national_boundary' : 'base_geofence',
+          color: '#f59e0b',
+          opacity: 1.0,
+          circle_radius: 8,
+          layer_category: 'navigation_aid',
         },
-        geojson: f,
-      };
-    });
-  } catch {
-    return [];
+        geojson: {
+          type: 'FeatureCollection',
+          features: lhFeatures,
+        },
+      });
+    }
+
+    // 3. PFZ Advisory Geodesic Thermal Fronts
+    if (pfzRes.status === 'fulfilled' && pfzRes.value && Array.isArray(pfzRes.value.advisories)) {
+      const frontFeatures: any[] = [];
+      pfzRes.value.advisories.forEach((advisory, i) => {
+        const centerLon = advisory.longitude;
+        const centerLat = advisory.latitude;
+        const circleCoords = generateCirclePolygon(centerLon, centerLat, 8.0);
+
+        frontFeatures.push({
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [circleCoords],
+          },
+          properties: {
+            pfz_id: advisory.advisory_id || `pfz-${i + 1}`,
+            name: `PFZ Front: ${advisory.target_species.slice(0, 2).join(', ')}`,
+            target_species: advisory.target_species.join(', '),
+            recommended_gear: (advisory.gear_recommended || []).join(', '),
+            sst_celsius: advisory.sst_celsius,
+            chlorophyll_a: advisory.chlorophyll_mg_m3,
+            distance_km: advisory.distance_km,
+            bearing_deg: advisory.bearing_deg,
+            sector: advisory.sector,
+            valid_to: advisory.valid_to,
+            type: 'Potential Fishing Zone Thermal Front',
+          },
+        });
+      });
+
+      if (frontFeatures.length > 0) {
+        layers.push({
+          layer_id: 'layer_pfz_thermal_fronts',
+          name: 'PFZ Thermal Front Advisories',
+          layer_type: 'geojson',
+          visible: true,
+          style: {
+            color: '#10b981',
+            opacity: 0.16,
+            line_width: 2,
+            layer_category: 'pfz',
+          },
+          geojson: {
+            type: 'FeatureCollection',
+            features: frontFeatures,
+          },
+        });
+      }
+    }
+
+    // 4. Active IMD/INCOIS Hazard Corridors
+    if (hazRes.status === 'fulfilled' && hazRes.value && Array.isArray(hazRes.value.features)) {
+      layers.push({
+        layer_id: 'layer_active_hazards_geojson',
+        name: 'Active Marine Hazards',
+        layer_type: 'geojson',
+        visible: true,
+        style: {
+          color: '#ef4444',
+          opacity: 0.28,
+          line_width: 2.5,
+          layer_category: 'hazard',
+        },
+        geojson: hazRes.value,
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching base and marine watch layers:', err);
   }
+
+  return layers;
 }
 
 /**
@@ -471,12 +652,18 @@ function isNationalMaritimeBoundary(layer: MapLayer): boolean {
     id.includes('eez') ||
     id.includes('territorial') ||
     id.includes('boundary') ||
+    id.includes('lighthouse') ||
+    id.includes('hazard') ||
+    id.includes('pfz') ||
     name.includes('exclusive economic zone') ||
     name.includes('eez') ||
     name.includes('territorial') ||
     name.includes('water boundary') ||
+    name.includes('lighthouse') ||
     category === 'national_boundary' ||
     category === 'national_eez' ||
+    category === 'navigation_aid' ||
+    category === 'hazard' ||
     polyType === 'eez_boundary' ||
     polyType === 'territorial_waters' ||
     polyType === 'island_water_boundary'

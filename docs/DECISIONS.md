@@ -547,6 +547,30 @@ Alternatives considered:
 
 Impact:
 Portal simplified to 3 core operational cards; `/fisher`, `/authority`, and `/researcher` gain deep nationwide telemetry without regressions.
+## D038 — Granular Dissolution of MarineWatch GIS into Fisher Console & Authority Command Deck
+Status: ACCEPTED
+
+Decision:
+1. Complete Removal of Map Tab from Researcher Lab: Remove the GIS Explorer map tab (`OceanWatchGIS`) entirely from `ResearcherPage`, refining the Researcher Lab into a pure analytical and scientific workstation (Research Query Workbench, Ocean Data Explorer, Data Source Monitor, Scenario Lab, and Data Catalogue §212).
+2. Granular Distribution of GIS Capabilities into Fisher Console:
+   - Floating National Coastal Bookmarks: 13 quick-jump landmarks across all Indian coastal states directly embedded into the Fisher `MapView`.
+   - Floating Multi-Hour Forecast Time Scrubber: Quick timeline scrubber (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) directly embedded into the Fisher `MapView`.
+   - Interactive Point Depth & Ocean Telemetry Inspector HUD: Click-to-inspect ocean telemetry querying backend spatial endpoints for seabed depth, distance to shore, continental shelf categorization, INCOIS predicted astronomical tide (PAT) elevation/trend, and nearest DGLL lighthouse aid.
+   - Comprehensive Vector Layers: Integrated DGLL landfall lighthouses (optical ranges, elevations, VHF Ch 16), concentric geodesic PFZ thermal front polygons, IMD/INCOIS active hazard corridors, and marine protected areas (MPAs) / naval firing ranges directly into the Fisher base map layer stack.
+3. Authority Command Deck Integration:
+   - National Coastal Jump selector in the surveillance toolbar to inspect and coordinate maritime assets across all coastal states.
+   - Real-time Astronomical Tide (PAT) & Draught Clearance status integrated directly into the CMFRI PortWatch Registry table.
+4. Dual-Client Parity: Identical implementations deployed across both `frontend/` (Vite) and `nextjs/` (Next.js) codebases.
+
+Reason:
+Puts specialized navigational, bathymetric, and hazard data into the hands of the operators who make real-time at-sea and harbour management decisions (Fishermen and Coast Guard/Port Authorities), while removing map noise from the analytical Researcher persona.
+
+Alternatives considered:
+- Keeping an embedded map tab in Researcher Lab (rejected: user explicitly requested full breakdown and removal of map tab from Researcher Lab).
+- Splitting features into new separate pages (rejected: causes fragmentation; embedding directly into existing map and operational cards provides immediate contextual value).
+
+Impact:
+Eliminates standalone GIS tabs completely; empowers Fisher Console with rich landfall aids, depth inspection, and time scrubbing; enhances Authority Deck with nationwide jurisdiction jumping and port tidal clearance; maintains 100% test integrity.
 Owner: Product / Architecture
 Date: 2026-09-25
 
@@ -560,6 +584,7 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 
 
 
