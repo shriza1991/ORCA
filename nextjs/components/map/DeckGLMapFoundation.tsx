@@ -312,7 +312,7 @@ export default function DeckGLMapFoundation({
             position: 'absolute',
             top: 10,
             left: 10,
-            right: 10,
+            right: showControls ? 116 : 10,
             pointerEvents: 'none',
             zIndex: 10,
           }}

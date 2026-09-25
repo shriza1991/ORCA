@@ -41,68 +41,71 @@ export default function PortWatchRegistry() {
   const totalMot = filteredPorts.reduce((acc, p) => acc + (p.craft_count?.motorized || 0), 0);
 
   return (
-    <div className="marinewatch-tab-inner-view" style={{ padding: '16px' }}>
-      <div className="tab-view-header" style={{ marginBottom: '16px' }}>
+    <div className="portwatch-view">
+      <div className="portwatch-header">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Anchor size={20} className="text-primary" />
+          <h2 className="portwatch-header-title">
+            <Anchor size={20} style={{ color: 'var(--color-accent)' }} />
             CMFRI Fish Landing Centres & Harbour Census Registry
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="portwatch-header-subtitle">
             Authoritative maritime fleet statistics, quay facilities, and emergency VHF radio calling channels
             across all Indian coastal states and island territories.
           </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <span className="registry-count-pill">{filteredPorts.length} Registered Harbours</span>
+        <div className="portwatch-header-actions">
+          <span className="portwatch-count-badge">{filteredPorts.length} Registered Harbours</span>
           <button
+            type="button"
             onClick={loadPorts}
-            className="p-1.5 rounded border border-border hover:bg-muted text-xs flex items-center gap-1"
+            className="portwatch-refresh-btn"
             title="Refresh port census"
+            aria-label="Refresh port census"
           >
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={loading ? 'spin-icon' : ''} />
           </button>
         </div>
       </div>
 
       {/* Fleet KPI Banner */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Total Monitored Harbours</div>
-          <div className="text-xl font-bold mt-1 text-primary">{filteredPorts.length}</div>
+      <div className="portwatch-kpi-grid">
+        <div className="portwatch-kpi-card">
+          <span className="portwatch-kpi-label">Total Monitored Harbours</span>
+          <span className="portwatch-kpi-value" style={{ color: 'var(--color-accent)' }}>{filteredPorts.length}</span>
         </div>
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Total Registered Craft</div>
-          <div className="text-xl font-bold mt-1 text-foreground">{totalCraft.toLocaleString()}</div>
+        <div className="portwatch-kpi-card">
+          <span className="portwatch-kpi-label">Total Registered Craft</span>
+          <span className="portwatch-kpi-value">{totalCraft.toLocaleString()}</span>
         </div>
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Mechanized Fleet</div>
-          <div className="text-xl font-bold mt-1 text-emerald-600">{totalMech.toLocaleString()}</div>
+        <div className="portwatch-kpi-card">
+          <span className="portwatch-kpi-label">Mechanized Fleet</span>
+          <span className="portwatch-kpi-value accent-emerald">{totalMech.toLocaleString()}</span>
         </div>
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Motorized Fleet</div>
-          <div className="text-xl font-bold mt-1 text-blue-600">{totalMot.toLocaleString()}</div>
+        <div className="portwatch-kpi-card">
+          <span className="portwatch-kpi-label">Motorized Fleet</span>
+          <span className="portwatch-kpi-value accent-blue">{totalMot.toLocaleString()}</span>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-3 text-muted-foreground" />
+      <div className="portwatch-toolbar">
+        <div className="portwatch-search-wrap">
+          <Search size={14} className="portwatch-search-icon" />
           <input
             type="text"
             placeholder="Search harbours by name, district, or facilities…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background text-sm"
+            className="portwatch-search-input"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter size={14} className="text-muted-foreground" />
+        <div className="portwatch-filter-group">
+          <Filter size={14} style={{ color: 'var(--color-text-dim)' }} />
           <select
             value={selectedState}
             onChange={(e) => setSelectedState(e.target.value)}
-            className="px-3 py-2 rounded-md border border-border bg-background text-sm font-medium"
+            className="portwatch-filter-select"
+            aria-label="Filter by state"
           >
             {states.map((st) => (
               <option key={st} value={st}>
@@ -114,57 +117,59 @@ export default function PortWatchRegistry() {
       </div>
 
       {/* Harbours Census Table */}
-      <div className="ports-table-wrap overflow-x-auto rounded-lg border border-border">
-        <table className="oceanwatch-table w-full text-left text-sm">
-          <thead className="bg-muted/50 border-b border-border text-xs uppercase font-semibold text-muted-foreground">
+      <div className="portwatch-table-wrap">
+        <table className="portwatch-table">
+          <thead>
             <tr>
-              <th className="p-3">Harbour Name</th>
-              <th className="p-3">District & State</th>
-              <th className="p-3">Harbour Type</th>
-              <th className="p-3">Total Fleet</th>
-              <th className="p-3">Mechanized</th>
-              <th className="p-3">Motorized</th>
-              <th className="p-3">VHF Channel</th>
-              <th className="p-3">Tide & Draft</th>
-              <th className="p-3">Key Facilities</th>
+              <th>Harbour Name</th>
+              <th>District & State</th>
+              <th>Harbour Type</th>
+              <th>Total Fleet</th>
+              <th>Mechanized</th>
+              <th>Motorized</th>
+              <th>VHF Channel</th>
+              <th>Tide & Draft</th>
+              <th>Key Facilities</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/60">
+          <tbody>
             {filteredPorts.map((p) => (
-              <tr key={p.id} className="hover:bg-muted/40 transition-colors">
-                <td className="p-3 font-semibold text-foreground flex items-center gap-1.5">
-                  <Anchor size={14} className="text-primary shrink-0" />
-                  {p.name}
+              <tr key={p.id}>
+                <td>
+                  <div className="port-name-cell">
+                    <Anchor size={14} style={{ color: 'var(--color-accent)' }} />
+                    <span>{p.name}</span>
+                  </div>
                 </td>
-                <td className="p-3 text-muted-foreground">
-                  {p.district}, <span className="font-medium text-foreground">{p.state}</span>
+                <td>
+                  <span>{p.district}, <strong>{p.state}</strong></span>
                 </td>
-                <td className="p-3">
-                  <span className="centre-type-pill text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                <td>
+                  <span className="port-type-tag">
                     {p.type.replace(/_/g, ' ')}
                   </span>
                 </td>
-                <td className="p-3 font-bold text-foreground">{p.craft_count?.total ?? '—'}</td>
-                <td className="p-3 text-emerald-600 font-semibold">{p.craft_count?.mechanized ?? '—'}</td>
-                <td className="p-3 text-blue-600 font-semibold">{p.craft_count?.motorized ?? '—'}</td>
-                <td className="p-3">
-                  <span className="inline-flex items-center gap-1 font-mono text-xs px-1.5 py-0.5 rounded bg-muted">
-                    <Radio size={12} className="text-primary" />
+                <td><strong>{p.craft_count?.total ?? '—'}</strong></td>
+                <td><span style={{ color: '#10b981', fontWeight: 700 }}>{p.craft_count?.mechanized ?? '—'}</span></td>
+                <td><span style={{ color: '#38bdf8', fontWeight: 700 }}>{p.craft_count?.motorized ?? '—'}</span></td>
+                <td>
+                  <span className="port-vhf-tag">
+                    <Radio size={11} style={{ color: 'var(--color-accent)' }} />
                     Ch {p.vhf_channel || 16}
                   </span>
                 </td>
-                <td className="p-3 text-xs">
-                  <span className="text-emerald-500 font-semibold">Tide +1.8m CD</span>
-                  <div className="text-[10px] text-muted-foreground">Nav Clearance: OK</div>
+                <td>
+                  <div className="port-tide-tag">Tide +1.8m CD</div>
+                  <div className="port-clearance-note">Nav Clearance: OK</div>
                 </td>
-                <td className="p-3 text-xs text-muted-foreground max-w-xs truncate" title={(p.facilities || []).join(', ')}>
+                <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={(p.facilities || []).join(', ')}>
                   {(p.facilities || []).join(', ')}
                 </td>
               </tr>
             ))}
             {filteredPorts.length === 0 && (
               <tr>
-                <td colSpan={9} className="p-6 text-center text-muted-foreground text-sm">
+                <td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                   No harbours match the current search filter.
                 </td>
               </tr>

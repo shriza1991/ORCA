@@ -531,22 +531,11 @@ export default function FleetTrackingDeck({
       </div>
 
       {isBackendOffline && (
-        <div className="fleet-offline-banner" style={{
-          backgroundColor: 'rgba(239, 68, 68, 0.15)',
-          border: '1px solid #ef4444',
-          borderRadius: '8px',
-          padding: '10px 14px',
-          margin: '0 0 14px 0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          color: '#ef4444',
-          fontSize: '13px',
-        }}>
+        <div className="fleet-offline-banner">
           <AlertTriangle size={18} />
           <div>
             <strong>{translateText('BACKEND OFFLINE — SURVEILLANCE DATA UNAVAILABLE', language)}</strong>
-            <p style={{ margin: '2px 0 0 0', opacity: 0.85, fontSize: '12px' }}>
+            <p>
               {translateText('Cannot connect to SAMUDRA backend API. Synthetic telemetry, GPS replay tracks, and broadcast alerts are suspended. Offline fallback preserves sector navigation only.', language)}
             </p>
           </div>
@@ -562,23 +551,16 @@ export default function FleetTrackingDeck({
           </div>
 
           {isLoading ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+            <div className="fleet-loading-text">
               {translateText('Loading monitored sector fleet...', language)}
             </div>
           ) : vessels.length === 0 ? (
-            <div style={{
-              padding: '24px 16px',
-              textAlign: 'center',
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
-              borderRadius: '8px',
-              border: '1px dashed rgba(255, 255, 255, 0.1)',
-              margin: '8px 0',
-            }}>
-              <Ship size={28} style={{ margin: '0 auto 8px auto', opacity: 0.4 }} />
-              <p style={{ margin: 0, fontWeight: 600, fontSize: '13px' }}>
+            <div className="fleet-empty-state">
+              <Ship size={28} className="fleet-empty-icon" />
+              <p className="fleet-empty-title">
                 {translateText('No Monitored Vessels in this Sector', language)}
               </p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>
+              <p className="fleet-empty-desc">
                 {translateText('No coastal vessels currently operating in this surveillance sector.', language)}
               </p>
             </div>
@@ -618,26 +600,18 @@ export default function FleetTrackingDeck({
 
           {/* Telemetry Replay Status / Unavailable State */}
           {selectedVessel && isReplayLoading && (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+            <div className="fleet-loading-text">
               {translateText('Loading vessel replay telemetry...', language)}
             </div>
           )}
 
           {selectedVessel && !isReplayLoading && isReplayUnavailable && (
-            <div className="fleet-replay-unavailable-card" style={{
-              padding: '14px 16px',
-              backgroundColor: 'rgba(239, 68, 68, 0.08)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-              borderRadius: '8px',
-              margin: '12px 0',
-              fontSize: '13px',
-              color: '#f87171',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontWeight: 600 }}>
+            <div className="fleet-replay-unavailable-card">
+              <div className="fleet-replay-unavail-header">
                 <AlertTriangle size={15} />
                 <span>{translateText('Surveillance Replay Unavailable', language)}</span>
               </div>
-              <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
+              <p className="fleet-replay-unavail-text">
                 {translateText(`GPS replay trajectory is unavailable for ${selectedVessel.name}. Operational coordinates will not be fabricated.`, language)}
               </p>
             </div>
@@ -727,15 +701,15 @@ export default function FleetTrackingDeck({
                   <span>{translateText('Pos:', language)} <strong>{currentPos.latitude.toFixed(3)}°N, {currentPos.longitude.toFixed(3)}°E</strong></span>
                 </div>
                 <div className="telemetry-pill">
-                  <Navigation size={14} style={{ color: '#10b981' }} />
+                  <Navigation size={14} className="telemetry-icon-start" />
                   <span>{translateText('Start:', language)} <strong>{selectedVessel?.home_harbor_id ? selectedVessel.home_harbor_id.replace('harbor-', '').replace(/^./, (c) => c.toUpperCase()) : `${positions[0].latitude.toFixed(2)}°N, ${positions[0].longitude.toFixed(2)}°E`}</strong></span>
                 </div>
                 <div className="telemetry-pill">
-                  <MapPin size={14} style={{ color: '#f59e0b' }} />
+                  <MapPin size={14} className="telemetry-icon-dest" />
                   <span>{translateText('Dest:', language)} <strong>{`${positions[positions.length - 1].latitude.toFixed(2)}°N, ${positions[positions.length - 1].longitude.toFixed(2)}°E`}</strong></span>
                 </div>
               </div>
-              <p className="scrubber-eyebrow" style={{ marginTop: '10px' }}>
+              <p className="scrubber-eyebrow scrubber-eyebrow-trajectory">
                 {trajectoryStatus?.available
                   ? translateText('Estimated trajectory — next 30 min', language)
                   : trajectoryStatus && translateText(`Estimated trajectory unavailable${trajectoryStatus.reason ? `: ${trajectoryStatus.reason}` : ''}`, language)}
@@ -752,11 +726,11 @@ export default function FleetTrackingDeck({
           </div>
 
           {operationalAlertsUnavailable ? (
-            <p style={{ color: '#f97316', fontSize: '13px', padding: '8px 0' }}>
+            <p className="fleet-alerts-unavailable">
               {translateText('Operational hazard alerts unavailable.', language)}
             </p>
           ) : operationalAlerts.length === 0 ? (
-            <p style={{ color: '#94a3b8', fontSize: '13px', padding: '8px 0' }}>
+            <p className="fleet-alerts-empty">
               {translateText('No vessels currently in an active hazard area.', language)}
             </p>
           ) : operationalAlerts.map((alert) => (
@@ -777,7 +751,7 @@ export default function FleetTrackingDeck({
           ))}
 
           {selectedOperationalAlert && (
-            <section className="fleet-alert-inspection" aria-label="Operational alert inspection" style={{ marginTop: '12px', padding: '12px', border: '1px solid rgba(250, 204, 21, 0.5)', borderRadius: '8px' }}>
+            <section className="fleet-alert-inspection" aria-label="Operational alert inspection">
               <div className="fleet-section-title">
                 <Crosshair size={16} />
                 <span>{translateText('Alert Inspection', language)}</span>
@@ -795,13 +769,13 @@ export default function FleetTrackingDeck({
             </section>
           )}
 
-          <div className="fleet-section-title" style={{ marginTop: '14px' }}>
+          <div className="fleet-section-title fleet-broadcast-title">
             <Bell size={16} />
             <span>{translateText('Maritime Broadcast Alerts', language)} ({notifications.length})</span>
           </div>
           <div className="fleet-alerts-list">
             {notifications.length === 0 ? (
-              <p style={{ color: '#94a3b8', fontSize: '13px', padding: '16px 0', textAlign: 'center' }}>
+              <p className="fleet-alerts-empty">
                 {translateText('No active maritime broadcast alerts in this sector.', language)}
               </p>
             ) : (

@@ -90,6 +90,18 @@
   - Nationwide Harbours expansion in `GuidedTripSetup.tsx` across both west and east coasts.
   - Maintained 100% architectural parity across `frontend/src/` and `nextjs/`.
 
+### Milestone Feature: Authority Deck Layout & Semantic Styling Refactor (§D039)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; visual verification complete via Chrome DevTools MCP across light & dark themes).
+- **Core Visual & Architectural Polish**:
+  - **Command Bar Responsive Overflow**: Fixed horizontal clipping of right-hand telemetry chips (`VERDICT`, `FLEET`, `HAZARDS`, `EVIDENCE`) by applying horizontal scroll containment (`overflow-x: auto; scrollbar-width: none`), flexible gap constraints, and responsive chip padding.
+  - **PortWatch & AquaWatch Semantic Architecture**: Replaced unstyled Tailwind utility classes (unprocessed in Vite) with dedicated semantic CSS classes in `components.css`:
+    - PortWatch: `.portwatch-view`, `.portwatch-header`, `.portwatch-kpi-grid`, `.portwatch-kpi-card`, `.portwatch-toolbar`, `.portwatch-search-input`, `.portwatch-filter-select`, `.portwatch-table-wrap`, `.portwatch-table`, `.port-name-cell`, `.port-type-tag`, `.port-vhf-tag`, `.port-tide-tag`.
+    - AquaWatch: `.aquawatch-view`, `.aquawatch-header`, `.aquawatch-kpi-grid`, `.aquawatch-kpi-card`, `.aquawatch-cards-grid`, `.aquawatch-card`, `.aquawatch-card-header`, `.aquawatch-attr-list`, `.aquawatch-status-badge`.
+  - **Top Map Overlay HUD Collision**: Corrected `deckgl-top-overlay` right margin (`right: showControls ? 116 : 10`), completely eliminating collision with DeckGL camera controls (`[Tactical 3D] [High Orbit] [2D Flat]`).
+  - **Theme Tokenization & Hex Leak Removal**: Replaced hardcoded inline hex colors (`#86efac`, `#f0fdf4`, `#166534`, etc.) with CSS variable tokens (`var(--color-*)`) across light and dark modes, ensuring WCAG contrast compliance and zero visual leaks in dark mode.
+  - **Dynamic Benchmark Status Pills**: Updated `ScenarioBenchmarkDeck.tsx` to dynamically assign status pill classes (`.status-go`, `.status-caution`, `.status-no-go`) matching `expected_status` instead of hardcoded `.status-go`.
+  - **FleetDeck Utility Standardization**: Added semantic classes for `.fleet-offline-banner`, `.fleet-replay-unavailable-card`, `.fleet-empty-state`, `.fleet-alert-inspection`, `.fleet-alerts-empty`, `.telemetry-icon-start`, and `.telemetry-icon-dest`.
+  - **100% Dual-Client Parity**: Synchronized all component refactors and CSS definitions to `nextjs/` (`components/authority/`, `components/map/`, `views/`, and `styles/components.css`).
 
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 

@@ -401,11 +401,10 @@ export default function AuthorityPage({
           {authorityActiveResponse?.agent_collaboration && (
             <button
               type="button"
-              className={`authority-kpi-chip authority-evidence-btn ${authorityTab === 'audit' ? 'active' : ''}`}
+              className={`authority-kpi-chip authority-decision-chip ${authorityTab === 'audit' ? 'active' : ''}`}
               onClick={() => setAuthorityTab('audit')}
               title={translateText('Inspect Decision Authority & Multi-Agent Arbitration', chat.language)}
               data-testid="kpi-decision-authority"
-              style={{ borderColor: '#86efac', background: '#f0fdf4', color: '#166534' }}
             >
               <ShieldCheck size={13} className="status-accent" />
               <span>
@@ -538,23 +537,16 @@ export default function AuthorityPage({
           /* Audit View: Direct In-Page Evidence & Agent Trace Logs */
           <div className="authority-audit-view">
             {authorityActiveResponse?.agent_collaboration && (
-              <div className="authority-collaboration-audit-section" style={{ gridColumn: '1 / -1', marginBottom: '20px' }} data-testid="authority-collaboration-section">
-                <div className="audit-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ShieldCheck size={18} color="#0284c7" />
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
+              <div className="authority-collaboration-audit-section" data-testid="authority-collaboration-section">
+                <div className="authority-collaboration-audit-header">
+                  <div className="authority-collaboration-audit-title">
+                    <ShieldCheck size={18} style={{ color: 'var(--color-accent)' }} />
+                    <h3>
                       {translateText('Statutory Decision Authority & Multi-Agent Arbitration Audit', chat.language)}
                     </h3>
                   </div>
                   <span
-                    style={{
-                      fontSize: '0.8rem',
-                      padding: '4px 10px',
-                      borderRadius: '9999px',
-                      background: authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? '#fef3c7' : '#dcfce7',
-                      color: authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? '#92400e' : '#166534',
-                      fontWeight: 700,
-                    }}
+                    className={`authority-consensus-badge ${authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? 'conflict' : 'consensus'}`}
                   >
                     {authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected
                       ? translateText('Protocol D010 Invoked', chat.language)
@@ -570,7 +562,7 @@ export default function AuthorityPage({
 
             <div className="authority-audit-column">
               {selectedOperationalAlert && (
-                <section className="fleet-alert-inspection" aria-label="Alert evidence" style={{ marginBottom: '14px', padding: '12px', border: '1px solid rgba(250, 204, 21, 0.5)', borderRadius: '8px' }}>
+                <section className="fleet-alert-inspection" aria-label="Alert evidence">
                   <div className="audit-section-header"><AlertTriangle size={16} /><h3>{translateText('Alert Evidence', chat.language)}</h3></div>
                   <p className="authority-empty-note">{translateText('Canonical containment observation; this is not a risk prediction.', chat.language)}</p>
                   <div className="alert-card-footer"><span>Sector: {selectedOperationalAlert.sector_id}</span><span>Vessel: {selectedOperationalAlert.vessel_id}</span></div>

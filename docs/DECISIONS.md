@@ -574,6 +574,29 @@ Eliminates standalone GIS tabs completely; empowers Fisher Console with rich lan
 Owner: Product / Architecture
 Date: 2026-09-25
 
+## D039 — Authority Command Deck Layout Resilience & Semantic Design Tokens
+Status: ACCEPTED
+
+Decision:
+1. Responsive Command Bar Containment: Replaced rigid horizontal flex wrapping on `.authority-command-bar` with contained horizontal scrolling (`overflow-x: auto; scrollbar-width: none`), compact gap spacing, and normalized chip heights, ensuring right-aligned telemetry chips (Verdict, Fleet, Hazards, Evidence) remain accessible across all viewport widths.
+2. Complete Semantic CSS Migration for PortWatch & AquaWatch: Deprecated unsupported Tailwind utility classes in `PortWatchRegistry` and `AquaWatchRegistry` (which silently failed in Vite without Tailwind processors), replacing them with dedicated, maintainable semantic CSS classes (`.portwatch-*`, `.aquawatch-*`) in `components.css`.
+3. Map Overlay HUD Viewport Margin Decoupling: In `DeckGLMapFoundation`, offset `deckgl-top-overlay` right margin from `10px` to `showControls ? 116px : 10px`, permanently eliminating visual collision with camera controls (`[Tactical 3D] [High Orbit] [2D Flat]`).
+4. Strict Dark/Light Theme Tokenization: Replaced hardcoded inline hex colors (`#86efac`, `#f0fdf4`, `#166534`, etc.) with CSS variable tokens (`var(--color-*)`) across all Authority subcomponents, ensuring WCAG contrast compliance and zero visual leaks in dark mode.
+5. Dynamic Status Pill Mapping: Configured `ScenarioBenchmarkDeck` to dynamically derive status pill CSS classes from `expected_status` rather than a hardcoded `.status-go` style.
+6. 100% Dual-Client Parity: Enforced identical component refactoring and style definitions across Vite (`frontend/`) and Next.js (`nextjs/`).
+
+Reason:
+Resolves severe layout and visual breakdowns on the Authority dashboard that caused registry tables and card grids to collapse into unstyled plain text, command bar telemetry to clip off-screen, and map overlays to collide.
+
+Alternatives considered:
+- Introducing Tailwind CLI into the Vite build pipeline (rejected: adds build friction and dependency divergence from the pure vanilla CSS variable architecture).
+- Statically hiding command bar chips on narrow screens (rejected: loss of critical situational awareness telemetry for operators).
+
+Impact:
+Guarantees robust responsive presentation, restores tabular and grid formatting for harbour and aquaculture registries, prevents camera control overlap, and preserves dark/light theme consistency.
+Owner: Frontend / Architecture
+Date: 2026-09-26
+
 ## Decision template
 
 ### D0XX — <title>

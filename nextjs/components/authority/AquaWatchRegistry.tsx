@@ -41,68 +41,73 @@ export default function AquaWatchRegistry() {
   const compliantCount = filteredFarms.filter((f) => f.biosecurity_compliant).length;
 
   return (
-    <div className="marinewatch-tab-inner-view" style={{ padding: '16px' }}>
-      <div className="tab-view-header" style={{ marginBottom: '16px' }}>
+    <div className="aquawatch-view">
+      <div className="aquawatch-header">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <ShieldCheck size={20} className="text-emerald-500" />
+          <h2 className="aquawatch-header-title">
+            <ShieldCheck size={20} style={{ color: '#10b981' }} />
             Coastal Aquaculture Authority (CAA) Farm & Biosecurity Registry
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="aquawatch-header-subtitle">
             Statutory brackishwater shrimp and fish aquaculture facilities registered under the Coastal
             Aquaculture Authority Act, 2005. Environmental parameters, biosecurity status, and water sources.
           </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <span className="registry-count-pill">{filteredFarms.length} Certified Facilities</span>
+        <div className="portwatch-header-actions">
+          <span className="aquawatch-count-badge">{filteredFarms.length} Certified Facilities</span>
           <button
+            type="button"
             onClick={loadFarms}
-            className="p-1.5 rounded border border-border hover:bg-muted text-xs flex items-center gap-1"
+            className="portwatch-refresh-btn"
             title="Refresh farm registry"
+            aria-label="Refresh farm registry"
           >
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={loading ? 'spin-icon' : ''} />
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Monitored Facilities</div>
-          <div className="text-xl font-bold mt-1 text-primary">{filteredFarms.length}</div>
+      <div className="aquawatch-kpi-grid">
+        <div className="aquawatch-kpi-card">
+          <span className="aquawatch-kpi-label">Monitored Facilities</span>
+          <span className="aquawatch-kpi-value" style={{ color: 'var(--color-accent)' }}>{filteredFarms.length}</span>
         </div>
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Water Spread Area</div>
-          <div className="text-xl font-bold mt-1 text-foreground">{totalArea.toFixed(1)} ha</div>
+        <div className="aquawatch-kpi-card">
+          <span className="aquawatch-kpi-label">Water Spread Area</span>
+          <span className="aquawatch-kpi-value">{totalArea.toFixed(1)} ha</span>
         </div>
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Biosecurity Audited</div>
-          <div className="text-xl font-bold mt-1 text-emerald-600">{compliantCount} Compliant</div>
+        <div className="aquawatch-kpi-card">
+          <span className="aquawatch-kpi-label">Biosecurity Audited</span>
+          <span className="aquawatch-kpi-value accent-emerald">{compliantCount} Compliant</span>
         </div>
-        <div className="p-3 rounded-lg border border-border bg-card">
-          <div className="text-[11px] uppercase font-bold text-muted-foreground">Statutory Authority</div>
-          <div className="text-xs font-semibold mt-2 text-muted-foreground">CAA, Min of Fisheries (GoI)</div>
+        <div className="aquawatch-kpi-card">
+          <span className="aquawatch-kpi-label">Statutory Authority</span>
+          <span className="aquawatch-kpi-value" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)', marginTop: '8px' }}>
+            CAA, Min of Fisheries (GoI)
+          </span>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-3 text-muted-foreground" />
+      <div className="portwatch-toolbar">
+        <div className="portwatch-search-wrap">
+          <Search size={14} className="portwatch-search-icon" />
           <input
             type="text"
             placeholder="Search by farm name, registration #, cultured species, or district…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background text-sm"
+            className="portwatch-search-input"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter size={14} className="text-muted-foreground" />
+        <div className="portwatch-filter-group">
+          <Filter size={14} style={{ color: 'var(--color-text-dim)' }} />
           <select
             value={selectedState}
             onChange={(e) => setSelectedState(e.target.value)}
-            className="px-3 py-2 rounded-md border border-border bg-background text-sm font-medium"
+            className="portwatch-filter-select"
+            aria-label="Filter by state"
           >
             {states.map((st) => (
               <option key={st} value={st}>
@@ -114,59 +119,59 @@ export default function AquaWatchRegistry() {
       </div>
 
       {/* Farm Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="aquawatch-cards-grid">
         {filteredFarms.map((farm) => (
-          <div key={farm.id} className="p-4 rounded-lg border border-border bg-card shadow-sm hover:shadow transition-shadow">
-            <div className="flex items-start justify-between gap-2 mb-2">
+          <div key={farm.id} className="aquawatch-card">
+            <div className="aquawatch-card-header">
               <div>
-                <h4 className="font-bold text-sm text-foreground">{farm.farm_name}</h4>
-                <span className="text-[11px] font-mono text-muted-foreground block mt-0.5">
+                <h4 className="aquawatch-farm-name">{farm.farm_name}</h4>
+                <div className="aquawatch-reg-no">
                   Reg: {farm.caa_registration_number}
-                </span>
+                </div>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              <span className="aquawatch-status-badge">
                 {farm.caa_status}
               </span>
             </div>
 
-            <div className="space-y-1.5 text-xs mt-3 pt-2 border-t border-border/50">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Location</span>
-                <span className="font-medium text-foreground">{farm.district}, {farm.state}</span>
+            <div className="aquawatch-attr-list">
+              <div className="aquawatch-attr-row">
+                <span className="aquawatch-attr-label">Location</span>
+                <span className="aquawatch-attr-value">{farm.district}, {farm.state}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Cultured Species</span>
-                <span className="font-semibold text-primary">{farm.cultured_species}</span>
+              <div className="aquawatch-attr-row">
+                <span className="aquawatch-attr-label">Cultured Species</span>
+                <span className="aquawatch-attr-value" style={{ color: 'var(--color-accent)' }}>{farm.cultured_species}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Water Source</span>
-                <span className="font-medium text-foreground">{farm.water_source}</span>
+              <div className="aquawatch-attr-row">
+                <span className="aquawatch-attr-label">Water Source</span>
+                <span className="aquawatch-attr-value">{farm.water_source}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Salinity</span>
-                <span className="font-mono text-foreground">{farm.water_salinity_ppt} ppt</span>
+              <div className="aquawatch-attr-row">
+                <span className="aquawatch-attr-label">Salinity</span>
+                <span className="aquawatch-attr-value" style={{ fontFamily: 'monospace' }}>{farm.water_salinity_ppt} ppt</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Water Spread</span>
-                <span className="font-medium text-foreground">{farm.water_spread_area_ha} ha ({farm.ponds_count} ponds)</span>
+              <div className="aquawatch-attr-row">
+                <span className="aquawatch-attr-label">Water Spread</span>
+                <span className="aquawatch-attr-value">{farm.water_spread_area_ha} ha ({farm.ponds_count} ponds)</span>
               </div>
-              <div className="flex justify-between items-center pt-1 border-t border-border/30">
-                <span className="text-muted-foreground">Biosecurity / ETP</span>
-                <span className={`text-[11px] font-semibold ${farm.biosecurity_compliant ? 'text-emerald-600' : 'text-amber-600'}`}>
+              <div className="aquawatch-attr-row" style={{ paddingTop: '6px', borderTop: '1px dashed var(--color-border)' }}>
+                <span className="aquawatch-attr-label">Biosecurity / ETP</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: farm.biosecurity_compliant ? '#10b981' : '#f59e0b' }}>
                   {farm.biosecurity_compliant ? 'Certified Compliant' : 'Audit Required'}
                 </span>
               </div>
             </div>
 
-            <div className="mt-3 pt-2 text-[10px] text-muted-foreground flex justify-between items-center border-t border-border/40">
+            <div className="aquawatch-card-footer">
               <span>{farm.latitude.toFixed(4)}°N, {farm.longitude.toFixed(4)}°E</span>
-              <span className="px-1.5 py-0.5 rounded bg-muted">CAA Registry</span>
+              <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--color-bg-tertiary)', fontSize: '10px', fontWeight: 600 }}>CAA Registry</span>
             </div>
           </div>
         ))}
       </div>
       {filteredFarms.length === 0 && (
-        <div className="p-8 text-center text-muted-foreground text-sm border border-dashed rounded-lg mt-2">
+        <div style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-muted)', border: '1px dashed var(--color-border)', borderRadius: '8px', marginTop: '16px' }}>
           No aquaculture sites match the current search filter.
         </div>
       )}
