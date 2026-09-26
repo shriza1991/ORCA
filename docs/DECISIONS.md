@@ -687,6 +687,27 @@ Deployment failures become visible at startup, Alembic remains the production sc
 Owner: Platform / Infrastructure
 Date: 2026-09-26
 
+## D037 — M3 Canonical DecisionObject and Structured DecisionDelta Engine
+Status: ACCEPTED
+
+- Date: 2026-09-25
+- Agent/person: Senior AI/Backend Systems Engineer (M3)
+- Task/context: Implement, test, verify, and ship the M3 Decision/Risk/Reasoning MVP.
+- Decision:
+  1. **Canonical DecisionObject Construction**: Embedded deterministic `DecisionObject` creation into `response_composer_node` within `backend/app/agents/graph.py`. Populated strictly from deterministic state (`DeterministicRiskEngine.evaluate()`, `Recommendation`, `Confidence`, route exposure, and evidence provenance). Never generated or modified by LLM reasoning.
+  2. **Additive Contract Compatibility**: Maintained 100% backward compatibility by keeping existing `Recommendation` and `risk_assessment` fields completely intact on backend and frontend contracts. Added `decision_object` and `decision_delta` additively to `ORCAState`, `ChatResponse`, and frontend TypeScript contracts.
+  3. **Structured DecisionDelta Engine**: Replaced thin string comparison in `WHAT_CHANGED`, `WHAT_IF`, and `SAFETY` state transitions with canonical Pydantic `DecisionDelta` (`added_factors`, `removed_factors`, `changed_factors`, `temporal_changes`, and deterministic mariner synthesis summary). Maintained historical thread context persistence (`baseline_risk_assessment`).
+  4. **Dedicated ALTERNATIVE Intent Branch**: Built an explicit `IntentCategory.ALTERNATIVE.value` handler in `response_composer_node` that extracts validated departure windows and route corridor options from existing risk and route exposure tools. Explicitly outputs "No validated alternative available with current evidence." rather than falling back to demo data or fabricating alternatives.
+  5. **Route Corridor Exposure Inferences**: Mapped `RouteExposureEngine` candidates into `DecisionObject.inferences` and `alternatives` with exposure metrics (wave height, route exposure score) without introducing duplicate route calculation engines.
+  6. **Resilient Failure Degradation**: Wrapped `DecisionObject` and `DecisionDelta` construction in safe try/except fallback blocks. In the event of schema or data mismatch, runtime preserves canonical `Recommendation`, logs the warning, and safely continues without crashing the pipeline.
+- Why: Satisfies all M3 invariants: absolute deterministic safety authority, zero LLM hallucination of decisions/evidence, backward compatibility with existing frontends and APIs, and epistemic honesty.
+- Alternatives considered:
+  - Allowing the LLM to synthesize the DecisionObject or delta (rejected: violates deterministic safety authority).
+  - Breaking or replacing the legacy `Recommendation` schema (rejected: breaks existing frontend consumers and APIs).
+  - Building a second route or risk engine (rejected: violates "no duplicate engines" rule).
+- Affected areas: `backend/app/agents/graph.py`, `backend/app/agents/state.py`, `backend/app/contracts/chat.py`, `backend/app/services/state_mapper.py`, `frontend/src/types/contracts.ts`, `backend/app/core/config.py`, `tests/agent_eval/test_m3_decision_object.py`, `tests/agent_eval/test_flagship_flow.py`.
+- Tests/verification: 17/17 dedicated M3 regression tests passing (`test_m3_decision_object.py`), flagship flow passing (`test_flagship_flow.py`), 405/405 agent_eval tests passing, 85/85 domain tests passing, frontend typecheck passing (0 errors), frontend Vite production build passing.
+
 ## Decision template
 
 ### D0XX — <title>
