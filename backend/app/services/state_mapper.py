@@ -29,6 +29,7 @@ from backend.app.contracts.chat import (
     Recommendation,
     RecommendationStatus,
 )
+from backend.app.contracts.mission import DecisionObject
 
 
 def map_state_to_response(
@@ -137,6 +138,28 @@ def map_state_to_response(
         "Please try rephrasing or contact support."
     )
 
+    # Every consumer receives the same canonical decision. Legacy clients
+    # continue to use recommendation for backwards compatibility.
+    raw_decision = state.get("decision_object")
+    if raw_decision is not None:
+        decision_object = raw_decision.model_dump() if hasattr(raw_decision, "model_dump") else raw_decision
+    else:
+        decision_object = DecisionObject(
+            decision=recommendation.status,
+            confidence=(recommendation.confidence.level if recommendation.confidence else confidence.level),
+            confidence_reasons=(recommendation.confidence.reasons if recommendation.confidence else confidence.reasons),
+            decisive_factor=recommendation.summary,
+            supporting_factors=recommendation.decisive_factors,
+            non_decisive_factors=recommendation.non_decisive_factors,
+            constraints_applied=[],
+            evidence=state.get("evidence") or [],
+            inferences=[],
+            provenance=recommendation.provenance,
+            uncertainty=recommendation.warnings,
+            alternatives=[],
+            recommended_action=recommendation.next_action,
+        ).model_dump()
+
     # ------------------------------------------------------------------
     # Assemble and return
     # ------------------------------------------------------------------
@@ -148,6 +171,7 @@ def map_state_to_response(
         intent=state.get("intent") or "UNKNOWN",
         answer=answer,
         recommendation=recommendation,
+        decision_object=decision_object,
         confidence=confidence,
         evidence=state.get("evidence") or [],
         map_layers=state.get("map_layers") or [],

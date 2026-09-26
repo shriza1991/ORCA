@@ -30,7 +30,9 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
     };
   }, []);
 
-  const mode = health?.data_mode?.toUpperCase() || 'UNKNOWN';
+  const rawMode = health?.data_mode?.trim();
+  const mode = rawMode && !rawMode.includes('{{') ? rawMode.toUpperCase() : 'UNKNOWN';
+  const databaseConnected = health?.database?.trim().toLowerCase() === 'connected';
 
   const getModeClass = () => {
     switch (mode) {
@@ -62,13 +64,13 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
         <Database size={12} />
         <span>Mode: {mode}</span>
       </span>
-      {health?.database && (
+      {health?.database && !health.database.includes('{{') && (
         <span
-          className={`pilot-badge ${health.database === 'connected' ? 'db-connected' : 'db-offline'}`}
-          title={health.database === 'connected' ? 'PostgreSQL Database Connected' : 'PostgreSQL Database Offline (Operating in in-memory snapshot mode)'}
+          className={`pilot-badge ${databaseConnected ? 'db-connected' : 'db-offline'}`}
+          title={databaseConnected ? 'PostgreSQL Database Connected' : 'PostgreSQL Database Offline (Operating in in-memory snapshot mode)'}
         >
           <ShieldCheck size={12} />
-          <span>DB: {health.database === 'connected' ? 'Connected' : 'Offline'}</span>
+          <span>DB: {databaseConnected ? 'Connected' : 'Offline'}</span>
         </span>
       )}
     </div>

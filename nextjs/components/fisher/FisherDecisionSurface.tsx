@@ -54,9 +54,11 @@ export function getFisherDecisionStatus(
   if (error || !assessment || !assessment.decision) {
     return 'UNKNOWN';
   }
-  const rawStatus = typeof assessment.decision === 'string' 
-    ? (assessment.decision as string).toUpperCase() 
-    : (assessment.decision as any)?.status?.toUpperCase() || '';
+  const rawStatus = assessment.decision_object?.decision?.toUpperCase() || (
+    typeof assessment.decision === 'string'
+      ? (assessment.decision as string).toUpperCase()
+      : (assessment.decision as any)?.status?.toUpperCase() || ''
+  );
   switch (rawStatus) {
     case 'GO':
       return 'SAFE_TO_GO';

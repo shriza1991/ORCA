@@ -1,4 +1,5 @@
 import type { UserContext, Recommendation, MapLayer, AgentCollaborationPayload } from './contracts';
+import type { DecisionObject } from './mission';
 
 export interface TripAssessmentRequest {
   origin_harbor?: string;
@@ -36,6 +37,7 @@ export interface TripAssessmentResponse {
   assessed_at: string;
   trip_context: UserContext;
   decision: Recommendation;
+  decision_object?: DecisionObject;
   conditions: ObservationBundle;
   alerts: Alert[];
   pfz_candidates: Record<string, any>[];

@@ -9,8 +9,8 @@ import { Layers, Navigation } from 'lucide-react';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
 
 /** Initial fallback center (Indian coastal waters) */
-const INITIAL_CENTER: [number, number] = [73.28, 16.99];
-const INITIAL_ZOOM = 7;
+const INITIAL_CENTER: [number, number] = [73.45, 16.5];
+const INITIAL_ZOOM = 8.8;
 
 /** CartoDB Vector Basemap Styles */
 const MAP_STYLE_LIGHT = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';

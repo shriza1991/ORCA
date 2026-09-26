@@ -89,14 +89,19 @@ export function useChat() {
       setMessages(prev => prev.map(m => m.id === loadingMsg.id ? assistantMsg : m));
       setActiveResponse(response);
     } catch (err) {
-      let errorMsg = 'Failed to connect to SAMUDRA backend.';
+      let errorMsg = 'ORCA cannot access marine data right now. Hold departure and verify with port authorities.';
       if (err instanceof ApiError) {
         if (typeof err.body === 'object' && err.body !== null && 'detail' in err.body) {
           errorMsg = String((err.body as Record<string, unknown>).detail);
         } else if (typeof err.body === 'object' && err.body !== null && 'message' in err.body) {
           errorMsg = String((err.body as Record<string, unknown>).message);
+        } else if (typeof err.body === 'object' && err.body !== null && 'error' in err.body) {
+          const envelope = (err.body as Record<string, unknown>).error;
+          if (typeof envelope === 'object' && envelope !== null && 'message' in envelope) {
+            errorMsg = String((envelope as Record<string, unknown>).message);
+          }
         } else {
-          errorMsg = `API Error (${err.status}): ${err.statusText}`;
+          errorMsg = 'ORCA cannot access marine data right now. Hold departure and verify with port authorities.';
         }
       } else if (err instanceof Error) {
         errorMsg = err.message;

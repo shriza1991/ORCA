@@ -66,16 +66,15 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
         
         if (bestVoice) {
           utterance.voice = bestVoice;
-        } else {
-          console.warn(`No TTS voice found for language: ${targetLang}`);
         }
       } else {
-         console.warn('No TTS voices available in the browser.');
+        // Browser default voice fallback is expected on hosts without locale packs.
       }
       
       utterance.onstart = () => setIsPlaying(true);
       utterance.onend = () => setIsPlaying(false);
       utterance.onerror = (e) => {
+        if (e.error === 'interrupted' || e.error === 'canceled') return;
         console.warn('Speech synthesis error:', e);
         setIsPlaying(false);
       };

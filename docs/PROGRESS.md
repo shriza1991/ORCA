@@ -4,6 +4,15 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-26 Production Root-Cause Hardening (feature branch)
+
+- **IMPLEMENTED**: expected marine provider failures now produce a schema-compatible degraded `ChatResponse` with `UNKNOWN` decision and explicit hold-departure action instead of surfacing a generic 502/500 to mission clients.
+- **IMPLEMENTED**: `ChatResponse.decision_object` is populated from the canonical deterministic recommendation so mission and map surfaces share one decision authority; legacy `recommendation` remains compatible.
+- **IMPLEMENTED**: Next.js and Vite data-mode indicators reject unresolved `{{...}}` template values; Next.js chat displays structured provider error messages; intentional speech cancellation and missing browser voice packs are quiet fallbacks.
+- **IMPLEMENTED**: default Next.js map viewport is anchored to the Konkan marine pilot geography at nautical zoom when no mission center is supplied.
+- **VERIFIED**: backend focused contract/chat tests `5 passed, 23 skipped` (PostgreSQL-gated cases skipped because no local PostgreSQL service was available); Next.js typecheck/build passed; Vite frontend `242 passed` and production build passed.
+- **DEPLOYMENT CHECK**: Render health returned 200 with `app_env=development`, `data_mode=SNAPSHOT`, and connected database. A synthetic chat query still returned the pre-deployment 502 `UPSTREAM_UNAVAILABLE` envelope; the feature branch changes are not deployed yet.
+
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
 - Current version: `v0.2.2-features-main-integrated`

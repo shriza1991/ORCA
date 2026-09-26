@@ -39,6 +39,7 @@ from backend.app.services.agent_run_service import (
     _AgentRuntimeUnavailableError,
     _DuplicateRunError,
     _LiveModeNotReadyError,
+    _build_degraded_response,
     agent_run_service,
 )
 from backend.app.services.stt_service import (
@@ -301,6 +302,21 @@ async def chat_endpoint(request: ChatRequest) -> ChatResponse:
             ConnectorTimeoutError,
             ConnectorUpstreamUnavailableError,
         )
+
+        # Expected provider failures are a valid degraded product state. Keep
+        # the ChatResponse schema stable so clients can render UNKNOWN/HOLD
+        # instead of collapsing a safety query into a generic 502 error.
+        expected_provider_failure = (
+            ConnectorAuthenticationError,
+            ConnectorMalformedResponseError,
+            ConnectorMissingSnapshotError,
+            ConnectorRateLimitError,
+            ConnectorStaleSnapshotError,
+            ConnectorTimeoutError,
+            ConnectorUpstreamUnavailableError,
+        )
+        if isinstance(exc.original_exc, expected_provider_failure):
+            return _build_degraded_response(exc.run_id, conversation_id, exc.original_exc)
 
         error_code = "AGENT_EXECUTION_FAILED"
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

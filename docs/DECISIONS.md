@@ -2,6 +2,18 @@
 
 Only cross-cutting decisions go here.
 
+## D015 — Canonical Decision Object and Safe Degraded Chat Contract
+Status: ACCEPTED
+
+Decision:
+1. `ChatResponse.decision_object` is the canonical decision payload for mission and map surfaces. The legacy `recommendation` field remains as a compatibility projection.
+2. Expected provider failures return a schema-compatible degraded response with `UNKNOWN` and an explicit hold-departure action. Unsupported `LIVE`/`HYBRID` readiness and unexpected programming failures retain structured non-200 error handling.
+3. UI status and telemetry must not infer a positive clearance from missing, stale, placeholder, or unrelated evidence.
+
+Reason:
+
+The production audit showed a contradictory `GO` map HUD while the mission surface reported incomplete evidence and hold departure. It also showed provider 502 responses becoming an opaque chat error. A single deterministic decision contract and explicit degraded state prevent unsafe UI divergence without fabricating live data.
+
 ## D001 — Modular Monolith
 Status: ACCEPTED
 

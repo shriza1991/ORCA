@@ -5,6 +5,8 @@
  * Owned by Dev 1 (Frontend Lead) & Dev 2 (Backend Platform).
  */
 
+import type { DecisionObject } from './mission';
+
 export type RecommendationStatus = 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN' | 'INFORMATIONAL';
 
 export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
@@ -120,6 +122,7 @@ export interface ChatResponse {
   intent: string;
   answer: string;
   recommendation: Recommendation;
+  decision_object?: DecisionObject;
   confidence: Confidence;
   evidence: EvidenceItem[];
   map_layers: MapLayer[];

@@ -143,15 +143,14 @@ def _build_degraded_response(
         language="en",
         intent="UNKNOWN",
         answer=(
-            "SAMUDRA encountered an internal error while processing your query. "
-            "Please try again or contact support. "
-            "Do not make any voyage decisions based on this response."
+            "ORCA cannot access marine data right now, so a safe operating decision "
+            "cannot be completed. Hold departure and verify with port authorities."
         ),
         recommendation=Recommendation(
             status=RecommendationStatus.UNKNOWN,
-            summary="System error: risk evaluation could not be completed.",
+            summary="No reliable marine evidence was available for this assessment.",
             decisive_factors=["Internal agent error — no reliable data available."],
-            next_action="Hold departure. Do not rely on this response.",
+            next_action="Hold departure. Verify current conditions with port authorities.",
         ),
         confidence=Confidence(
             level=ConfidenceLevel.LOW,
@@ -161,7 +160,7 @@ def _build_degraded_response(
         map_layers=[],
         trace=[],
         warnings=[
-            f"[DEV2-AGENT-ERROR] Agent runtime error ({exc_type}). "
+            f"[DEGRADED] Marine data provider or agent unavailable ({exc_type}). "
             "Response is unreliable and must not be used for voyage decisions."
         ],
         suggested_followups=[],
