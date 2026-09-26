@@ -858,6 +858,33 @@ Status: ACCEPTED
   - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
   - In-browser visual verification via Chrome DevTools: verified Carto Positron basemap, 3D extruded vessel beacon, waypoint breadcrumbs, and floating telemetry HUD. Console warnings for Deck.gl outlines and missing characters completely eliminated.
 
+## D049 — Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior Frontend / Visualization Engineer
+- Task/context: Optimize Deck.gl rendering pipeline and MapLibre synchronization to eliminate GPU readback stalls, CPU diffing thrashing, and high re-render frequencies.
+- Decision:
+  1. **Clamped High-DPI Drawing Buffers**: Added `useDevicePixels={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1}` to `DeckGLMapFoundation` and `DeckGLMarineMap`. Clamps canvas drawing buffer to a maximum of 2x on high-DPI (Retina/4K) displays, preventing 3x/4x buffer allocations and GPU `readPixels` stalls during picking.
+  2. **Reduced Picking Radius**: Set `pickingRadius={4}` on `<DeckGL>`, narrowing pointer hit-testing area for faster hover/click detection.
+  3. **RAF-Throttled MapLibre Camera Synchronization**: Replaced synchronous 60 FPS `jumpTo` camera invocation in `useEffect` with `requestAnimationFrame` and `cancelAnimationFrame`. Prevents redundant camera repositioning calls during rapid mouse/touch dragging.
+  4. **Conditional Pulse Ticking**: The pulse ticker in `AuthorityDeckGLMap` now runs conditionally (`hasPulsingElements = activeHazardIds.size > 0 || !!selectedVesselId`). When no alert hazard or vessel is selected, the pulse timer completely stops (`setPulseTick(0)`), achieving 0 idle timer interrupts and 0 idle re-renders. Rate was smoothed to 150ms.
+  5. **Vessel Position Fetch Keying**: Keyed vessel telemetry position fetching by `vesselIdsKey = vessels.map((v) => v.public_id).join(',')`, eliminating redundant fetch cycles when parent components re-render with identical vessel rosters.
+  6. **Decoupled Memoized Layer Architecture**: Split the monolithic `deckLayers` into 4 decoupled, memoized sub-layer groups:
+     - `staticSectorLayers` (memoized on `[boundaryFeatures, activeSector, lineRoutes, isLight]`): boundaries, sector polygon, radar station, operational routes. Retains identical references during pulse ticks or vessel position changes, so Deck.gl skips all layer diffing.
+     - `hazardLayers` (memoized on `[hazardFeatures, pulseTick, isLight]`): uses `updateTriggers: { getLineColor: [pulseTick, isLight], getFillColor: [pulseTick] }`.
+     - `vesselData` and `vesselVectorPaths` (memoized on `[vessels, selectedVesselId, activeReplayInfo?.currentPos, vesselPositionsMap]`): trigonometric computations (`tipLng`, `tipLat`) occur only when coordinates change, NEVER on pulse ticks.
+     - `vesselTrackLayers` (memoized on `[vesselData, vesselVectorPaths, selectedVesselId, activeReplayInfo, activeTrajectoryCoords, isLight]`): wake trails, breadcrumbs, trajectories, 3D beacon, craft icons, telemetry labels. Completely static while pulsing.
+     - `vesselAuraLayers`: the only vessel layer that updates on `pulseTick`, using `updateTriggers: { getRadius: [pulseTick] }`.
+  7. **Full Dual-Client Parity**: Identical changes synced across `frontend/src/` and `nextjs/`.
+- Why:
+  High-frequency timer-driven re-renders recreating all 12 layer instances caused severe WebGL buffer diffing overhead and high-DPI GPU stalls. Decoupling static layers allows Deck.gl's layer diffing algorithm to perform near-zero work during pulsing.
+- Affected areas:
+  `frontend/src/components/map/DeckGLMapFoundation.tsx`, `frontend/src/components/authority/AuthorityDeckGLMap.tsx`, `frontend/src/components/experimental/DeckGLMarineMap.tsx`, `nextjs/components/map/DeckGLMapFoundation.tsx`, `nextjs/components/authority/AuthorityDeckGLMap.tsx`, `nextjs/components/experimental/DeckGLMarineMap.tsx`.
+- Tests/verification:
+  - Frontend Vitest suite: 21 test files, 266/266 tests passing (`npm run test`).
+  - Frontend TypeScript compiler: 0 errors (`npx tsc --noEmit`).
+
 ## Decision template
 
 ### D0XX — <title>
@@ -868,4 +895,5 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 

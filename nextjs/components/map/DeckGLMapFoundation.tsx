@@ -122,6 +122,9 @@ export default function DeckGLMapFoundation({
         bearing: activeViewState.bearing ?? 0,
         interactive: false,
         attributionControl: false,
+        fadeDuration: 0,
+        trackResize: true,
+        refreshExpiredTiles: false,
       });
 
       maplibreMapRef.current = map;
@@ -146,21 +149,25 @@ export default function DeckGLMapFoundation({
     }
   }, [activeStyle]);
 
-  // Synchronize background MapLibre camera with DeckGL viewState at 60 FPS
+  // Synchronize background MapLibre camera with DeckGL viewState via requestAnimationFrame
   useEffect(() => {
     const map = maplibreMapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    try {
-      map.jumpTo({
-        center: [activeViewState.longitude, activeViewState.latitude],
-        zoom: activeViewState.zoom,
-        pitch: activeViewState.pitch ?? 0,
-        bearing: activeViewState.bearing ?? 0,
-      });
-    } catch {
-      // Ignore transient camera sync errors during fast resizing
-    }
+    const rafId = requestAnimationFrame(() => {
+      try {
+        map.jumpTo({
+          center: [activeViewState.longitude, activeViewState.latitude],
+          zoom: activeViewState.zoom,
+          pitch: activeViewState.pitch ?? 0,
+          bearing: activeViewState.bearing ?? 0,
+        });
+      } catch {
+        // Ignore transient camera sync errors during fast resizing
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [
     activeViewState.longitude,
     activeViewState.latitude,
@@ -319,6 +326,8 @@ export default function DeckGLMapFoundation({
         layers={layers}
         getTooltip={getTooltip}
         onClick={onClick}
+        useDevicePixels={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1}
+        pickingRadius={4}
       />
 
       {/* Top HUD Overlay Slot */}
