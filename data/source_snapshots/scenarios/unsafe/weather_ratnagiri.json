@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "snapshot_id": "SNAP-WEATHER_RATNAGIRI-UNSAFE",
+    "provider": "FIXTURE",
+    "source_name": "IMD Coastal Snapshot Fixture",
+    "captured_at": "2026-09-26T16:37:36.068131Z",
+    "valid_from": "2026-09-26T16:37:36.068131Z",
+    "valid_to": "2026-09-27T16:37:36.068131Z",
+    "schema_version": "1.0.0",
+    "checksum": "b45b5853f3c808bc1d1dbcb936191571acabfbe0646201010ff346974262b34d",
+    "status": "SIMULATED"
+  },
+  "payload": {
+    "harbor": "Ratnagiri",
+    "wind_speed_knots": 30.0,
+    "wind_gust_knots": 39.0,
+    "visibility_km": 10.0,
+    "observed_at": "2026-09-26T16:37:36.068131Z",
+    "valid_to": "2026-09-27T16:37:36.068131Z",
+    "source_name": "IMD Coastal Snapshot Fixture",
+    "source_url": "https://mausam.imd.gov.in/"
+  }
+}
