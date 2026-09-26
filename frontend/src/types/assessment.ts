@@ -1,4 +1,4 @@
-import type { UserContext, Recommendation, RecommendationStatus, MapLayer } from './contracts';
+import type { UserContext, Recommendation, RecommendationStatus, MapLayer, AgentCollaborationPayload, ThresholdComparison } from './contracts';
 import type { MissionState } from './mission';
 
 export interface TripAssessmentRequest {
@@ -52,10 +52,11 @@ export interface TripAssessmentResponse {
   pfz_candidates: Record<string, any>[];
   route_candidates: Record<string, any>[];
   map_layers: { layers: MapLayer[] };
-  evidence: Record<string, any>[];
+  evidence: (ThresholdComparison | Record<string, any>)[];
   source_status: AssessmentSourceStatus[];
   is_durable: boolean;
   mission_state?: MissionState;
   brief?: MissionBriefPayload;
+  agent_collaboration?: AgentCollaborationPayload;
 }
 

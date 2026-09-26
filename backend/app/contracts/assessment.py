@@ -10,7 +10,8 @@ from pydantic import BaseModel, Field, model_validator
 from backend.app.contracts.chat import (
     UserContext,
     RecommendationStatus,
-    DataProvenance
+    DataProvenance,
+    AgentCollaborationPayload,
 )
 from backend.app.contracts.observation import ObservationBundle
 from backend.app.contracts.mission import MissionState
@@ -121,4 +122,7 @@ class TripAssessmentResponse(BaseModel):
     is_durable: bool = Field(False, description="True if this assessment was persisted to the database.")
     mission_state: Optional[MissionState] = Field(None, description="Canonical M1.1 MissionState context.")
     brief: Optional[MissionBriefPayload] = Field(None, description="Grounded M1.2 deterministic mission brief and why explanation.")
+    agent_collaboration: Optional[AgentCollaborationPayload] = Field(
+        None, description="Deterministic multi-agent reasoning, stances, arbitration, and timeline (M1.3)."
+    )
 

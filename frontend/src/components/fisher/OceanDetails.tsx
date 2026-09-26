@@ -162,7 +162,7 @@ export default function OceanDetails({ assessment, language = 'en' }: OceanDetai
           <ul style={{ margin: 0, paddingLeft: '24px', color: '#334155', fontSize: '1rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {assessment.evidence?.slice(0, 3).map((ev, i) => (
               <li key={i}>
-                {ev.description || `${ev.metric_name}: ${ev.metric_value}`}
+                {ev.description || `${ev.metric_name}: ${(ev as any).observed_value ?? (ev as any).metric_value}`}
               </li>
             ))}
           </ul>

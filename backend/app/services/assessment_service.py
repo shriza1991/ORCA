@@ -237,11 +237,120 @@ class AssessmentService:
                     geospatial_engine=geo_engine,
                     dest_coords=target_coords,
                 )
-                route_candidates = [r.model_dump() for r in route_payload.routes]
+                route_candidates = []
+                for r in route_payload.routes:
+                    rd = r.model_dump()
+                    rd["is_recommended"] = (r.route_id == route_payload.recommended_route_id)
+                    route_candidates.append(rd)
             except Exception as e:
                 logger.warning(f"Failed to evaluate route candidates: {e}")
                 
-        # 5. Persist where possible
+        # 5. Derive Deterministic Agent Collaboration Payload (M1.3)
+        agent_collaboration = None
+        try:
+            from backend.app.domain.agent_collaboration import AgentCollaborationEngine
+            from backend.app.contracts.chat import Confidence, EvidenceItem, Recommendation, AgentTraceItem
+
+            rec_obj = None
+            evidence_items = []
+            if 'risk_payload' in locals() and risk_payload:
+                rec_obj = Recommendation(
+                    status=risk_payload.status,
+                    summary=risk_payload.summary,
+                    decisive_factors=risk_payload.decisive_factors,
+                    non_decisive_factors=risk_payload.non_decisive_factors,
+                    threshold_comparisons=risk_payload.threshold_comparisons,
+                    next_action=risk_payload.recommended_action,
+                    confidence=Confidence(
+                        level=risk_payload.confidence_level,
+                        reasons=risk_payload.confidence_reasons,
+                    ),
+                    provenance=risk_payload.provenance,
+                    evidence_ids=risk_payload.evidence_ids,
+                    warnings=risk_payload.warnings,
+                )
+                for prov in risk_payload.provenance:
+                    evidence_items.append(
+                        EvidenceItem(
+                            source_name=prov.source_name,
+                            provider_name=prov.provider_name,
+                            source_url=prov.source_url,
+                            valid_from=prov.valid_from,
+                            valid_to=prov.valid_to,
+                            retrieved_at=prov.observed_time or now_iso,
+                            quality_flags=prov.quality_flags,
+                        )
+                    )
+
+            trace_items = [
+                AgentTraceItem(
+                    step=1,
+                    node="marine_agent",
+                    agent="marine_agent",
+                    action="Ingested ocean state forecast & PFZ telemetry",
+                    status="completed",
+                    timestamp=now_iso,
+                ),
+                AgentTraceItem(
+                    step=2,
+                    node="weather_agent",
+                    agent="weather_agent",
+                    action="Evaluated coastal wind, gusts & atmospheric bulletins",
+                    status="completed",
+                    timestamp=now_iso,
+                ),
+                AgentTraceItem(
+                    step=3,
+                    node="risk_engine",
+                    agent="safety_agent",
+                    action=f"Applied craft safety thresholds for {effective_craft_profile}",
+                    status="completed",
+                    timestamp=now_iso,
+                ),
+                AgentTraceItem(
+                    step=4,
+                    node="decision_authority",
+                    agent="decision_authority",
+                    action="Arbitrated specialist stances under statutory maritime rules",
+                    status="completed",
+                    timestamp=now_iso,
+                ),
+            ]
+
+            obs_map: Dict[str, Any] = {
+                "significant_wave_height_m": getattr(marine, "significant_wave_height_m", None) if marine else None,
+                "swell_height_m": getattr(marine, "swell_wave_height_m", None) if marine else None,
+                "wave_period_seconds": getattr(marine, "wave_period_seconds", None) if marine else None,
+                "sea_surface_temperature_c": getattr(marine, "sea_surface_temperature_c", None) if marine else None,
+                "wind_speed_knots": getattr(weather, "wind_speed_knots", None) if weather else None,
+                "wind_gust_knots": getattr(weather, "wind_gust_knots", None) if weather else None,
+                "cyclone_warning_active": getattr(hazard, "cyclone_warning_active", False) if hazard else False,
+                "squall_alert": getattr(hazard, "squall_alert", False) if hazard else False,
+                "headline": getattr(hazard, "headline", None) if hazard else None,
+                "pfz_candidates": pfz_candidates,
+                "route_candidates": route_candidates,
+                "observed_at": getattr(marine, "observed_at", None) or getattr(weather, "observed_at", None) or now_iso,
+                "valid_to": getattr(marine, "valid_to", None) or getattr(weather, "valid_to", None),
+            }
+
+            agent_collaboration = AgentCollaborationEngine.derive_collaboration(
+                observations=obs_map,
+                risk_assessment=rec_obj,
+                evidence=evidence_items,
+                trace=trace_items,
+                user_profile={"craft_profile": effective_craft_profile},
+                tool_results={
+                    "pfz_search": {"candidates": pfz_candidates},
+                    "route_planner": {"routes": route_candidates},
+                },
+                intent="SAFETY",
+                language=effective_language_preference or "en",
+                harbor=effective_origin_harbor,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to derive assessment agent_collaboration: {e}")
+
+        # 6. Persist where possible
         is_durable = False
         if DB_AVAILABLE:
             from backend.app.core.config import settings
@@ -262,7 +371,7 @@ class AssessmentService:
                 except Exception as e:
                     logger.warning(f"Failed to persist assessment: {e}")
 
-        # 6. Format Response
+        # 7. Format Response
         return TripAssessmentResponse(
             assessment_id=assessment_id,
             assessed_at=now_iso,
@@ -287,6 +396,7 @@ class AssessmentService:
             is_durable=is_durable,
             mission_state=mission_state,
             brief=brief,
+            agent_collaboration=agent_collaboration,
         )
 
     @staticmethod

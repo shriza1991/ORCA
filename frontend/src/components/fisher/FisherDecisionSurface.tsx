@@ -14,6 +14,7 @@ import {
   Volume2,
   VolumeX,
   Map as MapIcon,
+  FileText,
 } from 'lucide-react';
 import type { TripAssessmentResponse } from '../../types/assessment';
 import type { DecisionDiff, MissionContext } from '../../types/mission';
@@ -22,6 +23,9 @@ import { translateText, type SupportedLanguage, TRANSLATIONS } from '../../i18n/
 import { useSpokenGuidance } from '../../hooks/useSpokenGuidance';
 import AgentCollaborationPanel from '../collaboration/AgentCollaborationPanel';
 import MissionBriefPanel from './MissionBriefPanel';
+import PFZDetails from './PFZDetails';
+import TripPlanDetails from './TripPlanDetails';
+import EvidenceDrawer from '../evidence/EvidenceDrawer';
 
 export type FisherDecisionStatus = 'SAFE_TO_GO' | 'CAUTION' | 'DO_NOT_GO' | 'UNKNOWN';
 
@@ -250,6 +254,7 @@ export default function FisherDecisionSurface({
   isExpired = false,
 }: FisherDecisionSurfaceProps) {
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [isEvidenceDrawerOpen, setIsEvidenceDrawerOpen] = useState(false);
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const status = getFisherDecisionStatus(assessment, error);
   const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
@@ -320,6 +325,7 @@ export default function FisherDecisionSurface({
       aria-label="Primary Mission Decision and Conditions"
       data-testid="fisher-decision-surface"
     >
+      {/* 1. Decision Banner */}
       <div className={`fisher-decision-card ${currentCfg.bgClass}`} data-testid={currentCfg.testId}>
         {/* Connectivity / Data Status Indicator */}
         {(() => {
@@ -376,6 +382,7 @@ export default function FisherDecisionSurface({
         )}
       </div>
 
+      {/* 2. Mission Brief */}
       <MissionBriefPanel
         brief={assessment?.brief}
         delta={collab?.delta}
@@ -383,6 +390,101 @@ export default function FisherDecisionSurface({
         language={language}
       />
 
+      {/* 3. Inspect Evidence & Data Feeds Button */}
+      <div className="inspect-evidence-container" style={{ marginTop: '14px' }}>
+        <button
+          type="button"
+          onClick={() => setIsEvidenceDrawerOpen(true)}
+          className="fisher-inspect-evidence-btn"
+          data-testid="inspect-evidence-btn"
+          style={{
+            width: '100%',
+            padding: '12px 18px',
+            borderRadius: '10px',
+            border: '1px solid #cbd5e1',
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            fontSize: '0.9375rem',
+            fontWeight: 600,
+            color: '#0f172a',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          }}
+        >
+          <FileText size={18} color="#0284c7" />
+          <span>{translateText('Inspect Evidence & Data Feeds', language)}</span>
+        </button>
+      </div>
+
+      <EvidenceDrawer
+        isOpen={isEvidenceDrawerOpen}
+        onClose={() => setIsEvidenceDrawerOpen(false)}
+        evidence={assessment?.evidence}
+        sourceStatus={assessment?.source_status}
+        brief={assessment?.brief}
+        language={language}
+      />
+
+      {/* 4. Agent Collaboration Accordion */}
+      {collab && (
+        <div className="fisher-collaboration-container" style={{ marginTop: '16px' }} data-testid="fisher-collaboration-container">
+          <button
+            type="button"
+            onClick={() => setShowCollaboration(!showCollaboration)}
+            className="fisher-collaboration-toggle"
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              borderRadius: '12px',
+              border: '1px solid #cbd5e1',
+              background: showCollaboration ? '#f8fafc' : '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#0f172a',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            }}
+            aria-expanded={showCollaboration}
+            data-testid="toggle-fisher-collaboration"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ShieldCheck size={20} color="#0284c7" />
+              <span>{translateText('Decision Authority & Agent Reasoning', language)}</span>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '3px 8px',
+                  borderRadius: '9999px',
+                  background: collab.arbitration?.conflict_detected ? '#fef3c7' : '#dcfce7',
+                  color: collab.arbitration?.conflict_detected ? '#92400e' : '#166534',
+                  fontWeight: 700,
+                }}
+              >
+                {collab.arbitration?.conflict_detected
+                  ? translateText('Protocol D010 Overridden', language)
+                  : translateText('4 Agents Consensus', language)}
+              </span>
+            </div>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              {showCollaboration ? translateText('Hide Details ▲', language) : translateText('Inspect Agents ▼', language)}
+            </span>
+          </button>
+
+          {showCollaboration && (
+            <div style={{ marginTop: '12px' }} data-testid="fisher-collaboration-drawer">
+              <AgentCollaborationPanel collaboration={collab} defaultRole="fisherman" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. Ocean Conditions */}
       <div className="fisher-conditions-grid" role="group" aria-label="Essential local conditions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '16px' }}>
         <div className="condition-tile" data-testid="condition-waves">
           <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
@@ -446,61 +548,13 @@ export default function FisherDecisionSurface({
         </div>
       )}
 
-      {collab && (
-        <div className="fisher-collaboration-container" style={{ marginTop: '16px' }} data-testid="fisher-collaboration-container">
-          <button
-            type="button"
-            onClick={() => setShowCollaboration(!showCollaboration)}
-            className="fisher-collaboration-toggle"
-            style={{
-              width: '100%',
-              padding: '14px 18px',
-              borderRadius: '12px',
-              border: '1px solid #cbd5e1',
-              background: showCollaboration ? '#f8fafc' : '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              fontWeight: 600,
-              color: '#0f172a',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-            }}
-            aria-expanded={showCollaboration}
-            data-testid="toggle-fisher-collaboration"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ShieldCheck size={20} color="#0284c7" />
-              <span>{translateText('Decision Authority & Agent Reasoning', language)}</span>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '3px 8px',
-                  borderRadius: '9999px',
-                  background: collab.arbitration?.conflict_detected ? '#fef3c7' : '#dcfce7',
-                  color: collab.arbitration?.conflict_detected ? '#92400e' : '#166534',
-                  fontWeight: 700,
-                }}
-              >
-                {collab.arbitration?.conflict_detected
-                  ? translateText('Protocol D010 Overridden', language)
-                  : translateText('4 Agents Consensus', language)}
-              </span>
-            </div>
-            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-              {showCollaboration ? translateText('Hide Details ▲', language) : translateText('Inspect Agents ▼', language)}
-            </span>
-          </button>
+      {/* 6. PFZ Explainability */}
+      <PFZDetails assessment={assessment} language={language} />
 
-          {showCollaboration && (
-            <div style={{ marginTop: '12px' }} data-testid="fisher-collaboration-drawer">
-              <AgentCollaborationPanel collaboration={collab} defaultRole="fisherman" />
-            </div>
-          )}
-        </div>
-      )}
+      {/* 7. Route Comparison */}
+      <TripPlanDetails assessment={assessment} language={language} />
 
+      {/* Fisher Action Buttons */}
       <div className="fisher-action-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
         <button
           onClick={handleSpeak}

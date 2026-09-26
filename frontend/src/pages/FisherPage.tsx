@@ -4,8 +4,6 @@ import GuidedTripSetup from '../components/fisher/GuidedTripSetup';
 import FisherDecisionSurface from '../components/fisher/FisherDecisionSurface';
 import WhatIfSimulator from '../components/mission/WhatIfSimulator';
 import OceanDetails from '../components/fisher/OceanDetails';
-import PFZDetails from '../components/fisher/PFZDetails';
-import TripPlanDetails from '../components/fisher/TripPlanDetails';
 import ChatPanel from '../components/chat/ChatPanel';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
@@ -267,8 +265,6 @@ export default function FisherPage({
                   onReplay={(text) => speak(text)} 
                 />
 
-                <TripPlanDetails assessment={assessment} language={chat.language} />
-
                 <FisherDecisionSurface
                   assessment={assessment}
                   isLoading={isLoading}
@@ -293,7 +289,6 @@ export default function FisherPage({
                   onApplyContext={(newCtx) => chat.setMissionContext(newCtx)}
                 />
 
-                <PFZDetails assessment={assessment} language={chat.language} />
                 <OceanDetails assessment={assessment} language={chat.language} />
               </>
             )}

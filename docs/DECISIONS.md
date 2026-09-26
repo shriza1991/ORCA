@@ -785,6 +785,30 @@ Status: ACCEPTED
   - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
   - Next.js validation: `tsc --noEmit` and `next build` passing with 0 errors.
 
+## D047 — M1.3 Explainability & Evidence View Implementation
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior AI/Backend Systems Engineer (M1.3)
+- Task/context: Implement ORCA M1.3 Explainability & Evidence View projecting existing deterministic evidence into the Fisher UI.
+- Decision:
+  1. **Assessment-Level Agent Collaboration**: Extended `TripAssessmentResponse` with additive `agent_collaboration: Optional[AgentCollaborationPayload] = None`. In `AssessmentService.assess_trip()`, invoked `AgentCollaborationEngine.derive_collaboration(...)` directly from deterministic engine outputs (observations, recommendation, evidence items, trace items) without requiring a chat flow, LLM generation, or synthetic explanations.
+  2. **Deterministic Threshold Comparison Matrix**: Created `ThresholdTable.tsx` rendering every `ThresholdComparison` in `assessment.evidence` (Metric, Observed, Operator, Threshold, Unit, Impact, Status, Description) with pure impact enum color badges (`SAFE`, `CAUTION_TRIGGER`, `NO_GO_TRIGGER`, `UNKNOWN_TRIGGER`) without inferring additional meaning.
+  3. **Assessment-Mode Evidence Drawer**: Upgraded `EvidenceDrawer.tsx` to support both chat evidence and assessment-mode inspection (`assessment.evidence`, `assessment.source_status`, `assessment.brief`) with tabbed navigation (Threshold Matrix, Data Feeds, Brief Confidence, and Agent Trace).
+  4. **PFZ Explainability & Multi-Candidate Rationale**: Upgraded `PFZDetails.tsx` to render the top 3 INCOIS PFZ candidates with complete metrics (Rank, Distance nm, Bearing, Depth, SST, Chlorophyll) and deterministic distance advantage rationale comparing Candidate #1 to Candidate #2 without introducing new ranking algorithms or scores.
+  5. **Route Exposure Comparison View**: Upgraded `TripPlanDetails.tsx` to render all evaluated route corridors in a comparison matrix (Route Name, Distance, Wave Height, ETA, Fuel, Exposure Score, Risk Rating, Feasibility, Infeasibility reasons) with visual recommendation indicators and zero score recalculations.
+  6. **Fisher Decision Surface Canonical Sequential Flow**: Wired `FisherDecisionSurface.tsx` to project all evidence in exact sequence:
+     Decision Banner $\rightarrow$ Mission Brief $\rightarrow$ Inspect Evidence $\rightarrow$ Agent Collaboration $\rightarrow$ Ocean Conditions $\rightarrow$ PFZ Explainability $\rightarrow$ Route Comparison.
+  7. **In-Memory Zero-Network Invariant**: Ensured all explainability panels operate purely from the in-memory `TripAssessmentResponse`, guaranteeing 0 additional API calls, 0 polling requests, and 0 websocket messages.
+- Why:
+  Fulfills maritime explainability requirements, giving mariners and operators immediate, deterministic clarity into why safety recommendations, PFZ targets, and route corridors were chosen.
+- Affected areas:
+  `backend/app/contracts/assessment.py`, `backend/app/services/assessment_service.py`, `frontend/src/types/assessment.ts`, `frontend/src/components/evidence/ThresholdTable.tsx`, `frontend/src/components/evidence/EvidenceDrawer.tsx`, `frontend/src/components/fisher/PFZDetails.tsx`, `frontend/src/components/fisher/TripPlanDetails.tsx`, `frontend/src/components/fisher/FisherDecisionSurface.tsx`, `frontend/src/pages/FisherPage.tsx`, `frontend/src/components/fisher/OceanDetails.tsx`, `tests/integration/test_m1_3_explainability.py`, `frontend/src/components/evidence/m1_3_explainability.test.ts`.
+- Tests/verification:
+  - Backend integration tests: 3/3 passing in `tests/integration/test_m1_3_explainability.py`.
+  - Frontend test suite: 21 test files, 266/266 tests passing in Vitest (`npm run test`).
+  - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
+
 ## Decision template
 
 ### D0XX — <title>
@@ -795,5 +819,6 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 
 

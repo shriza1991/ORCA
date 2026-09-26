@@ -747,4 +747,32 @@ None
   - Frontend test suite (`npx vitest run`): 17/17 test files passed, 244/244 tests passed.
   - Backend test suite (`pytest`): 118/118 focused connectors & M3 decision object tests passed, 586/590 full backend suite passed (4 Open-Meteo contract regressions resolved).
 
+## 2026-09-26 — M1.3 Explainability & Evidence View Implementation
+- Status: **COMPLETE & VERIFIED**
+- **1. Assessment-Level Agent Collaboration**:
+  - Added additive `agent_collaboration: Optional[AgentCollaborationPayload] = None` to `TripAssessmentResponse` in `backend/app/contracts/assessment.py`.
+  - In `AssessmentService.assess_trip()`, invoked `AgentCollaborationEngine.derive_collaboration(...)` directly from deterministic risk evaluation outputs, observations, and trace items.
+  - Exposes Marine, Weather, Geospatial, and Safety agent stances, arbitration results, and causal reasoning timeline immediately after assessment without requiring a chat flow or LLM generation.
+- **2. Deterministic Threshold Comparison Matrix**:
+  - Implemented `ThresholdTable.tsx` in `frontend/src/components/evidence/ThresholdTable.tsx`.
+  - Renders all `ThresholdComparison` records from `assessment.evidence` across 8 canonical columns: `Metric`, `Observed`, `Operator`, `Threshold`, `Unit`, `Impact`, `Status`, `Description`.
+  - Status badges strictly color-coded by impact enum (`SAFE`, `CAUTION_TRIGGER`, `NO_GO_TRIGGER`, `UNKNOWN_TRIGGER`) without inferring additional meaning.
+- **3. Assessment-Mode Evidence Drawer**:
+  - Upgraded `EvidenceDrawer.tsx` to support in-memory inspection of `assessment.evidence`, `assessment.source_status`, `assessment.brief`, and trace.
+  - Wired "Inspect Evidence & Data Feeds" button in `FisherDecisionSurface.tsx` operating on in-memory data with zero network calls, zero polling, and zero websocket subscriptions.
+- **4. PFZ Explainability & Multi-Candidate Rationale**:
+  - Upgraded `PFZDetails.tsx` to display top 3 ranked PFZ candidates with complete metrics (`Rank`, `Distance nm`, `Bearing`, `Depth`, `SST`, `Chlorophyll`).
+  - Added deterministic selection rationale explaining distance advantage over Candidate #2 (e.g. `Selected because it is the nearest viable PFZ. Distance advantage: 8.2nm closer than Candidate #2.`) using existing candidate metrics only.
+- **5. Route Comparison View**:
+  - Upgraded `TripPlanDetails.tsx` with complete evaluated routes table displaying `Route`, `Distance`, `Wave Height`, `ETA`, `Fuel`, `Exposure Score`, `Risk Rating`, `Feasible`, and `infeasibility_reasons` for infeasible corridors.
+  - Visually indicates the recommended route using Dev 4 backend exposure values without recalculation.
+- **6. Fisher Decision Surface Integration**:
+  - Organized canonical decision flow in `FisherDecisionSurface.tsx`:
+    Decision Banner $\rightarrow$ Mission Brief $\rightarrow$ Inspect Evidence $\rightarrow$ Agent Collaboration $\rightarrow$ Ocean Conditions $\rightarrow$ PFZ Explainability $\rightarrow$ Route Comparison.
+- **Verification**:
+  - Backend integration tests: 3/3 passed (`pytest tests/integration/test_m1_3_explainability.py`).
+  - Frontend test suite: 21 test files, 266/266 passed (`vitest run`).
+  - Frontend TypeScript validation: 0 errors (`tsc --noEmit`).
+
+
 
