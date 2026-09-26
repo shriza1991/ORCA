@@ -16,16 +16,21 @@ export const HARBOR_COORDINATES: Record<string, [number, number]> = {
   Ratnagiri: [73.28, 16.99],
   Malvan: [73.47, 16.06],
   Panaji: [73.83, 15.49],
+  Goa: [73.83, 15.49],
   Mumbai: [72.87, 18.92],
   Veraval: [70.37, 20.90],
   Porbandar: [69.60, 21.64],
   Cochin: [76.24, 9.97],
+  Kochi: [76.24, 9.97],
   Chennai: [80.30, 13.08],
   Visakhapatnam: [83.22, 17.69],
   Paradip: [86.61, 20.26],
   Tuticorin: [78.16, 8.75],
   Mangalore: [74.82, 12.92],
+  Malpe: [74.695, 13.35],
   Kandla: [70.22, 23.01],
+  Kolkata: [88.32, 22.54],
+  Puri: [85.825, 19.795],
 };
 
 export interface CoastalBookmark {
@@ -631,8 +636,36 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
         geojson: hazRes.value,
       });
     }
+
+    // 5. Indian Coastal Harbors
+    const portsLayer: MapLayer = {
+      layer_id: 'layer_all_harbors',
+      name: 'Indian Coastal Harbors',
+      layer_type: 'geojson',
+      visible: true,
+      style: {
+        color: '#10b981',
+        circle_radius: 6,
+        opacity: 0.9,
+        layer_category: 'navigation_terminal',
+      },
+      geojson: {
+        type: 'FeatureCollection',
+        features: Object.entries(HARBOR_COORDINATES).map(([name, coords]) => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: coords },
+          properties: {
+            harbor: name,
+            type: 'Departure Harbor Station',
+            status: 'AVAILABLE'
+          }
+        }))
+      }
+    };
+    layers.push(portsLayer);
   } catch (err) {
     console.error('Error fetching base and marine watch layers:', err);
+    return [];
   }
 
   return layers;

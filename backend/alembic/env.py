@@ -20,8 +20,8 @@ from backend.app.core.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-# Overwrite sqlalchemy.url with our settings config
-config.set_main_option("sqlalchemy.url", settings.SYNC_DATABASE_URL)
+# Overwrite sqlalchemy.url with our settings config (escaping % for configparser interpolation)
+config.set_main_option("sqlalchemy.url", settings.SYNC_DATABASE_URL.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

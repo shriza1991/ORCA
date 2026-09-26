@@ -51,6 +51,9 @@ class UserContext(BaseModel):
     return_time: Optional[str] = Field(
         None, description="Structured planned return time (ISO-8601 UTC)"
     )
+    target_pfz: Optional[str] = Field(
+        None, description="Target PFZ candidate preference (auto | custom)"
+    )
 
 
 class ChatRequest(BaseModel):

@@ -44,27 +44,32 @@ export default function GuidedTripSetup({
   const steps = [
     {
       id: 'harbor',
-      title: translateText('Which harbour?', language),
+      title: translateText('From which port?', language),
+      icon: <MapPin size={48} />,
+    },
+    {
+      id: 'pfz',
+      title: translateText('Select PFZ', language),
       icon: <MapPin size={48} />,
     },
     {
       id: 'boat',
-      title: translateText('Which boat?', language),
+      title: translateText('Boat vessel size type?', language),
       icon: <ShipWheel size={48} />,
     },
     {
       id: 'depart',
-      title: translateText('When will you leave?', language),
+      title: translateText('Day when you will depart?', language),
       icon: <CalendarClock size={48} />,
     },
     {
-      id: 'return',
-      title: translateText('When will you return?', language),
-      icon: <CalendarClock size={48} />,
+      id: 'sea_condition',
+      title: translateText('See the sea condition', language),
+      icon: <Check size={48} />,
     },
     {
       id: 'confirm',
-      title: translateText('Confirm your trip', language),
+      title: translateText('Plan the trip', language),
       icon: <Check size={48} />,
     },
   ];
@@ -133,6 +138,33 @@ export default function GuidedTripSetup({
       case 1:
         return (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+            {[
+              { value: 'auto', label: 'Auto-select best PFZ' },
+              { value: 'custom', label: 'Use my own coordinates' }
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  onContextChange({ ...context, target_pfz: opt.value });
+                  handleNext();
+                }}
+                style={{
+                  padding: '24px',
+                  fontSize: '1.5rem',
+                  borderRadius: '12px',
+                  background: context.target_pfz === opt.value ? '#3b82f6' : '#f1f5f9',
+                  color: context.target_pfz === opt.value ? 'white' : 'black',
+                  border: 'none',
+                }}
+              >
+                {translateText(opt.label, language)}
+              </button>
+            ))}
+          </div>
+        );
+      case 2:
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
             {CRAFT_PROFILES.map((c) => (
               <button
                 key={c.value}
@@ -154,7 +186,7 @@ export default function GuidedTripSetup({
             ))}
           </div>
         );
-      case 2:
+      case 3:
         return (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
             {['today', 'tomorrow'].map((time) => (
@@ -178,40 +210,38 @@ export default function GuidedTripSetup({
             ))}
           </div>
         );
-      case 3:
+      case 4:
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-            {['tomorrow', 'in 2 days', 'in 3 days'].map((time) => (
-              <button
-                key={time}
-                onClick={() => {
-                  onContextChange({ ...context, return_time: time });
-                  handleNext();
-                }}
-                style={{
-                  padding: '24px',
-                  fontSize: '1.5rem',
-                  borderRadius: '12px',
-                  background: context.return_time === time ? '#3b82f6' : '#f1f5f9',
-                  color: context.return_time === time ? 'white' : 'black',
-                  border: 'none',
-                }}
-              >
-                {translateText(time === 'tomorrow' ? 'Tomorrow' : time === 'in 2 days' ? 'In 2 days' : 'In 3 days', language)}
-              </button>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '1.25rem', textAlign: 'center' }}>
+            <p style={{ color: '#64748b' }}>
+              {translateText('We are ready to fetch live wind, wave, and hazard conditions for your voyage.', language)}
+            </p>
+            <button
+              onClick={handleNext}
+              style={{
+                padding: '24px',
+                fontSize: '1.5rem',
+                borderRadius: '12px',
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                marginTop: '16px',
+              }}
+            >
+              {translateText('Proceed to Plan', language)}
+            </button>
           </div>
         );
-      case 4:
+      case 5:
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '1.25rem' }}>
             <p><strong>{translateText('Harbour', language)}:</strong> {translateText(context.origin_harbor || 'Ratnagiri', language)}</p>
+            <p><strong>{translateText('PFZ', language)}:</strong> {translateText(context.target_pfz === 'custom' ? 'Custom' : 'Auto-select', language)}</p>
             <p>
               <strong>{translateText('Boat', language)}:</strong>{' '}
               {translateText(CRAFT_PROFILES.find((c) => c.value === context.craft_profile)?.label || 'Motorized boat', language)}
             </p>
             <p><strong>{translateText('Leaving', language)}:</strong> {translateText(context.departure_time === 'today' ? 'Today' : 'Tomorrow', language)}</p>
-            <p><strong>{translateText('Returning', language)}:</strong> {translateText(context.return_time === 'tomorrow' ? 'Tomorrow' : context.return_time === 'in 2 days' ? 'In 2 days' : 'In 3 days', language)}</p>
             
             <button
               onClick={handleComplete}
@@ -225,7 +255,7 @@ export default function GuidedTripSetup({
                 marginTop: '32px',
               }}
             >
-              {translateText('Assess Trip Safety', language)}
+              {translateText('Generate Complete Summary', language)}
             </button>
           </div>
         );

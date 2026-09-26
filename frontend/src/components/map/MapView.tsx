@@ -391,10 +391,27 @@ export default function MapView({
     simulationRootRef.current = root;
 
     let Icon = Ship;
-    if (craftProfile === 'traditional_non_motorized') Icon = Sailboat;
-    else if (craftProfile === 'mechanized_trawler') Icon = Ship; // using Ship for both, but we can differentiate color
+    let iconColor = '#2563eb';
+    let bgColor = 'white';
     
-    root.render(<Icon size={24} color="#2563eb" fill={craftProfile === 'mechanized_trawler' ? '#bfdbfe' : 'none'} />);
+    if (craftProfile === 'traditional_non_motorized') {
+      Icon = Sailboat;
+      iconColor = '#16a34a';
+      el.style.borderColor = '#16a34a';
+    } else if (craftProfile === 'mechanized_trawler') {
+      Icon = Ship;
+      bgColor = '#bfdbfe';
+      iconColor = '#1e3a8a';
+      el.style.borderColor = '#1e3a8a';
+    }
+
+    // Lucide icons generally point UP or RIGHT. Ship and Sailboat might need rotation.
+    // Wrap the icon in a div that corrects its default orientation to face UP (0 degrees).
+    root.render(
+      <div style={{ transform: 'rotate(-90deg)', display: 'flex' }}>
+        <Icon size={22} color={iconColor} fill={bgColor} />
+      </div>
+    );
 
     const marker = new maplibregl.Marker({ element: el, pitchAlignment: 'map', rotationAlignment: 'map' })
       .setLngLat(line.geometry.coordinates[0] as [number, number])
@@ -458,6 +475,29 @@ export default function MapView({
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
+    map.on('style.load', () => {
+      if (!map.hasImage('icon-anchor')) {
+        const createEmojiImg = (char: string) => {
+          const c = document.createElement('canvas');
+          c.width = 40;
+          c.height = 40;
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            ctx.font = '28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(char, 20, 22);
+            return ctx.getImageData(0, 0, 40, 40);
+          }
+          return null;
+        };
+        const anchorImg = createEmojiImg('⚓');
+        if (anchorImg) map.addImage('icon-anchor', anchorImg);
+        const fishImg = createEmojiImg('🐟');
+        if (fishImg) map.addImage('icon-fish', fishImg);
+      }
+    });
+
     map.on('click', async (e) => {
       const lat = parseFloat(e.lngLat.lat.toFixed(4));
       const lon = parseFloat(e.lngLat.lng.toFixed(4));
@@ -479,7 +519,6 @@ export default function MapView({
     };
     map.on('zoom', updateZoomTier);
     updateZoomTier();
-
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
     });
@@ -880,7 +919,13 @@ export default function MapView({
               html = `<div class="map-popup"><h5 style="margin:0 0 6px;color:#0284c7;font-size:12px;font-weight:700">${layer.name}</h5>${content}</div>`;
             }
 
-            const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px', offset: 10 })
+            const isFisherDark = html.includes('map-popup-fisher');
+            const popup = new maplibregl.Popup({ 
+              closeButton: true, 
+              maxWidth: '280px', 
+              offset: 10,
+              className: isFisherDark ? 'dark-theme-popup' : ''
+            })
               .setLngLat(e.lngLat)
               .setHTML(html)
               .addTo(map);

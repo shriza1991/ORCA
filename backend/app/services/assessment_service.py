@@ -142,14 +142,26 @@ class AssessmentService:
                 
                 route_engine = DeterministicRouteExposureEngine()
                 geo_engine = DeterministicGeospatialEngine()
+                
+                target_dest = request.destination_id or "Outer Bank"
+                target_coords = request.coordinates
+                if pfz_ranking and pfz_ranking.ranked_candidates:
+                    selected_pfz = None
+                    if request.destination_id and request.destination_id != "auto":
+                        selected_pfz = next((c for c in pfz_ranking.ranked_candidates if c.candidate_id == request.destination_id), None)
+                    if not selected_pfz:
+                        selected_pfz = pfz_ranking.ranked_candidates[0]
+                    target_coords = [selected_pfz.longitude, selected_pfz.latitude]
+                    target_dest = selected_pfz.location_reference or selected_pfz.candidate_id
+                
                 route_payload = route_engine.evaluate_routes(
                     context=ctx,
                     marine=marine,
-                    destination=request.destination_id or "Outer Bank",
+                    destination=target_dest,
                     weather=weather,
                     hazard=hazard,
                     geospatial_engine=geo_engine,
-                    dest_coords=request.coordinates, # Usually origin coords are passed via context, dest_coords here is an approximation
+                    dest_coords=target_coords,
                 )
                 route_candidates = [r.model_dump() for r in route_payload.routes]
             except Exception as e:

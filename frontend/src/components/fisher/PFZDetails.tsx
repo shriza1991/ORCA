@@ -35,13 +35,25 @@ export default function PFZDetails({ assessment, language = 'en' }: PFZDetailsPr
         </span>
       </div>
 
+      {pfz.location_reference && (
+        <div style={{ marginBottom: '16px', color: '#334155', fontWeight: 600, fontSize: '1.1rem' }}>
+          📍 {pfz.location_reference}
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
         <div>
           <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '4px' }}>
             {translateText('Distance & Direction', language)}
           </div>
           <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#334155' }}>
-            {pfz.distance_nm?.toFixed(1) || pfz.distance_km?.toFixed(1) || '—'} {pfz.distance_nm ? 'nm' : 'km'}, {pfz.bearing_deg || 0}°
+            {pfz.distance_nautical_miles !== undefined
+              ? `${pfz.distance_nautical_miles.toFixed(1)} nm`
+              : pfz.distance_nm !== undefined
+              ? `${pfz.distance_nm.toFixed(1)} nm`
+              : pfz.distance_km !== undefined
+              ? `${pfz.distance_km.toFixed(1)} km`
+              : '—'}, {pfz.bearing_degrees ?? pfz.bearing_deg ?? '—'}°
           </div>
         </div>
 

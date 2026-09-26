@@ -19,6 +19,7 @@ export interface UserContext {
   return_time?: string;
   language_preference?: 'auto' | 'en' | 'hi' | 'mr' | 'ta';
   parent_assessment_id?: string;
+  target_pfz?: string;
 }
 
 export interface ChatRequest {

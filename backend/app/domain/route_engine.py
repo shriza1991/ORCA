@@ -167,10 +167,27 @@ class DeterministicRouteExposureEngine:
             ids = ["ROUTE-B-DIRECT", "ROUTE-C-BALANCED", "ROUTE-A-INSHORE"]
             is_synthetic = False
         else:
-            corridors = self._generate_synthetic_corridors(origin_coords, target_coords)
+            try:
+                from backend.app.domain.marine_routing import MarinePathfinder
+                pathfinder = MarinePathfinder(self.land_polygon, resolution_deg=0.015)
+                
+                direct = pathfinder.find_path(origin_coords, target_coords, safety_buffer_deg=0.0)
+                inshore = pathfinder.find_path(origin_coords, target_coords, safety_buffer_deg=0.01)
+                balanced = pathfinder.find_path(origin_coords, target_coords, safety_buffer_deg=0.02)
+                
+                corridors = [
+                    direct or self._generate_synthetic_corridors(origin_coords, target_coords)[0],
+                    balanced or self._generate_synthetic_corridors(origin_coords, target_coords)[1],
+                    inshore or self._generate_synthetic_corridors(origin_coords, target_coords)[2]
+                ]
+                is_synthetic = False
+            except Exception as e:
+                logger.error(f"A* Pathfinding failed: {e}")
+                corridors = self._generate_synthetic_corridors(origin_coords, target_coords)
+                is_synthetic = True
+                
             names = ["Direct Open-Sea Channel", "Balanced Coastal Passage", "Inshore Sheltered Channel"]
             ids = ["ROUTE-B-DIRECT", "ROUTE-C-BALANCED", "ROUTE-A-INSHORE"]
-            is_synthetic = True
 
         wave_h = marine.significant_wave_height_m if marine.significant_wave_height_m is not None else 1.0
         missing_state = None if marine.significant_wave_height_m is not None else "Missing actual wave height, defaulting to 1.0m"

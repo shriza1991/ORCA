@@ -586,6 +586,12 @@ None
 - Hardened database persistence in `backend/app/services/assessment_service.py` to ensure graceful fallback when PostgreSQL is offline.
 - Verified test suite: `pytest tests/agent_eval/` (387 passed, 1 skipped), frontend Vitest (224 passed across 16 test suites, zero TypeScript errors).
 
+### P0-27 — Map Rendering Reliability & Harbour Precision Alignment
+- Fixed MapLibre interpolation crashes by extracting zoom interpolators to the root level of layer expressions.
+- Bypassed MapLibre text-font dependency for emoji glyph rendering by injecting dynamic Canvas `ImageData` directly into the map style registry.
+- Precision-aligned all 15 Indian coastal harbour coordinates in `geo.ts` directly to their true shoreline positions, resolving inland plotting artifacts.
+- Fixed backend snapshot resolution by using absolute environment paths, guaranteeing robust local file loads independent of Uvicorn cwd.
+
 ---
 
 

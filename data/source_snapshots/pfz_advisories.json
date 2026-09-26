@@ -1,36 +1,4321 @@
 {
   "metadata": {
-    "snapshot_id": "SNAP-PFZ_ADVISORIES",
+    "snapshot_id": "PFZ-SNAP-1790225467",
     "provider": "INCOIS",
-    "source_name": "INCOIS PFZ Snapshot",
-    "captured_at": "2026-09-06T04:20:06.304636+00:00",
-    "valid_from": "2026-01-01T00:00:00+00:00",
-    "valid_to": "2030-01-01T00:00:00+00:00",
-    "schema_version": "1.0.0",
-    "checksum": "cc297414da23b5c258d79714088bc9414df25f40ff08b86f35a6443f5acaf281",
-    "reference_url": "https://example.com/snapshot",
+    "source_name": "pfz_advisories",
+    "captured_at": "2026-09-24T04:51:07.105227+00:00",
+    "valid_from": "2026-09-24T04:51:07.105227+00:00",
+    "valid_to": "2026-09-24T23:59:59Z",
+    "schema_version": "1.0",
+    "checksum": "7ae7deeec8991d637d117aada3e1bd67e6f95536b8af593e76eee4d0a9d75ccc",
     "status": "SIMULATED"
   },
   "payload": {
     "features": [
       {
-        "id": "PFZ-SNAP-01",
-        "lat": 16.92,
-        "lon": 73.15,
-        "sst_grad": 0.8,
-        "chlorophyll": 1.4
+        "id": "MH-PFZ-1",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.7294,
+            20.0831
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-1",
+          "location_reference": "Tarapur Pt",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
       },
       {
-        "id": "PFZ-SNAP-02",
-        "lat": 17.05,
-        "lon": 73.05,
-        "sst_grad": 1.1,
-        "chlorophyll": 1.9
+        "id": "MH-PFZ-2",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.7525,
+            20.0542
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-2",
+          "location_reference": "Ghivali",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-3",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.77,
+            20.0219
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-3",
+          "location_reference": "Varor",
+          "depth_m": 24.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-4",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.7978,
+            19.9983
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-4",
+          "location_reference": "Kambode",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-5",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.8286,
+            19.9786
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-5",
+          "location_reference": "PokharanDandi/Uchheli",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-6",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.845,
+            19.9458
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-6",
+          "location_reference": "Navapur (Ucheli Cr)",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-7",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.855,
+            19.9103
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-7",
+          "location_reference": "DhaktiDahanu/Gungawada",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-8",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.8617,
+            19.8742
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-8",
+          "location_reference": "Satpati(N)",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-9",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.8611,
+            19.8375
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-9",
+          "location_reference": "Murbe",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-10",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.845,
+            19.8053
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-10",
+          "location_reference": "Satpati(M/S)",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-11",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.7472,
+            19.6217
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-11",
+          "location_reference": "Satpati",
+          "depth_m": 31.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-12",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.7231,
+            19.5814
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-12",
+          "location_reference": "Vadarai",
+          "depth_m": 33.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-13",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.6903,
+            19.5481
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-13",
+          "location_reference": "Danda",
+          "depth_m": 39.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-14",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.6458,
+            19.5344
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-14",
+          "location_reference": "Shirgaon",
+          "depth_m": 41.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-15",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.6039,
+            19.5142
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-15",
+          "location_reference": "Edavan/Kore",
+          "depth_m": 51.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-16",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.5836,
+            19.4728
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-16",
+          "location_reference": "Kelwane",
+          "depth_m": 62.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-17",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.555,
+            19.4358
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-17",
+          "location_reference": "Kelwa/KelwaDadar",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-18",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.5242,
+            19.4006
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-18",
+          "location_reference": "Tembhi",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-19",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.5047,
+            19.3581
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-19",
+          "location_reference": "Arnalapada",
+          "depth_m": 66.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-20",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.4742,
+            19.3231
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-20",
+          "location_reference": "Datiware",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-21",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.0258,
+            19.0489
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-21",
+          "location_reference": "Arnala",
+          "depth_m": 93.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-22",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.9878,
+            19.0089
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-22",
+          "location_reference": "Madh",
+          "depth_m": 56.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-23",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.9392,
+            18.9761
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-23",
+          "location_reference": "YerangalBhati",
+          "depth_m": 77.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-24",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.8933,
+            18.9383
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-24",
+          "location_reference": "Malabar Port (Mumbai)",
+          "depth_m": 78.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-25",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.8375,
+            18.9169
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-25",
+          "location_reference": "Manori",
+          "depth_m": 83.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-26",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.7792,
+            18.9031
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-26",
+          "location_reference": "Patwadi",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-27",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.7194,
+            18.8969
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-27",
+          "location_reference": "Colaba Pt.(Mumbai)",
+          "depth_m": 70.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-28",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.66,
+            18.8917
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-28",
+          "location_reference": "Gorai",
+          "depth_m": 72.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-29",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.6014,
+            18.8792
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-29",
+          "location_reference": "Worli-Lotus",
+          "depth_m": 70.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-30",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.5467,
+            18.855
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-30",
+          "location_reference": "CuffPared",
+          "depth_m": 76.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-31",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5978,
+            18.7014
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-31",
+          "location_reference": "Navgaon",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-32",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5769,
+            18.6653
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-32",
+          "location_reference": "VarsoliChalmala",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-33",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5608,
+            18.6272
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-33",
+          "location_reference": "Thal",
+          "depth_m": 30.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-34",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5594,
+            18.5858
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-34",
+          "location_reference": "Alibag",
+          "depth_m": 32.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-35",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5844,
+            18.5533
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-35",
+          "location_reference": "Nagaon",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-36",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.6189,
+            18.53
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-36",
+          "location_reference": "Revadanda",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-37",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.6564,
+            18.5114
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-37",
+          "location_reference": "Korlai",
+          "depth_m": 23.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-38",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.6908,
+            18.4881
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-38",
+          "location_reference": "Borli-Mandla",
+          "depth_m": 22.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-39",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7222,
+            18.4606
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-39",
+          "location_reference": "Rewdanda",
+          "depth_m": 19.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-40",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7497,
+            18.4292
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-40",
+          "location_reference": "Mazgaon",
+          "depth_m": 18.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-41",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7383,
+            17.8042
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-41",
+          "location_reference": "Velas",
+          "depth_m": 34.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-42",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7481,
+            17.7406
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-42",
+          "location_reference": "AadeUttambar",
+          "depth_m": 33.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-43",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7836,
+            17.6864
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-43",
+          "location_reference": "HarnePort",
+          "depth_m": 33.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-44",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.8017,
+            17.6244
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-44",
+          "location_reference": "Kolthare",
+          "depth_m": 32.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-45",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7983,
+            17.5597
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-45",
+          "location_reference": "Tolkeshwar Pt",
+          "depth_m": 36.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-46",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7794,
+            17.4978
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-46",
+          "location_reference": "Anjanvel",
+          "depth_m": 40.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-47",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7503,
+            17.4394
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-47",
+          "location_reference": "Kondkarul",
+          "depth_m": 49.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-48",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7314,
+            17.3775
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-48",
+          "location_reference": "Budhal",
+          "depth_m": 63.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-49",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7233,
+            17.3131
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-49",
+          "location_reference": "Jaigarh Head",
+          "depth_m": 69.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-50",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.7317,
+            17.2489
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-50",
+          "location_reference": "SakharJaigad",
+          "depth_m": 65.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-51",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0853,
+            16.8897
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-51",
+          "location_reference": "Purnagad",
+          "depth_m": 41.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-52",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0853,
+            16.8481
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-52",
+          "location_reference": "Purangad",
+          "depth_m": 42.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-53",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0833,
+            16.8064
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-53",
+          "location_reference": "Bokarwadi",
+          "depth_m": 43.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-54",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0789,
+            16.7647
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-54",
+          "location_reference": "Sakhri-Natye",
+          "depth_m": 44.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-55",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0681,
+            16.7244
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-55",
+          "location_reference": "Wada Vetye",
+          "depth_m": 45.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-56",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0497,
+            16.6872
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-56",
+          "location_reference": "Ambolgad",
+          "depth_m": 49.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-57",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0261,
+            16.6528
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-57",
+          "location_reference": "Wagapur Pt",
+          "depth_m": 53.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-58",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.995,
+            16.6253
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-58",
+          "location_reference": "Sakharinate",
+          "depth_m": 57.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-59",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9614,
+            16.6006
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-59",
+          "location_reference": "Vijaydurg",
+          "depth_m": 61.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-60",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9444,
+            16.5639
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-60",
+          "location_reference": "Vijayadurg Hr",
+          "depth_m": 59.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-61",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.8881,
+            16.3453
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-61",
+          "location_reference": "Kalamaiwadi",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-62",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9008,
+            16.3053
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-62",
+          "location_reference": "Devgarh",
+          "depth_m": 74.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-63",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9208,
+            16.2683
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-63",
+          "location_reference": "Mithmumbri/Taramumbari",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-64",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9494,
+            16.2375
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-64",
+          "location_reference": "Kunkeshwar",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-65",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9797,
+            16.2094
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-65",
+          "location_reference": "Kunkeshwar/Katvan",
+          "depth_m": 64.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-66",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9878,
+            16.1683
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-66",
+          "location_reference": "Munge",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-67",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9881,
+            16.1264
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-67",
+          "location_reference": "Achra Pt",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-68",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.9933,
+            16.0847
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-68",
+          "location_reference": "Achara",
+          "depth_m": 73.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-69",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0117,
+            16.0469
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-69",
+          "location_reference": "Dhurivada",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "MH-PFZ-70",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            73.0347,
+            16.0117
+          ]
+        },
+        "properties": {
+          "candidate_id": "MH-PFZ-70",
+          "location_reference": "Sindhudurg (Malvan)",
+          "depth_m": 72.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-71",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.14,
+            23.0394
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-71",
+          "location_reference": "Moti Akri",
+          "depth_m": 22.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-72",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1564,
+            23.0028
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-72",
+          "location_reference": "Bhutau",
+          "depth_m": 23.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-73",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1856,
+            22.9747
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-73",
+          "location_reference": "Lakhi Bandar",
+          "depth_m": 23.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-74",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.2219,
+            22.9569
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-74",
+          "location_reference": "Khuada",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-75",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.2583,
+            22.9392
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-75",
+          "location_reference": "Chhachhi",
+          "depth_m": 24.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-76",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.2914,
+            22.9153
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-76",
+          "location_reference": "Guvar",
+          "depth_m": 23.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-77",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.3169,
+            22.8842
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-77",
+          "location_reference": "Bambhdai",
+          "depth_m": 20.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-78",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.3342,
+            22.8475
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-78",
+          "location_reference": "Narayan Sarovar (Koteshwar)",
+          "depth_m": 24.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-79",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.3569,
+            22.8142
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-79",
+          "location_reference": "Bhada",
+          "depth_m": 25.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-80",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.3914,
+            22.7928
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-80",
+          "location_reference": "Nana Layja",
+          "depth_m": 22.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-81",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.2744,
+            22.5925
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-81",
+          "location_reference": "Jakhau",
+          "depth_m": 40.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-82",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.2464,
+            22.5517
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-82",
+          "location_reference": "Kachchigadh",
+          "depth_m": 48.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-83",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.2031,
+            22.5258
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-83",
+          "location_reference": "Mitha Port",
+          "depth_m": 60.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-84",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1594,
+            22.5019
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-84",
+          "location_reference": "Rupen",
+          "depth_m": 58.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-85",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1369,
+            22.4572
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-85",
+          "location_reference": "Dwarka",
+          "depth_m": 53.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-86",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1289,
+            22.4072
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-86",
+          "location_reference": "Okha",
+          "depth_m": 55.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-87",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1322,
+            22.3569
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-87",
+          "location_reference": "Kadoli",
+          "depth_m": 66.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-88",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1608,
+            22.3164
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-88",
+          "location_reference": "Mitha Port",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-89",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.7081,
+            22.3042
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-89",
+          "location_reference": "Bhogat",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-90",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1967,
+            22.2806
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-90",
+          "location_reference": "Kuranga",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-91",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.6817,
+            22.2531
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-91",
+          "location_reference": "Navadra",
+          "depth_m": 30.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-92",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.2264,
+            22.2397
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-92",
+          "location_reference": "Poshitra",
+          "depth_m": 72.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-93",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.6319,
+            22.2247
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-93",
+          "location_reference": "Mota Asota",
+          "depth_m": 33.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-94",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.6028,
+            22.1747
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-94",
+          "location_reference": "Miyani",
+          "depth_m": 43.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-95",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.5922,
+            22.1178
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-95",
+          "location_reference": "Harshad Miyani",
+          "depth_m": 52.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-96",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.6161,
+            22.0667
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-96",
+          "location_reference": "Tukda Miyani",
+          "depth_m": 66.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-97",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.6333,
+            22.0119
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-97",
+          "location_reference": "Raatadi",
+          "depth_m": 58.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-98",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.6722,
+            21.9686
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-98",
+          "location_reference": "Kuchhadi",
+          "depth_m": 55.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-99",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.7094,
+            21.9242
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-99",
+          "location_reference": "Porbandar",
+          "depth_m": 59.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-100",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.7233,
+            21.8681
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-100",
+          "location_reference": "odadar",
+          "depth_m": 63.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-101",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.0872,
+            21.3439
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-101",
+          "location_reference": "Vadinar",
+          "depth_m": 71.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-102",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.0358,
+            21.3425
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-102",
+          "location_reference": "Bharana",
+          "depth_m": 74.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-103",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.1361,
+            21.3283
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-103",
+          "location_reference": "Sikka",
+          "depth_m": 68.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-104",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.9892,
+            21.3214
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-104",
+          "location_reference": "Nana Ambla",
+          "depth_m": 82.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-105",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.7089,
+            21.3039
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-105",
+          "location_reference": "Navibandar",
+          "depth_m": 111.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-106",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.9522,
+            21.2856
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-106",
+          "location_reference": "Salaya",
+          "depth_m": 86.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-107",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.7547,
+            21.2806
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-107",
+          "location_reference": "Gorsar",
+          "depth_m": 85.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-108",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.8039,
+            21.2656
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-108",
+          "location_reference": "Madhavpur",
+          "depth_m": 112.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-109",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.9064,
+            21.2633
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-109",
+          "location_reference": "Mangrol",
+          "depth_m": 97.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-110",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.855,
+            21.2589
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-110",
+          "location_reference": "Shil",
+          "depth_m": 108.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-111",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.2089,
+            21.1989
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-111",
+          "location_reference": "Piroton Island",
+          "depth_m": 54.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-112",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.2022,
+            21.1469
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-112",
+          "location_reference": "Kalyan Lt",
+          "depth_m": 75.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-113",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.1772,
+            21.1006
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-113",
+          "location_reference": "Tragdi",
+          "depth_m": 81.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-114",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.1633,
+            21.0497
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-114",
+          "location_reference": "Modhva",
+          "depth_m": 88.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-115",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.1669,
+            20.9978
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-115",
+          "location_reference": "Navinal",
+          "depth_m": 261.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-116",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.1969,
+            20.955
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-116",
+          "location_reference": "Tunda",
+          "depth_m": 530.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-117",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.2428,
+            20.9294
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-117",
+          "location_reference": "Zarpara",
+          "depth_m": 133.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-118",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.275,
+            20.8889
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-118",
+          "location_reference": "Sachana",
+          "depth_m": 104.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-119",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.3233,
+            20.8678
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-119",
+          "location_reference": "Mundra",
+          "depth_m": 84.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-120",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.1147,
+            20.8606
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-120",
+          "location_reference": "Chorwad",
+          "depth_m": 37.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-121",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.3747,
+            20.8564
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-121",
+          "location_reference": "Balachadi",
+          "depth_m": 77.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-122",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.1417,
+            20.8108
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-122",
+          "location_reference": "Adri",
+          "depth_m": 37.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-123",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.4664,
+            20.8033
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-123",
+          "location_reference": "Onjal Machhivad",
+          "depth_m": 21.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-124",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.4211,
+            20.7997
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-124",
+          "location_reference": "Dandi",
+          "depth_m": 18.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-125",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5111,
+            20.7942
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-125",
+          "location_reference": "Bhat",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-126",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5531,
+            20.7761
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-126",
+          "location_reference": "Krishnapur",
+          "depth_m": 25.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-127",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.3875,
+            20.7697
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-127",
+          "location_reference": "Hazira",
+          "depth_m": 9.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-128",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.1458,
+            20.7525
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-128",
+          "location_reference": "Veraval",
+          "depth_m": 48.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-129",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5906,
+            20.7503
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-129",
+          "location_reference": "Kakwadi",
+          "depth_m": 17.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-130",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.3603,
+            20.7331
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-130",
+          "location_reference": "Dipla",
+          "depth_m": 19.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-131",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.6122,
+            20.7111
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-131",
+          "location_reference": "Mendhar",
+          "depth_m": 18.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-132",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.3228,
+            20.7081
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-132",
+          "location_reference": "Wasi Borsi",
+          "depth_m": 20.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-133",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.17,
+            20.7003
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-133",
+          "location_reference": "Hirakot",
+          "depth_m": 52.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-134",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.6328,
+            20.6744
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-134",
+          "location_reference": "Valsad",
+          "depth_m": 17.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-135",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.5011,
+            20.6744
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-135",
+          "location_reference": "Mangrol Bara",
+          "depth_m": 29.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-136",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.4425,
+            20.6717
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-136",
+          "location_reference": "Mul Dwarka",
+          "depth_m": 36.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-137",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.2153,
+            20.6633
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-137",
+          "location_reference": "Kadwar",
+          "depth_m": 53.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-138",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.3864,
+            20.655
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-138",
+          "location_reference": "Dhamlej",
+          "depth_m": 41.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-139",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.2708,
+            20.6447
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-139",
+          "location_reference": "Sutrapada",
+          "depth_m": 50.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-140",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.3292,
+            20.6428
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-140",
+          "location_reference": "Vadodra",
+          "depth_m": 46.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-141",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.1047,
+            20.5383
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-141",
+          "location_reference": "Diu Island",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-142",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.1492,
+            20.5275
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-142",
+          "location_reference": "Nava Bandar",
+          "depth_m": 25.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-143",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.1928,
+            20.5119
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-143",
+          "location_reference": "Simar",
+          "depth_m": 25.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-144",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.2331,
+            20.4897
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-144",
+          "location_reference": "Saiyad Rajpara",
+          "depth_m": 25.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-145",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.2678,
+            20.4597
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-145",
+          "location_reference": "Rohisha",
+          "depth_m": 25.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-146",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.2894,
+            20.4194
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-146",
+          "location_reference": "Jafarabad",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-147",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.3131,
+            20.3803
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-147",
+          "location_reference": "Kotda",
+          "depth_m": 27.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-148",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.3461,
+            20.3483
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-148",
+          "location_reference": "Shiyalbet",
+          "depth_m": 26.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-149",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.3883,
+            20.3303
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-149",
+          "location_reference": "Pipavav",
+          "depth_m": 25.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-150",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.4303,
+            20.3111
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-150",
+          "location_reference": "Madhvad Lighthouse",
+          "depth_m": 28.5,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-100",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.14,
+            23.039444444444445
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-100",
+          "location_reference": "Moti Akri",
+          "depth_m": 22.5,
+          "distance_km": 62.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-101",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.1563888888889,
+            23.002777777777776
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-101",
+          "location_reference": "Bhutau",
+          "depth_m": 23.5,
+          "distance_km": 68.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-102",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.18555555555555,
+            22.97472222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-102",
+          "location_reference": "Lakhi Bandar",
+          "depth_m": 23.5,
+          "distance_km": 74.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-103",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.22194444444445,
+            22.956944444444442
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-103",
+          "location_reference": "Khuada",
+          "depth_m": 27.5,
+          "distance_km": 77.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-104",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.25833333333334,
+            22.939166666666665
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-104",
+          "location_reference": "Chhachhi",
+          "depth_m": 24.5,
+          "distance_km": 80.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-105",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.29138888888889,
+            22.915277777777778
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-105",
+          "location_reference": "Guvar",
+          "depth_m": 23.5,
+          "distance_km": 82.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-106",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.31694444444445,
+            22.884166666666665
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-106",
+          "location_reference": "Bambhdai",
+          "depth_m": 20.5,
+          "distance_km": 82.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-107",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.33416666666666,
+            22.8475
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-107",
+          "location_reference": "Narayan Sarovar (Koteshwar)",
+          "depth_m": 24.5,
+          "distance_km": 92.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-108",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.35694444444444,
+            22.81416666666667
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-108",
+          "location_reference": "Bhada",
+          "depth_m": 25.5,
+          "distance_km": 91.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-109",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.3913888888889,
+            22.79277777777778
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-109",
+          "location_reference": "Nana Layja",
+          "depth_m": 22.5,
+          "distance_km": 91.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-110",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.27444444444444,
+            22.592499999999998
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-110",
+          "location_reference": "Jakhau",
+          "depth_m": 40.5,
+          "distance_km": 82.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-111",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.24638888888889,
+            22.551666666666666
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-111",
+          "location_reference": "Kachchigadh",
+          "depth_m": 48.5,
+          "distance_km": 79.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-112",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.20305555555557,
+            22.52583333333333
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-112",
+          "location_reference": "Mitha Port",
+          "depth_m": 60.5,
+          "distance_km": 85.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-113",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.15944444444445,
+            22.501944444444444
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-113",
+          "location_reference": "Rupen",
+          "depth_m": 58.5,
+          "distance_km": 90.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-114",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.13694444444445,
+            22.45722222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-114",
+          "location_reference": "Dwarka",
+          "depth_m": 53.5,
+          "distance_km": 92.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-115",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.12888888888888,
+            22.40722222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-115",
+          "location_reference": "Okha",
+          "depth_m": 55.5,
+          "distance_km": 102.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-116",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.13222222222221,
+            22.356944444444444
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-116",
+          "location_reference": "Kadoli",
+          "depth_m": 66.5,
+          "distance_km": 106.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-117",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.16083333333334,
+            22.31638888888889
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-117",
+          "location_reference": "Mitha Port",
+          "depth_m": 68.5,
+          "distance_km": 111.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-118",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.70805555555556,
+            22.304166666666667
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-118",
+          "location_reference": "Bhogat",
+          "depth_m": 27.5,
+          "distance_km": 64.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-119",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.19666666666667,
+            22.280555555555555
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-119",
+          "location_reference": "Kuranga",
+          "depth_m": 68.5,
+          "distance_km": 106.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-120",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.68166666666667,
+            22.253055555555555
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-120",
+          "location_reference": "Navadra",
+          "depth_m": 30.5,
+          "distance_km": 69.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-121",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.22638888888889,
+            22.239722222222223
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-121",
+          "location_reference": "Poshitra",
+          "depth_m": 72.5,
+          "distance_km": 105.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-122",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.63194444444444,
+            22.22472222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-122",
+          "location_reference": "Mota Asota",
+          "depth_m": 33.5,
+          "distance_km": 81.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-123",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.60277777777777,
+            22.174722222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-123",
+          "location_reference": "Miyani",
+          "depth_m": 43.5,
+          "distance_km": 90.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-124",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.59222222222222,
+            22.11777777777778
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-124",
+          "location_reference": "Harshad Miyani",
+          "depth_m": 52.5,
+          "distance_km": 90.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-125",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.61611111111111,
+            22.066666666666666
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-125",
+          "location_reference": "Tukda Miyani",
+          "depth_m": 66.5,
+          "distance_km": 92.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-126",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.63333333333334,
+            22.011944444444445
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-126",
+          "location_reference": "Raatadi",
+          "depth_m": 58.5,
+          "distance_km": 97.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-127",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.67222222222223,
+            21.96861111111111
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-127",
+          "location_reference": "Kuchhadi",
+          "depth_m": 55.5,
+          "distance_km": 100.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-128",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.70944444444444,
+            21.924166666666668
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-128",
+          "location_reference": "Porbandar",
+          "depth_m": 59.5,
+          "distance_km": 100.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-129",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.72333333333333,
+            21.868055555555557
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-129",
+          "location_reference": "odadar",
+          "depth_m": 63.5,
+          "distance_km": 107.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-130",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.08722222222222,
+            21.343888888888888
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-130",
+          "location_reference": "Vadinar",
+          "depth_m": 71.5,
+          "distance_km": 132.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-131",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.03583333333333,
+            21.342499999999998
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-131",
+          "location_reference": "Bharana",
+          "depth_m": 74.5,
+          "distance_km": 133.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-132",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.13611111111112,
+            21.328333333333333
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-132",
+          "location_reference": "Sikka",
+          "depth_m": 68.5,
+          "distance_km": 140.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-133",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.98916666666666,
+            21.32138888888889
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-133",
+          "location_reference": "Nana Ambla",
+          "depth_m": 82.5,
+          "distance_km": 132.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-134",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.7088888888889,
+            21.30388888888889
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-134",
+          "location_reference": "Navibandar",
+          "depth_m": 111.5,
+          "distance_km": 112.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-135",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.95222222222222,
+            21.285555555555558
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-135",
+          "location_reference": "Salaya",
+          "depth_m": 86.5,
+          "distance_km": 132.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-136",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.75472222222223,
+            21.280555555555555
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-136",
+          "location_reference": "Gorsar",
+          "depth_m": 85.5,
+          "distance_km": 123.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-137",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.80388888888889,
+            21.265555555555554
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-137",
+          "location_reference": "Madhavpur",
+          "depth_m": 112.5,
+          "distance_km": 125.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-138",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.9063888888889,
+            21.263333333333332
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-138",
+          "location_reference": "Mangrol",
+          "depth_m": 97.5,
+          "distance_km": 130.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-139",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            68.85499999999999,
+            21.25888888888889
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-139",
+          "location_reference": "Shil",
+          "depth_m": 108.5,
+          "distance_km": 127.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-140",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.2088888888889,
+            21.198888888888888
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-140",
+          "location_reference": "Piroton Island",
+          "depth_m": 54.5,
+          "distance_km": 171.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-141",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.20222222222222,
+            21.146944444444443
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-141",
+          "location_reference": "Kalyan Lt",
+          "depth_m": 75.5,
+          "distance_km": 178.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-142",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.17722222222223,
+            21.100555555555555
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-142",
+          "location_reference": "Tragdi",
+          "depth_m": 81.5,
+          "distance_km": 184.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-143",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.16333333333334,
+            21.049722222222226
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-143",
+          "location_reference": "Modhva",
+          "depth_m": 88.5,
+          "distance_km": 190.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-144",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.16694444444445,
+            20.997777777777777
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-144",
+          "location_reference": "Navinal",
+          "depth_m": 261.5,
+          "distance_km": 196.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-145",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.19694444444445,
+            20.955
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-145",
+          "location_reference": "Tunda",
+          "depth_m": 530.5,
+          "distance_km": 201.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-146",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.24277777777777,
+            20.929444444444446
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-146",
+          "location_reference": "Zarpara",
+          "depth_m": 133.5,
+          "distance_km": 205.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-147",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.275,
+            20.88888888888889
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-147",
+          "location_reference": "Sachana",
+          "depth_m": 104.5,
+          "distance_km": 206.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-148",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.32333333333332,
+            20.86777777777778
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-148",
+          "location_reference": "Mundra",
+          "depth_m": 84.5,
+          "distance_km": 208.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-149",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.11472222222221,
+            20.860555555555557
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-149",
+          "location_reference": "Chorwad",
+          "depth_m": 37.5,
+          "distance_km": 20.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-150",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            69.37472222222222,
+            20.85638888888889
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-150",
+          "location_reference": "Balachadi",
+          "depth_m": 77.5,
+          "distance_km": 209.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-151",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.14166666666668,
+            20.810833333333335
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-151",
+          "location_reference": "Adri",
+          "depth_m": 37.5,
+          "distance_km": 22.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-152",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.46638888888889,
+            20.803333333333335
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-152",
+          "location_reference": "Onjal Machhivad",
+          "depth_m": 21.5,
+          "distance_km": 39.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-153",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.42111111111112,
+            20.799722222222226
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-153",
+          "location_reference": "Dandi",
+          "depth_m": 18.5,
+          "distance_km": 42.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-154",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.5111111111111,
+            20.79416666666667
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-154",
+          "location_reference": "Bhat",
+          "depth_m": 27.5,
+          "distance_km": 36.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-155",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.55305555555556,
+            20.77611111111111
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-155",
+          "location_reference": "Krishnapur",
+          "depth_m": 25.5,
+          "distance_km": 32.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-156",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.3875,
+            20.76972222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-156",
+          "location_reference": "Hazira",
+          "depth_m": 9.5,
+          "distance_km": 45.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-157",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.14583333333334,
+            20.7525
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-157",
+          "location_reference": "Veraval",
+          "depth_m": 48.5,
+          "distance_km": 30.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-158",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.59055555555555,
+            20.75027777777778
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-158",
+          "location_reference": "Kakwadi",
+          "depth_m": 17.5,
+          "distance_km": 29.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-159",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.36027777777777,
+            20.733055555555556
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-159",
+          "location_reference": "Dipla",
+          "depth_m": 19.5,
+          "distance_km": 50.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-160",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.61222222222221,
+            20.711111111111112
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-160",
+          "location_reference": "Mendhar",
+          "depth_m": 18.5,
+          "distance_km": 28.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-161",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.32277777777777,
+            20.708055555555553
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-161",
+          "location_reference": "Wasi Borsi",
+          "depth_m": 20.5,
+          "distance_km": 53.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-162",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.17,
+            20.700277777777778
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-162",
+          "location_reference": "Hirakot",
+          "depth_m": 52.5,
+          "distance_km": 34.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-163",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            72.63277777777778,
+            20.674444444444447
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-163",
+          "location_reference": "Valsad",
+          "depth_m": 17.5,
+          "distance_km": 28.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-164",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.50111111111111,
+            20.674444444444447
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-164",
+          "location_reference": "Mangrol Bara",
+          "depth_m": 29.5,
+          "distance_km": 59.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-165",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.44250000000001,
+            20.671666666666667
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-165",
+          "location_reference": "Mul Dwarka",
+          "depth_m": 36.5,
+          "distance_km": 25.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-166",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.21527777777779,
+            20.66333333333333
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-166",
+          "location_reference": "Kadwar",
+          "depth_m": 53.5,
+          "distance_km": 32.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-167",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.3863888888889,
+            20.654999999999998
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-167",
+          "location_reference": "Dhamlej",
+          "depth_m": 41.5,
+          "distance_km": 27.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-168",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.27083333333333,
+            20.64472222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-168",
+          "location_reference": "Sutrapada",
+          "depth_m": 50.5,
+          "distance_km": 30.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-169",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            70.32916666666667,
+            20.642777777777777
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-169",
+          "location_reference": "Vadodra",
+          "depth_m": 46.5,
+          "distance_km": 28.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-170",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.10472222222222,
+            20.538333333333334
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-170",
+          "location_reference": "Diu Island",
+          "depth_m": 27.5,
+          "distance_km": 22.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-171",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.14916666666667,
+            20.5275
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-171",
+          "location_reference": "Nava Bandar",
+          "depth_m": 25.5,
+          "distance_km": 24.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-172",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.19277777777778,
+            20.511944444444445
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-172",
+          "location_reference": "Simar",
+          "depth_m": 25.5,
+          "distance_km": 28.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-173",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.23305555555555,
+            20.489722222222223
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-173",
+          "location_reference": "Saiyad Rajpara",
+          "depth_m": 25.5,
+          "distance_km": 33.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-174",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.26777777777778,
+            20.459722222222222
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-174",
+          "location_reference": "Rohisha",
+          "depth_m": 25.5,
+          "distance_km": 39.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-175",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.28944444444444,
+            20.419444444444444
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-175",
+          "location_reference": "Jafarabad",
+          "depth_m": 26.5,
+          "distance_km": 49.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-176",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.31305555555555,
+            20.380277777777778
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-176",
+          "location_reference": "Kotda",
+          "depth_m": 27.5,
+          "distance_km": 60.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-177",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.3461111111111,
+            20.348333333333333
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-177",
+          "location_reference": "Shiyalbet",
+          "depth_m": 26.5,
+          "distance_km": 63.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-178",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.38833333333334,
+            20.330277777777777
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-178",
+          "location_reference": "Pipavav",
+          "depth_m": 25.5,
+          "distance_km": 64.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
+      },
+      {
+        "id": "GJ-PFZ-179",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            71.43027777777779,
+            20.311111111111114
+          ]
+        },
+        "properties": {
+          "candidate_id": "GJ-PFZ-179",
+          "location_reference": "Madhvad Lighthouse",
+          "depth_m": 28.5,
+          "distance_km": 77.5,
+          "bearing_degrees": 0.0,
+          "sst": 28.5,
+          "chlorophyll": 0.8
+        }
       }
     ],
-    "bulletin_date": "2026-09-06T04:20:06.304636+00:00",
-    "valid_to": "2030-01-01T00:00:00+00:00",
-    "source_name": "INCOIS PFZ Mission Snapshot Fixture",
-    "source_url": "https://incois.gov.in/portal/pfz"
+    "bulletin_date": "2026-09-23T00:00:00Z",
+    "valid_to": "2026-09-24T23:59:59Z",
+    "source_name": "INCOIS Maharashtra PFZ",
+    "source_url": "https://incois.gov.in"
   }
 }

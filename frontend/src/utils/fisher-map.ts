@@ -350,10 +350,15 @@ export function formatFishermanPopup(feature: any, layer: MapLayer): string | nu
   if (layerId.includes('pfz') || layerCategory.includes('pfz') || props.sst_gradient !== undefined) {
     const rank = props.rank ? `#${props.rank}` : '';
     const confidence = props.confidence || 'UNKNOWN';
-    const sstGrad = props.sst_gradient !== null && props.sst_gradient !== undefined ? Number(props.sst_gradient).toFixed(2) : '—';
-    const dist = props.distance_km !== undefined && props.distance_km !== null ? `${Number(props.distance_km).toFixed(1)} km` : '—';
-    const bearing = props.bearing_deg !== undefined && props.bearing_deg !== null ? `${props.bearing_deg}°` : '—';
-    const depth = props.depth_m !== undefined && props.depth_m !== null ? `${Number(props.depth_m).toFixed(0)} m` : '—';
+    const sstGradRaw = props.sst_gradient ?? props.sea_surface_temp_c;
+    const sstGrad = sstGradRaw !== null && sstGradRaw !== undefined ? Number(sstGradRaw).toFixed(2) : '—';
+    const distRaw = props.distance_km ?? (props.distance_nautical_miles ? props.distance_nautical_miles * 1.852 : undefined);
+    const dist = distRaw !== undefined && distRaw !== null ? `${Number(distRaw).toFixed(1)} km` : '—';
+    const bearingRaw = props.bearing_deg ?? props.bearing_degrees;
+    const bearing = bearingRaw !== undefined && bearingRaw !== null ? `${bearingRaw}°` : '—';
+    const depthRaw = props.depth_m ?? props.water_depth_m;
+    const depth = depthRaw !== undefined && depthRaw !== null ? `${Number(depthRaw).toFixed(0)} m` : '—';
+    const locationName = props.location_reference ? `(${props.location_reference})` : '';
 
     const confBadge =
       confidence === 'HIGH'
@@ -365,7 +370,7 @@ export function formatFishermanPopup(feature: any, layer: MapLayer): string | nu
     return `
       <div class="map-popup-fisher">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-          <strong style="color:#10b981;font-size:13px;">PFZ Candidate ${rank}</strong>
+          <strong style="color:#10b981;font-size:13px;">PFZ Candidate ${rank} ${locationName}</strong>
           ${confBadge}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-top:6px;border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;">
