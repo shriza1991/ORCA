@@ -9,7 +9,7 @@ import type { OperationalMode } from '../../types/mission';
 import LayerManager from './LayerManager';
 import MissionMapBrief from './MissionMapBrief';
 import { Layers, Navigation, Play, Square, Ship, Sailboat, Clock, Waves, X, Bookmark, RefreshCw } from 'lucide-react';
-import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { type SupportedLanguage } from '../../i18n/translations';
 import { executeSpatialQuery, type UnifiedSpatialQueryResponse } from '../../api/marinewatch-client';
 import { NATIONAL_COASTAL_BOOKMARKS } from '../../utils/geo';
 
