@@ -1,7 +1,7 @@
 import math
 import heapq
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Any, Callable
 from shapely.geometry import Point, LineString
 
 logger = logging.getLogger(__name__)
@@ -56,17 +56,19 @@ class MarinePathfinder:
         start_coords: List[float], 
         end_coords: List[float], 
         safety_buffer_deg: float = 0.0,
-        max_iterations: int = 5000
+        max_iterations: int = 5000,
+        current_vector_fn: Optional[Any] = None,
+        craft_speed_knots: float = 8.0,
     ) -> Optional[List[List[float]]]:
         """
-        A* Pathfinding on a dynamic grid to route around land.
+        A* Pathfinding on a dynamic grid to route around land and optimize against surface currents.
         Returns a list of [lon, lat] waypoints.
         """
         start_node = Node(start_coords[0], start_coords[1])
         end_node = Node(end_coords[0], end_coords[1])
         
-        # If direct path is clear, just return it!
-        if self._line_navigable(start_node.x, start_node.y, end_node.x, end_node.y):
+        # If direct path is clear and no current vectors to optimize against, return it
+        if current_vector_fn is None and self._line_navigable(start_node.x, start_node.y, end_node.x, end_node.y):
             return [start_coords, end_coords]
 
         open_set = []
@@ -126,7 +128,26 @@ class MarinePathfinder:
                 else:
                     neighbor = nodes_dict[(nx, ny)]
                 
-                tentative_g = current.g + haversine(current.x, current.y, nx, ny)
+                step_dist = haversine(current.x, current.y, nx, ny)
+                time_factor = 1.0
+                if current_vector_fn is not None:
+                    v_dx = nx - current.x
+                    v_dy = ny - current.y
+                    v_mag = math.hypot(v_dx, v_dy)
+                    if v_mag > 1e-6:
+                        u_head = v_dx / v_mag
+                        v_head = v_dy / v_mag
+                        mid_x = (current.x + nx) / 2.0
+                        mid_y = (current.y + ny) / 2.0
+                        try:
+                            u_curr, v_curr = current_vector_fn(mid_x, mid_y)
+                            v_along = (u_curr * u_head) + (v_curr * v_head)
+                            eff_speed = max(1.0, craft_speed_knots + v_along)
+                            time_factor = craft_speed_knots / eff_speed
+                        except Exception:
+                            time_factor = 1.0
+
+                tentative_g = current.g + (step_dist * time_factor)
                 
                 # Penalize changing direction to encourage straight lines
                 if current.parent:

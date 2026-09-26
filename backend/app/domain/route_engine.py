@@ -1,6 +1,7 @@
 import math
 import json
 import logging
+from datetime import datetime, timezone
 from typing import List, Optional, Any
 from shapely.geometry import Point, LineString, shape, MultiPolygon
 
@@ -14,6 +15,8 @@ from backend.app.agents.integrations.dev4 import (
     RouteExposurePayload,
     EvaluatedRouteItem,
 )
+from backend.app.domain.trajectory_exposure import TrajectoryExposureEngine
+from backend.app.domain.departure_window import DepartureWindowEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +27,8 @@ class DeterministicRouteExposureEngine:
         self.coastline_geojson_path = coastline_geojson_path
         self.land_polygon = self._load_land_polygon()
         self.nominal_speed_knots = 8.0
+        self.trajectory_engine = TrajectoryExposureEngine()
+        self.departure_evaluator = DepartureWindowEvaluator()
 
     def _load_land_polygon(self) -> Optional[MultiPolygon]:
         try:
@@ -124,6 +129,8 @@ class DeterministicRouteExposureEngine:
         geospatial_engine: Optional[Any] = None,
         dest_coords: Optional[List[float]] = None,
         base_waypoints: Optional[List[List[float]]] = None,
+        hourly_forecast: Optional[List[MarineConditionsPayload]] = None,
+        departure_time: Optional[Any] = None,
     ) -> RouteExposurePayload:
         
         origin_coords = context.coordinates
@@ -207,35 +214,51 @@ class DeterministicRouteExposureEngine:
             geofence_reasons = self._check_geofence(c_way, geospatial_engine, context)
             infeasible_reasons.extend(geofence_reasons)
             
-            # Exposure calculation (wave height + distance penalty)
-            exposure = round(wave_h * 1.5 + (dist_km / 10.0), 2)
-            
-            if exposure > 6.0:
-                risk_rating = "HIGH"
-            elif exposure > 3.0:
-                risk_rating = "MODERATE"
-            else:
-                risk_rating = "LOW"
-            craft = context.craft_profile or 'motorized_boat'
-            if craft == 'traditional_non_motorized':
+            # Craft profile and speed parameters
+            craft = getattr(context, "craft_profile", None) or "motorized_boat"
+            if craft == "traditional_non_motorized":
                 speed_knots = 3.0
                 fuel_rate = 0.0
-            elif craft == 'mechanized_trawler':
+            elif craft == "mechanized_trawler":
                 speed_knots = 10.0
                 fuel_rate = 20.0
             else:
                 speed_knots = 8.0
                 fuel_rate = 3.0
-                
-            eta_hours = round((dist_km / 1.852) / speed_knots, 2)
+
+            # Calculate dynamic trajectory exposure along waypoints
+            parsed_dep_time = None
+            if isinstance(departure_time, datetime):
+                parsed_dep_time = departure_time
+            elif isinstance(departure_time, str):
+                try:
+                    parsed_dep_time = datetime.fromisoformat(departure_time.replace("Z", "+00:00"))
+                except Exception:
+                    pass
+
+            fallback_wind = weather.wind_speed_knots if weather and weather.wind_speed_knots is not None else 12.0
+            traj_res = self.trajectory_engine.evaluate_trajectory(
+                waypoints=c_way,
+                craft_profile=craft,
+                departure_time=parsed_dep_time,
+                hourly_forecast=hourly_forecast,
+                fallback_wave_height_m=wave_h,
+                fallback_wind_knots=fallback_wind,
+            )
+
+            evaluated_wave = traj_res.peak_wave_height_m
+            exposure = traj_res.integrated_exposure_score
+            risk_rating = traj_res.risk_rating
+            eta_hours = traj_res.total_transit_hours
             fuel_liters = round(eta_hours * fuel_rate, 1)
+            route_missing = traj_res.missing_data_state if traj_res.missing_data_state else missing_state
             
             evaluated_routes.append(
                 EvaluatedRouteItem(
                     route_id=c_id,
                     name=c_name,
                     distance_km=round(dist_km, 1),
-                    max_wave_height_m=wave_h,
+                    max_wave_height_m=evaluated_wave,
                     risk_rating=risk_rating,
                     exposure_score=exposure,
                     waypoints=c_way,
@@ -246,7 +269,9 @@ class DeterministicRouteExposureEngine:
                     is_feasible=len(infeasible_reasons) == 0,
                     infeasibility_reasons=infeasible_reasons,
                     is_synthetic=is_synthetic,
-                    missing_data_state=missing_state,
+                    missing_data_state=route_missing,
+                    waypoint_timeline=[w.model_dump() for w in traj_res.waypoint_timeline],
+                    peak_exposure_point=traj_res.peak_exposure_point,
                 )
             )
 
@@ -258,6 +283,22 @@ class DeterministicRouteExposureEngine:
             feasible_routes.sort(key=lambda r: r.exposure_score)
             recommended_route_id = feasible_routes[0].route_id
 
+        # Scan departure windows if hourly forecast is provided
+        dep_windows = None
+        optimal_rec = None
+        if hourly_forecast:
+            try:
+                scan_res = self.departure_evaluator.scan_departure_windows(
+                    context=context,
+                    hourly_forecast=hourly_forecast,
+                    earliest_departure=parsed_dep_time,
+                    fallback_wave_m=wave_h,
+                )
+                dep_windows = [w.model_dump() for w in scan_res.windows]
+                optimal_rec = scan_res.recommendation_text
+            except Exception as e:
+                logger.warning(f"Departure window scan failed: {e}")
+
         return RouteExposurePayload(
             origin=context.origin_harbor or "Ratnagiri",
             destination=destination,
@@ -265,4 +306,6 @@ class DeterministicRouteExposureEngine:
             routes=evaluated_routes, # Return all routes so UI can show infeasible ones too
             origin_coordinates=origin_coords,
             destination_coordinates=target_coords,
+            departure_windows=dep_windows,
+            optimal_departure_recommendation=optimal_rec,
         )
