@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { ShipWheel, MapPin, CalendarClock, ArrowLeft, Check, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
 import type { MissionContext } from '../../types/mission';
@@ -63,7 +62,6 @@ export default function GuidedTripSetup({
 }: GuidedTripSetupProps) {
   const [step, setStep] = useState(0);
   const { speak, stop } = useSpokenGuidance({ language });
-  const { t } = useTranslation();
 
   // Store all wizard values locally until confirmation step (M1.1.5)
   const [localContext, setLocalContext] = useState<MissionContext>(() => {
@@ -102,7 +100,6 @@ export default function GuidedTripSetup({
   const steps = [
     {
       id: 'harbor',
-<<<<<<< HEAD
       title: translateText('From which port?', language),
       icon: <MapPin size={40} />,
     },
@@ -135,40 +132,6 @@ export default function GuidedTripSetup({
       id: 'confirm',
       title: translateText('Confirm & Assess Voyage', language),
       icon: <Check size={40} />,
-=======
-      title: t('GuidedTripSetup.from_which_port', 'From which port?'),
-      icon: <MapPin size={48} />,
-    },
-    {
-      id: 'pfz',
-      title: t('GuidedTripSetup.select_pfz', 'Select PFZ'),
-      icon: <MapPin size={48} />,
-    },
-    {
-      id: 'boat',
-      title: t('GuidedTripSetup.boat_vessel_size_type', 'Boat vessel size type?'),
-      icon: <ShipWheel size={48} />,
-    },
-    {
-      id: 'depart',
-      title: t('GuidedTripSetup.depart_day', 'Day when you will depart?'),
-      icon: <CalendarClock size={48} />,
-    },
-    {
-      id: 'return',
-      title: t('GuidedTripSetup.return_day', 'Day when you will return?'),
-      icon: <CalendarClock size={48} />,
-    },
-    {
-      id: 'sea_condition',
-      title: t('GuidedTripSetup.sea_condition', 'See the sea condition'),
-      icon: <Check size={48} />,
-    },
-    {
-      id: 'confirm',
-      title: t('GuidedTripSetup.plan_trip', 'Plan the trip'),
-      icon: <Check size={48} />,
->>>>>>> origin/features
     },
   ];
 
@@ -234,35 +197,7 @@ export default function GuidedTripSetup({
                   textAlign: 'left',
                 }}
               >
-<<<<<<< HEAD
                 ⚓ {translateText(h, language)}
-=======
-                {t('Harbor.' + h, h)}
-              </button>
-            ))}
-          </div>
-        );
-      case 4:
-        return (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-            {['today', 'tomorrow', '2_days', '3_days'].map((time) => (
-              <button
-                key={time}
-                onClick={() => {
-                  onContextChange({ ...context, return_time: time });
-                  handleNext();
-                }}
-                style={{
-                  padding: '24px',
-                  fontSize: '1.5rem',
-                  borderRadius: '12px',
-                  background: context.return_time === time ? '#3b82f6' : '#f1f5f9',
-                  color: context.return_time === time ? 'white' : 'black',
-                  border: 'none',
-                }}
-              >
-                {t('GuidedTripSetup.return_time.' + time, time.replace('_', ' '))}
->>>>>>> origin/features
               </button>
             ))}
           </div>
@@ -272,36 +207,6 @@ export default function GuidedTripSetup({
       case 1:
         return (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-<<<<<<< HEAD
-=======
-            {[
-              { value: 'auto', label: 'Auto-select best PFZ' },
-              { value: 'custom', label: 'Use my own coordinates' }
-            ].map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => {
-                  onContextChange({ ...context, target_pfz: opt.value });
-                  handleNext();
-                }}
-                style={{
-                  padding: '24px',
-                  fontSize: '1.5rem',
-                  borderRadius: '12px',
-                  background: context.target_pfz === opt.value ? '#3b82f6' : '#f1f5f9',
-                  color: context.target_pfz === opt.value ? 'white' : 'black',
-                  border: 'none',
-                }}
-              >
-                {t('GuidedTripSetup.pfz_opt.' + opt.value, opt.label)}
-              </button>
-            ))}
-          </div>
-        );
-      case 2:
-        return (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
->>>>>>> origin/features
             {CRAFT_PROFILES.map((c) => (
               <button
                 key={c.value}
@@ -321,11 +226,7 @@ export default function GuidedTripSetup({
                   textAlign: 'left',
                 }}
               >
-<<<<<<< HEAD
                 ⛵ {translateText(c.label, language)}
-=======
-                {t('GuidedTripSetup.craft.' + c.value, c.label)}
->>>>>>> origin/features
               </button>
             ))}
           </div>
@@ -334,39 +235,9 @@ export default function GuidedTripSetup({
       // Step 2: Departure DateTime
       case 2:
         return (
-<<<<<<< HEAD
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <p style={{ color: '#475569', fontSize: '1.1rem', margin: 0 }}>
               {translateText('Select a departure time preset or enter your scheduled departure:', language)}
-=======
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-            {['today', 'tomorrow'].map((time) => (
-              <button
-                key={time}
-                onClick={() => {
-                  onContextChange({ ...context, departure_time: time });
-                  handleNext();
-                }}
-                style={{
-                  padding: '24px',
-                  fontSize: '1.5rem',
-                  borderRadius: '12px',
-                  background: context.departure_time === time ? '#3b82f6' : '#f1f5f9',
-                  color: context.departure_time === time ? 'white' : 'black',
-                  border: 'none',
-                }}
-              >
-                {t('GuidedTripSetup.time.' + time, time === 'today' ? 'Today' : 'Tomorrow')}
-              </button>
-            ))}
-          </div>
-        );
-      case 5:
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '1.25rem', textAlign: 'center' }}>
-            <p style={{ color: '#64748b' }}>
-              {translateText('We are ready to fetch live wind, wave, and hazard conditions for your voyage.', language)}
->>>>>>> origin/features
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
