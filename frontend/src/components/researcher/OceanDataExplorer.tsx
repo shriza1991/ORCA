@@ -24,8 +24,10 @@ import {
   derivePFZTrustMetadata,
   deriveHazardTrustMetadata,
 } from '../../utils/provenance';
+import { useTranslation } from "react-i18next";
 
 export default function OceanDataExplorer() {
+    const { t } = useTranslation();
   const [harbors, setHarbors] = useState<HarborData[]>([]);
   const [selectedHarbor, setSelectedHarbor] = useState<string>('');
   const [observations, setObservations] = useState<MarineObservation[]>([]);
@@ -163,7 +165,7 @@ export default function OceanDataExplorer() {
             <div className="researcher-metric-body">
               <span className="researcher-metric-label">Sea Surface Temp</span>
               <span className="researcher-metric-value">{latest?.sst_celsius?.toFixed(1) ?? '—'} <small>°C</small></span>
-              <span className="researcher-metric-sub">Source: {latest?.source ?? '—'}</span>
+              <span className="researcher-metric-sub">{t('OceanDataExplorer.sourceval', { val: latest?.source ?? '—' })}</span>
             </div>
           </div>
           <div className="researcher-metric-card">
@@ -311,7 +313,7 @@ export default function OceanDataExplorer() {
                       {cell.cloud_cover_pct != null ? `${cell.cloud_cover_pct}%` : '—'}
                     </td>
                     <td><span className="researcher-source-badge">{cell.satellite}</span></td>
-                    <td>{cell.resolution_m}m</td>
+                    <td>{t('OceanDataExplorer.valm', { val: cell.resolution_m })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -401,10 +403,10 @@ export default function OceanDataExplorer() {
                 </div>
                 {hz.description && <p className="researcher-hazard-desc">{hz.description}</p>}
                 <div className="researcher-hazard-meta">
-                  <span>Source: {hz.source}</span>
-                  <span>Area: {hz.affected_area ?? '—'}</span>
+                  <span>{t('OceanDataExplorer.sourceval', { val: hz.source })}</span>
+                  <span>{t('OceanDataExplorer.areaval', { val: hz.affected_area ?? '—' })}</span>
                   <span>Valid: {formatTime(hz.issued_at)} → {formatTime(hz.valid_until)}</span>
-                  {hz.qc_status && <span>QC: {hz.qc_status}</span>}
+                  {hz.qc_status && <span>{t('OceanDataExplorer.qcval', { val: hz.qc_status })}</span>}
                 </div>
               </div>
             ))}

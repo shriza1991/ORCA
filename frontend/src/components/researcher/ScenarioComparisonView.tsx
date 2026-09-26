@@ -13,6 +13,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import type { ScenarioMeta, ScenarioRunResult } from '../../api/researcher-client';
+import { useTranslation } from "react-i18next";
 
 export interface ScenarioComparisonViewProps {
   selectedScenarios: ScenarioMeta[];
@@ -83,6 +84,7 @@ export default function ScenarioComparisonView({
   onRunAllSelected,
   onClearComparison,
 }: ScenarioComparisonViewProps) {
+    const { t } = useTranslation();
   const [expandedDetails, setExpandedDetails] = useState(true);
 
   const isAnyRunning = runningIds.length > 0;
@@ -185,7 +187,7 @@ export default function ScenarioComparisonView({
                 if (!res) {
                   return (
                     <td key={s.id} className="scenario-cell">
-                      <span className="expected-intent">Expected: {s.intent}</span>
+                      <span className="expected-intent">{t('ScenarioComparisonView.expectedval', { val: s.intent })}</span>
                       <span className="text-muted">—</span>
                     </td>
                   );
@@ -193,7 +195,7 @@ export default function ScenarioComparisonView({
                 if (res.is_error) {
                   return (
                     <td key={s.id} className="scenario-cell error-cell">
-                      <span className="expected-intent">Expected: {s.intent}</span>
+                      <span className="expected-intent">{t('ScenarioComparisonView.expectedval', { val: s.intent })}</span>
                       <span className="actual-intent error">ERROR</span>
                     </td>
                   );
@@ -203,7 +205,7 @@ export default function ScenarioComparisonView({
                 return (
                   <td key={s.id} className="scenario-cell">
                     <div className="intent-comparison-wrap">
-                      <span className="expected-intent">Expected: {s.intent}</span>
+                      <span className="expected-intent">{t('ScenarioComparisonView.expectedval', { val: s.intent })}</span>
                       <div className="actual-intent-row">
                         <span className="actual-intent-val">{actualIntent || 'UNKNOWN'}</span>
                         <span className={`intent-match-pill ${isMatch ? 'match' : 'mismatch'}`}>
@@ -333,8 +335,8 @@ export default function ScenarioComparisonView({
                 if (!res) return <td key={s.id} className="scenario-cell text-muted">—</td>;
                 return (
                   <td key={s.id} className="scenario-cell mono-cell">
-                    {res.trace_steps ?? 0} steps
-                  </td>
+                                        {t('ScenarioComparisonView.valsteps', { val: res.trace_steps ?? 0 })}
+                                      </td>
                 );
               })}
             </tr>

@@ -1,11 +1,13 @@
 import type { EvidenceItem } from '../../types/contracts';
 import { Clock, ExternalLink, MapPin } from 'lucide-react';
+import { useTranslation } from "react-i18next";
 
 interface EvidenceCardProps {
   evidence: EvidenceItem;
 }
 
 export default function EvidenceCard({ evidence }: EvidenceCardProps) {
+    const { t } = useTranslation();
   const freshness = getFreshness(evidence);
 
   return (
@@ -34,7 +36,7 @@ export default function EvidenceCard({ evidence }: EvidenceCardProps) {
         {evidence.retrieved_at && (
           <div className="evidence-time-row">
             <Clock size={11} />
-            <span>Retrieved: {formatTime(evidence.retrieved_at)}</span>
+            <span>{t('EvidenceCard.retrievedval', { val: formatTime(evidence.retrieved_at) })}</span>
           </div>
         )}
       </div>

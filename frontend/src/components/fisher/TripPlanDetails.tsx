@@ -1,6 +1,7 @@
 import { Clock, Route as RouteIcon, Fuel, ShieldAlert } from 'lucide-react';
 import type { TripAssessmentResponse } from '../../types/assessment';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 interface TripPlanDetailsProps {
   assessment: TripAssessmentResponse | null;
@@ -8,6 +9,7 @@ interface TripPlanDetailsProps {
 }
 
 export default function TripPlanDetails({ assessment, language }: TripPlanDetailsProps) {
+    const { t } = useTranslation();
   const title = translateText('Trip Plan & Estimates', language);
 
   if (!assessment || !assessment.route_candidates || assessment.route_candidates.length === 0) {
@@ -96,14 +98,14 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
           <div style={{ padding: '12px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <RouteIcon size={24} color="#3b82f6" style={{ marginBottom: '8px' }} />
             <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>{distLabel}</div>
-            <div style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 'bold' }}>{distance} km</div>
+            <div style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 'bold' }}>{t('TripPlanDetails.valkm', { val: distance })}</div>
           </div>
 
           <div style={{ padding: '12px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <Clock size={24} color="#f59e0b" style={{ marginBottom: '8px' }} />
             <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>{timeLabel}</div>
             <div style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 'bold' }}>{timeStr}</div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Arriving: {arrivalStr}</div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>{t('TripPlanDetails.arrivingval', { val: arrivalStr })}</div>
           </div>
 
           <div style={{ padding: '12px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>

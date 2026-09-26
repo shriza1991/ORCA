@@ -22,6 +22,7 @@ import {
 } from '../api/marinewatch-client';
 
 import { translateText, type SupportedLanguage } from '../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 type MarineWatchTab = 'oceanwatch' | 'fisherwatch' | 'aquawatch' | 'hazards' | 'portwatch' | 'catalogue';
 
@@ -32,6 +33,7 @@ interface MarineWatchPageProps {
 }
 
 export default function MarineWatchPage({ onBackToPortal, theme = 'light', language = 'en' }: MarineWatchPageProps) {
+    const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<MarineWatchTab>('oceanwatch');
   const [aquacultureSites, setAquacultureSites] = useState<AquacultureSite[]>([]);
   const [hazards, setHazards] = useState<ActiveHazard[]>([]);
@@ -174,7 +176,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light', langu
                   <div className="farm-card-header">
                     <div>
                       <h4 className="farm-name">{farm.farm_name}</h4>
-                      <span className="farm-reg-no">Reg: {farm.caa_registration_number}</span>
+                      <span className="farm-reg-no">{t('MarineWatchPage.regval', { val: farm.caa_registration_number })}</span>
                     </div>
                     <span className="farm-status-pill">{farm.caa_status}</span>
                   </div>
@@ -194,7 +196,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light', langu
                     </div>
                     <div className="attr-item">
                       <span className="attr-label">Salinity</span>
-                      <span className="attr-val">{farm.water_salinity_ppt} ppt</span>
+                      <span className="attr-val">{t('MarineWatchPage.valppt', { val: farm.water_salinity_ppt })}</span>
                     </div>
                     <div className="attr-item">
                       <span className="attr-label">Water Spread Area</span>
@@ -281,7 +283,7 @@ export default function MarineWatchPage({ onBackToPortal, theme = 'light', langu
                   fishing ports across the Konkan and West Coast maritime sectors.
                 </p>
               </div>
-              <span className="registry-count-pill">{ports.length} Harbours</span>
+              <span className="registry-count-pill">{t('MarineWatchPage.valharbours', { val: ports.length })}</span>
             </div>
 
             <div className="ports-table-wrap">

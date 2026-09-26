@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Square, Loader2, X, PhoneCall } from 'lucide-react';
 import { TRANSLATIONS, type SupportedLanguage } from '../../i18n/translations';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
+import { useTranslation } from "react-i18next";
 
 interface ChatInputProps {
   language?: SupportedLanguage;
@@ -12,6 +13,7 @@ interface ChatInputProps {
 }
 
 export default function ChatInput({ language = 'en', onSend, onStartCall, disabled }: ChatInputProps) {
+    const { t: i18nT } = useTranslation();
   const [text, setText] = useState('');
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -113,7 +115,7 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
         {detectedLanguage && !isRecording && !isTranscribing && (
           <div className="voice-status-pill detected" role="status">
             <Mic size={13} />
-            <span>Voice detected: {languageLabel(detectedLanguage)}</span>
+            <span>{i18nT('ChatInput.voicedetectedva', { val: languageLabel(detectedLanguage) })}</span>
           </div>
         )}
 

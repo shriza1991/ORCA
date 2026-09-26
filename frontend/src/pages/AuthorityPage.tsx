@@ -36,6 +36,7 @@ import {
   fetchAndFormatBaseLayers,
 } from '../utils/geo';
 import { translateText } from '../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 export interface AuthorityPageProps {
   chat: ReturnType<typeof useChat>;
@@ -61,6 +62,7 @@ export default function AuthorityPage({
   onOpenEvidence,
   onBack,
 }: AuthorityPageProps) {
+    const { t } = useTranslation();
   const [sectors, setSectors] = useState<DemoSector[]>(FALLBACK_DEMO_SECTORS);
   const [selectedSector, setSelectedSector] = useState<string>(FALLBACK_DEMO_SECTORS[0].public_id);
   const [authorityTab, setAuthorityTab] = useState<AuthorityTab>('terminal');
@@ -461,10 +463,10 @@ export default function AuthorityPage({
                 <section className="fleet-alert-inspection" aria-label="Alert evidence" style={{ marginBottom: '14px', padding: '12px', border: '1px solid rgba(250, 204, 21, 0.5)', borderRadius: '8px' }}>
                   <div className="audit-section-header"><AlertTriangle size={16} /><h3>{translateText('Alert Evidence', chat.language)}</h3></div>
                   <p className="authority-empty-note">{translateText('Canonical containment observation; this is not a risk prediction.', chat.language)}</p>
-                  <div className="alert-card-footer"><span>Sector: {selectedOperationalAlert.sector_id}</span><span>Vessel: {selectedOperationalAlert.vessel_id}</span></div>
-                  <div className="alert-card-footer"><span>Hazard: {selectedOperationalAlert.hazard_id}</span><span>Association: IN_HAZARD_AREA</span></div>
-                  <div className="alert-card-footer"><span>Position observed: {selectedAlertAssociation?.evaluated_at ?? 'Unavailable'}</span><span>Hazard status: {selectedAlertHazard?.status ?? 'Unavailable'}</span></div>
-                  <div className="alert-card-footer"><span>Hazard validity: {selectedAlertHazard?.valid_to ?? 'Unavailable'}</span><span>Severity: {selectedOperationalAlert.severity}</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.sectorval', { val: selectedOperationalAlert.sector_id })}</span><span>{t('AuthorityPage.vesselval', { val: selectedOperationalAlert.vessel_id })}</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.hazardval', { val: selectedOperationalAlert.hazard_id })}</span><span>Association: IN_HAZARD_AREA</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.positionobserve', { val: selectedAlertAssociation?.evaluated_at ?? 'Unavailable' })}</span><span>{t('AuthorityPage.hazardstatusval', { val: selectedAlertHazard?.status ?? 'Unavailable' })}</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.hazardvalidityv', { val: selectedAlertHazard?.valid_to ?? 'Unavailable' })}</span><span>{t('AuthorityPage.severityval', { val: selectedOperationalAlert.severity })}</span></div>
                 </section>
               )}
               <div className="audit-section-header">

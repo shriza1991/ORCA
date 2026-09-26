@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { ShipWheel, MapPin, CalendarClock, ArrowLeft, Check } from 'lucide-react';
 import type { MissionContext } from '../../types/mission';
@@ -28,36 +29,42 @@ export default function GuidedTripSetup({
 }: GuidedTripSetupProps) {
   const [step, setStep] = useState(0);
   const { speak, stop } = useSpokenGuidance({ language });
+  const { t } = useTranslation();
 
   const steps = [
     {
       id: 'harbor',
-      title: translateText('From which port?', language),
+      title: t('GuidedTripSetup.from_which_port', 'From which port?'),
       icon: <MapPin size={48} />,
     },
     {
       id: 'pfz',
-      title: translateText('Select PFZ', language),
+      title: t('GuidedTripSetup.select_pfz', 'Select PFZ'),
       icon: <MapPin size={48} />,
     },
     {
       id: 'boat',
-      title: translateText('Boat vessel size type?', language),
+      title: t('GuidedTripSetup.boat_vessel_size_type', 'Boat vessel size type?'),
       icon: <ShipWheel size={48} />,
     },
     {
       id: 'depart',
-      title: translateText('Day when you will depart?', language),
+      title: t('GuidedTripSetup.depart_day', 'Day when you will depart?'),
+      icon: <CalendarClock size={48} />,
+    },
+    {
+      id: 'return',
+      title: t('GuidedTripSetup.return_day', 'Day when you will return?'),
       icon: <CalendarClock size={48} />,
     },
     {
       id: 'sea_condition',
-      title: translateText('See the sea condition', language),
+      title: t('GuidedTripSetup.sea_condition', 'See the sea condition'),
       icon: <Check size={48} />,
     },
     {
       id: 'confirm',
-      title: translateText('Plan the trip', language),
+      title: t('GuidedTripSetup.plan_trip', 'Plan the trip'),
       icon: <Check size={48} />,
     },
   ];
@@ -118,7 +125,31 @@ export default function GuidedTripSetup({
                   border: 'none',
                 }}
               >
-                {translateText(h, language)}
+                {t('Harbor.' + h, h)}
+              </button>
+            ))}
+          </div>
+        );
+      case 4:
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+            {['today', 'tomorrow', '2_days', '3_days'].map((time) => (
+              <button
+                key={time}
+                onClick={() => {
+                  onContextChange({ ...context, return_time: time });
+                  handleNext();
+                }}
+                style={{
+                  padding: '24px',
+                  fontSize: '1.5rem',
+                  borderRadius: '12px',
+                  background: context.return_time === time ? '#3b82f6' : '#f1f5f9',
+                  color: context.return_time === time ? 'white' : 'black',
+                  border: 'none',
+                }}
+              >
+                {t('GuidedTripSetup.return_time.' + time, time.replace('_', ' '))}
               </button>
             ))}
           </div>
@@ -145,7 +176,7 @@ export default function GuidedTripSetup({
                   border: 'none',
                 }}
               >
-                {translateText(opt.label, language)}
+                {t('GuidedTripSetup.pfz_opt.' + opt.value, opt.label)}
               </button>
             ))}
           </div>
@@ -169,7 +200,7 @@ export default function GuidedTripSetup({
                   border: 'none',
                 }}
               >
-                {translateText(c.label, language)}
+                {t('GuidedTripSetup.craft.' + c.value, c.label)}
               </button>
             ))}
           </div>
@@ -193,12 +224,12 @@ export default function GuidedTripSetup({
                   border: 'none',
                 }}
               >
-                {translateText(time === 'today' ? 'Today' : 'Tomorrow', language)}
+                {t('GuidedTripSetup.time.' + time, time === 'today' ? 'Today' : 'Tomorrow')}
               </button>
             ))}
           </div>
         );
-      case 4:
+      case 5:
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '1.25rem', textAlign: 'center' }}>
             <p style={{ color: '#64748b' }}>
@@ -220,7 +251,7 @@ export default function GuidedTripSetup({
             </button>
           </div>
         );
-      case 5:
+      case 6:
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '1.25rem' }}>
             <p><strong>{translateText('Harbour', language)}:</strong> {translateText(context.origin_harbor || 'Ratnagiri', language)}</p>

@@ -1,0 +1,572 @@
+[
+  {
+    "lang": "hi",
+    "key": "MarineWatchPage.reg",
+    "text": "Reg:"
+  },
+  {
+    "lang": "hi",
+    "key": "MarineWatchPage.district",
+    "text": "District"
+  },
+  {
+    "lang": "hi",
+    "key": "MarineWatchPage.n",
+    "text": "°N,"
+  },
+  {
+    "lang": "hi",
+    "key": "SettingsPage.local_persistence",
+    "text": "LOCAL PERSISTENCE"
+  },
+  {
+    "lang": "hi",
+    "key": "AuthorityDeckGLMap.vessels",
+    "text": "Vessels:"
+  },
+  {
+    "lang": "hi",
+    "key": "AuthorityDeckGLMap.speed",
+    "text": "Speed:"
+  },
+  {
+    "lang": "hi",
+    "key": "AuthorityDeckGLMap.heading",
+    "text": "Heading:"
+  },
+  {
+    "lang": "hi",
+    "key": "DeckGLMapFoundation.title_rotate_compass_bearing",
+    "text": "Rotate Compass Bearing"
+  },
+  {
+    "lang": "hi",
+    "key": "DeckGLMapFoundation.aria-label_toggle_fullscreen",
+    "text": "Toggle Fullscreen"
+  },
+  {
+    "lang": "hi",
+    "key": "DataCatalogueView.official_oceanographic_meteorological_bathymetric",
+    "text": "Official oceanographic, meteorological, bathymetric, and fisheries datasets curated for India's maritime domain.             Every dataset maintains strict provenance, update cadence, and licensing compliance."
+  },
+  {
+    "lang": "hi",
+    "key": "DataCatalogueView.description_purpose",
+    "text": "Description & Purpose"
+  },
+  {
+    "lang": "hi",
+    "key": "FisherWatchView.deterministic_evaluation_no_ai",
+    "text": "Deterministic Evaluation (No AI Hallucinations)"
+  },
+  {
+    "lang": "hi",
+    "key": "FisherWatchView.target_potential_fishing_zone",
+    "text": "Target Potential Fishing Zone (PFZ)"
+  },
+  {
+    "lang": "hi",
+    "key": "FisherWatchView.incois_advisory",
+    "text": "INCOIS ADVISORY"
+  },
+  {
+    "lang": "hi",
+    "key": "FisherWatchView.c",
+    "text": "°C"
+  },
+  {
+    "lang": "hi",
+    "key": "FisherWatchView.oceansat_3_ocm",
+    "text": "Oceansat-3 OCM"
+  },
+  {
+    "lang": "hi",
+    "key": "FisherWatchView.harbours",
+    "text": "Harbours"
+  },
+  {
+    "lang": "hi",
+    "key": "FisherWatchView.aria-label_vessel_profile",
+    "text": "Vessel Profile"
+  },
+  {
+    "lang": "hi",
+    "key": "OceanWatchGIS.validity",
+    "text": "Validity"
+  },
+  {
+    "lang": "hi",
+    "key": "OceanWatchGIS.official_sources_incois_imd",
+    "text": "Official Sources: INCOIS, IMD, GEBCO 2024, CMFRI, DGLL, CAA"
+  },
+  {
+    "lang": "hi",
+    "key": "OceanWatchGIS.click_anywhere_on_the",
+    "text": "Click anywhere on the Indian Ocean, Arabian Sea, or Bay of Bengal to inspect conditions, bathymetry, and tide."
+  },
+  {
+    "lang": "hi",
+    "key": "EOGridSpatialMap.max",
+    "text": "Max:"
+  },
+  {
+    "lang": "hi",
+    "key": "HazardSpatialMap.alert",
+    "text": "Alert"
+  },
+  {
+    "lang": "hi",
+    "key": "OceanDataExplorer.visibility",
+    "text": "Visibility"
+  },
+  {
+    "lang": "hi",
+    "key": "OceanTimeSeriesChart.hourly_observations",
+    "text": "hourly observations)"
+  },
+  {
+    "lang": "hi",
+    "key": "PFZSpatialMap.high_conf",
+    "text": "High Conf"
+  },
+  {
+    "lang": "hi",
+    "key": "QueryWorkbench.evaluated_threshold_safety_bounds",
+    "text": "Evaluated Threshold Safety Bounds:"
+  },
+  {
+    "lang": "hi",
+    "key": "ScenarioLab.run_scenario",
+    "text": "Run Scenario"
+  },
+  {
+    "lang": "hi",
+    "key": "TideTimeSeriesChart.48_hour_snapshot",
+    "text": "48-Hour Snapshot"
+  },
+  {
+    "lang": "mr",
+    "key": "AuthorityPage.position_observed",
+    "text": "Position observed:"
+  },
+  {
+    "lang": "mr",
+    "key": "AuthorityPage.aria-label_operational_command_bar",
+    "text": "Operational Command Bar"
+  },
+  {
+    "lang": "mr",
+    "key": "FleetTrackingDeck.n",
+    "text": "°N,"
+  },
+  {
+    "lang": "mr",
+    "key": "ChatInput.aria-label_dismiss_error",
+    "text": "Dismiss error"
+  },
+  {
+    "lang": "mr",
+    "key": "EvidenceCard.source",
+    "text": "Source"
+  },
+  {
+    "lang": "mr",
+    "key": "DataCatalogueView.loading_dataset_catalogue",
+    "text": "Loading dataset catalogue…"
+  },
+  {
+    "lang": "mr",
+    "key": "DataCatalogueView.aria-label_close_details",
+    "text": "Close details"
+  },
+  {
+    "lang": "mr",
+    "key": "FisherWatchView.motorized_obm",
+    "text": "Motorized OBM"
+  },
+  {
+    "lang": "mr",
+    "key": "FisherWatchView.deterministic_evaluation_no_ai",
+    "text": "Deterministic Evaluation (No AI Hallucinations)"
+  },
+  {
+    "lang": "mr",
+    "key": "OceanWatchGIS.craft",
+    "text": "craft"
+  },
+  {
+    "lang": "mr",
+    "key": "OceanWatchGIS.regulations",
+    "text": "Regulations:"
+  },
+  {
+    "lang": "mr",
+    "key": "OperationalSnapshot.voyage_brief",
+    "text": "Voyage brief"
+  },
+  {
+    "lang": "mr",
+    "key": "OperationalSnapshot.aria-label_voyage_brief",
+    "text": "Voyage brief"
+  },
+  {
+    "lang": "mr",
+    "key": "DataProvenancePanel.scientific_semantics_data_disclosure",
+    "text": "Scientific Semantics & Data Disclosure"
+  },
+  {
+    "lang": "mr",
+    "key": "OceanDataExplorer.refresh",
+    "text": "Refresh"
+  },
+  {
+    "lang": "mr",
+    "key": "OceanDataExplorer.wave_height",
+    "text": "Wave Height"
+  },
+  {
+    "lang": "mr",
+    "key": "ScenarioComparisonView.pass",
+    "text": "PASS"
+  },
+  {
+    "lang": "mr",
+    "key": "ScenarioComparisonView.actual",
+    "text": "Actual:"
+  },
+  {
+    "lang": "mr",
+    "key": "ScenarioComparisonView.0_error",
+    "text": "0 (Error)"
+  },
+  {
+    "lang": "mr",
+    "key": "ScenarioLab.decisive_factors_validation",
+    "text": "Decisive Factors / Validation"
+  },
+  {
+    "lang": "mr",
+    "key": "TideTimeSeriesChart.latest_tide_level",
+    "text": "Latest Tide Level"
+  },
+  {
+    "lang": "ta",
+    "key": "AuthorityPage.position_observed",
+    "text": "Position observed:"
+  },
+  {
+    "lang": "ta",
+    "key": "MarineWatchPage.ha",
+    "text": "ha ("
+  },
+  {
+    "lang": "ta",
+    "key": "MarineWatchPage.ponds",
+    "text": "ponds)"
+  },
+  {
+    "lang": "ta",
+    "key": "MarineWatchPage.harbours",
+    "text": "Harbours"
+  },
+  {
+    "lang": "ta",
+    "key": "MarineWatchPage.harbour_name",
+    "text": "Harbour Name"
+  },
+  {
+    "lang": "ta",
+    "key": "PortalPage.experimental_visual_benchmark_deck",
+    "text": "Experimental Visual Benchmark: deck.gl (WebGL2)"
+  },
+  {
+    "lang": "ta",
+    "key": "SettingsPage.incois_integration",
+    "text": "INCOIS INTEGRATION"
+  },
+  {
+    "lang": "ta",
+    "key": "AuthorityDeckGLMap.speed",
+    "text": "Speed:"
+  },
+  {
+    "lang": "ta",
+    "key": "TripPlanDetails.no_route_estimates_available",
+    "text": "No route estimates available for this trip. Check your data connection."
+  },
+  {
+    "lang": "ta",
+    "key": "DataModeIndicator.title_backend_service_not_connected",
+    "text": "Backend service not connected"
+  },
+  {
+    "lang": "ta",
+    "key": "LanguageSelector.aria-label_language_selection",
+    "text": "Language selection"
+  },
+  {
+    "lang": "ta",
+    "key": "DeckGLMapFoundation.title_reset_view",
+    "text": "Reset View"
+  },
+  {
+    "lang": "ta",
+    "key": "MapView.aria-label_geospatial_map_viewport",
+    "text": "Geospatial map viewport"
+  },
+  {
+    "lang": "ta",
+    "key": "MissionMapBrief.aria-label_mission_map_summary_and",
+    "text": "Mission map summary and corridor selection"
+  },
+  {
+    "lang": "ta",
+    "key": "DataCatalogueView.update_cadence",
+    "text": "Update Cadence"
+  },
+  {
+    "lang": "ta",
+    "key": "FisherWatchView.live_telemetry",
+    "text": "LIVE TELEMETRY ("
+  },
+  {
+    "lang": "ta",
+    "key": "FisherWatchView.non_motorized",
+    "text": "Non-Motorized"
+  },
+  {
+    "lang": "ta",
+    "key": "FisherWatchView.e_depth",
+    "text": "°E · Depth"
+  },
+  {
+    "lang": "ta",
+    "key": "OceanWatchGIS.chl_a_mg_m",
+    "text": "Chl-a (mg/m³)"
+  },
+  {
+    "lang": "ta",
+    "key": "OceanWatchGIS.farm_name",
+    "text": "Farm Name"
+  },
+  {
+    "lang": "ta",
+    "key": "OceanWatchGIS.ppt",
+    "text": "ppt"
+  },
+  {
+    "lang": "ta",
+    "key": "OceanWatchGIS.official_sources_incois_imd",
+    "text": "Official Sources: INCOIS, IMD, GEBCO 2024, CMFRI, DGLL, CAA"
+  },
+  {
+    "lang": "ta",
+    "key": "DataProvenancePanel.dataset_trust_provenance",
+    "text": "Dataset Trust & Provenance:"
+  },
+  {
+    "lang": "ta",
+    "key": "DataSourceMonitor.mode",
+    "text": "Mode:"
+  },
+  {
+    "lang": "ta",
+    "key": "EOGridSpatialMap.mean",
+    "text": "Mean:"
+  },
+  {
+    "lang": "ta",
+    "key": "EOGridSpatialMap.0_clear",
+    "text": "0% (Clear)"
+  },
+  {
+    "lang": "ta",
+    "key": "EOGridSpatialMap.100_overcast",
+    "text": "100% (Overcast)"
+  },
+  {
+    "lang": "ta",
+    "key": "OceanDataExplorer.time_utc",
+    "text": "Time (UTC)"
+  },
+  {
+    "lang": "ta",
+    "key": "OceanTimeSeriesChart.qc_flagged",
+    "text": "QC Flagged"
+  },
+  {
+    "lang": "ta",
+    "key": "ScenarioComparisonView.confidence_rating",
+    "text": "Confidence Rating"
+  },
+  {
+    "lang": "ta",
+    "key": "ScenarioComparisonView.steps",
+    "text": "steps"
+  },
+  {
+    "lang": "ta",
+    "key": "ScenarioComparisonView.warnings",
+    "text": "Warnings"
+  },
+  {
+    "lang": "te",
+    "key": "MarineWatchPage.ppt",
+    "text": "ppt"
+  },
+  {
+    "lang": "te",
+    "key": "MarineWatchPage.n",
+    "text": "°N,"
+  },
+  {
+    "lang": "te",
+    "key": "MarineWatchPage.active_bulletins",
+    "text": "Active Bulletins"
+  },
+  {
+    "lang": "te",
+    "key": "MarineWatchPage.type",
+    "text": "Type"
+  },
+  {
+    "lang": "te",
+    "key": "MarineWatchPage.total_fleet",
+    "text": "Total Fleet"
+  },
+  {
+    "lang": "te",
+    "key": "PortalPage.open_deck_gl_experiment",
+    "text": "Open deck.gl Experiment"
+  },
+  {
+    "lang": "te",
+    "key": "EvidenceCard.source",
+    "text": "Source"
+  },
+  {
+    "lang": "te",
+    "key": "DeckGLExperimentView.webgl2_accelerated",
+    "text": "WebGL2 Accelerated"
+  },
+  {
+    "lang": "te",
+    "key": "DeckGLExperimentView.camera_view_angle",
+    "text": "Camera View Angle:"
+  },
+  {
+    "lang": "te",
+    "key": "DeckGLExperimentView.reset",
+    "text": "Reset"
+  },
+  {
+    "lang": "te",
+    "key": "DeckGLExperimentView.waypoint",
+    "text": "Waypoint"
+  },
+  {
+    "lang": "te",
+    "key": "FisherAlertPanel.replay",
+    "text": "Replay"
+  },
+  {
+    "lang": "te",
+    "key": "TripPlanDetails.arriving",
+    "text": "Arriving:"
+  },
+  {
+    "lang": "te",
+    "key": "DeckGLMapFoundation.aria-label_zoom_in",
+    "text": "Zoom In"
+  },
+  {
+    "lang": "te",
+    "key": "DeckGLMapFoundation.title_rotate_compass_bearing",
+    "text": "Rotate Compass Bearing"
+  },
+  {
+    "lang": "te",
+    "key": "FisherWatchView.real_incois_pfz_advisories",
+    "text": "Real INCOIS PFZ advisories synthesized with CMFRI landing centres, craft safety ceilings, and             passage evaluation. Official data provided by INCOIS & Central Marine Fisheries Research Institute."
+  },
+  {
+    "lang": "te",
+    "key": "FisherWatchView.departure_harbour_landing_centre",
+    "text": "Departure Harbour / Landing Centre"
+  },
+  {
+    "lang": "te",
+    "key": "FisherWatchView.c",
+    "text": "°C"
+  },
+  {
+    "lang": "te",
+    "key": "OceanWatchGIS.major_fishing_gears",
+    "text": "Major Fishing Gears"
+  },
+  {
+    "lang": "te",
+    "key": "DataSourceMonitor.the_profiles_below_describe",
+    "text": "The profiles below describe the authoritative schema, provider semantics, and update cadences configured for this prototype environment. All observations are deterministic synthetic snapshots modeled on published Indian oceanographic data formats."
+  },
+  {
+    "lang": "te",
+    "key": "DataSourceMonitor.imd_cyclone_warning_division",
+    "text": "IMD — Cyclone Warning Division"
+  },
+  {
+    "lang": "te",
+    "key": "DataSourceMonitor.supreme_authority_for_severe",
+    "text": "Supreme authority for severe weather, cyclone tracks, and coastal alerts. Triggers hard-stop NO_GO."
+  },
+  {
+    "lang": "te",
+    "key": "EOGridSpatialMap.valid_cells",
+    "text": "Valid Cells:"
+  },
+  {
+    "lang": "te",
+    "key": "OceanDataExplorer.phase",
+    "text": "Phase"
+  },
+  {
+    "lang": "te",
+    "key": "OceanDataExplorer.sst_gradient",
+    "text": "SST Gradient:"
+  },
+  {
+    "lang": "te",
+    "key": "OceanDataExplorer.observed_advisory_hazard_bulletins",
+    "text": "Observed / Advisory Hazard Bulletins"
+  },
+  {
+    "lang": "te",
+    "key": "QueryWorkbench.issuing_authority_source",
+    "text": "Issuing Authority / Source"
+  },
+  {
+    "lang": "te",
+    "key": "QueryWorkbench.no_spatial_vector_layers",
+    "text": "No spatial vector layers returned for this inquiry."
+  },
+  {
+    "lang": "te",
+    "key": "QueryWorkbench.aria-label_send_analytical_inquiry",
+    "text": "Send analytical inquiry"
+  },
+  {
+    "lang": "te",
+    "key": "ScenarioComparisonView.fail",
+    "text": "FAIL"
+  },
+  {
+    "lang": "te",
+    "key": "ScenarioComparisonView.side_by_side_reasoning",
+    "text": "Side-by-Side Reasoning & Validation Details"
+  },
+  {
+    "lang": "te",
+    "key": "ScenarioLab.run_all",
+    "text": "Run All"
+  }
+]

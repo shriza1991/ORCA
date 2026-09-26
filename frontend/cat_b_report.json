@@ -1,0 +1,1014 @@
+{
+  "catACount": 58,
+  "catBCount": 168,
+  "catBList": [
+    {
+      "file": "AuthorityPage",
+      "original": "<h3>{translateText(selectedOperationalAlert ? 'Sector Situation Evidence' : 'Verified Official Evidence', chat.language)} ({auditEvidenceList.length})</h3>",
+      "proposed": "<h3><Trans i18nKey=\"AuthorityPage.complex_1\" var0={translateText(selectedOperationalAlert ? 'Sector Situation Evidence' : 'Verified Official Evidence', chat.language)} var1={auditEvidenceList.length} /></h3>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "AuthorityPage",
+      "original": "<h3>{translateText('Autonomous Agent Execution Trail', chat.language)} ({auditTraceList.length} {translateText('Steps', chat.language)})</h3>",
+      "proposed": "<h3><Trans i18nKey=\"AuthorityPage.complex_2\" var0={translateText('Autonomous Agent Execution Trail', chat.language)} var1={auditTraceList.length} var2={translateText('Steps', chat.language)} /></h3>",
+      "template": "{{var0}} ({{var1}} {{var2}})"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<small>({translateText(\"Syncing…\", language)})</small>",
+      "proposed": "<small><Trans i18nKey=\"MarineWatchPage.complex_3\" var0={translateText(\"Syncing…\", language)} /></small>",
+      "template": "({{var0}})"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span className=\"registry-count-pill\">{aquacultureSites.length} Certified Farms</span>",
+      "proposed": "<span className=\"registry-count-pill\"><Trans i18nKey=\"MarineWatchPage.complex_4\" var0={aquacultureSites.length} /></span>",
+      "template": "{{var0}} Certified Farms"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span className=\"attr-val\">{farm.district}, {farm.state}</span>",
+      "proposed": "<span className=\"attr-val\"><Trans i18nKey=\"MarineWatchPage.complex_5\" var0={farm.district} var1={farm.state} /></span>",
+      "template": "{{var0}}, {{var1}}"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span className=\"attr-val\">{farm.water_spread_area_ha} ha ({farm.ponds_count} ponds)</span>",
+      "proposed": "<span className=\"attr-val\"><Trans i18nKey=\"MarineWatchPage.complex_6\" var0={farm.water_spread_area_ha} var1={farm.ponds_count} /></span>",
+      "template": "{{var0}} ha ({{var1}} ponds)"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span className=\"text-xs text-muted-foreground\">\r\n                      Coordinates: {farm.latitude.toFixed(4)}°N, {farm.longitude.toFixed(4)}°E\r\n                    </span>",
+      "proposed": "<span className=\"text-xs text-muted-foreground\"><Trans i18nKey=\"MarineWatchPage.complex_7\" var0={farm.latitude.toFixed(4)} var1={farm.longitude.toFixed(4)} /></span>",
+      "template": "Coordinates: {{var0}}°N, {{var1}}°E"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span className=\"hazards-badge-count\">{hazards.length} Active Bulletins</span>",
+      "proposed": "<span className=\"hazards-badge-count\"><Trans i18nKey=\"MarineWatchPage.complex_8\" var0={hazards.length} /></span>",
+      "template": "{{var0}} Active Bulletins"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span className=\"signal-num\">Signal {sig.signal}</span>",
+      "proposed": "<span className=\"signal-num\"><Trans i18nKey=\"MarineWatchPage.complex_9\" var0={sig.signal} /></span>",
+      "template": "Signal {{var0}}"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span className=\"signal-port\">{sig.port}: {sig.meaning}</span>",
+      "proposed": "<span className=\"signal-port\"><Trans i18nKey=\"MarineWatchPage.complex_10\" var0={sig.port} var1={sig.meaning} /></span>",
+      "template": "{{var0}}: {{var1}}"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<span>Valid until: {new Date(hz.valid_until).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</span>",
+      "proposed": "<span><Trans i18nKey=\"MarineWatchPage.complex_11\" var0={new Date(hz.valid_until).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' } /></span>",
+      "template": "Valid until: {{var0}})} IST"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<td>{p.district}, {p.state}</td>",
+      "proposed": "<td><Trans i18nKey=\"MarineWatchPage.complex_12\" var0={p.district} var1={p.state} /></td>",
+      "template": "{{var0}}, {{var1}}"
+    },
+    {
+      "file": "MarineWatchPage",
+      "original": "<td><Radio size={12} className=\"inline mr-1 text-primary\" />Ch {p.vhf_channel}</td>",
+      "proposed": "<td><Trans i18nKey=\"MarineWatchPage.complex_13\" var0={12} var1={p.vhf_channel} /></td>",
+      "template": "<Radio size={{var0}} className=\"inline mr-1 text-primary\" />Ch {{var1}}"
+    },
+    {
+      "file": "AuthorityDeckGLMap",
+      "original": "<span style={{ color: '#94a3b8', fontSize: '10px', fontFamily: 'monospace' }}>({voyageStats.vesselId})</span>",
+      "proposed": "<span style={{ color: '#94a3b8', fontSize: '10px', fontFamily: 'monospace' }}><Trans i18nKey=\"AuthorityDeckGLMap.complex_14\" var0={voyageStats.vesselId} /></span>",
+      "template": "({{var0}})"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('Monitored Coastal Fleet', language)} ({vessels.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_15\" var0={translateText('Monitored Coastal Fleet', language)} var1={vessels.length} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('Length:', language)} {v.length_m}m</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_16\" var0={translateText('Length:', language)} var1={v.length_m} /></span>",
+      "template": "{{var0}} {{var1}}m"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('Engine:', language)} {v.metadata_json.engine_hp} HP</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_17\" var0={translateText('Engine:', language)} var1={v.metadata_json.engine_hp} /></span>",
+      "template": "{{var0}} {{var1}} HP"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('Start', language)} ({formatTimestamp(positions[0]?.timestamp)})</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_18\" var0={translateText('Start', language)} var1={formatTimestamp(positions[0]?.timestamp)} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span className=\"current-time-pill\">T = {formatTimestamp(currentPos.timestamp)}</span>",
+      "proposed": "<span className=\"current-time-pill\"><Trans i18nKey=\"FleetTrackingDeck.complex_19\" var0={formatTimestamp(currentPos.timestamp)} /></span>",
+      "template": "T = {{var0}}"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('End', language)} ({formatTimestamp(positions[positions.length - 1]?.timestamp)})</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_20\" var0={translateText('End', language)} var1={formatTimestamp(positions[positions.length - 1]?.timestamp)} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<strong>{currentPos.heading_deg}°</strong>",
+      "proposed": "<strong><Trans i18nKey=\"FleetTrackingDeck.complex_21\" var0={currentPos.heading_deg} /></strong>",
+      "template": "{{var0}}°"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<strong>{currentPos.latitude.toFixed(3)}°N, {currentPos.longitude.toFixed(3)}°E</strong>",
+      "proposed": "<strong><Trans i18nKey=\"FleetTrackingDeck.complex_22\" var0={currentPos.latitude.toFixed(3)} var1={currentPos.longitude.toFixed(3)} /></strong>",
+      "template": "{{var0}}°N, {{var1}}°E"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('Operational Hazard Alerts', language)} ({operationalAlerts.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_23\" var0={translateText('Operational Hazard Alerts', language)} var1={operationalAlerts.length} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{alert.vessel_id} · {alert.hazard_id}</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_24\" var0={alert.vessel_id} var1={alert.hazard_id} /></span>",
+      "template": "{{var0}} · {{var1}}"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('Association:', language)} IN_HAZARD_AREA</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_25\" var0={translateText('Association:', language)} /></span>",
+      "template": "{{var0}} IN_HAZARD_AREA"
+    },
+    {
+      "file": "FleetTrackingDeck",
+      "original": "<span>{translateText('Maritime Broadcast Alerts', language)} ({notifications.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"FleetTrackingDeck.complex_26\" var0={translateText('Maritime Broadcast Alerts', language)} var1={notifications.length} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "ScenarioBenchmarkDeck",
+      "original": "<span className=\"benchmark-list-label\">{translateText('Evaluation Benchmarks', language)} ({scenarios.length})</span>",
+      "proposed": "<span className=\"benchmark-list-label\"><Trans i18nKey=\"ScenarioBenchmarkDeck.complex_27\" var0={translateText('Evaluation Benchmarks', language)} var1={scenarios.length} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "ScenarioBenchmarkDeck",
+      "original": "<h4>{selectedScenario.id}: {selectedScenario.name}</h4>",
+      "proposed": "<h4><Trans i18nKey=\"ScenarioBenchmarkDeck.complex_28\" var0={selectedScenario.id} var1={selectedScenario.name} /></h4>",
+      "template": "{{var0}}: {{var1}}"
+    },
+    {
+      "file": "ScenarioBenchmarkDeck",
+      "original": "<div className=\"scenario-query-quote\">\r\n                <strong>{translateText('Standard Query:', language)}</strong> &ldquo;{selectedScenario.query}&rdquo;\r\n              </div>",
+      "proposed": "<div className=\"scenario-query-quote\"><Trans i18nKey=\"ScenarioBenchmarkDeck.complex_29\" var0={translateText('Standard Query:', language)} var1={selectedScenario.query} /></div>",
+      "template": "<strong>{{var0}}</strong> &ldquo;{{var1}}&rdquo;"
+    },
+    {
+      "file": "ScenarioBenchmarkDeck",
+      "original": "<span className=\"result-metric-summary\">\r\n                  {benchmarkResult.trace_steps_count} {translateText('execution steps', language)} · {benchmarkResult.evidence_count} {translateText('evidence records', language)}\r\n                </span>",
+      "proposed": "<span className=\"result-metric-summary\"><Trans i18nKey=\"ScenarioBenchmarkDeck.complex_30\" var0={benchmarkResult.trace_steps_count} var1={translateText('execution steps', language)} var2={benchmarkResult.evidence_count} var3={translateText('evidence records', language)} /></span>",
+      "template": "{{var0}} {{var1}} · {{var2}} {{var3}}"
+    },
+    {
+      "file": "ScenarioBenchmarkDeck",
+      "original": "<strong>\r\n                    {translateText('Actual:', language)} <span className=\"status-highlight\">{benchmarkResult.actual_status}</span> ({translateText('Expected:', language)} {benchmarkResult.expected_status})\r\n                  </strong>",
+      "proposed": "<strong><Trans i18nKey=\"ScenarioBenchmarkDeck.complex_31\" var0={translateText('Actual:', language)} var1={benchmarkResult.actual_status} var2={translateText('Expected:', language)} var3={benchmarkResult.expected_status} /></strong>",
+      "template": "{{var0}} <span className=\"status-highlight\">{{var1}}</span> ({{var2}} {{var3}})"
+    },
+    {
+      "file": "ScenarioBenchmarkDeck",
+      "original": "<strong>\r\n                    {benchmarkResult.actual_intent} ({translateText('Expected:', language)} {benchmarkResult.expected_intent})\r\n                  </strong>",
+      "proposed": "<strong><Trans i18nKey=\"ScenarioBenchmarkDeck.complex_32\" var0={benchmarkResult.actual_intent} var1={translateText('Expected:', language)} var2={benchmarkResult.expected_intent} /></strong>",
+      "template": "{{var0}} ({{var1}} {{var2}})"
+    },
+    {
+      "file": "EvidenceCard",
+      "original": "<span>Valid: {formatTime(evidence.valid_from)} — {formatTime(evidence.valid_to)}</span>",
+      "proposed": "<span><Trans i18nKey=\"EvidenceCard.complex_33\" var0={formatTime(evidence.valid_from)} var1={formatTime(evidence.valid_to)} /></span>",
+      "template": "Valid: {{var0}} — {{var1}}"
+    },
+    {
+      "file": "EvidenceCard",
+      "original": "<span>{evidence.geometry.type}: [{formatCoords(evidence.geometry.coordinates)}]</span>",
+      "proposed": "<span><Trans i18nKey=\"EvidenceCard.complex_34\" var0={evidence.geometry.type} var1={formatCoords(evidence.geometry.coordinates)} /></span>",
+      "template": "{{var0}}: [{{var1}}]"
+    },
+    {
+      "file": "EvidenceDrawer",
+      "original": "<Dialog.Title className=\"sr-only\">\r\n              {t.drawerTitleEvidence} & {t.drawerTitleTrace}\r\n            </Dialog.Title>",
+      "proposed": "<Dialog.Title className=\"sr-only\"><Trans i18nKey=\"EvidenceDrawer.complex_35\" var0={t.drawerTitleEvidence} var1={t.drawerTitleTrace} /></Dialog.Title>",
+      "template": "{{var0}} & {{var1}}"
+    },
+    {
+      "file": "EvidenceDrawer",
+      "original": "<span>{t.drawerTitleEvidence} ({evidence.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"EvidenceDrawer.complex_36\" var0={t.drawerTitleEvidence} var1={evidence.length} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "EvidenceDrawer",
+      "original": "<span>{t.drawerTitleTrace} ({trace.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"EvidenceDrawer.complex_37\" var0={t.drawerTitleTrace} var1={trace.length} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<span style={{ color: '#ef4444', fontWeight: 600 }}>⚠️ Marine Hazards ({hazards.length})</span>",
+      "proposed": "<span style={{ color: '#ef4444', fontWeight: 600 }}><Trans i18nKey=\"DeckGLExperimentView.complex_38\" var0={hazards.length} /></span>",
+      "template": "⚠️ Marine Hazards ({{var0}})"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<span style={{ color: '#06b6d4', fontWeight: 600 }}>🧭 Route Corridors ({routes.length})</span>",
+      "proposed": "<span style={{ color: '#06b6d4', fontWeight: 600 }}><Trans i18nKey=\"DeckGLExperimentView.complex_39\" var0={routes.length} /></span>",
+      "template": "🧭 Route Corridors ({{var0}})"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<span style={{ color: '#10b981', fontWeight: 600 }}>🐟 PFZ 3D Columns ({pfzCandidates.length})</span>",
+      "proposed": "<span style={{ color: '#10b981', fontWeight: 600 }}><Trans i18nKey=\"DeckGLExperimentView.complex_40\" var0={pfzCandidates.length} /></span>",
+      "template": "🐟 PFZ 3D Columns ({{var0}})"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<button\r\n                        key={spd}\r\n                        type=\"button\"\r\n                        onClick={() => setPlaybackSpeed(spd)}\r\n                        style={{\r\n                          padding: '4px 8px',\r\n                          background: playbackSpeed === spd ? '#0284c7' : 'transparent',\r\n                          color: playbackSpeed === spd ? '#fff' : '#94a3b8',\r\n                          border: 'none',\r\n                          fontSize: '11px',\r\n                          fontWeight: 600,\r\n                          cursor: 'pointer',\r\n                        }}\r\n                      >\r\n                        {spd}x\r\n                      </button>",
+      "proposed": "<button\r\n                        key={spd}\r\n                        type=\"button\"\r\n                        onClick={() =><Trans i18nKey=\"DeckGLExperimentView.complex_41\" var0={{\r\n                          padding: '4px 8px',\r\n                          background: playbackSpeed === spd ? '#0284c7' : 'transparent',\r\n                          color: playbackSpeed === spd ? '#fff' : '#94a3b8',\r\n                          border: 'none',\r\n                          fontSize: '11px',\r\n                          fontWeight: 600,\r\n                          cursor: 'pointer',\r\n                        } var1={spd} /></button\r\n>",
+      "template": "setPlaybackSpeed(spd)}\r\n                        style={{var0}}}\r\n                      >\r\n                        {{var1}}x"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<span>{activeVesselPosition?.heading_deg || 0}°</span>",
+      "proposed": "<span><Trans i18nKey=\"DeckGLExperimentView.complex_42\" var0={activeVesselPosition?.heading_deg || 0} /></span>",
+      "template": "{{var0}}°"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<span>{activeVesselPosition?.latitude.toFixed(3)}°N, {activeVesselPosition?.longitude.toFixed(3)}°E</span>",
+      "proposed": "<span><Trans i18nKey=\"DeckGLExperimentView.complex_43\" var0={activeVesselPosition?.latitude.toFixed(3)} var1={activeVesselPosition?.longitude.toFixed(3)} /></span>",
+      "template": "{{var0}}°N, {{var1}}°E"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<span style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap' }}>\r\n                  Waypoint {vesselIndex + 1}/{vesselPositions.length}\r\n                </span>",
+      "proposed": "<span style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap' }}><Trans i18nKey=\"DeckGLExperimentView.complex_44\" var0={vesselIndex + 1} var1={vesselPositions.length} /></span>",
+      "template": "Waypoint {{var0}}/{{var1}}"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<strong style={{ color: '#10b981' }}>{spatialMetrics.distToPFZ} km ({spatialMetrics.bearingToPFZ}°)</strong>",
+      "proposed": "<strong style={{ color: '#10b981' }}><Trans i18nKey=\"DeckGLExperimentView.complex_45\" var0={spatialMetrics.distToPFZ} var1={spatialMetrics.bearingToPFZ} /></strong>",
+      "template": "{{var0}} km ({{var1}}°)"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<strong style={{ color: '#38bdf8' }}>{spatialMetrics.vesselCrossTrackKm} km off line</strong>",
+      "proposed": "<strong style={{ color: '#38bdf8' }}><Trans i18nKey=\"DeckGLExperimentView.complex_46\" var0={spatialMetrics.vesselCrossTrackKm} /></strong>",
+      "template": "{{var0}} km off line"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<strong style={{ color: spatialMetrics.routeIntersectionsCount > 0 ? '#f59e0b' : '#10b981' }}>\r\n                  {spatialMetrics.routeIntersectionsCount} intersection(s)\r\n                </strong>",
+      "proposed": "<strong style={{ color: spatialMetrics.routeIntersectionsCount ><Trans i18nKey=\"DeckGLExperimentView.complex_47\" var0={spatialMetrics.routeIntersectionsCount} /></strong>",
+      "template": "0 ? '#f59e0b' : '#10b981' }}>\r\n                  {{var0}} intersection(s)"
+    },
+    {
+      "file": "DeckGLExperimentView",
+      "original": "<span>Dist: {r.distance_km} km</span>",
+      "proposed": "<span><Trans i18nKey=\"DeckGLExperimentView.complex_48\" var0={r.distance_km} /></span>",
+      "template": "Dist: {{var0}} km"
+    },
+    {
+      "file": "FisherDecisionSurface",
+      "original": "<div>\n              <strong>{translateText('Evaluated Window:', language)}</strong>{' '}\n              {assessment.trip_context.departure_time || 'Now'} - {assessment.trip_context.return_time || 'End of trip'}\n            </div>",
+      "proposed": "<div><Trans i18nKey=\"FisherDecisionSurface.complex_49\" var0={translateText('Evaluated Window:', language)} var1={' '} var2={assessment.trip_context.departure_time || 'Now'} var3={assessment.trip_context.return_time || 'End of trip'} /></div>",
+      "template": "<strong>{{var0}}</strong>{{var1}}\n              {{var2}} - {{var3}}"
+    },
+    {
+      "file": "FisherDecisionSurface",
+      "original": "<p style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#7f1d1d' }}>\n            <strong>{translateText('What is happening:', language)}</strong> {translateText(hazardVal, language)}.<br/>\n            <strong>{translateText('Does it affect this trip?', language)}</strong> {translateText('Yes, it directly affects your planned route.', language)}<br/>\n            <strong>{translateText('What to do next:', language)}</strong> {translateText('Do not depart. Await further clearance.', language)}\n          </p>",
+      "proposed": "<p style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#7f1d1d' }}><Trans i18nKey=\"FisherDecisionSurface.complex_50\" var0={translateText('What is happening:', language)} var1={translateText(hazardVal, language)} var2={translateText('Does it affect this trip?', language)} var3={translateText('Yes, it directly affects your planned route.', language)} var4={translateText('What to do next:', language)} var5={translateText('Do not depart. Await further clearance.', language)} /></p>",
+      "template": "<strong>{{var0}}</strong> {{var1}}.<br/>\n            <strong>{{var2}}</strong> {{var3}}<br/>\n            <strong>{{var4}}</strong> {{var5}}"
+    },
+    {
+      "file": "GuidedTripSetup",
+      "original": "<strong>{translateText('Harbour', language)}:</strong>",
+      "proposed": "<strong><Trans i18nKey=\"GuidedTripSetup.complex_51\" var0={translateText('Harbour', language)} /></strong>",
+      "template": "{{var0}}:"
+    },
+    {
+      "file": "GuidedTripSetup",
+      "original": "<strong>{translateText('PFZ', language)}:</strong>",
+      "proposed": "<strong><Trans i18nKey=\"GuidedTripSetup.complex_52\" var0={translateText('PFZ', language)} /></strong>",
+      "template": "{{var0}}:"
+    },
+    {
+      "file": "GuidedTripSetup",
+      "original": "<strong>{translateText('Boat', language)}:</strong>",
+      "proposed": "<strong><Trans i18nKey=\"GuidedTripSetup.complex_53\" var0={translateText('Boat', language)} /></strong>",
+      "template": "{{var0}}:"
+    },
+    {
+      "file": "GuidedTripSetup",
+      "original": "<strong>{translateText('Leaving', language)}:</strong>",
+      "proposed": "<strong><Trans i18nKey=\"GuidedTripSetup.complex_54\" var0={translateText('Leaving', language)} /></strong>",
+      "template": "{{var0}}:"
+    },
+    {
+      "file": "PFZDetails",
+      "original": "<div style={{ marginBottom: '16px', color: '#334155', fontWeight: 600, fontSize: '1.1rem' }}>\n          📍 {pfz.location_reference}\n        </div>",
+      "proposed": "<div style={{ marginBottom: '16px', color: '#334155', fontWeight: 600, fontSize: '1.1rem' }}><Trans i18nKey=\"PFZDetails.complex_55\" var0={pfz.location_reference} /></div>",
+      "template": "📍 {{var0}}"
+    },
+    {
+      "file": "PFZDetails",
+      "original": "<div style={{ fontSize: '1.1rem', fontWeight: 500, color: '#334155' }}>\n            {pfz.distance_nautical_miles !== undefined ? pfz.distance_nautical_miles?.toFixed(1) : (pfz.distance_nm?.toFixed(1) || '—')} nm, {pfz.bearing_degrees ?? pfz.bearing_deg ?? '—'}°\n          </div>",
+      "proposed": "<div style={{ fontSize: '1.1rem', fontWeight: 500, color: '#334155' }}><Trans i18nKey=\"PFZDetails.complex_56\" var0={pfz.distance_nautical_miles !== undefined ? pfz.distance_nautical_miles?.toFixed(1) : (pfz.distance_nm?.toFixed(1) || '—')} var1={pfz.bearing_degrees ?? pfz.bearing_deg ?? '—'} /></div>",
+      "template": "{{var0}} nm, {{var1}}°"
+    },
+    {
+      "file": "Header",
+      "original": "<span>{t.evidenceBtn} ({evidenceCount})</span>",
+      "proposed": "<span><Trans i18nKey=\"Header.complex_57\" var0={t.evidenceBtn} var1={evidenceCount} /></span>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "Header",
+      "original": "<span className=\"header-settings-pill\">\r\n              {language.toUpperCase()} · {theme === 'dark' ? '🌙' : '☀️'}\r\n            </span>",
+      "proposed": "<span className=\"header-settings-pill\"><Trans i18nKey=\"Header.complex_58\" var0={language.toUpperCase()} var1={theme === 'dark' ? '🌙' : '☀️'} /></span>",
+      "template": "{{var0}} · {{var1}}"
+    },
+    {
+      "file": "DeckGLMapFoundation",
+      "original": "<div\r\n        className=\"deckgl-view-telemetry\"\r\n        style={{\r\n          position: 'absolute',\r\n          bottom: 6,\r\n          right: 10,\r\n          fontSize: '10px',\r\n          fontFamily: 'monospace',\r\n          color: 'rgba(148, 163, 184, 0.7)',\r\n          background: 'rgba(15, 23, 42, 0.65)',\r\n          padding: '2px 6px',\r\n          borderRadius: '4px',\r\n          pointerEvents: 'none',\r\n          zIndex: 5,\r\n        }}\r\n      >\r\n        Z:{activeViewState.zoom.toFixed(1)} | P:{(activeViewState.pitch ?? 0).toFixed(0)}° | B:{(activeViewState.bearing ?? 0).toFixed(0)}°\r\n      </div>",
+      "proposed": "<div\r\n        className=\"deckgl-view-telemetry\"\r\n        style={{\r\n          position: 'absolute',\r\n          bottom: 6,\r\n          right: 10,\r\n          fontSize: '10px',\r\n          fontFamily: 'monospace',\r\n          color: 'rgba(148, 163, 184, 0.7)',\r\n          background: 'rgba(15, 23, 42, 0.65)',\r\n          padding: '2px 6px',\r\n          borderRadius: '4px',\r\n          pointerEvents: 'none',\r\n          zIndex: 5,\r\n        }}\r\n      ><Trans i18nKey=\"DeckGLMapFoundation.complex_59\" var0={activeViewState.zoom.toFixed(1)} var1={(activeViewState.pitch ?? 0).toFixed(0)} var2={(activeViewState.bearing ?? 0).toFixed(0)} /></div\r\n>",
+      "template": "Z:{{var0}} | P:{{var1}}° | B:{{var2}}°"
+    },
+    {
+      "file": "LayerManager",
+      "original": "<h4 className=\"layer-manager-title\">{translateText('Map Layers', language)} ({layers.length})</h4>",
+      "proposed": "<h4 className=\"layer-manager-title\"><Trans i18nKey=\"LayerManager.complex_60\" var0={translateText('Map Layers', language)} var1={layers.length} /></h4>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "MissionMapBrief",
+      "original": "<span> · {routeLayers.length} {translateText('Routes', language)}</span>",
+      "proposed": "<span><Trans i18nKey=\"MissionMapBrief.complex_61\" var0={routeLayers.length} var1={translateText('Routes', language)} /></span>",
+      "template": "· {{var0}} {{var1}}"
+    },
+    {
+      "file": "MissionMapBrief",
+      "original": "<span> · {pfzLayers.length} {translateText('PFZ', language)}</span>",
+      "proposed": "<span><Trans i18nKey=\"MissionMapBrief.complex_62\" var0={pfzLayers.length} var1={translateText('PFZ', language)} /></span>",
+      "template": "· {{var0}} {{var1}}"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginLeft: '12px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}>\r\n              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />\r\n              LIVE TELEMETRY ({lastUpdated.toLocaleTimeString()})\r\n            </span>",
+      "proposed": "<span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginLeft: '12px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}><Trans i18nKey=\"FisherWatchView.complex_63\" var0={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' } var1={lastUpdated.toLocaleTimeString()} /></span>",
+      "template": "<span style={{var0}}} />\r\n              LIVE TELEMETRY ({{var1}})"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<option key={p.id} value={p.id}>\r\n                  {p.name} ({p.district}, {p.state})\r\n                </option>",
+      "proposed": "<option key={p.id} value={p.id}><Trans i18nKey=\"FisherWatchView.complex_64\" var0={p.name} var1={p.district} var2={p.state} /></option>",
+      "template": "{{var0}} ({{var1}}, {{var2}})"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<option key={z.advisory_id} value={z.advisory_id}>\r\n                  {z.location_name} (Bearing {z.bearing_deg}°, ~{z.distance_km} km)\r\n                </option>",
+      "proposed": "<option key={z.advisory_id} value={z.advisory_id}><Trans i18nKey=\"FisherWatchView.complex_65\" var0={z.location_name} var1={z.bearing_deg} var2={z.distance_km} /></option>",
+      "template": "{{var0}} (Bearing {{var1}}°, ~{{var2}} km)"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<span>Distance: <strong>{routeResult.total_distance_nm} nm</strong> ({routeResult.total_distance_km} km)</span>",
+      "proposed": "<span><Trans i18nKey=\"FisherWatchView.complex_66\" var0={routeResult.total_distance_nm} var1={routeResult.total_distance_km} /></span>",
+      "template": "Distance: <strong>{{var0}} nm</strong> ({{var1}} km)"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<span className=\"column-count-badge\">{pfzList.length} Active Zones</span>",
+      "proposed": "<span className=\"column-count-badge\"><Trans i18nKey=\"FisherWatchView.complex_67\" var0={pfzList.length} /></span>",
+      "template": "{{var0}} Active Zones"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<div className=\"pfz-coordinates\">\r\n                  {pfz.latitude.toFixed(3)}°N, {pfz.longitude.toFixed(3)}°E · Depth {pfz.depth_range_m}\r\n                </div>",
+      "proposed": "<div className=\"pfz-coordinates\"><Trans i18nKey=\"FisherWatchView.complex_68\" var0={pfz.latitude.toFixed(3)} var1={pfz.longitude.toFixed(3)} var2={pfz.depth_range_m} /></div>",
+      "template": "{{var0}}°N, {{var1}}°E · Depth {{var2}}"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<span>SST: {pfz.sst_celsius}°C</span>",
+      "proposed": "<span><Trans i18nKey=\"FisherWatchView.complex_69\" var0={pfz.sst_celsius} /></span>",
+      "template": "SST: {{var0}}°C"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<span>Chl-a: {pfz.chlorophyll_mg_m3} mg/m³</span>",
+      "proposed": "<span><Trans i18nKey=\"FisherWatchView.complex_70\" var0={pfz.chlorophyll_mg_m3} /></span>",
+      "template": "Chl-a: {{var0}} mg/m³"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<span>Bearing: {pfz.bearing_deg}°</span>",
+      "proposed": "<span><Trans i18nKey=\"FisherWatchView.complex_71\" var0={pfz.bearing_deg} /></span>",
+      "template": "Bearing: {{var0}}°"
+    },
+    {
+      "file": "FisherWatchView",
+      "original": "<span className=\"centre-location\">\r\n                      {port.district}, {port.state} · {port.latitude.toFixed(4)}°N, {port.longitude.toFixed(4)}°E\r\n                    </span>",
+      "proposed": "<span className=\"centre-location\"><Trans i18nKey=\"FisherWatchView.complex_72\" var0={port.district} var1={port.state} var2={port.latitude.toFixed(4)} var3={port.longitude.toFixed(4)} /></span>",
+      "template": "{{var0}}, {{var1}} · {{var2}}°N, {{var3}}°E"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>🌊 {translateText(\"Wave & Swell (INCOIS)\", language)}</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_73\" var0={translateText(\"Wave & Swell (INCOIS)\", language)} /></span>",
+      "template": "🌊 {{var0}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>🐟 {translateText(\"Potential Fishing Zones\", language)}</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_74\" var0={translateText(\"Potential Fishing Zones\", language)} /></span>",
+      "template": "🐟 {{var0}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>⚓ {translateText(\"CMFRI Landing Centres\", language)} ({ports.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_75\" var0={translateText(\"CMFRI Landing Centres\", language)} var1={ports.length} /></span>",
+      "template": "⚓ {{var0}} ({{var1}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>🗼 {translateText(\"DGLL Lighthouses\", language)} ({lighthouses.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_76\" var0={translateText(\"DGLL Lighthouses\", language)} var1={lighthouses.length} /></span>",
+      "template": "🗼 {{var0}} ({{var1}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>🦐 {translateText(\"CAA Coastal Aquaculture\", language)} ({farms.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_77\" var0={translateText(\"CAA Coastal Aquaculture\", language)} var1={farms.length} /></span>",
+      "template": "🦐 {{var0}} ({{var1}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>📏 {translateText(\"12nm / 200nm & Marine Parks\", language)}</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_78\" var0={translateText(\"12nm / 200nm & Marine Parks\", language)} /></span>",
+      "template": "📏 {{var0}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>🏔️ {translateText(\"GEBCO Depth Contours\", language)}</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_79\" var0={translateText(\"GEBCO Depth Contours\", language)} /></span>",
+      "template": "🏔️ {{var0}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span>⚠️ {translateText(\"Active Hazard Zones\", language)} ({hazardsGeoJson?.features?.length ?? 0})</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_80\" var0={translateText(\"Active Hazard Zones\", language)} var1={hazardsGeoJson?.features?.length ?? 0} /></span>",
+      "template": "⚠️ {{var0}} ({{var1}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'ports' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('ports')}\r\n                >\r\n                  ⚓ Harbours ({ports.length})\r\n                </button>",
+      "proposed": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'ports' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() =><Trans i18nKey=\"OceanWatchGIS.complex_81\" var0={ports.length} /></button\r\n>",
+      "template": "setListCategory('ports')}\r\n                >\r\n                  ⚓ Harbours ({{var0}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'lighthouses' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('lighthouses')}\r\n                >\r\n                  🗼 Lighthouses ({lighthouses.length})\r\n                </button>",
+      "proposed": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'lighthouses' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() =><Trans i18nKey=\"OceanWatchGIS.complex_82\" var0={lighthouses.length} /></button\r\n>",
+      "template": "setListCategory('lighthouses')}\r\n                >\r\n                  🗼 Lighthouses ({{var0}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'pfzs' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('pfzs')}\r\n                >\r\n                  🐟 PFZs ({pfzs.length})\r\n                </button>",
+      "proposed": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'pfzs' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() =><Trans i18nKey=\"OceanWatchGIS.complex_83\" var0={pfzs.length} /></button\r\n>",
+      "template": "setListCategory('pfzs')}\r\n                >\r\n                  🐟 PFZs ({{var0}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'farms' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('farms')}\r\n                >\r\n                  🦐 Aquaculture ({farms.length})\r\n                </button>",
+      "proposed": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'farms' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() =><Trans i18nKey=\"OceanWatchGIS.complex_84\" var0={farms.length} /></button\r\n>",
+      "template": "setListCategory('farms')}\r\n                >\r\n                  🦐 Aquaculture ({{var0}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<td>{p.district}, {p.state}</td>",
+      "proposed": "<td><Trans i18nKey=\"OceanWatchGIS.complex_85\" var0={p.district} var1={p.state} /></td>",
+      "template": "{{var0}}, {{var1}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<td>Ch {p.vhf_channel}</td>",
+      "proposed": "<td><Trans i18nKey=\"OceanWatchGIS.complex_86\" var0={p.vhf_channel} /></td>",
+      "template": "Ch {{var0}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<td>{z.latitude.toFixed(2)}°N, {z.longitude.toFixed(2)}°E</td>",
+      "proposed": "<td><Trans i18nKey=\"OceanWatchGIS.complex_87\" var0={z.latitude.toFixed(2)} var1={z.longitude.toFixed(2)} /></td>",
+      "template": "{{var0}}°N, {{var1}}°E"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<td>{z.sst_celsius}°C</td>",
+      "proposed": "<td><Trans i18nKey=\"OceanWatchGIS.complex_88\" var0={z.sst_celsius} /></td>",
+      "template": "{{var0}}°C"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<td>{z.chlorophyll_mg_m3} mg/m³</td>",
+      "proposed": "<td><Trans i18nKey=\"OceanWatchGIS.complex_89\" var0={z.chlorophyll_mg_m3} /></td>",
+      "template": "{{var0}} mg/m³"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<td>{f.district}, {f.state}</td>",
+      "proposed": "<td><Trans i18nKey=\"OceanWatchGIS.complex_90\" var0={f.district} var1={f.state} /></td>",
+      "template": "{{var0}}, {{var1}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<h3>\r\n                {pointCoordinates[0].toFixed(3)}°N, {pointCoordinates[1].toFixed(3)}°E\r\n              </h3>",
+      "proposed": "<h3><Trans i18nKey=\"OceanWatchGIS.complex_91\" var0={pointCoordinates[0].toFixed(3)} var1={pointCoordinates[1].toFixed(3)} /></h3>",
+      "template": "{{var0}}°N, {{var1}}°E"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span> ({translateText(\"nearest:\", language)} {pointData.bathymetry_and_shelf.nearest_landing_centre})</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanWatchGIS.complex_92\" var0={translateText(\"nearest:\", language)} var1={pointData.bathymetry_and_shelf.nearest_landing_centre} /></span>",
+      "template": "({{var0}} {{var1}})"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<span className=\"condition-val\">{pointData.ocean_state.sst_c}°C</span>",
+      "proposed": "<span className=\"condition-val\"><Trans i18nKey=\"OceanWatchGIS.complex_93\" var0={pointData.ocean_state.sst_c} /></span>",
+      "template": "{{var0}}°C"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<div className=\"text-xs text-muted-foreground\">\r\n                              {lh.distance_km} km away · Range {lh.range_nm} nm · {lh.light_character}\r\n                            </div>",
+      "proposed": "<div className=\"text-xs text-muted-foreground\"><Trans i18nKey=\"OceanWatchGIS.complex_94\" var0={lh.distance_km} var1={lh.range_nm} var2={lh.light_character} /></div>",
+      "template": "{{var0}} km away · Range {{var1}} nm · {{var2}}"
+    },
+    {
+      "file": "OceanWatchGIS",
+      "original": "<div className=\"text-xs text-muted-foreground\">\r\n                              {p.distance_km} km away · VHF Ch {p.vhf_channel}\r\n                            </div>",
+      "proposed": "<div className=\"text-xs text-muted-foreground\"><Trans i18nKey=\"OceanWatchGIS.complex_95\" var0={p.distance_km} var1={p.vhf_channel} /></div>",
+      "template": "{{var0}} km away · VHF Ch {{var1}}"
+    },
+    {
+      "file": "OperationalSnapshot",
+      "original": "<strong>{context.origin_harbor} · {formatCraft(context.craft_profile)}</strong>",
+      "proposed": "<strong><Trans i18nKey=\"OperationalSnapshot.complex_96\" var0={context.origin_harbor} var1={formatCraft(context.craft_profile)} /></strong>",
+      "template": "{{var0}} · {{var1}}"
+    },
+    {
+      "file": "WhatIfSimulator",
+      "original": "<p className=\"what-if-description\">\r\n            {translateText('Current status:', language)} <strong>{currentStatus.replace('_', '-')}</strong>. {translateText('Simulate counterfactual voyage parameters (temporal window, vessel limits) against deterministic risk rules.', language)}\r\n          </p>",
+      "proposed": "<p className=\"what-if-description\"><Trans i18nKey=\"WhatIfSimulator.complex_97\" var0={translateText('Current status:', language)} var1={currentStatus.replace('_', '-')} var2={translateText('Simulate counterfactual voyage parameters (temporal window, vessel limits) against deterministic risk rules.', language)} /></p>",
+      "template": "{{var0}} <strong>{{var1}}</strong>. {{var2}}"
+    },
+    {
+      "file": "WhatIfSimulator",
+      "original": "<span className=\"diff-timestamp\">+{activeDiff.timeOffsetHours}h {translateText('offset', language)}</span>",
+      "proposed": "<span className=\"diff-timestamp\"><Trans i18nKey=\"WhatIfSimulator.complex_98\" var0={activeDiff.timeOffsetHours} var1={translateText('offset', language)} /></span>",
+      "template": "+{{var0}}h {{var1}}"
+    },
+    {
+      "file": "RecommendationBanner",
+      "original": "<strong>{t.nextActionLabel}:</strong>",
+      "proposed": "<strong><Trans i18nKey=\"RecommendationBanner.complex_99\" var0={t.nextActionLabel} /></strong>",
+      "template": "{{var0}}:"
+    },
+    {
+      "file": "RecommendationBanner",
+      "original": "<span key={i} style={{ fontSize: '10px', color: 'var(--color-text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>\r\n              {prov.provider_name} • {prov.source_name} {prov.valid_to ? `(Valid to ${prov.valid_to.slice(0, 16).replace('T', ' ')} UTC)` : ''}\r\n            </span>",
+      "proposed": "<span key={i} style={{ fontSize: '10px', color: 'var(--color-text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}><Trans i18nKey=\"RecommendationBanner.complex_100\" var0={prov.provider_name} var1={prov.source_name} var2={prov.valid_to ? `(Valid to ${prov.valid_to.slice(0, 16).replace('T', ' ')} /></span>",
+      "template": "{{var0}} • {{var1}} {{var2}} UTC)` : ''}"
+    },
+    {
+      "file": "DataProvenancePanel",
+      "original": "<span className=\"provenance-period-text\">· {metadata.snapshotPeriod}</span>",
+      "proposed": "<span className=\"provenance-period-text\"><Trans i18nKey=\"DataProvenancePanel.complex_101\" var0={metadata.snapshotPeriod} /></span>",
+      "template": "· {{var0}}"
+    },
+    {
+      "file": "DataProvenancePanel",
+      "original": "<strong className={`quality-pill-val ${validRate < 100 ? 'has-suspect' : ''}`}>\r\n              {metadata.validCount} / {metadata.totalCount} valid ({validRate}%)\r\n            </strong>",
+      "proposed": "<strong className={`quality-pill-val ${validRate < 100 ? 'has-suspect' : ''}`}><Trans i18nKey=\"DataProvenancePanel.complex_102\" var0={metadata.validCount} var1={metadata.totalCount} var2={validRate} /></strong>",
+      "template": "{{var0}} / {{var1}} valid ({{var2}}%)"
+    },
+    {
+      "file": "DataProvenancePanel",
+      "original": "<span key={status} className={`p-qc-badge ${statusLower}`}>\r\n                        {status}: {count}\r\n                      </span>",
+      "proposed": "<span key={status} className={`p-qc-badge ${statusLower}`}><Trans i18nKey=\"DataProvenancePanel.complex_103\" var0={status} var1={count} /></span>",
+      "template": "{{var0}}: {{var1}}"
+    },
+    {
+      "file": "DataProvenancePanel",
+      "original": "<span key={conf} className={`p-conf-badge ${conf.toLowerCase()}`}>\r\n                      Confidence {conf}: {count}\r\n                    </span>",
+      "proposed": "<span key={conf} className={`p-conf-badge ${conf.toLowerCase()}`}><Trans i18nKey=\"DataProvenancePanel.complex_104\" var0={conf} var1={count} /></span>",
+      "template": "Confidence {{var0}}: {{var1}}"
+    },
+    {
+      "file": "DataProvenancePanel",
+      "original": "<span key={st} className={`p-status-badge ${st.toLowerCase()}`}>\r\n                      Status {st}: {count}\r\n                    </span>",
+      "proposed": "<span key={st} className={`p-status-badge ${st.toLowerCase()}`}><Trans i18nKey=\"DataProvenancePanel.complex_105\" var0={st} var1={count} /></span>",
+      "template": "Status {{var0}}: {{var1}}"
+    },
+    {
+      "file": "DataProvenancePanel",
+      "original": "<span className=\"p-val mono\">±{metadata.meanUncertainty}</span>",
+      "proposed": "<span className=\"p-val mono\"><Trans i18nKey=\"DataProvenancePanel.complex_106\" var0={metadata.meanUncertainty} /></span>",
+      "template": "±{{var0}}"
+    },
+    {
+      "file": "DataSourceMonitor",
+      "original": "<span>{configuredCount} configured profiles</span>",
+      "proposed": "<span><Trans i18nKey=\"DataSourceMonitor.complex_107\" var0={configuredCount} /></span>",
+      "template": "{{var0}} configured profiles"
+    },
+    {
+      "file": "EOGridSpatialMap",
+      "original": "<option key={m.key} value={m.key} style={{ background: '#0f172a', color: '#f8fafc' }}>\r\n                  {m.label} ({m.shortName} · {m.unit})\r\n                </option>",
+      "proposed": "<option key={m.key} value={m.key} style={{ background: '#0f172a', color: '#f8fafc' }}><Trans i18nKey=\"EOGridSpatialMap.complex_108\" var0={m.label} var1={m.shortName} var2={m.unit} /></option>",
+      "template": "{{var0}} ({{var1}} · {{var2}})"
+    },
+    {
+      "file": "EOGridSpatialMap",
+      "original": "<span className=\"eo-stat-val\">{spatialStats.validCount} / {spatialStats.totalCount}</span>",
+      "proposed": "<span className=\"eo-stat-val\"><Trans i18nKey=\"EOGridSpatialMap.complex_109\" var0={spatialStats.validCount} var1={spatialStats.totalCount} /></span>",
+      "template": "{{var0}} / {{var1}}"
+    },
+    {
+      "file": "EOGridSpatialMap",
+      "original": "<span style={{ fontWeight: 600, color: '#f8fafc' }}>\r\n                  {activeMetricConfig.shortName} Scale:\r\n                </span>",
+      "proposed": "<span style={{ fontWeight: 600, color: '#f8fafc' }}><Trans i18nKey=\"EOGridSpatialMap.complex_110\" var0={activeMetricConfig.shortName} /></span>",
+      "template": "{{var0}} Scale:"
+    },
+    {
+      "file": "EOGridSpatialMap",
+      "original": "<strong>Cell {selectedCellRecord.cell_id}</strong>",
+      "proposed": "<strong><Trans i18nKey=\"EOGridSpatialMap.complex_111\" var0={selectedCellRecord.cell_id} /></strong>",
+      "template": "Cell {{var0}}"
+    },
+    {
+      "file": "EOGridSpatialMap",
+      "original": "<span className=\"val\">{selectedCellRecord.center_lat?.toFixed(3)}°N, {selectedCellRecord.center_lon?.toFixed(3)}°E</span>",
+      "proposed": "<span className=\"val\"><Trans i18nKey=\"EOGridSpatialMap.complex_112\" var0={selectedCellRecord.center_lat?.toFixed(3)} var1={selectedCellRecord.center_lon?.toFixed(3)} /></span>",
+      "template": "{{var0}}°N, {{var1}}°E"
+    },
+    {
+      "file": "EOGridSpatialMap",
+      "original": "<span className=\"val\">{selectedCellRecord.satellite || 'Oceansat-3'} ({selectedCellRecord.resolution_m || 360}m)</span>",
+      "proposed": "<span className=\"val\"><Trans i18nKey=\"EOGridSpatialMap.complex_113\" var0={selectedCellRecord.satellite || 'Oceansat-3'} var1={selectedCellRecord.resolution_m || 360} /></span>",
+      "template": "{{var0}} ({{var1}}m)"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span className=\"researcher-eo-badge\">{dailySeries.length}-Day Snapshot</span>",
+      "proposed": "<span className=\"researcher-eo-badge\"><Trans i18nKey=\"EOTemporalAnalysisChart.complex_114\" var0={dailySeries.length} /></span>",
+      "template": "{{var0}}-Day Snapshot"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span className=\"researcher-eo-subtitle\">\r\n            Daily Spatial Mean across 5×5 Grid (25 Cells) · {activeConfig.label}\r\n          </span>",
+      "proposed": "<span className=\"researcher-eo-subtitle\"><Trans i18nKey=\"EOTemporalAnalysisChart.complex_115\" var0={activeConfig.label} /></span>",
+      "template": "Daily Spatial Mean across 5×5 Grid (25 Cells) · {{var0}}"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span className=\"eo-summary-val mono\">\r\n              {summaryStats.overallMin} — {summaryStats.overallMax} <small>{activeConfig.unit}</small>\r\n            </span>",
+      "proposed": "<span className=\"eo-summary-val mono\"><Trans i18nKey=\"EOTemporalAnalysisChart.complex_116\" var0={summaryStats.overallMin} var1={summaryStats.overallMax} var2={activeConfig.unit} /></span>",
+      "template": "{{var0}} — {{var1}} <small>{{var2}}</small>"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span className=\"eo-summary-val\" style={{ color: summaryStats.coveragePct > 80 ? '#10b981' : '#f59e0b' }}>\r\n              {summaryStats.coveragePct}% <small>({summaryStats.totalValid}/{summaryStats.totalCells} cells)</small>\r\n            </span>",
+      "proposed": "<span className=\"eo-summary-val\" style={{ color: summaryStats.coveragePct ><Trans i18nKey=\"EOTemporalAnalysisChart.complex_117\" var0={summaryStats.coveragePct} var1={summaryStats.totalValid} var2={summaryStats.totalCells} /></span>",
+      "template": "80 ? '#10b981' : '#f59e0b' }}>\r\n              {{var0}}% <small>({{var1}}/{{var2}} cells)</small>"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<small>({summaryStats.totalValid}/{summaryStats.totalCells} cells)</small>",
+      "proposed": "<small><Trans i18nKey=\"EOTemporalAnalysisChart.complex_118\" var0={summaryStats.totalValid} var1={summaryStats.totalCells} /></small>",
+      "template": "({{var0}}/{{var1}} cells)"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<strong>{hoveredPoint.displayDate} ({hoveredPoint.date})</strong>",
+      "proposed": "<strong><Trans i18nKey=\"EOTemporalAnalysisChart.complex_119\" var0={hoveredPoint.displayDate} var1={hoveredPoint.date} /></strong>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span className=\"mono\">{hoveredPoint.min.toFixed(activeConfig.decimals)} — {hoveredPoint.max.toFixed(activeConfig.decimals)} {activeConfig.unit}</span>",
+      "proposed": "<span className=\"mono\"><Trans i18nKey=\"EOTemporalAnalysisChart.complex_120\" var0={hoveredPoint.min.toFixed(activeConfig.decimals)} var1={hoveredPoint.max.toFixed(activeConfig.decimals)} var2={activeConfig.unit} /></span>",
+      "template": "{{var0}} — {{var1}} {{var2}}"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span className=\"mono\">{hoveredPoint.validCount} / {hoveredPoint.totalCount} cells ({Math.round((hoveredPoint.validCount / hoveredPoint.totalCount) * 100)}%)</span>",
+      "proposed": "<span className=\"mono\"><Trans i18nKey=\"EOTemporalAnalysisChart.complex_121\" var0={hoveredPoint.validCount} var1={hoveredPoint.totalCount} var2={Math.round((hoveredPoint.validCount / hoveredPoint.totalCount) * 100)} /></span>",
+      "template": "{{var0}} / {{var1}} cells ({{var2}}%)"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span className=\"mono\">±{hoveredPoint.meanUncertainty}</span>",
+      "proposed": "<span className=\"mono\"><Trans i18nKey=\"EOTemporalAnalysisChart.complex_122\" var0={hoveredPoint.meanUncertainty} /></span>",
+      "template": "±{{var0}}"
+    },
+    {
+      "file": "EOTemporalAnalysisChart",
+      "original": "<span\r\n                    key={status}\r\n                    className={`eo-tooltip-qc-badge ${status.toLowerCase()}`}\r\n                  >\r\n                    {status}: {count}\r\n                  </span>",
+      "proposed": "<span\r\n                    key={status}\r\n                    className={`eo-tooltip-qc-badge ${status.toLowerCase()}`}\r\n                  ><Trans i18nKey=\"EOTemporalAnalysisChart.complex_123\" var0={status} var1={count} /></span\r\n>",
+      "template": "{{var0}}: {{var1}}"
+    },
+    {
+      "file": "HazardSpatialMap",
+      "original": "<span style={{ fontSize: '11px', color: '#94a3b8' }}>({geojson.features.length} Bulletins)</span>",
+      "proposed": "<span style={{ fontSize: '11px', color: '#94a3b8' }}><Trans i18nKey=\"HazardSpatialMap.complex_124\" var0={geojson.features.length} /></span>",
+      "template": "({{var0}} Bulletins)"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<option key={h.public_id} value={h.public_id}>{h.name} ({h.state})</option>",
+      "proposed": "<option key={h.public_id} value={h.public_id}><Trans i18nKey=\"OceanDataExplorer.complex_125\" var0={h.name} var1={h.state} /></option>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<h3 className=\"researcher-section-title\">Marine Conditions — {harborName}</h3>",
+      "proposed": "<h3 className=\"researcher-section-title\"><Trans i18nKey=\"OceanDataExplorer.complex_126\" var0={harborName} /></h3>",
+      "template": "Marine Conditions — {{var0}}"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<span className=\"researcher-metric-sub\">Swell {latest?.swell_period_s?.toFixed(1) ?? '—'}s</span>",
+      "proposed": "<span className=\"researcher-metric-sub\"><Trans i18nKey=\"OceanDataExplorer.complex_127\" var0={latest?.swell_period_s?.toFixed(1) ?? '—'} /></span>",
+      "template": "Swell {{var0}}s"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<span className=\"researcher-metric-sub\">{latest?.wind_direction_deg ?? '—'}° direction</span>",
+      "proposed": "<span className=\"researcher-metric-sub\"><Trans i18nKey=\"OceanDataExplorer.complex_128\" var0={latest?.wind_direction_deg ?? '—'} /></span>",
+      "template": "{{var0}}° direction"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<span className=\"researcher-metric-sub\">Visibility {latest?.visibility_nm ?? '—'} nm</span>",
+      "proposed": "<span className=\"researcher-metric-sub\"><Trans i18nKey=\"OceanDataExplorer.complex_129\" var0={latest?.visibility_nm ?? '—'} /></span>",
+      "template": "Visibility {{var0}} nm"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<div className=\"researcher-pfz-rank\">#{pfz.rank}</div>",
+      "proposed": "<div className=\"researcher-pfz-rank\"><Trans i18nKey=\"OceanDataExplorer.complex_130\" var0={pfz.rank} /></div>",
+      "template": "#{{var0}}"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<span>{pfz.distance_km != null ? pfz.distance_km.toFixed(1) : '—'} km · {pfz.bearing_deg ?? 0}°{pfz.depth_m != null ? ` · ${pfz.depth_m}m depth` : ''} · ({pfz.latitude?.toFixed(2)}°N, {pfz.longitude?.toFixed(2)}°E)</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanDataExplorer.complex_131\" var0={pfz.distance_km != null ? pfz.distance_km.toFixed(1) : '—'} var1={pfz.bearing_deg ?? 0} var2={pfz.depth_m != null ? ` · ${pfz.depth_m} var3={pfz.latitude?.toFixed(2)} var4={pfz.longitude?.toFixed(2)} /></span>",
+      "template": "{{var0}} km · {{var1}}°{{var2}}m depth` : ''} · ({{var3}}°N, {{var4}}°E)"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<span>SST Gradient: {pfz.sst_gradient != null ? pfz.sst_gradient : '—'} · Chl-a {pfz.chlorophyll_a_mg_m3 != null ? `${pfz.chlorophyll_a_mg_m3} mg/m³` : '—'}</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanDataExplorer.complex_132\" var0={pfz.sst_gradient != null ? pfz.sst_gradient : '—'} var1={pfz.chlorophyll_a_mg_m3 != null ? `${pfz.chlorophyll_a_mg_m3} /></span>",
+      "template": "SST Gradient: {{var0}} · Chl-a {{var1}} mg/m³` : '—'}"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<div className=\"researcher-pfz-validity\">\r\n                      Valid: {formatDate(pfz.valid_from)} — {formatDate(pfz.valid_to)}\r\n                    </div>",
+      "proposed": "<div className=\"researcher-pfz-validity\"><Trans i18nKey=\"OceanDataExplorer.complex_133\" var0={formatDate(pfz.valid_from)} var1={formatDate(pfz.valid_to)} /></div>",
+      "template": "Valid: {{var0}} — {{var1}}"
+    },
+    {
+      "file": "OceanDataExplorer",
+      "original": "<span>Valid: {formatTime(hz.issued_at)} → {formatTime(hz.valid_until)}</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanDataExplorer.complex_134\" var0={formatTime(hz.issued_at)} var1={formatTime(hz.valid_until)} /></span>",
+      "template": "Valid: {{var0}} → {{var1}}"
+    },
+    {
+      "file": "OceanTimeSeriesChart",
+      "original": "<span>No observation time-series data available for {harborName}.</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanTimeSeriesChart.complex_135\" var0={harborName} /></span>",
+      "template": "No observation time-series data available for {{var0}}."
+    },
+    {
+      "file": "OceanTimeSeriesChart",
+      "original": "<span>48-Hour Marine Observation Time Series — {harborName}</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanTimeSeriesChart.complex_136\" var0={harborName} /></span>",
+      "template": "48-Hour Marine Observation Time Series — {{var0}}"
+    },
+    {
+      "file": "OceanTimeSeriesChart",
+      "original": "<span>{timeRangeStart} → {timeRangeEnd} ({sortedObs.length} hourly observations)</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanTimeSeriesChart.complex_137\" var0={timeRangeStart} var1={timeRangeEnd} var2={sortedObs.length} /></span>",
+      "template": "{{var0}} → {{var1}} ({{var2}} hourly observations)"
+    },
+    {
+      "file": "OceanTimeSeriesChart",
+      "original": "<text\r\n                x={margin.left + 8}\r\n                y={p.panelTop + 14}\r\n                className=\"ocean-panel-title\"\r\n                fill={p.metric.color}\r\n              >\r\n                {p.metric.label} ({p.metric.unit})\r\n              </text>",
+      "proposed": "<text\r\n                x={margin.left + 8}\r\n                y={p.panelTop + 14}\r\n                className=\"ocean-panel-title\"\r\n                fill={p.metric.color}\r\n              ><Trans i18nKey=\"OceanTimeSeriesChart.complex_138\" var0={p.metric.label} var1={p.metric.unit} /></text\r\n>",
+      "template": "{{var0}} ({{var1}})"
+    },
+    {
+      "file": "OceanTimeSeriesChart",
+      "original": "<span>Swell Period: {hoveredObs.swell_period_s.toFixed(1)} s</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanTimeSeriesChart.complex_139\" var0={hoveredObs.swell_period_s.toFixed(1)} /></span>",
+      "template": "Swell Period: {{var0}} s"
+    },
+    {
+      "file": "OceanTimeSeriesChart",
+      "original": "<span> · Current: {hoveredObs.current_speed_kn.toFixed(1)} kn</span>",
+      "proposed": "<span><Trans i18nKey=\"OceanTimeSeriesChart.complex_140\" var0={hoveredObs.current_speed_kn.toFixed(1)} /></span>",
+      "template": "· Current: {{var0}} kn"
+    },
+    {
+      "file": "PFZSpatialMap",
+      "original": "<span style={{ fontSize: '11px', color: '#94a3b8' }}>({validCandidates.length} Active Candidates)</span>",
+      "proposed": "<span style={{ fontSize: '11px', color: '#94a3b8' }}><Trans i18nKey=\"PFZSpatialMap.complex_141\" var0={validCandidates.length} /></span>",
+      "template": "({{var0}} Active Candidates)"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span>{resp.evidence?.length ?? 0} Evidence Items</span>",
+      "proposed": "<span><Trans i18nKey=\"QueryWorkbench.complex_142\" var0={resp.evidence?.length ?? 0} /></span>",
+      "template": "{{var0}} Evidence Items"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span>{resp.map_layers.length} Spatial Layers</span>",
+      "proposed": "<span><Trans i18nKey=\"QueryWorkbench.complex_143\" var0={resp.map_layers.length} /></span>",
+      "template": "{{var0}} Spatial Layers"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span key={i} className=\"uncertainty-reason-item\">• {r}</span>",
+      "proposed": "<span key={i} className=\"uncertainty-reason-item\"><Trans i18nKey=\"QueryWorkbench.complex_144\" var0={r} /></span>",
+      "template": "• {{var0}}"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span key={i} className=\"warning-chip\">⚠️ {w}</span>",
+      "proposed": "<span key={i} className=\"warning-chip\"><Trans i18nKey=\"QueryWorkbench.complex_145\" var0={w} /></span>",
+      "template": "⚠️ {{var0}}"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span className=\"section-title\">Verified Supporting Evidence ({resp.evidence.length} items)</span>",
+      "proposed": "<span className=\"section-title\"><Trans i18nKey=\"QueryWorkbench.complex_146\" var0={resp.evidence.length} /></span>",
+      "template": "Verified Supporting Evidence ({{var0}} items)"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span className=\"section-title\">ORCA Reasoning Trace ({resp.trace.length} steps)</span>",
+      "proposed": "<span className=\"section-title\"><Trans i18nKey=\"QueryWorkbench.complex_147\" var0={resp.trace.length} /></span>",
+      "template": "ORCA Reasoning Trace ({{var0}} steps)"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span key={t} className=\"tool-tag\">✓ {t}</span>",
+      "proposed": "<span key={t} className=\"tool-tag\"><Trans i18nKey=\"QueryWorkbench.complex_148\" var0={t} /></span>",
+      "template": "✓ {{var0}}"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span className=\"researcher-trace-num\">#{t.step}</span>",
+      "proposed": "<span className=\"researcher-trace-num\"><Trans i18nKey=\"QueryWorkbench.complex_149\" var0={t.step} /></span>",
+      "template": "#{{var0}}"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span className=\"researcher-trace-agent\">[{t.agent}]</span>",
+      "proposed": "<span className=\"researcher-trace-agent\"><Trans i18nKey=\"QueryWorkbench.complex_150\" var0={t.agent} /></span>",
+      "template": "[{{var0}}]"
+    },
+    {
+      "file": "QueryWorkbench",
+      "original": "<span className=\"section-title\">Returned Spatial Vector Layers ({resp.map_layers.length} layers)</span>",
+      "proposed": "<span className=\"section-title\"><Trans i18nKey=\"QueryWorkbench.complex_151\" var0={resp.map_layers.length} /></span>",
+      "template": "Returned Spatial Vector Layers ({{var0}} layers)"
+    },
+    {
+      "file": "ScenarioComparisonView",
+      "original": "<span>Scenario Comparative Analysis ({selectedScenarios.length} Selected)</span>",
+      "proposed": "<span><Trans i18nKey=\"ScenarioComparisonView.complex_152\" var0={selectedScenarios.length} /></span>",
+      "template": "Scenario Comparative Analysis ({{var0}} Selected)"
+    },
+    {
+      "file": "ScenarioComparisonView",
+      "original": "<span className=\"scenario-comparison-sub\">\r\n            {executedCount} of {selectedScenarios.length} executed\r\n          </span>",
+      "proposed": "<span className=\"scenario-comparison-sub\"><Trans i18nKey=\"ScenarioComparisonView.complex_153\" var0={executedCount} var1={selectedScenarios.length} /></span>",
+      "template": "{{var0}} of {{var1}} executed"
+    },
+    {
+      "file": "ScenarioComparisonView",
+      "original": "<button\r\n                        type=\"button\"\r\n                        className=\"card-run-btn\"\r\n                        onClick={() => onRunScenario(s.id)}\r\n                        disabled={runningIds.includes(s.id) || isAnyRunning}\r\n                      >\r\n                        <Play size={11} /> Run {s.id}\r\n                      </button>",
+      "proposed": "<button\r\n                        type=\"button\"\r\n                        className=\"card-run-btn\"\r\n                        onClick={() =><Trans i18nKey=\"ScenarioComparisonView.complex_154\" var0={runningIds.includes(s.id) || isAnyRunning} var1={11} var2={s.id} /></button\r\n>",
+      "template": "onRunScenario(s.id)}\r\n                        disabled={{var0}}\r\n                      >\r\n                        <Play size={{var1}} /> Run {{var2}}"
+    },
+    {
+      "file": "ScenarioLab",
+      "original": "<span className=\"researcher-compare-counter\">\r\n              Compare: {selectedCompareIds.length}/4 selected\r\n            </span>",
+      "proposed": "<span className=\"researcher-compare-counter\"><Trans i18nKey=\"ScenarioLab.complex_155\" var0={selectedCompareIds.length} /></span>",
+      "template": "Compare: {{var0}}/4 selected"
+    },
+    {
+      "file": "ScenarioLab",
+      "original": "<span>Scenario Comparison ({selectedCompareIds.length})</span>",
+      "proposed": "<span><Trans i18nKey=\"ScenarioLab.complex_156\" var0={selectedCompareIds.length} /></span>",
+      "template": "Scenario Comparison ({{var0}})"
+    },
+    {
+      "file": "ScenarioLab",
+      "original": "<h3>\r\n                  {selected.id}: {selected.name}\r\n                </h3>",
+      "proposed": "<h3><Trans i18nKey=\"ScenarioLab.complex_157\" var0={selected.id} var1={selected.name} /></h3>",
+      "template": "{{var0}}: {{var1}}"
+    },
+    {
+      "file": "ScenarioLab",
+      "original": "<span className=\"researcher-input-label\">\r\n                            Executed Tools ({selectedResult.executed_tools.length})\r\n                          </span>",
+      "proposed": "<span className=\"researcher-input-label\"><Trans i18nKey=\"ScenarioLab.complex_158\" var0={selectedResult.executed_tools.length} /></span>",
+      "template": "Executed Tools ({{var0}})"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span>Tide Temporal Analysis — {harborName}</span>",
+      "proposed": "<span><Trans i18nKey=\"TideTimeSeriesChart.complex_159\" var0={harborName} /></span>",
+      "template": "Tide Temporal Analysis — {{var0}}"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span>Tide Temporal Analysis — {harborName}</span>",
+      "proposed": "<span><Trans i18nKey=\"TideTimeSeriesChart.complex_160\" var0={harborName} /></span>",
+      "template": "Tide Temporal Analysis — {{var0}}"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span>No tide observations available for {harborName}.</span>",
+      "proposed": "<span><Trans i18nKey=\"TideTimeSeriesChart.complex_161\" var0={harborName} /></span>",
+      "template": "No tide observations available for {{var0}}."
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span>Tide Temporal Analysis — {harborName}</span>",
+      "proposed": "<span><Trans i18nKey=\"TideTimeSeriesChart.complex_162\" var0={harborName} /></span>",
+      "template": "Tide Temporal Analysis — {{var0}}"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span>Datum: {datum} (Chart Datum)</span>",
+      "proposed": "<span><Trans i18nKey=\"TideTimeSeriesChart.complex_163\" var0={datum} /></span>",
+      "template": "Datum: {{var0}} (Chart Datum)"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span className=\"tide-kpi-sub\">\r\n            Min: {minLevel?.toFixed(2) ?? '—'} m · Max: {maxLevel?.toFixed(2) ?? '—'} m\r\n          </span>",
+      "proposed": "<span className=\"tide-kpi-sub\"><Trans i18nKey=\"TideTimeSeriesChart.complex_164\" var0={minLevel?.toFixed(2) ?? '—'} var1={maxLevel?.toFixed(2) ?? '—'} /></span>",
+      "template": "Min: {{var0}} m · Max: {{var1}} m"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span className=\"tide-kpi-value\">\r\n              {validCount} / {totalCount}\r\n              <small> valid</small>\r\n            </span>",
+      "proposed": "<span className=\"tide-kpi-value\"><Trans i18nKey=\"TideTimeSeriesChart.complex_165\" var0={validCount} var1={totalCount} /></span>",
+      "template": "{{var0}} / {{var1}}\r\n              <small> valid</small>"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<span\r\n                  key={phase}\r\n                  className=\"tide-mini-phase-badge\"\r\n                  style={{ background: style.bg, color: style.text }}\r\n                >\r\n                  {phase}: {count}\r\n                </span>",
+      "proposed": "<span\r\n                  key={phase}\r\n                  className=\"tide-mini-phase-badge\"\r\n                  style={{ background: style.bg, color: style.text }}\r\n                ><Trans i18nKey=\"TideTimeSeriesChart.complex_166\" var0={phase} var1={count} /></span\r\n>",
+      "template": "{{var0}}: {{var1}}"
+    },
+    {
+      "file": "TideTimeSeriesChart",
+      "original": "<text\r\n            x={-(margin.top + plotHeight / 2)}\r\n            y={16}\r\n            transform=\"rotate(-90)\"\r\n            textAnchor=\"middle\"\r\n            className=\"ocean-axis-title\"\r\n            fill=\"var(--color-text-muted, #cbd5e1)\"\r\n            fontSize=\"11\"\r\n            fontWeight=\"600\"\r\n          >\r\n            Tide Level (m above {datum})\r\n          </text>",
+      "proposed": "<text\r\n            x={-(margin.top + plotHeight / 2)}\r\n            y={16}\r\n            transform=\"rotate(-90)\"\r\n            textAnchor=\"middle\"\r\n            className=\"ocean-axis-title\"\r\n            fill=\"var(--color-text-muted, #cbd5e1)\"\r\n            fontSize=\"11\"\r\n            fontWeight=\"600\"\r\n          ><Trans i18nKey=\"TideTimeSeriesChart.complex_167\" var0={datum} /></text\r\n>",
+      "template": "Tide Level (m above {{var0}})"
+    },
+    {
+      "file": "AgentTimeline",
+      "original": "<span className=\"trace-step-number\">Step {item.step}</span>",
+      "proposed": "<span className=\"trace-step-number\"><Trans i18nKey=\"AgentTimeline.complex_168\" var0={item.step} /></span>",
+      "template": "Step {{var0}}"
+    }
+  ]
+}

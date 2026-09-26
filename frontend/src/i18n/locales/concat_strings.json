@@ -1,0 +1,906 @@
+[
+  {
+    "file": "AuthorityPage",
+    "text": "<span>Sector: {selectedOperationalAlert.sector_id}</span>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<span>Vessel: {selectedOperationalAlert.vessel_id}</span>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<span>Hazard: {selectedOperationalAlert.hazard_id}</span>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<span>Position observed: {selectedAlertAssociation?.evaluated_at ?? 'Unavailable'}</span>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<span>Hazard status: {selectedAlertHazard?.status ?? 'Unavailable'}</span>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<span>Hazard validity: {selectedAlertHazard?.valid_to ?? 'Unavailable'}</span>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<span>Severity: {selectedOperationalAlert.severity}</span>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<h3>{translateText(selectedOperationalAlert ? 'Sector Situation Evidence' : 'Verified Official Evidence', chat.language)} ({auditEvidenceList.length})</h3>"
+  },
+  {
+    "file": "AuthorityPage",
+    "text": "<h3>{translateText('Autonomous Agent Execution Trail', chat.language)} ({auditTraceList.length} {translateText('Steps', chat.language)})</h3>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<small>({translateText(\"Syncing…\", language)})</small>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"registry-count-pill\">{aquacultureSites.length} Certified Farms</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"farm-reg-no\">Reg: {farm.caa_registration_number}</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"attr-val\">{farm.district}, {farm.state}</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"attr-val\">{farm.water_salinity_ppt} ppt</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"attr-val\">{farm.water_spread_area_ha} ha ({farm.ponds_count} ponds)</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"text-xs text-muted-foreground\">\r\n                      Coordinates: {farm.latitude.toFixed(4)}°N, {farm.longitude.toFixed(4)}°E\r\n                    </span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"hazards-badge-count\">{hazards.length} Active Bulletins</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"signal-num\">Signal {sig.signal}</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"signal-port\">{sig.port}: {sig.meaning}</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span>Valid until: {new Date(hz.valid_until).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<span className=\"registry-count-pill\">{ports.length} Harbours</span>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<td>{p.district}, {p.state}</td>"
+  },
+  {
+    "file": "MarineWatchPage",
+    "text": "<td><Radio size={12} className=\"inline mr-1 text-primary\" />Ch {p.vhf_channel}</td>"
+  },
+  {
+    "file": "AuthorityDeckGLMap",
+    "text": "<span style={{ color: '#94a3b8', fontSize: '10px', fontFamily: 'monospace' }}>({voyageStats.vesselId})</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('Monitored Coastal Fleet', language)} ({vessels.length})</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('Length:', language)} {v.length_m}m</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('Engine:', language)} {v.metadata_json.engine_hp} HP</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('Start', language)} ({formatTimestamp(positions[0]?.timestamp)})</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span className=\"current-time-pill\">T = {formatTimestamp(currentPos.timestamp)}</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('End', language)} ({formatTimestamp(positions[positions.length - 1]?.timestamp)})</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<strong>{currentPos.speed_knots} kts</strong>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<strong>{currentPos.heading_deg}°</strong>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<strong>{currentPos.latitude.toFixed(3)}°N, {currentPos.longitude.toFixed(3)}°E</strong>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('Operational Hazard Alerts', language)} ({operationalAlerts.length})</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{alert.vessel_id} · {alert.hazard_id}</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('Association:', language)} IN_HAZARD_AREA</span>"
+  },
+  {
+    "file": "FleetTrackingDeck",
+    "text": "<span>{translateText('Maritime Broadcast Alerts', language)} ({notifications.length})</span>"
+  },
+  {
+    "file": "ScenarioBenchmarkDeck",
+    "text": "<span className=\"benchmark-list-label\">{translateText('Evaluation Benchmarks', language)} ({scenarios.length})</span>"
+  },
+  {
+    "file": "ScenarioBenchmarkDeck",
+    "text": "<h4>{selectedScenario.id}: {selectedScenario.name}</h4>"
+  },
+  {
+    "file": "ScenarioBenchmarkDeck",
+    "text": "<div className=\"scenario-query-quote\">\r\n                <strong>{translateText('Standard Query:', language)}</strong> &ldquo;{selectedScenario.query}&rdquo;\r\n              </div>"
+  },
+  {
+    "file": "ScenarioBenchmarkDeck",
+    "text": "<span className=\"result-metric-summary\">\r\n                  {benchmarkResult.trace_steps_count} {translateText('execution steps', language)} · {benchmarkResult.evidence_count} {translateText('evidence records', language)}\r\n                </span>"
+  },
+  {
+    "file": "ScenarioBenchmarkDeck",
+    "text": "<strong>\r\n                    {translateText('Actual:', language)} <span className=\"status-highlight\">{benchmarkResult.actual_status}</span> ({translateText('Expected:', language)} {benchmarkResult.expected_status})\r\n                  </strong>"
+  },
+  {
+    "file": "ScenarioBenchmarkDeck",
+    "text": "<strong>\r\n                    {benchmarkResult.actual_intent} ({translateText('Expected:', language)} {benchmarkResult.expected_intent})\r\n                  </strong>"
+  },
+  {
+    "file": "ChatInput",
+    "text": "<span>Voice detected: {languageLabel(detectedLanguage)}</span>"
+  },
+  {
+    "file": "EvidenceCard",
+    "text": "<span>Valid: {formatTime(evidence.valid_from)} — {formatTime(evidence.valid_to)}</span>"
+  },
+  {
+    "file": "EvidenceCard",
+    "text": "<span>Retrieved: {formatTime(evidence.retrieved_at)}</span>"
+  },
+  {
+    "file": "EvidenceCard",
+    "text": "<span>{evidence.geometry.type}: [{formatCoords(evidence.geometry.coordinates)}]</span>"
+  },
+  {
+    "file": "EvidenceDrawer",
+    "text": "<Dialog.Title className=\"sr-only\">\r\n              {t.drawerTitleEvidence} & {t.drawerTitleTrace}\r\n            </Dialog.Title>"
+  },
+  {
+    "file": "EvidenceDrawer",
+    "text": "<span>{t.drawerTitleEvidence} ({evidence.length})</span>"
+  },
+  {
+    "file": "EvidenceDrawer",
+    "text": "<span>{t.drawerTitleTrace} ({trace.length})</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span style={{ color: '#ef4444', fontWeight: 600 }}>⚠️ Marine Hazards ({hazards.length})</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span style={{ color: '#06b6d4', fontWeight: 600 }}>🧭 Route Corridors ({routes.length})</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span style={{ color: '#10b981', fontWeight: 600 }}>🐟 PFZ 3D Columns ({pfzCandidates.length})</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<button\r\n                        key={spd}\r\n                        type=\"button\"\r\n                        onClick={() => setPlaybackSpeed(spd)}\r\n                        style={{\r\n                          padding: '4px 8px',\r\n                          background: playbackSpeed === spd ? '#0284c7' : 'transparent',\r\n                          color: playbackSpeed === spd ? '#fff' : '#94a3b8',\r\n                          border: 'none',\r\n                          fontSize: '11px',\r\n                          fontWeight: 600,\r\n                          cursor: 'pointer',\r\n                        }}\r\n                      >\r\n                        {spd}x\r\n                      </button>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span>{activeVesselPosition?.speed_knots || 0} kn</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span>{activeVesselPosition?.heading_deg || 0}°</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span>{activeVesselPosition?.latitude.toFixed(3)}°N, {activeVesselPosition?.longitude.toFixed(3)}°E</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap' }}>\r\n                  Waypoint {vesselIndex + 1}/{vesselPositions.length}\r\n                </span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<strong style={{ color: '#10b981' }}>{spatialMetrics.distToPFZ} km ({spatialMetrics.bearingToPFZ}°)</strong>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<strong style={{ color: '#38bdf8' }}>{spatialMetrics.vesselCrossTrackKm} km off line</strong>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<strong style={{ color: spatialMetrics.routeIntersectionsCount > 0 ? '#f59e0b' : '#10b981' }}>\r\n                  {spatialMetrics.routeIntersectionsCount} intersection(s)\r\n                </strong>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span>Dist: {r.distance_km} km</span>"
+  },
+  {
+    "file": "DeckGLExperimentView",
+    "text": "<span>Exposure: {r.exposure_score}</span>"
+  },
+  {
+    "file": "FisherDecisionSurface",
+    "text": "<div>\n              <strong>{translateText('Evaluated Window:', language)}</strong>{' '}\n              {assessment.trip_context.departure_time || 'Now'} - {assessment.trip_context.return_time || 'End of trip'}\n            </div>"
+  },
+  {
+    "file": "FisherDecisionSurface",
+    "text": "<p style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#7f1d1d' }}>\n            <strong>{translateText('What is happening:', language)}</strong> {translateText(hazardVal, language)}.<br/>\n            <strong>{translateText('Does it affect this trip?', language)}</strong> {translateText('Yes, it directly affects your planned route.', language)}<br/>\n            <strong>{translateText('What to do next:', language)}</strong> {translateText('Do not depart. Await further clearance.', language)}\n          </p>"
+  },
+  {
+    "file": "GuidedTripSetup",
+    "text": "<strong>{translateText('Harbour', language)}:</strong>"
+  },
+  {
+    "file": "GuidedTripSetup",
+    "text": "<strong>{translateText('PFZ', language)}:</strong>"
+  },
+  {
+    "file": "GuidedTripSetup",
+    "text": "<strong>{translateText('Boat', language)}:</strong>"
+  },
+  {
+    "file": "GuidedTripSetup",
+    "text": "<strong>{translateText('Leaving', language)}:</strong>"
+  },
+  {
+    "file": "PFZDetails",
+    "text": "<div style={{ marginBottom: '16px', color: '#334155', fontWeight: 600, fontSize: '1.1rem' }}>\n          📍 {pfz.location_reference}\n        </div>"
+  },
+  {
+    "file": "PFZDetails",
+    "text": "<div style={{ fontSize: '1.1rem', fontWeight: 500, color: '#334155' }}>\n            {pfz.distance_nautical_miles !== undefined ? pfz.distance_nautical_miles?.toFixed(1) : (pfz.distance_nm?.toFixed(1) || '—')} nm, {pfz.bearing_degrees ?? pfz.bearing_deg ?? '—'}°\n          </div>"
+  },
+  {
+    "file": "TripPlanDetails",
+    "text": "<div style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 'bold' }}>{distance} km</div>"
+  },
+  {
+    "file": "TripPlanDetails",
+    "text": "<div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Arriving: {arrivalStr}</div>"
+  },
+  {
+    "file": "DataModeIndicator",
+    "text": "<span>Mode: {mode}</span>"
+  },
+  {
+    "file": "DataModeIndicator",
+    "text": "<span>DB: {health.database === 'connected' ? 'Connected' : 'Offline'}</span>"
+  },
+  {
+    "file": "Header",
+    "text": "<span>{t.evidenceBtn} ({evidenceCount})</span>"
+  },
+  {
+    "file": "Header",
+    "text": "<span className=\"header-settings-pill\">\r\n              {language.toUpperCase()} · {theme === 'dark' ? '🌙' : '☀️'}\r\n            </span>"
+  },
+  {
+    "file": "DeckGLMapFoundation",
+    "text": "<div\r\n        className=\"deckgl-view-telemetry\"\r\n        style={{\r\n          position: 'absolute',\r\n          bottom: 6,\r\n          right: 10,\r\n          fontSize: '10px',\r\n          fontFamily: 'monospace',\r\n          color: 'rgba(148, 163, 184, 0.7)',\r\n          background: 'rgba(15, 23, 42, 0.65)',\r\n          padding: '2px 6px',\r\n          borderRadius: '4px',\r\n          pointerEvents: 'none',\r\n          zIndex: 5,\r\n        }}\r\n      >\r\n        Z:{activeViewState.zoom.toFixed(1)} | P:{(activeViewState.pitch ?? 0).toFixed(0)}° | B:{(activeViewState.bearing ?? 0).toFixed(0)}°\r\n      </div>"
+  },
+  {
+    "file": "LayerManager",
+    "text": "<h4 className=\"layer-manager-title\">{translateText('Map Layers', language)} ({layers.length})</h4>"
+  },
+  {
+    "file": "MissionMapBrief",
+    "text": "<span> · {routeLayers.length} {translateText('Routes', language)}</span>"
+  },
+  {
+    "file": "MissionMapBrief",
+    "text": "<span> · {pfzLayers.length} {translateText('PFZ', language)}</span>"
+  },
+  {
+    "file": "MissionMapBrief",
+    "text": "<strong>{activeCandidate.distance_km} km</strong>"
+  },
+  {
+    "file": "MissionMapBrief",
+    "text": "<strong>{activeCandidate.max_wave_height_m}m</strong>"
+  },
+  {
+    "file": "DataCatalogueView",
+    "text": "<option key={c} value={c}>\r\n                  Category: {c}\r\n                </option>"
+  },
+  {
+    "file": "DataCatalogueView",
+    "text": "<option key={p} value={p}>\r\n                  Provider: {p}\r\n                </option>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginLeft: '12px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}>\r\n              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />\r\n              LIVE TELEMETRY ({lastUpdated.toLocaleTimeString()})\r\n            </span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<option key={p.id} value={p.id}>\r\n                  {p.name} ({p.district}, {p.state})\r\n                </option>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<option key={z.advisory_id} value={z.advisory_id}>\r\n                  {z.location_name} (Bearing {z.bearing_deg}°, ~{z.distance_km} km)\r\n                </option>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span>Distance: <strong>{routeResult.total_distance_nm} nm</strong> ({routeResult.total_distance_km} km)</span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<strong>{routeResult.total_distance_nm} nm</strong>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<strong>{routeResult.max_wave_height_m} m</strong>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span className=\"text-rose-600 font-semibold\">\r\n                    Violations: {routeResult.restricted_violations.join(', ')}\r\n                  </span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span className=\"column-count-badge\">{pfzList.length} Active Zones</span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<div className=\"pfz-coordinates\">\r\n                  {pfz.latitude.toFixed(3)}°N, {pfz.longitude.toFixed(3)}°E · Depth {pfz.depth_range_m}\r\n                </div>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span>SST: {pfz.sst_celsius}°C</span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span>Chl-a: {pfz.chlorophyll_mg_m3} mg/m³</span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span>Bearing: {pfz.bearing_deg}°</span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span className=\"pfz-gears\">Gear: {pfz.gear_recommended.join(', ')}</span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span className=\"column-count-badge\">{landingCentres.length} Harbours</span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<span className=\"centre-location\">\r\n                      {port.district}, {port.state} · {port.latitude.toFixed(4)}°N, {port.longitude.toFixed(4)}°E\r\n                    </span>"
+  },
+  {
+    "file": "FisherWatchView",
+    "text": "<div className=\"text-xs text-muted-foreground\">\r\n                    Facilities: {port.facilities.slice(0, 3).join(', ')}\r\n                  </div>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>🌊 {translateText(\"Wave & Swell (INCOIS)\", language)}</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>🐟 {translateText(\"Potential Fishing Zones\", language)}</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>⚓ {translateText(\"CMFRI Landing Centres\", language)} ({ports.length})</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>🗼 {translateText(\"DGLL Lighthouses\", language)} ({lighthouses.length})</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>🦐 {translateText(\"CAA Coastal Aquaculture\", language)} ({farms.length})</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>📏 {translateText(\"12nm / 200nm & Marine Parks\", language)}</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>🏔️ {translateText(\"GEBCO Depth Contours\", language)}</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span>⚠️ {translateText(\"Active Hazard Zones\", language)} ({hazardsGeoJson?.features?.length ?? 0})</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'ports' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('ports')}\r\n                >\r\n                  ⚓ Harbours ({ports.length})\r\n                </button>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'lighthouses' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('lighthouses')}\r\n                >\r\n                  🗼 Lighthouses ({lighthouses.length})\r\n                </button>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'pfzs' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('pfzs')}\r\n                >\r\n                  🐟 PFZs ({pfzs.length})\r\n                </button>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<button\r\n                  className={`px-3 py-1.5 text-xs font-semibold rounded-md ${\r\n                    listCategory === 'farms' ? 'bg-primary text-primary-foreground' : 'bg-muted'\r\n                  }`}\r\n                  onClick={() => setListCategory('farms')}\r\n                >\r\n                  🦐 Aquaculture ({farms.length})\r\n                </button>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{p.district}, {p.state}</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>Ch {p.vhf_channel}</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<strong>{lh.range_nm} nm</strong>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{lh.focal_height_m} m</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{z.latitude.toFixed(2)}°N, {z.longitude.toFixed(2)}°E</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{z.sst_celsius}°C</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{z.chlorophyll_mg_m3} mg/m³</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{f.district}, {f.state}</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{f.water_spread_area_ha} ha</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<td>{f.water_salinity_ppt} ppt</td>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<h3>\r\n                {pointCoordinates[0].toFixed(3)}°N, {pointCoordinates[1].toFixed(3)}°E\r\n              </h3>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<strong>{pointData.bathymetry_and_shelf.distance_to_shore_km} km</strong>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span> ({translateText(\"nearest:\", language)} {pointData.bathymetry_and_shelf.nearest_landing_centre})</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<div className=\"text-lg font-bold\">\r\n                        {pointData.astronomical_tide.current_height_m} m\r\n                      </div>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span className=\"extrema-val\">{pointData.astronomical_tide.next_high.height_m} m</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span className=\"extrema-val\">{pointData.astronomical_tide.next_low.height_m} m</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span className=\"condition-val\">{pointData.ocean_state.wave_height_m} m</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span className=\"condition-val\">{pointData.ocean_state.sst_c}°C</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span className=\"condition-val\">{pointData.ocean_state.wind_speed_kn} kn</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<span className=\"condition-val\">{pointData.ocean_state.swell_period_s} s</span>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<div className=\"text-xs text-muted-foreground\">\r\n                              {lh.distance_km} km away · Range {lh.range_nm} nm · {lh.light_character}\r\n                            </div>"
+  },
+  {
+    "file": "OceanWatchGIS",
+    "text": "<div className=\"text-xs text-muted-foreground\">\r\n                              {p.distance_km} km away · VHF Ch {p.vhf_channel}\r\n                            </div>"
+  },
+  {
+    "file": "OperationalSnapshot",
+    "text": "<strong>{context.origin_harbor} · {formatCraft(context.craft_profile)}</strong>"
+  },
+  {
+    "file": "WhatIfSimulator",
+    "text": "<p className=\"what-if-description\">\r\n            {translateText('Current status:', language)} <strong>{currentStatus.replace('_', '-')}</strong>. {translateText('Simulate counterfactual voyage parameters (temporal window, vessel limits) against deterministic risk rules.', language)}\r\n          </p>"
+  },
+  {
+    "file": "WhatIfSimulator",
+    "text": "<span className=\"diff-timestamp\">+{activeDiff.timeOffsetHours}h {translateText('offset', language)}</span>"
+  },
+  {
+    "file": "RecommendationBanner",
+    "text": "<strong>{t.nextActionLabel}:</strong>"
+  },
+  {
+    "file": "RecommendationBanner",
+    "text": "<span key={i} style={{ fontSize: '10px', color: 'var(--color-text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>\r\n              {prov.provider_name} • {prov.source_name} {prov.valid_to ? `(Valid to ${prov.valid_to.slice(0, 16).replace('T', ' ')} UTC)` : ''}\r\n            </span>"
+  },
+  {
+    "file": "DataProvenancePanel",
+    "text": "<span className=\"provenance-period-text\">· {metadata.snapshotPeriod}</span>"
+  },
+  {
+    "file": "DataProvenancePanel",
+    "text": "<strong className={`quality-pill-val ${validRate < 100 ? 'has-suspect' : ''}`}>\r\n              {metadata.validCount} / {metadata.totalCount} valid ({validRate}%)\r\n            </strong>"
+  },
+  {
+    "file": "DataProvenancePanel",
+    "text": "<span key={status} className={`p-qc-badge ${statusLower}`}>\r\n                        {status}: {count}\r\n                      </span>"
+  },
+  {
+    "file": "DataProvenancePanel",
+    "text": "<span key={conf} className={`p-conf-badge ${conf.toLowerCase()}`}>\r\n                      Confidence {conf}: {count}\r\n                    </span>"
+  },
+  {
+    "file": "DataProvenancePanel",
+    "text": "<span key={st} className={`p-status-badge ${st.toLowerCase()}`}>\r\n                      Status {st}: {count}\r\n                    </span>"
+  },
+  {
+    "file": "DataProvenancePanel",
+    "text": "<span className=\"p-val mono\">±{metadata.meanUncertainty}</span>"
+  },
+  {
+    "file": "DataSourceMonitor",
+    "text": "<span>Mode: {health?.data_mode ?? 'SNAPSHOT'}</span>"
+  },
+  {
+    "file": "DataSourceMonitor",
+    "text": "<span>{configuredCount} configured profiles</span>"
+  },
+  {
+    "file": "EOGridSpatialMap",
+    "text": "<option key={m.key} value={m.key} style={{ background: '#0f172a', color: '#f8fafc' }}>\r\n                  {m.label} ({m.shortName} · {m.unit})\r\n                </option>"
+  },
+  {
+    "file": "EOGridSpatialMap",
+    "text": "<span className=\"eo-stat-val\">{spatialStats.validCount} / {spatialStats.totalCount}</span>"
+  },
+  {
+    "file": "EOGridSpatialMap",
+    "text": "<span style={{ fontWeight: 600, color: '#f8fafc' }}>\r\n                  {activeMetricConfig.shortName} Scale:\r\n                </span>"
+  },
+  {
+    "file": "EOGridSpatialMap",
+    "text": "<strong>Cell {selectedCellRecord.cell_id}</strong>"
+  },
+  {
+    "file": "EOGridSpatialMap",
+    "text": "<span className=\"val\">{selectedCellRecord.center_lat?.toFixed(3)}°N, {selectedCellRecord.center_lon?.toFixed(3)}°E</span>"
+  },
+  {
+    "file": "EOGridSpatialMap",
+    "text": "<span className=\"val\">{selectedCellRecord.satellite || 'Oceansat-3'} ({selectedCellRecord.resolution_m || 360}m)</span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span className=\"researcher-eo-badge\">{dailySeries.length}-Day Snapshot</span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span className=\"researcher-eo-subtitle\">\r\n            Daily Spatial Mean across 5×5 Grid (25 Cells) · {activeConfig.label}\r\n          </span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span className=\"eo-summary-val mono\">\r\n              {summaryStats.overallMin} — {summaryStats.overallMax} <small>{activeConfig.unit}</small>\r\n            </span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span className=\"eo-summary-val\" style={{ color: summaryStats.coveragePct > 80 ? '#10b981' : '#f59e0b' }}>\r\n              {summaryStats.coveragePct}% <small>({summaryStats.totalValid}/{summaryStats.totalCells} cells)</small>\r\n            </span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<small>({summaryStats.totalValid}/{summaryStats.totalCells} cells)</small>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<strong>{hoveredPoint.displayDate} ({hoveredPoint.date})</strong>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span className=\"mono\">{hoveredPoint.min.toFixed(activeConfig.decimals)} — {hoveredPoint.max.toFixed(activeConfig.decimals)} {activeConfig.unit}</span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span className=\"mono\">{hoveredPoint.validCount} / {hoveredPoint.totalCount} cells ({Math.round((hoveredPoint.validCount / hoveredPoint.totalCount) * 100)}%)</span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span className=\"mono\">±{hoveredPoint.meanUncertainty}</span>"
+  },
+  {
+    "file": "EOTemporalAnalysisChart",
+    "text": "<span\r\n                    key={status}\r\n                    className={`eo-tooltip-qc-badge ${status.toLowerCase()}`}\r\n                  >\r\n                    {status}: {count}\r\n                  </span>"
+  },
+  {
+    "file": "HazardSpatialMap",
+    "text": "<span style={{ fontSize: '11px', color: '#94a3b8' }}>({geojson.features.length} Bulletins)</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<option key={h.public_id} value={h.public_id}>{h.name} ({h.state})</option>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<h3 className=\"researcher-section-title\">Marine Conditions — {harborName}</h3>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span className=\"researcher-metric-sub\">Swell {latest?.swell_period_s?.toFixed(1) ?? '—'}s</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span className=\"researcher-metric-sub\">Source: {latest?.source ?? '—'}</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span className=\"researcher-metric-sub\">{latest?.wind_direction_deg ?? '—'}° direction</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span className=\"researcher-metric-sub\">Visibility {latest?.visibility_nm ?? '—'} nm</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<td>{cell.resolution_m}m</td>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<div className=\"researcher-pfz-rank\">#{pfz.rank}</div>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span>{pfz.distance_km != null ? pfz.distance_km.toFixed(1) : '—'} km · {pfz.bearing_deg ?? 0}°{pfz.depth_m != null ? ` · ${pfz.depth_m}m depth` : ''} · ({pfz.latitude?.toFixed(2)}°N, {pfz.longitude?.toFixed(2)}°E)</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span>SST Gradient: {pfz.sst_gradient != null ? pfz.sst_gradient : '—'} · Chl-a {pfz.chlorophyll_a_mg_m3 != null ? `${pfz.chlorophyll_a_mg_m3} mg/m³` : '—'}</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<div className=\"researcher-pfz-validity\">\r\n                      Valid: {formatDate(pfz.valid_from)} — {formatDate(pfz.valid_to)}\r\n                    </div>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span>Source: {hz.source}</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span>Area: {hz.affected_area ?? '—'}</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span>Valid: {formatTime(hz.issued_at)} → {formatTime(hz.valid_until)}</span>"
+  },
+  {
+    "file": "OceanDataExplorer",
+    "text": "<span>QC: {hz.qc_status}</span>"
+  },
+  {
+    "file": "OceanTimeSeriesChart",
+    "text": "<span>No observation time-series data available for {harborName}.</span>"
+  },
+  {
+    "file": "OceanTimeSeriesChart",
+    "text": "<span>48-Hour Marine Observation Time Series — {harborName}</span>"
+  },
+  {
+    "file": "OceanTimeSeriesChart",
+    "text": "<span>{timeRangeStart} → {timeRangeEnd} ({sortedObs.length} hourly observations)</span>"
+  },
+  {
+    "file": "OceanTimeSeriesChart",
+    "text": "<text\r\n                x={margin.left + 8}\r\n                y={p.panelTop + 14}\r\n                className=\"ocean-panel-title\"\r\n                fill={p.metric.color}\r\n              >\r\n                {p.metric.label} ({p.metric.unit})\r\n              </text>"
+  },
+  {
+    "file": "OceanTimeSeriesChart",
+    "text": "<span>Swell Period: {hoveredObs.swell_period_s.toFixed(1)} s</span>"
+  },
+  {
+    "file": "OceanTimeSeriesChart",
+    "text": "<span> · Current: {hoveredObs.current_speed_kn.toFixed(1)} kn</span>"
+  },
+  {
+    "file": "PFZSpatialMap",
+    "text": "<span style={{ fontSize: '11px', color: '#94a3b8' }}>({validCandidates.length} Active Candidates)</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span>{resp.evidence?.length ?? 0} Evidence Items</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span>{resp.map_layers.length} Spatial Layers</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span key={i} className=\"uncertainty-reason-item\">• {r}</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span key={i} className=\"warning-chip\">⚠️ {w}</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span className=\"section-title\">Verified Supporting Evidence ({resp.evidence.length} items)</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<div>Obs: {new Date(ev.observed_time).toLocaleString()}</div>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<div className=\"valid-to-time\">Valid to: {new Date(ev.valid_to).toLocaleString()}</div>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span className=\"section-title\">ORCA Reasoning Trace ({resp.trace.length} steps)</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span className=\"tools-summary-tag\">\r\n                                    Tools: {executedTools.join(', ')}\r\n                                  </span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span key={t} className=\"tool-tag\">✓ {t}</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span className=\"researcher-trace-num\">#{t.step}</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span className=\"researcher-trace-agent\">[{t.agent}]</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span className=\"researcher-trace-duration\">{t.duration_ms}ms</span>"
+  },
+  {
+    "file": "QueryWorkbench",
+    "text": "<span className=\"section-title\">Returned Spatial Vector Layers ({resp.map_layers.length} layers)</span>"
+  },
+  {
+    "file": "ScenarioComparisonView",
+    "text": "<span>Scenario Comparative Analysis ({selectedScenarios.length} Selected)</span>"
+  },
+  {
+    "file": "ScenarioComparisonView",
+    "text": "<span className=\"scenario-comparison-sub\">\r\n            {executedCount} of {selectedScenarios.length} executed\r\n          </span>"
+  },
+  {
+    "file": "ScenarioComparisonView",
+    "text": "<span className=\"expected-intent\">Expected: {s.intent}</span>"
+  },
+  {
+    "file": "ScenarioComparisonView",
+    "text": "<span className=\"expected-intent\">Expected: {s.intent}</span>"
+  },
+  {
+    "file": "ScenarioComparisonView",
+    "text": "<span className=\"expected-intent\">Expected: {s.intent}</span>"
+  },
+  {
+    "file": "ScenarioComparisonView",
+    "text": "<td key={s.id} className=\"scenario-cell mono-cell\">\r\n                    {res.trace_steps ?? 0} steps\r\n                  </td>"
+  },
+  {
+    "file": "ScenarioComparisonView",
+    "text": "<button\r\n                        type=\"button\"\r\n                        className=\"card-run-btn\"\r\n                        onClick={() => onRunScenario(s.id)}\r\n                        disabled={runningIds.includes(s.id) || isAnyRunning}\r\n                      >\r\n                        <Play size={11} /> Run {s.id}\r\n                      </button>"
+  },
+  {
+    "file": "ScenarioLab",
+    "text": "<span className=\"researcher-compare-counter\">\r\n              Compare: {selectedCompareIds.length}/4 selected\r\n            </span>"
+  },
+  {
+    "file": "ScenarioLab",
+    "text": "<span>Scenario Comparison ({selectedCompareIds.length})</span>"
+  },
+  {
+    "file": "ScenarioLab",
+    "text": "<h3>\r\n                  {selected.id}: {selected.name}\r\n                </h3>"
+  },
+  {
+    "file": "ScenarioLab",
+    "text": "<span className=\"researcher-kpi-value\">\r\n                          {selectedResult?.evidence_count ?? 0} items\r\n                        </span>"
+  },
+  {
+    "file": "ScenarioLab",
+    "text": "<span className=\"researcher-kpi-value\">\r\n                          {selectedResult?.trace_steps ?? 0} steps\r\n                        </span>"
+  },
+  {
+    "file": "ScenarioLab",
+    "text": "<span className=\"researcher-kpi-value\">\r\n                          {selectedResult?.execution_time_ms ?? 0}ms\r\n                        </span>"
+  },
+  {
+    "file": "ScenarioLab",
+    "text": "<span className=\"researcher-input-label\">\r\n                            Executed Tools ({selectedResult.executed_tools.length})\r\n                          </span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span>Tide Temporal Analysis — {harborName}</span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span>Tide Temporal Analysis — {harborName}</span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span>No tide observations available for {harborName}.</span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span>Tide Temporal Analysis — {harborName}</span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span>Datum: {datum} (Chart Datum)</span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span className=\"tide-kpi-sub\">\r\n            Min: {minLevel?.toFixed(2) ?? '—'} m · Max: {maxLevel?.toFixed(2) ?? '—'} m\r\n          </span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span className=\"tide-kpi-value\">\r\n              {validCount} / {totalCount}\r\n              <small> valid</small>\r\n            </span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span\r\n                  key={phase}\r\n                  className=\"tide-mini-phase-badge\"\r\n                  style={{ background: style.bg, color: style.text }}\r\n                >\r\n                  {phase}: {count}\r\n                </span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<span className=\"tide-kpi-sub\">Reference Datum: {datum}</span>"
+  },
+  {
+    "file": "TideTimeSeriesChart",
+    "text": "<text\r\n            x={-(margin.top + plotHeight / 2)}\r\n            y={16}\r\n            transform=\"rotate(-90)\"\r\n            textAnchor=\"middle\"\r\n            className=\"ocean-axis-title\"\r\n            fill=\"var(--color-text-muted, #cbd5e1)\"\r\n            fontSize=\"11\"\r\n            fontWeight=\"600\"\r\n          >\r\n            Tide Level (m above {datum})\r\n          </text>"
+  },
+  {
+    "file": "AgentTimeline",
+    "text": "<span className=\"trace-step-number\">Step {item.step}</span>"
+  }
+]

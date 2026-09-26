@@ -1,4 +1,4 @@
-export type SupportedLanguage = 'en' | 'hi' | 'mr';
+export type SupportedLanguage = 'en' | 'hi' | 'mr' | 'ta' | 'te';
 
 export interface PromptTemplate {
   id: string;
@@ -62,6 +62,8 @@ export interface LocaleContent {
 
 
 export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
+  ta: {} as any,
+  te: {} as any,
   en: {
     appTagline: 'Smart Autonomous Marine Understanding, Decision & Risk Assistant',
     evidenceBtn: 'Evidence',
@@ -333,6 +335,8 @@ interface TranslationEntry {
   en: string;
   hi: string;
   mr: string;
+  ta?: string;
+  te?: string;
 }
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
@@ -1950,7 +1954,7 @@ export function translateText(text: string, targetLang: SupportedLanguage): stri
       normalizeForMatch(entry.hi) === clean ||
       normalizeForMatch(entry.mr) === clean
     ) {
-      return entry[targetLang];
+      return entry[targetLang] || entry.en;
     }
   }
 
@@ -1969,25 +1973,25 @@ export function translateText(text: string, targetLang: SupportedLanguage): stri
       clean.includes('ratnagiri') &&
       entry.en.includes('Potential Fishing Zone')
     ) {
-      return entry[targetLang];
+      return entry[targetLang] || entry.en;
     }
     if (
       (clean.includes('departure from ratnagiri') || clean.includes('no-go') || clean.includes('3.4m') || clean.includes('squall')) &&
       entry.en.includes('NO-GO')
     ) {
-      return entry[targetLang];
+      return entry[targetLang] || entry.en;
     }
     if (
       (clean.includes('hazard') || clean.includes('squall') || clean.includes('naval') || clean.includes('restricted')) &&
       entry.en.includes('hazard alert')
     ) {
-      return entry[targetLang];
+      return entry[targetLang] || entry.en;
     }
     if (
       (clean.includes('route comparison') || clean.includes('route 1') || clean.includes('lowest cumulative risk')) &&
       entry.en.includes('Route Comparison')
     ) {
-      return entry[targetLang];
+      return entry[targetLang] || entry.en;
     }
   }
 
@@ -2009,22 +2013,22 @@ export function translateChatMessage(
     if (intent === 'NEAREST_PFZ' || intent === 'PFZ') {
       const match = CANONICAL_TRANSLATION_MAP.find(e => e.en.includes('Potential Fishing Zone'));
       if (match && (content.includes('Potential Fishing Zone') || content.includes('PFZ'))) {
-        return match[targetLang];
+        return (match[targetLang] || match.en) as string;
       }
     } else if (intent === 'GO_NO_GO_SAFETY') {
       const match = CANONICAL_TRANSLATION_MAP.find(e => e.en.includes('NO-GO'));
       if (match && (content.includes('NO-GO') || content.includes('advised against'))) {
-        return match[targetLang];
+        return (match[targetLang] || match.en) as string;
       }
     } else if (intent === 'HAZARD_BOUNDARY' || intent === 'HAZARDS') {
       const match = CANONICAL_TRANSLATION_MAP.find(e => e.en.includes('hazard alert'));
       if (match && (content.includes('hazard') || content.includes('squall'))) {
-        return match[targetLang];
+        return (match[targetLang] || match.en) as string;
       }
     } else if (intent === 'SAFER_ROUTE' || intent === 'ROUTE') {
       const match = CANONICAL_TRANSLATION_MAP.find(e => e.en.includes('Route Comparison'));
       if (match && (content.includes('Route Comparison') || content.includes('lowest cumulative risk'))) {
-        return match[targetLang];
+        return (match[targetLang] || match.en) as string;
       }
     }
   }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -243,10 +244,24 @@ export default function FisherDecisionSurface({
   isOffline = false,
   isExpired = false,
 }: FisherDecisionSurfaceProps) {
+  const { t: i18nT } = useTranslation();
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
-  const status = getFisherDecisionStatus(assessment, error);
-  const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
+    let status = getFisherDecisionStatus(assessment, error);
   const conditions = extractFisherConditions(isLoading || error ? null : assessment);
+  const hazardVal = conditions.hazard;
+  const hasActiveHazard = hazardVal !== '—' && hazardVal !== 'No Active Hazards' && hazardVal !== 'Status Unknown';
+
+  if (hasActiveHazard && status === 'SAFE_TO_GO') {
+    const highestAlert = assessment?.alerts?.find((a: any) => a.affects_trip) || assessment?.alerts?.[0];
+    const alertSeverity = highestAlert?.severity ? String(highestAlert.severity).toUpperCase() : '';
+    if (highestAlert && (alertSeverity === 'CRITICAL' || alertSeverity === 'HIGH')) {
+      status = 'DO_NOT_GO';
+    } else {
+      status = 'CAUTION';
+    }
+  }
+
+  const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
   const { speak, stop, isPlaying } = useSpokenGuidance({ language });
 
   const statusConfig: Record<
@@ -281,15 +296,13 @@ export default function FisherDecisionSurface({
 
   const currentCfg = isLoading
     ? {
-        label: translateText('CHECKING…', language),
+        label: i18nT('FisherDecisionSurface.CHECKING…', 'CHECKING…'),
         bgClass: 'decision-loading',
         icon: <Loader2 size={32} className="decision-icon spin-icon" />,
         testId: 'status-loading',
       }
     : statusConfig[status];
 
-  const hazardVal = conditions.hazard;
-  const hasActiveHazard = hazardVal !== '—' && hazardVal !== 'No Active Hazards' && hazardVal !== 'Status Unknown';
 
   const handleSpeak = () => {
     if (isPlaying) {
@@ -297,9 +310,9 @@ export default function FisherDecisionSurface({
     } else {
       let textToSpeak = `${currentCfg.label}. ${explanation}.`;
       if (hasActiveHazard) {
-        const alertPrefix = translateText('Alert', language);
-        const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
-        const hazardText = hazardVal ? translateText(hazardVal, language) : '';
+        const alertPrefix = i18nT('FisherDecisionSurface.Alert', 'Alert');
+        const affectsSuffix = i18nT('FisherDecisionSurface.affects your planned trip. Do not depart.', 'affects your planned trip. Do not depart.');
+        const hazardText = hazardVal ? i18nT('Hazard.' + hazardVal, hazardVal) : '';
         textToSpeak += ` ${alertPrefix}: ${hazardText} ${affectsSuffix}`;
       }
       speak(textToSpeak);
@@ -357,11 +370,11 @@ export default function FisherDecisionSurface({
         {assessment && (
           <div style={{ marginTop: '16px', fontSize: '0.9rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div>
-              <strong>{translateText('Evaluated Window:', language)}</strong>{' '}
+              <strong>{i18nT('FisherDecisionSurface.Evaluated Window:', 'Evaluated Window:')}</strong>{' '}
               {assessment.trip_context.departure_time || 'Now'} - {assessment.trip_context.return_time || 'End of trip'}
             </div>
             <div>
-              <strong>{translateText('Assessment Time:', language)}</strong>{' '}
+              <strong>{i18nT('FisherDecisionSurface.Assessment Time:', 'Assessment Time:')}</strong>{' '}
               {new Date(assessment.assessed_at).toLocaleString()}
             </div>
           </div>
@@ -372,28 +385,28 @@ export default function FisherDecisionSurface({
         <div className="condition-tile" data-testid="condition-waves">
           <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
             <WavesIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Waves', language)}</span>
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Waves', 'Waves')}</span>
           </div>
           <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.waves}</div>
         </div>
         <div className="condition-tile" data-testid="condition-wind">
           <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
             <WindIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Wind', language)}</span>
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Wind', 'Wind')}</span>
           </div>
           <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.wind}</div>
         </div>
         <div className="condition-tile" data-testid="condition-visibility">
           <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
             <VisibilityIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Visibility', language)}</span>
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Visibility', 'Visibility')}</span>
           </div>
           <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.visibility}</div>
         </div>
         <div className="condition-tile" data-testid="condition-tide">
           <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
             <TideIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Tide', language)}</span>
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Tide', 'Tide')}</span>
           </div>
           <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>
             {translateText(conditions.tide, language)}
@@ -402,31 +415,31 @@ export default function FisherDecisionSurface({
       </div>
       
       <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '12px', textAlign: 'center' }}>
-        {conditions.isForecast ? translateText('Based on forecast', language) : translateText('Based on current observation', language)}
+        {conditions.isForecast ? i18nT('FisherDecisionSurface.Based on forecast', 'Based on forecast') : i18nT('FisherDecisionSurface.Based on current observation', 'Based on current observation')}
       </div>
 
       {hasActiveHazard && (
-        <div className="fisher-actionable-alert" style={{ background: '#fef2f2', borderLeft: '8px solid #ef4444', padding: '16px', marginTop: '16px', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 8px 0', color: '#991b1b', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="fisher-actionable-alert" style={{ background: status === 'DO_NOT_GO' ? '#fef2f2' : '#fffbeb', borderLeft: `8px solid ${status === 'DO_NOT_GO' ? '#ef4444' : '#f59e0b'}`, padding: '16px', marginTop: '16px', borderRadius: '8px' }}>
+          <h3 style={{ margin: '0 0 8px 0', color: status === 'DO_NOT_GO' ? '#991b1b' : '#b45309', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={24} />
-            {translateText(hazardVal, language)}
+            {i18nT('Hazard.' + hazardVal, hazardVal)}
           </h3>
-          <p style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#7f1d1d' }}>
-            <strong>{translateText('What is happening:', language)}</strong> {translateText(hazardVal, language)}.<br/>
-            <strong>{translateText('Does it affect this trip?', language)}</strong> {translateText('Yes, it directly affects your planned route.', language)}<br/>
-            <strong>{translateText('What to do next:', language)}</strong> {translateText('Do not depart. Await further clearance.', language)}
+          <p style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: status === 'DO_NOT_GO' ? '#7f1d1d' : '#92400e' }}>
+            <strong>{i18nT('FisherDecisionSurface.What is happening:', 'What is happening:')}</strong> {i18nT('Hazard.' + hazardVal, hazardVal)}.<br/>
+            <strong>{i18nT('FisherDecisionSurface.Does it affect this trip?', 'Does it affect this trip?')}</strong> {i18nT('FisherDecisionSurface.Yes, it directly affects your planned route.', 'Yes, it directly affects your planned route.')}<br/>
+            <strong>{i18nT('FisherDecisionSurface.What to do next:', 'What to do next:')}</strong> {status === 'DO_NOT_GO' ? i18nT('FisherDecisionSurface.Do not depart. Await further clearance.', 'Do not depart. Await further clearance.') : i18nT('FisherDecisionSurface.Proceed with caution.', 'Proceed with caution.')}
           </p>
           <button
             onClick={() => {
-              const alertPrefix = translateText('Alert', language);
-              const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
-              const hearAdvisory = translateText('Hear the official advisory', language);
-              speak(`${alertPrefix}: ${translateText(hazardVal, language)}. ${affectsSuffix} ${hearAdvisory}`);
+              const alertPrefix = i18nT('FisherDecisionSurface.Alert', 'Alert');
+              const affectsSuffix = i18nT('FisherDecisionSurface.affects your planned trip. Do not depart.', 'affects your planned trip. Do not depart.');
+              const hearAdvisory = i18nT('FisherDecisionSurface.Hear the official advisory', 'Hear the official advisory');
+              speak(`${alertPrefix}: ${i18nT('Hazard.' + hazardVal, hazardVal)}. ${affectsSuffix} ${hearAdvisory}`);
             }}
             style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#ef4444', color: 'white', borderRadius: '8px', border: 'none', width: '100%' }}
           >
             <Volume2 size={24} />
-            {translateText('Hear the official advisory', language)}
+            {i18nT('FisherDecisionSurface.Hear the official advisory', 'Hear the official advisory')}
           </button>
         </div>
       )}
