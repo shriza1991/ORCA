@@ -26,6 +26,7 @@ import {
 } from '../../api/client';
 import type { MapLayer } from '../../types/contracts';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 interface FleetTrackingDeckProps {
   selectedSector?: string;
@@ -85,6 +86,7 @@ export default function FleetTrackingDeck({
   onTrajectoryUpdate,
   language = 'en',
 }: FleetTrackingDeckProps) {
+    const { t } = useTranslation();
   const [vessels, setVessels] = useState<DemoVessel[]>([]);
   const [selectedVesselId, setSelectedVesselId] = useState<string | null>(null);
   const [positions, setPositions] = useState<VesselPosition[]>([]);
@@ -690,7 +692,7 @@ export default function FleetTrackingDeck({
               <div className="scrubber-telemetry-grid">
                 <div className="telemetry-pill">
                   <Gauge size={14} />
-                  <span>{translateText('Speed:', language)} <strong>{currentPos.speed_knots} kts</strong></span>
+                  <span>{translateText('Speed:', language)} <strong>{t('FleetTrackingDeck.valkts', { val: currentPos.speed_knots })}</strong></span>
                 </div>
                 <div className="telemetry-pill">
                   <Compass size={14} />

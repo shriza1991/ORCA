@@ -18,6 +18,7 @@ import {
   type ScenarioRunResult,
 } from '../../api/researcher-client';
 import ScenarioComparisonView from './ScenarioComparisonView';
+import { useTranslation } from "react-i18next";
 
 function StatusBadge({ status }: { status?: string }) {
   const safeStatus = status || 'UNKNOWN';
@@ -37,6 +38,7 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 export default function ScenarioLab() {
+    const { t } = useTranslation();
   const [scenarios, setScenarios] = useState<ScenarioMeta[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>([]);
@@ -369,20 +371,20 @@ export default function ScenarioLab() {
                       <div className="researcher-result-kpi">
                         <span className="researcher-kpi-label">Evidence</span>
                         <span className="researcher-kpi-value">
-                          {selectedResult?.evidence_count ?? 0} items
-                        </span>
+                                                                                {t('ScenarioLab.valitems', { val: selectedResult?.evidence_count ?? 0 })}
+                                                                              </span>
                       </div>
                       <div className="researcher-result-kpi">
                         <span className="researcher-kpi-label">Trace</span>
                         <span className="researcher-kpi-value">
-                          {selectedResult?.trace_steps ?? 0} steps
-                        </span>
+                                                                                {t('ScenarioLab.valsteps', { val: selectedResult?.trace_steps ?? 0 })}
+                                                                              </span>
                       </div>
                       <div className="researcher-result-kpi">
                         <span className="researcher-kpi-label">Latency</span>
                         <span className="researcher-kpi-value">
-                          {selectedResult?.execution_time_ms ?? 0}ms
-                        </span>
+                                                                                {t('ScenarioLab.valms', { val: selectedResult?.execution_time_ms ?? 0 })}
+                                                                              </span>
                       </div>
                     </div>
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { ChatRequest, ChatResponse } from '../types/contracts';
 import { sendMessage, ApiError } from '../api/client';
 import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type MissionState, type WhatIfParameters } from '../types/mission';
@@ -25,7 +25,13 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [activeResponse, setActiveResponse] = useState<ChatResponse | null>(null);
-  const [language, setLanguage] = useState<'en' | 'hi' | 'mr'>('en');
+  const [language, setLanguage] = useState<'en' | 'hi' | 'mr' | 'ta' | 'te'>('en');
+
+  useEffect(() => {
+    import('../i18n/i18n').then((module) => {
+      module.default.changeLanguage(language);
+    });
+  }, [language]);
   const [missionContext, setMissionContext] = useState<MissionContext>(DEFAULT_MISSION_CONTEXT);
   const [missionState, setMissionState] = useState<MissionState | null>(null);
   const [activeDiff, setActiveDiff] = useState<DecisionDiff | null>(null);
@@ -66,7 +72,7 @@ export function useChat() {
         message: text,
         user_context: {
           ...missionContext,
-          language_preference: targetLanguage,
+          language_preference: targetLanguage as any,
           ...requestContext,
         },
         mission_state: missionState ?? undefined,
@@ -157,7 +163,7 @@ export function useChat() {
         message: queryText,
         user_context: {
           ...effectiveContext,
-          language_preference: language,
+          language_preference: language as any,
           parent_assessment_id: currentAssessmentId || activeResponse?.assessment_id,
         },
         mission_state: missionState ?? undefined,

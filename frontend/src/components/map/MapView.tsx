@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import maplibregl from 'maplibre-gl';
@@ -72,6 +73,7 @@ export default function MapView({
   timeOffsetHours,
   onTimeOffsetChange,
 }: MapViewProps) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const activeLayersRef = useRef<{ layers: string[]; sources: string[] }>({ layers: [], sources: [] });
@@ -1148,7 +1150,7 @@ export default function MapView({
               style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: isTrackingLocation ? '#eff6ff' : 'white', color: isTrackingLocation ? '#2563eb' : '#0f172a', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: isTrackingLocation ? 'bold' : 'normal' }}
             >
               <Navigation size={24} fill={isTrackingLocation ? '#2563eb' : 'none'} />
-              {translateText('My Location', language) || 'My Location'}
+              {t('MapView.my_location', 'My Location')}
             </button>
           )}
           <button
@@ -1156,7 +1158,7 @@ export default function MapView({
             style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'white', color: '#0f172a', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           >
             <Layers size={24} />
-            {translateText('Fit Trip', language) || 'Fit Trip'}
+            {t('MapView.fit_trip', 'Fit Trip')}
           </button>
           {layerAvailability?.routes === 'AVAILABLE' && (
             <button
@@ -1164,7 +1166,7 @@ export default function MapView({
               style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: isSimulating ? '#fee2e2' : 'white', color: isSimulating ? '#dc2626' : '#2563eb', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
             >
               {isSimulating ? <Square size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
-              {isSimulating ? 'Stop' : 'Simulate'}
+              {isSimulating ? t('MapView.stop', 'Stop') : t('MapView.simulate', 'Simulate')}
             </button>
           )}
         </div>

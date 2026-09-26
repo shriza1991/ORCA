@@ -38,12 +38,14 @@ const COASTAL_SECTORS = [
 ];
 
 import { type SupportedLanguage } from '../../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 interface FisherWatchViewProps {
   language?: SupportedLanguage;
 }
 
 export default function FisherWatchView({ language = 'en' }: FisherWatchViewProps) {
+    const { t } = useTranslation();
   void language; // Used to trigger re-renders or for future translation string wrapper
   const [selectedSector, setSelectedSector] = useState<string>('All India');
   const [pfzList, setPfzList] = useState<PFZAdvisory[]>([]);
@@ -288,12 +290,12 @@ export default function FisherWatchView({ language = 'en' }: FisherWatchViewProp
                 <span className="verdict-summary font-semibold">{routeResult.verdict}</span>
               </div>
               <div className="verdict-metrics">
-                <span>Distance: <strong>{routeResult.total_distance_nm} nm</strong> ({routeResult.total_distance_km} km)</span>
-                <span>Max Significant Wave: <strong>{routeResult.max_wave_height_m} m</strong></span>
+                <span>Distance: <strong>{t('FisherWatchView.valnm', { val: routeResult.total_distance_nm })}</strong> ({routeResult.total_distance_km} km)</span>
+                <span>Max Significant Wave: <strong>{t('FisherWatchView.valm', { val: routeResult.max_wave_height_m })}</strong></span>
                 {routeResult.restricted_violations.length > 0 && (
                   <span className="text-rose-600 font-semibold">
-                    Violations: {routeResult.restricted_violations.join(', ')}
-                  </span>
+                                                      {t('FisherWatchView.violationsval', { val: routeResult.restricted_violations.join(', ') })}
+                                                    </span>
                 )}
               </div>
             </div>
@@ -349,7 +351,7 @@ export default function FisherWatchView({ language = 'en' }: FisherWatchViewProp
                 </div>
 
                 <div className="pfz-footer">
-                  <span className="pfz-gears">Gear: {pfz.gear_recommended.join(', ')}</span>
+                  <span className="pfz-gears">{t('FisherWatchView.gearval', { val: pfz.gear_recommended.join(', ') })}</span>
                   <span className="pfz-source-tag">Oceansat-3 OCM</span>
                 </div>
               </div>
@@ -364,7 +366,7 @@ export default function FisherWatchView({ language = 'en' }: FisherWatchViewProp
               <Anchor size={18} className="text-primary" />
               <h3>CMFRI Fish Landing Centres & Ports</h3>
             </div>
-            <span className="column-count-badge">{landingCentres.length} Harbours</span>
+            <span className="column-count-badge">{t('FisherWatchView.valharbours', { val: landingCentres.length })}</span>
           </div>
 
           <div className="ports-directory-list">
@@ -405,8 +407,8 @@ export default function FisherWatchView({ language = 'en' }: FisherWatchViewProp
                     <span>VHF Ch <strong>{port.vhf_channel}</strong></span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Facilities: {port.facilities.slice(0, 3).join(', ')}
-                  </div>
+                                            {t('FisherWatchView.facilitiesval', { val: port.facilities.slice(0, 3).join(', ') })}
+                                          </div>
                 </div>
               </div>
             ))}

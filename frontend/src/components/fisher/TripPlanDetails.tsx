@@ -1,6 +1,7 @@
 import { Clock, Route as RouteIcon, Fuel, ShieldAlert, CheckCircle2, XCircle, Award } from 'lucide-react';
 import type { TripAssessmentResponse } from '../../types/assessment';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 interface TripPlanDetailsProps {
   assessment: TripAssessmentResponse | null;
@@ -21,6 +22,7 @@ export function getRiskBadgeStyle(risk: string): { backgroundColor: string; colo
 }
 
 export default function TripPlanDetails({ assessment, language }: TripPlanDetailsProps) {
+  const { t } = useTranslation();
   const title = translateText('Trip Plan & Evaluated Routes', language);
 
   if (!assessment || !assessment.route_candidates || assessment.route_candidates.length === 0) {

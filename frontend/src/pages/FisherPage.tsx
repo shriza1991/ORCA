@@ -217,7 +217,7 @@ export default function FisherPage({
             />
           </div>
         ) : (
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '100%' }}>
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', maxHeight: '100vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button

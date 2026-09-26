@@ -13,7 +13,15 @@ export interface SpokenGuidanceOptions {
 const LANG_FALLBACK_CHAINS: Record<SupportedLanguage, string[]> = {
   en: ['en-IN', 'en-US', 'en-GB', 'en'],
   hi: ['hi-IN', 'hi'],
-  mr: ['mr-IN', 'hi-IN', 'hi', 'en-IN'],
+  mr: [
+      "आपला प्रवास सुरू करण्यासाठी..."
+    ],
+    ta: [
+      "Start your trip..."
+    ],
+    te: [
+      "Start your trip..."
+    ],
 };
 
 /**
