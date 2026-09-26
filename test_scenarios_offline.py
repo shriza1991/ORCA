@@ -6,12 +6,15 @@ from pathlib import Path
 # Add backend to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
+import pytest
+
 from backend.app.agents.integrations.contracts import ToolInvocationContext
 from backend.app.connectors.manager import ConnectorManager
 from backend.app.connectors.snapshot import SnapshotConnector
 from backend.app.connectors.modes import DataMode
 from backend.app.domain.risk_engine import DeterministicRiskEngine
 
+@pytest.mark.parametrize("scenario_name", ["hero", "safe", "unsafe", "unknown"])
 def test_scenario(scenario_name: str):
     print(f"\n=== Testing Scenario: {scenario_name.upper()} ===")
     
@@ -52,7 +55,8 @@ def test_scenario(scenario_name: str):
     print(f"Confidence: {res.confidence_level.value}")
     print("Decisive Factors:", res.decisive_factors)
     print("Warnings:", res.warnings)
-    
+    assert res.status is not None
+    assert res.confidence_level is not None
     return res.status.value, res.confidence_level.value
 
 def main():
