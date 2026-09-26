@@ -843,7 +843,7 @@ async def voice_chat_endpoint(
     except _AgentExecutionError as exc:
         envelope = Dev2ErrorEnvelope(
             code="AGENT_EXECUTION_FAILED",
-            message="SAMUDRA encountered an internal error while processing your query.",
+            message="ORCA encountered an internal error while processing your query.",
             run_id=exc.run_id,
         )
         return JSONResponse(

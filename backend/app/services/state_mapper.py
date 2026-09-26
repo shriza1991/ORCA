@@ -134,7 +134,7 @@ def map_state_to_response(
     # Answer / response text
     # ------------------------------------------------------------------
     answer: str = state.get("response") or (
-        "SAMUDRA was unable to synthesise a response for this query. "
+        "ORCA was unable to synthesise a response for this query. "
         "Please try rephrasing or contact support."
     )
 
@@ -144,10 +144,31 @@ def map_state_to_response(
     if raw_decision is not None:
         decision_object = raw_decision.model_dump() if hasattr(raw_decision, "model_dump") else raw_decision
     else:
+        # confidence may arrive from ORCAState as a typed Confidence model or a
+        # plain dict — handle both safely without calling .level on a dict.
+        def _conf_level(c: Any) -> Any:
+            if c is None:
+                return ConfidenceLevel.LOW
+            if hasattr(c, "level"):
+                return c.level
+            if isinstance(c, dict):
+                return c.get("level", ConfidenceLevel.LOW)
+            return ConfidenceLevel.LOW
+
+        def _conf_reasons(c: Any) -> list:
+            if c is None:
+                return []
+            if hasattr(c, "reasons"):
+                return c.reasons
+            if isinstance(c, dict):
+                return c.get("reasons", [])
+            return []
+
+        _rec_conf = recommendation.confidence
         decision_object = DecisionObject(
             decision=recommendation.status,
-            confidence=(recommendation.confidence.level if recommendation.confidence else confidence.level),
-            confidence_reasons=(recommendation.confidence.reasons if recommendation.confidence else confidence.reasons),
+            confidence=(_conf_level(_rec_conf) if _rec_conf is not None else _conf_level(confidence)),
+            confidence_reasons=(_conf_reasons(_rec_conf) if _rec_conf is not None else _conf_reasons(confidence)),
             decisive_factor=recommendation.summary,
             supporting_factors=recommendation.decisive_factors,
             non_decisive_factors=recommendation.non_decisive_factors,
