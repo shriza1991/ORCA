@@ -63,7 +63,7 @@ export type AuthorityTab = 'terminal' | 'fleet' | 'ports' | 'aquaculture' | 'ben
  */
 export default function AuthorityPage({
   chat,
-  theme: _theme,
+  theme,
   mobileView,
   onOpenEvidence,
   onBack,
@@ -468,6 +468,7 @@ export default function AuthorityPage({
                 trajectoryLayer={trajectoryLayer}
                 sectorRouteLayers={sectorRouteLayers}
                 language={chat.language}
+                theme={theme}
               />
             </div>
           </div>
@@ -510,6 +511,7 @@ export default function AuthorityPage({
                 trajectoryLayer={trajectoryLayer}
                 sectorRouteLayers={sectorRouteLayers}
                 language={chat.language}
+                theme={theme}
               />
             </div>
           </div>

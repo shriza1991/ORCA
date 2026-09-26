@@ -825,6 +825,39 @@ Status: ACCEPTED
   - Frontend test suite: 21 test files, 266/266 tests passing in Vitest (`npm run test`).
   - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
 
+## D048 — Light Mode Support for Authority Command Deck 3D Deck.gl Map
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior Frontend / Visualization Engineer
+- Task/context: Provide high-contrast, theme-adaptive Light Mode support for the 3D Map in Authority Command Deck while eliminating Deck.gl text rendering warnings.
+- Decision:
+  1. **Dual Basemap Vector Styles**: Configured `DeckGLMapFoundation` with Carto Positron (`https://basemaps.cartocdn.com/gl/positron-gl-style/style.json`) for Light Mode and Dark Matter for Dark Mode, switching dynamically via `map.setStyle()` on theme transition.
+  2. **Theme-Adaptive Deck.gl Vector Layers**:
+     - Boundaries & Geofences: High-contrast cyan/sky line colors in Light Mode against pale coastal waters.
+     - Active Surveillance Sector & Radar Node: Vibrant purple borders and station markers.
+     - Operational Hazards: Crimson/amber stroked polygons with responsive warning fill.
+     - Operational Routes: Emerald green for recommended corridor, slate for alternate corridors.
+     - Vessel Wake Trail & Breadcrumbs: Luminous amber tracks with dark-outline visibility.
+     - 3D Extruded Beacon & Pulse Aura: Semi-translucent gold beacon with warm amber perimeter.
+     - Vessel Icons & Vectors: Gold (selected) and cyan (monitored) craft chevrons.
+     - Text Layers: High-contrast slate typography (`[15, 23, 42]`) with clean white halo outline (`[255, 255, 255]`) in Light Mode, inverted in Dark Mode.
+  3. **Deck.gl Outline & Character Set Resolution**:
+     - Added `fontSettings: { sdf: true }` to all Deck.gl TextLayers with `outlineWidth`, eliminating `fontSettings.sdf is required to render outline`.
+     - Replaced non-ASCII middle-dot characters (`·`) with standard hyphens (`-`), eliminating `Missing character: · (183)` console warnings.
+  4. **Glassmorphic Floating HUD Overlays**:
+     - Restyled camera preset selector ("Tactical 3D", "High Orbit", "2D Flat"), quick navigation toolbar, top Sector Command Header strip, and bottom Vessel Voyage Telemetry HUD with high-contrast translucent white surfaces (`rgba(255, 255, 255, 0.94)`), slate borders, and dark slate typography.
+  5. **100% Dual-Client Parity**:
+     - Synchronized changes across React (`frontend/src/components/map/DeckGLMapFoundation.tsx`, `frontend/src/components/authority/AuthorityDeckGLMap.tsx`, `frontend/src/pages/AuthorityPage.tsx`) and Next.js (`nextjs/components/map/DeckGLMapFoundation.tsx`, `nextjs/components/authority/AuthorityDeckGLMap.tsx`, `nextjs/views/AuthorityPage.tsx`).
+- Why:
+  Authority operators working in well-lit maritime command centers and port control offices require a bright, daylight-readable, glare-free tactical map interface matching the application's global Light Mode theme.
+- Affected areas:
+  `frontend/src/components/map/DeckGLMapFoundation.tsx`, `frontend/src/components/authority/AuthorityDeckGLMap.tsx`, `frontend/src/pages/AuthorityPage.tsx`, `nextjs/components/map/DeckGLMapFoundation.tsx`, `nextjs/components/authority/AuthorityDeckGLMap.tsx`, `nextjs/views/AuthorityPage.tsx`.
+- Tests/verification:
+  - Frontend test suite: 21 test files, 266/266 tests passing in Vitest (`npm test`).
+  - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
+  - In-browser visual verification via Chrome DevTools: verified Carto Positron basemap, 3D extruded vessel beacon, waypoint breadcrumbs, and floating telemetry HUD. Console warnings for Deck.gl outlines and missing characters completely eliminated.
+
 ## Decision template
 
 ### D0XX — <title>

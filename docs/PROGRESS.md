@@ -6,9 +6,15 @@
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
-- Current version: `v0.2.3-m1.2-mission-brief`
-- Active branch: `main`
-- Current milestone: **M1.2 Mission Brief / Why Panel (Deterministic Presentation & Explainability)**
+- Current version: `v0.2.4-m4-light-authority-map`
+- Active branch: `feat/m4-mission-twin`
+- Current feature: **Authority Command Deck Light Mode 3D Deck.gl Map (§D048)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Frontend Vitest: 266/266 passing across 21 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npx tsc --noEmit`).
+    - Dual-Client Parity: 100% synchronized across Vite (`frontend/`) and Next.js (`nextjs/`).
+    - In-browser visual verification: Carto Positron basemap active in Light Mode; Deck.gl vector layers (boundaries, sector geofences, hazards, routes, 3D beacons, wake trails, text labels) adaptively contrast against daylight surfaces. Deck.gl outline warnings resolved with SDF fonts; middle-dot missing characters eliminated.
+- Prior Milestone: **M1.2 Mission Brief / Why Panel (Deterministic Presentation & Explainability)**
   - **Status**: **COMPLETE & VERIFIED**
     - Backend Pytest: 3/3 acceptance tests passing in `tests/integration/test_m1_2_mission_brief.py`, 18/18 passing across full assessment suite (`test_assessments.py`, `test_mission_contracts.py`, `test_m1_1_mission_state.py`, `test_m1_2_mission_brief.py`).
     - Frontend Vitest: 259/259 passing across 20 test suites (`npm run test`).
