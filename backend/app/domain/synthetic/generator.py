@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 # Authoritative reference timestamp for deterministic generation
-REFERENCE_TIME = datetime(2026, 9, 12, 6, 0, 0, tzinfo=timezone.utc)
+REFERENCE_TIME = datetime(2026, 9, 26, 6, 0, 0, tzinfo=timezone.utc)
 SYNTHETIC_NAMESPACE = "SAMUDRA_DEMO_V1"
 DATASET_VERSION = "synthetic_demo_v1"
 
@@ -241,7 +241,7 @@ def generate_marine_observations() -> List[Dict[str, Any]]:
     harbors = [("harbor-ratnagiri", "Ratnagiri", 1.2, 12.0), ("harbor-malvan", "Malvan", 1.1, 10.0)]
 
     for harbor_id, harbor_name, base_wave, base_wind in harbors:
-        for offset in range(-24, 24):
+        for offset in range(-24, 73):
             obs_time = REFERENCE_TIME + timedelta(hours=offset)
             obs_id = f"obs-{harbor_name.lower()}-{offset:+03d}h"
 
@@ -284,6 +284,7 @@ def generate_marine_observations() -> List[Dict[str, Any]]:
                 "public_id": obs_id,
                 "harbor_id": harbor_id,
                 "observation_time": obs_time,
+                "valid_to_utc": (obs_time + timedelta(hours=72)).isoformat().replace('+00:00', 'Z'),
                 # Source native INCOIS variables
                 "swh": wave_height,
                 "mwh": max_wave,
