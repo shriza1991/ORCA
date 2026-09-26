@@ -51,6 +51,19 @@ class ProviderToolAdapter:
     """Utility class providing normalization adapters for Dev 2 and Dev 4 providers."""
 
     @staticmethod
+    def _resolve_data_mode(is_mock: bool, source_name: str) -> str:
+        if is_mock:
+            return "MOCK"
+        source_upper = (source_name or "").upper()
+        if "UNAVAILABLE" in source_upper or "DEGRADED" in source_upper:
+            return "UNAVAILABLE"
+        if "SNAPSHOT" in source_upper or "HISTORICAL" in source_upper:
+            return "HISTORICAL"
+        if "HYBRID" in source_upper or "CACHED" in source_upper:
+            return "CACHED_REAL"
+        return "LIVE"
+
+    @staticmethod
     def adapt_marine_conditions(
         provider_fn: Callable[[ToolInvocationContext], MarineConditionsPayload],
         context: ToolInvocationContext,
@@ -70,7 +83,7 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE" # TODO: Maybe extract from payload if exists
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
             lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
             coverage_val = payload.harbor or context.origin_harbor
 
@@ -155,7 +168,7 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE"
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
             lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
             coverage_val = payload.harbor or context.origin_harbor
 
@@ -222,7 +235,7 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE"
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
             lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
             coverage_val = payload.harbor or context.origin_harbor
 
@@ -288,7 +301,7 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE"
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
             lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
             coverage_val = payload.harbor or context.origin_harbor
 
@@ -356,7 +369,16 @@ class ProviderToolAdapter:
                 if hazard is None:
                     hazard = bundle.hazard
 
-            payload = engine_fn(context, marine=marine, weather=weather, hazard=hazard, bundle=bundle)
+            data_mode_val = "MOCK" if is_mock else "LIVE"
+            
+            payload = engine_fn(
+                context, 
+                marine=marine, 
+                weather=weather, 
+                hazard=hazard, 
+                bundle=bundle,
+                data_mode=data_mode_val
+            )
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "DETERMINISTIC_EVAL"]
 
             rec = Recommendation(
@@ -376,7 +398,7 @@ class ProviderToolAdapter:
             )
             rec.confidence = confidence
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE"
+            data_mode_val = "MOCK" if is_mock else "LIVE"
             lineage_val = "risk_engine_eval"
             coverage_val = context.origin_harbor or "Global"
 
@@ -426,7 +448,7 @@ class ProviderToolAdapter:
             payload = engine_fn(context, raw_features)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "GEOSPATIAL_EVAL"]
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE"
+            data_mode_val = "MOCK" if is_mock else "LIVE"
             lineage_val = "pfz_ranking_eval"
             coverage_val = context.origin_harbor or "Coastal"
 
@@ -476,7 +498,7 @@ class ProviderToolAdapter:
             payload = engine_fn(context, marine, destination)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "ROUTE_EVAL"]
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE"
+            data_mode_val = "MOCK" if is_mock else "LIVE"
             lineage_val = "route_exposure_eval"
             coverage_val = f"{context.origin_harbor} to {destination}"
 
@@ -522,7 +544,7 @@ class ProviderToolAdapter:
             payload = engine_fn(context, coords)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "GEOSPATIAL_EVAL"]
 
-            data_mode_val = "M2_CONTRACT_MOCK" if is_mock else "LIVE"
+            data_mode_val = "MOCK" if is_mock else "LIVE"
             lineage_val = "geospatial_hazard_eval"
             coverage_val = f"Coords: {coords}" if coords else (context.origin_harbor or "Unknown")
 

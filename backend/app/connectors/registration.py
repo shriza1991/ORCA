@@ -105,7 +105,7 @@ def register_dev2_provider_tools(
         resolution="Point",
         freshness="Real-time",
         access="API",
-        data_mode="LIVE",
+        data_mode="MOCK" if is_mock else "LIVE",
         supported_intents=["SAFETY", "ROUTE", "HAZARDS", "WHAT_IF", "ALTERNATIVE", "ANALYTICAL_EXPLANATION", "WHAT_CHANGED"],
     )
 
@@ -135,7 +135,7 @@ def register_dev2_provider_tools(
         resolution="Point",
         freshness="Daily",
         access="API",
-        data_mode="LIVE",
+        data_mode="MOCK" if is_mock else "LIVE",
         supported_intents=["SAFETY", "HAZARDS"],
     )
 
@@ -201,7 +201,7 @@ def register_dev4_operational_engines(
         resolution="Point",
         freshness="Daily",
         access="API",
-        data_mode="LIVE",
+        data_mode="MOCK" if is_mock else "LIVE",
         supported_intents=["PFZ"],
     )
     pfz_engine = DeterministicPFZRankingEngine()
@@ -238,7 +238,7 @@ def register_dev4_operational_engines(
         resolution="N/A",
         freshness="Real-time",
         access="Local",
-        data_mode="LIVE",
+        data_mode="MOCK" if is_mock else "LIVE",
         supported_intents=["SAFETY", "ROUTE", "WHAT_IF", "ALTERNATIVE", "ANALYTICAL_EXPLANATION", "WHAT_CHANGED"],
     )
     def handle_risk(**kwargs: Any) -> Any:
@@ -290,7 +290,7 @@ def register_dev4_operational_engines(
         resolution="N/A",
         freshness="Real-time",
         access="Local",
-        data_mode="LIVE",
+        data_mode="MOCK" if is_mock else "LIVE",
         supported_intents=["SAFETY"],
     )
     def handle_trip_assessment(**kwargs: Any) -> Any:
@@ -395,7 +395,7 @@ def register_dev4_operational_engines(
         resolution="High",
         freshness="Monthly",
         access="Database",
-        data_mode="LIVE",
+        data_mode="MOCK" if is_mock else "LIVE",
         supported_intents=["ROUTE", "HAZARDS", "SAFETY", "ANALYTICAL_EXPLANATION", "WHAT_CHANGED"],
     )
     geo_engine = DeterministicGeospatialEngine()
@@ -431,7 +431,7 @@ def register_dev4_operational_engines(
         resolution="N/A",
         freshness="Real-time",
         access="Local",
-        data_mode="LIVE",
+        data_mode="MOCK" if is_mock else "LIVE",
         supported_intents=["ROUTE", "HAZARDS"],
     )
     def handle_route(**kwargs: Any) -> Any:
