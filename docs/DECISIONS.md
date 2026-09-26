@@ -948,3 +948,13 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
+ # #   2 0 2 6 - 0 9 - 2 7 :   F i x t u r e   F o r e c a s t   H o r i z o n   a n d   T e l e m e t r y   F i e l d   M a p p i n g s 
+ -   * * C o n t e x t * * :   O f f l i n e   t r i p   e v a l u a t i o n s   f o r   t y p i c a l   d u r a t i o n s   ( e . g . ,   1 2   h o u r s )   w e r e   t r i g g e r i n g   \ T R I P _ W I N D O W _ E X C E E D S _ F O R E C A S T \   a l e r t s   b e c a u s e   t h e   f a l l b a c k   s n a p s h o t   d a t a   d e r i v e d   a   6 - h o u r   \  a l i d _ t o \   w i n d o w .   A d d i t i o n a l l y ,   v a l i d   r e c o r d s   w e r e   b e i n g   m a r k e d   a s   \ D E G R A D E D _ D A T A \   b e c a u s e   t h e   d a t a b a s e   m o d e l   m a p p e d   w a v e   h e i g h t   t o   \ w a v e _ h e i g h t _ m \   w h i l e   t h e   n o r m a l i z e r   o n l y   r e a d   \ s w h \   o r   \ s i g n i f i c a n t _ w a v e _ h e i g h t _ m \ . 
+ -   * * D e c i s i o n * * :   
+     1 .   E x t e n d e d   t h e   d e t e r m i n i s t i c a l l y   g e n e r a t e d   s y n t h e t i c   f i x t u r e   h o r i z o n   f r o m   2 4 h   t o   7 2 h   ( \ g e n e r a t o r . p y \ ) . 
+     2 .   A n c h o r e d   t h e   d e t e r m i n i s t i c   \ R E F E R E N C E _ T I M E \   i n   \ g e n e r a t o r . p y \   t o   t h e   c u r r e n t   e v a l u a t i o n   d a y   ( 2 0 2 6 - 0 9 - 2 6 )   s o   m o c k   d a t a   e n c o m p a s s e s   a c t i v e   t e s t   t r i p s . 
+     3 .   M o d i f i e d   \ I n c o i s O S F N o r m a l i z e r \   t o   d e r i v e   a   7 2 - h o u r   v a l i d   w i n d o w   a n d   c h e c k   \ w a v e _ h e i g h t _ m \   a l o n g s i d e   n a t i v e   I N C O I S   k e y s   t o   m a i n t a i n   c o n s i s t e n c y   a c r o s s   D B   r e c o r d s   a n d   d i r e c t   J S O N   f i l e   l o a d i n g . 
+ -   * * C o n s e q u e n c e * * :   T e s t   t r i p s   o f   1 2 +   h o u r s   n o w   s u c c e s s f u l l y   p a s s   t h e   s n a p s h o t   s t a l e n e s s   e v a l u a t i o n   a n d   r e t u r n   a   d e t e r m i n i s t i c   \ G O \   d e c i s i o n   w i t h o u t   d e g r a d e d   d a t a   w a r n i n g s . 
+  
+ 
