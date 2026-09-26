@@ -40,6 +40,13 @@ def register_dev2_provider_tools(
         dependencies=marine_cap.dependencies,
         requires_evidence=marine_cap.requires_evidence,
         is_available=True,  # Will update below
+        authority="INCOIS",
+        coverage="Indian Coast",
+        resolution="0.25 deg",
+        freshness="Hourly",
+        access="API",
+        data_mode="HYBRID",
+        supported_intents=["SAFETY", "ROUTE", "PFZ", "CONDITIONS", "HAZARDS", "WHAT_CHANGED", "WHAT_IF", "ALTERNATIVE", "ANALYTICAL_EXPLANATION"],
     )
 
     def handle_marine(**kwargs: Any) -> Any:
@@ -63,6 +70,13 @@ def register_dev2_provider_tools(
         dependencies=weather_cap.dependencies,
         requires_evidence=weather_cap.requires_evidence,
         is_available=True,
+        authority="IMD",
+        coverage="Indian Coast",
+        resolution="10 km",
+        freshness="Hourly",
+        access="API",
+        data_mode="HYBRID",
+        supported_intents=["SAFETY", "ROUTE", "WHAT_IF", "ALTERNATIVE", "ANALYTICAL_EXPLANATION", "WHAT_CHANGED"],
     )
 
     def handle_weather(**kwargs: Any) -> Any:
@@ -86,6 +100,13 @@ def register_dev2_provider_tools(
         dependencies=hazard_cap.dependencies,
         requires_evidence=hazard_cap.requires_evidence,
         is_available=True,
+        authority="IMD",
+        coverage="Indian Coast",
+        resolution="Point",
+        freshness="Real-time",
+        access="API",
+        data_mode="LIVE",
+        supported_intents=["SAFETY", "ROUTE", "HAZARDS", "WHAT_IF", "ALTERNATIVE", "ANALYTICAL_EXPLANATION", "WHAT_CHANGED"],
     )
 
     def handle_hazard(**kwargs: Any) -> Any:
@@ -109,6 +130,13 @@ def register_dev2_provider_tools(
         dependencies=svas_cap.dependencies,
         requires_evidence=svas_cap.requires_evidence,
         is_available=True,
+        authority="INCOIS",
+        coverage="Indian Coast",
+        resolution="Point",
+        freshness="Daily",
+        access="API",
+        data_mode="LIVE",
+        supported_intents=["SAFETY", "HAZARDS"],
     )
 
     def handle_svas(**kwargs: Any) -> Any:
@@ -168,6 +196,13 @@ def register_dev4_operational_engines(
         dependencies=pfz_cap.dependencies,
         requires_evidence=pfz_cap.requires_evidence,
         is_available=True,
+        authority="INCOIS",
+        coverage="Indian Coast",
+        resolution="Point",
+        freshness="Daily",
+        access="API",
+        data_mode="LIVE",
+        supported_intents=["PFZ"],
     )
     pfz_engine = DeterministicPFZRankingEngine()
     def handle_pfz(**kwargs: Any) -> Any:
@@ -198,6 +233,13 @@ def register_dev4_operational_engines(
         dependencies=risk_cap.dependencies,
         requires_evidence=risk_cap.requires_evidence,
         is_available=True,
+        authority="SAMUDRA",
+        coverage="Global",
+        resolution="N/A",
+        freshness="Real-time",
+        access="Local",
+        data_mode="LIVE",
+        supported_intents=["SAFETY", "ROUTE", "WHAT_IF", "ALTERNATIVE", "ANALYTICAL_EXPLANATION", "WHAT_CHANGED"],
     )
     def handle_risk(**kwargs: Any) -> Any:
         context = ToolInvocationContext(**{k: v for k, v in kwargs.items() if k not in ("observation_bundle", "bundle", "marine", "weather", "hazard")})
@@ -243,6 +285,13 @@ def register_dev4_operational_engines(
         dependencies=trip_cap.dependencies,
         requires_evidence=trip_cap.requires_evidence,
         is_available=True,
+        authority="SAMUDRA",
+        coverage="Global",
+        resolution="N/A",
+        freshness="Real-time",
+        access="Local",
+        data_mode="LIVE",
+        supported_intents=["SAFETY"],
     )
     def handle_trip_assessment(**kwargs: Any) -> Any:
         from backend.app.services.assessment_service import AssessmentService
@@ -341,6 +390,13 @@ def register_dev4_operational_engines(
         dependencies=geo_cap.dependencies,
         requires_evidence=geo_cap.requires_evidence,
         is_available=True,
+        authority="Flanders",
+        coverage="Indian Coast",
+        resolution="High",
+        freshness="Monthly",
+        access="Database",
+        data_mode="LIVE",
+        supported_intents=["ROUTE", "HAZARDS", "SAFETY", "ANALYTICAL_EXPLANATION", "WHAT_CHANGED"],
     )
     geo_engine = DeterministicGeospatialEngine()
     def handle_geo(**kwargs: Any) -> Any:
@@ -370,6 +426,13 @@ def register_dev4_operational_engines(
         dependencies=route_cap.dependencies,
         requires_evidence=route_cap.requires_evidence,
         is_available=False,
+        authority="SAMUDRA",
+        coverage="Global",
+        resolution="N/A",
+        freshness="Real-time",
+        access="Local",
+        data_mode="LIVE",
+        supported_intents=["ROUTE", "HAZARDS"],
     )
     def handle_route(**kwargs: Any) -> Any:
         raise RuntimeError("Real route evaluator is explicitly unavailable in operational mode.")
