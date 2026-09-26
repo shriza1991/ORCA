@@ -166,6 +166,7 @@ class MissionState(BaseModel):
     selected_area: Optional[Dict[str, Any]] = Field(None, description="GeoJSON of selected operational area")
     route: Optional[MissionRoute] = Field(None, description="Computed or selected route corridor")
     previous_decision: Optional[PreviousDecision] = Field(None, description="Preceding decision for comparison")
+    parent_assessment_id: Optional[str] = Field(None, description="Parent baseline assessment ID for what-if scenarios")
     current_context: MissionContextData = Field(default_factory=MissionContextData, description="Environmental data snapshot")
     provenance: MissionProvenance = Field(default_factory=MissionProvenance, description="Source provenance lineage")
     uncertainty: MissionUncertainty = Field(default_factory=MissionUncertainty, description="Data gaps and conflict flags")
@@ -177,6 +178,30 @@ class MissionState(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),
         description="Mission last updated timestamp (ISO-8601 UTC)",
     )
+
+    @property
+    def origin_harbor(self) -> Optional[str]:
+        return self.origin.name
+
+    @property
+    def craft_profile(self) -> str:
+        return self.vessel.type
+
+    @property
+    def departure_time(self) -> Optional[str]:
+        return self.timing.departure
+
+    @property
+    def return_time(self) -> Optional[str]:
+        return self.timing.return_deadline
+
+    @property
+    def target_pfz(self) -> Optional[str]:
+        return self.destination.name
+
+    @property
+    def language_preference(self) -> str:
+        return self.user.locale
 
 
 # =============================================================================
@@ -278,6 +303,17 @@ def mission_from_user_context(
         locale=ctx.language_preference if ctx.language_preference and ctx.language_preference != "auto" else "en",
     )
 
+    # Determine timing
+    timing = MissionTiming(
+        departure=ctx.departure_time,
+        return_deadline=ctx.return_time,
+    )
+
+    # Determine destination / target PFZ
+    destination = MissionLocation(
+        name=ctx.target_pfz,
+    ) if ctx.target_pfz else MissionLocation()
+
     # Determine objective
     lower_msg = message.lower()
     obj_type = ObjectiveType.FISHING
@@ -295,4 +331,7 @@ def mission_from_user_context(
         vessel=vessel,
         objective=MissionObjective(type=obj_type, description=message if message else None),
         origin=origin,
+        destination=destination,
+        timing=timing,
+        parent_assessment_id=ctx.parent_assessment_id,
     )

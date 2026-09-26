@@ -6,11 +6,12 @@ Coordinates the single assessment pipeline for the Fisher dashboard and conversa
 import uuid
 import logging
 from datetime import datetime, UTC
-from typing import List
+from typing import List, Optional
 
 from backend.app.contracts.assessment import TripAssessmentRequest, TripAssessmentResponse, AssessmentSourceStatus
 from backend.app.contracts.observation import ObservationBundle
 from backend.app.contracts.chat import UserContext, RecommendationStatus
+from backend.app.contracts.mission import MissionState, mission_from_user_context
 from backend.app.services.data_service import DataService
 from backend.app.domain.risk_engine import DeterministicRiskEngine
 from backend.app.agents.integrations.contracts import ToolInvocationContext
@@ -36,21 +37,54 @@ class AssessmentService:
         assessment_id = str(uuid.uuid4())
         now_iso = datetime.now(UTC).isoformat()
 
+        # Resolve canonical MissionState as source-of-truth (M1.1)
+        if request.mission_state:
+            mission_state = request.mission_state
+        else:
+            u_ctx = UserContext(
+                origin_harbor=request.origin_harbor,
+                coordinates=request.coordinates,
+                craft_profile=request.craft_profile,
+                departure_time=request.departure_time,
+                return_time=request.return_time,
+                target_pfz=request.destination_id,
+                language_preference=request.language_preference,
+                parent_assessment_id=request.parent_assessment_id,
+            )
+            mission_state = mission_from_user_context(
+                user_context=u_ctx,
+                message=f"Trip assessment from {request.origin_harbor or 'coordinates'}",
+            )
+
+        effective_origin_harbor = mission_state.origin.name or request.origin_harbor
+        effective_coordinates = (
+            [mission_state.origin.longitude, mission_state.origin.latitude]
+            if (mission_state.origin and mission_state.origin.latitude is not None and mission_state.origin.longitude is not None)
+            else request.coordinates
+        )
+        effective_craft_profile = mission_state.vessel.type or request.craft_profile
+        effective_departure_time = mission_state.timing.departure or request.departure_time
+        effective_return_time = mission_state.timing.return_deadline or request.return_time
+        effective_destination_id = mission_state.destination.name or request.destination_id
+        effective_language_preference = mission_state.user.locale or request.language_preference
+        effective_parent_assessment_id = getattr(mission_state, "parent_assessment_id", None) or request.parent_assessment_id
+
         # 1. Validation & Setup
-        if not request.origin_harbor and not request.coordinates:
+        if not effective_origin_harbor and not effective_coordinates:
             # Missing critical inputs cannot yield a favorable verdict
             return AssessmentService._build_error_response(
                 assessment_id, now_iso, request, 
-                "Missing critical inputs: Must provide either harbor or explicit starting coordinates."
+                "Missing critical inputs: Must provide either harbor or explicit starting coordinates.",
+                mission_state=mission_state,
             )
 
         data_service = DataService(data_mode=request.data_mode)
         
         ctx = ToolInvocationContext(
-            origin_harbor=request.origin_harbor,
-            coordinates=request.coordinates,
-            craft_profile=request.craft_profile,
-            departure_time=request.departure_time
+            origin_harbor=effective_origin_harbor,
+            coordinates=effective_coordinates,
+            craft_profile=effective_craft_profile,
+            departure_time=effective_departure_time
             # return_time is handled in the risk engine window
         )
 
@@ -101,13 +135,13 @@ class AssessmentService:
         else:
             try:
                 # Passing both departure_time (ref_time) and return_time to the risk engine to evaluate the trip window
-                ref_time = request.departure_time or now_iso
+                ref_time = effective_departure_time or now_iso
                 risk_payload = DeterministicRiskEngine.evaluate(
                     context=ctx,
                     bundle=bundle,
                     data_mode=request.data_mode,
                     reference_time=ref_time,
-                    return_time=request.return_time
+                    return_time=effective_return_time,
                 )
                 
                 decision = risk_payload.status # RecommendationStatus type
@@ -121,7 +155,7 @@ class AssessmentService:
 
         # PFZ Evaluation
         pfz_candidates = []
-        if request.destination_id or True: # Evaluate if we can
+        if effective_destination_id or True: # Evaluate if we can
             try:
                 pfz_raw = data_service.get_pfz_raw_advisories(ctx)
                 if pfz_raw and pfz_raw.features:
@@ -143,12 +177,12 @@ class AssessmentService:
                 route_engine = DeterministicRouteExposureEngine()
                 geo_engine = DeterministicGeospatialEngine()
                 
-                target_dest = request.destination_id or "Outer Bank"
-                target_coords = request.coordinates
+                target_dest = effective_destination_id or "Outer Bank"
+                target_coords = effective_coordinates
                 if pfz_ranking and pfz_ranking.ranked_candidates:
                     selected_pfz = None
-                    if request.destination_id and request.destination_id != "auto":
-                        selected_pfz = next((c for c in pfz_ranking.ranked_candidates if c.candidate_id == request.destination_id), None)
+                    if effective_destination_id and effective_destination_id != "auto":
+                        selected_pfz = next((c for c in pfz_ranking.ranked_candidates if c.candidate_id == effective_destination_id), None)
                     if not selected_pfz:
                         selected_pfz = pfz_ranking.ranked_candidates[0]
                     target_coords = [selected_pfz.longitude, selected_pfz.latitude]
@@ -179,8 +213,8 @@ class AssessmentService:
                         repo = AssessmentRepository(db)
                         repo.create(
                             assessed_at=now_iso,
-                            origin_harbor=request.origin_harbor,
-                            craft_profile=request.craft_profile,
+                            origin_harbor=effective_origin_harbor,
+                            craft_profile=effective_craft_profile,
                             decision=decision.value,
                             evidence_json={"alerts": alerts, "evidence": evidence}
                         )
@@ -193,10 +227,14 @@ class AssessmentService:
             assessment_id=assessment_id,
             assessed_at=now_iso,
             trip_context=UserContext(
-                origin_harbor=request.origin_harbor,
-                coordinates=request.coordinates,
-                craft_profile=request.craft_profile,
-                language_preference=request.language_preference
+                origin_harbor=effective_origin_harbor,
+                coordinates=effective_coordinates,
+                craft_profile=effective_craft_profile,
+                departure_time=effective_departure_time,
+                return_time=effective_return_time,
+                target_pfz=effective_destination_id,
+                language_preference=effective_language_preference,
+                parent_assessment_id=effective_parent_assessment_id,
             ),
             decision=decision,
             conditions=bundle,
@@ -206,11 +244,18 @@ class AssessmentService:
             map_layers={}, 
             evidence=evidence,
             source_status=source_status,
-            is_durable=is_durable
+            is_durable=is_durable,
+            mission_state=mission_state,
         )
 
     @staticmethod
-    def _build_error_response(assessment_id: str, now: str, request: TripAssessmentRequest, error_msg: str) -> TripAssessmentResponse:
+    def _build_error_response(
+        assessment_id: str,
+        now: str,
+        request: TripAssessmentRequest,
+        error_msg: str,
+        mission_state: Optional[MissionState] = None,
+    ) -> TripAssessmentResponse:
         return TripAssessmentResponse(
             assessment_id=assessment_id,
             assessed_at=now,
@@ -218,7 +263,11 @@ class AssessmentService:
                 origin_harbor=request.origin_harbor,
                 coordinates=request.coordinates,
                 craft_profile=request.craft_profile,
-                language_preference=request.language_preference
+                departure_time=request.departure_time,
+                return_time=request.return_time,
+                target_pfz=request.destination_id,
+                language_preference=request.language_preference,
+                parent_assessment_id=request.parent_assessment_id,
             ),
             decision=RecommendationStatus.UNKNOWN,
             conditions=ObservationBundle(data_mode=request.data_mode),
@@ -228,5 +277,6 @@ class AssessmentService:
             map_layers={},
             evidence=[],
             source_status=[],
-            is_durable=False
+            is_durable=False,
+            mission_state=mission_state,
         )

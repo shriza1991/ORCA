@@ -8,7 +8,16 @@
 
 - Current version: `v0.2.2-features-main-integrated`
 - Active branch: `main`
-- Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**
+- Current milestone: **M1.1 Canonical MissionState Context Preservation** (Assessment → Chat → Voice → What-If → Alerts)
+  - **Status**: **COMPLETE & VERIFIED** (Backend pytest: 4/4 acceptance tests passing in `tests/integration/test_m1_1_mission_state.py`, 8/8 contract tests passing in `tests/contract/`; Frontend: 246/246 passing in Vitest across 18 suites, TypeScript check: 0 errors).
+  - **Additive Architectural Integration**: Canonical `MissionState` contract bridged across all active pipelines without removing legacy `UserContext`, `TripAssessmentRequest`, `ChatRequest`, or `SavedTripRequest` fields.
+  - **Operational Pipelines Bound**:
+    - **Assessment Pipeline**: `TripAssessmentRequest` and `TripAssessmentResponse` accept and return `mission_state`; `AssessmentService` uses `MissionState` as the authoritative single source of truth while keeping legacy fields working.
+    - **Chat Pipeline**: `ChatRequest` and `ChatResponse` carry `mission_state`; `ORCAState` passes `mission_state` unmodified through supervisor, specialist tools, risk evaluation, and response composer nodes. `_build_user_context()` preserves departure/return times, target PFZ, and parent assessment ID.
+    - **Voice Pipeline**: `/voice/chat` endpoint accepts `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id`, constructing canonical `MissionState` before agent execution.
+    - **Frontend State & Cache Isolation**: `useTripAssessment` and `useChat` maintain persistent `MissionState` references; `offline-cache.ts` isolates keys using `samudra_trip_assessment_${originHarbor}_${craftProfile}_${departureTime}`, preventing collisions across different departure hours.
+    - **Decision Type Normalization**: Updated frontend `decision` contract to `RecommendationStatus | Recommendation` to eliminate runtime crashes between backend string statuses and rich recommendation objects.
+    - **Alert Service Attachment**: In-memory attachment of `MissionState` to monitored trip registrations.
 - Client Architecture Migration: **IN PROGRESS (Next.js Multi-Agent Reasoning Port & Full Route Support)**
   - Dual interface model locked: React Native + Expo (field mobile) & Next.js + React (web platform & demo).
   - Migration principle: `REUSE → ADAPT → EXTRACT → REWRITE`.

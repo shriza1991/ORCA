@@ -157,4 +157,5 @@ def map_state_to_response(
         agent_collaboration=state.get("agent_collaboration"),
         decision_object=state.get("decision_object"),
         decision_delta=state.get("decision_delta"),
+        mission_state=state.get("mission_state"),
     )

@@ -12,6 +12,7 @@ from backend.app.contracts.chat import (
     DataProvenance
 )
 from backend.app.contracts.observation import ObservationBundle
+from backend.app.contracts.mission import MissionState
 
 
 class TripAssessmentRequest(BaseModel):
@@ -26,6 +27,7 @@ class TripAssessmentRequest(BaseModel):
     language_preference: str = Field("auto", description="Language preference for alerts and summaries.")
     data_mode: str = Field("HYBRID", description="Data resolution mode (LIVE | HYBRID | SNAPSHOT | SYNTHETIC).")
     parent_assessment_id: Optional[str] = Field(None, description="ID of a previous assessment for comparison.")
+    mission_state: Optional[MissionState] = Field(None, description="Canonical M1.1 MissionState context.")
 
 
 class AssessmentSourceStatus(BaseModel):
@@ -66,3 +68,4 @@ class TripAssessmentResponse(BaseModel):
     )
     
     is_durable: bool = Field(False, description="True if this assessment was persisted to the database.")
+    mission_state: Optional[MissionState] = Field(None, description="Canonical M1.1 MissionState context.")

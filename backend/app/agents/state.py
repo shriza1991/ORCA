@@ -73,6 +73,9 @@ class ORCAState(TypedDict, total=False):
     llm_provider: Optional[Any]
     """Optional LLMProvider instance for cognitive assistance (M3)."""
 
+    mission_state: Optional[Any]
+    """Canonical M1.1 MissionState context preserved across assessment, chat, and voice."""
+
     # -------------------------------------------------------------------------
     # 2. Cognitive Extraction & Intent
     # -------------------------------------------------------------------------

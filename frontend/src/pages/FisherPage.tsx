@@ -118,6 +118,17 @@ export default function FisherPage({
     registerTrip,
   ]);
 
+  // Synchronize canonical mission_state across assessment -> chat (M1.1)
+  useEffect(() => {
+    if (assessment?.mission_state) {
+      chat.setMissionState(assessment.mission_state);
+    }
+  }, [assessment?.mission_state, chat]);
+
+  const effectiveDecisionStatus = assessment?.decision
+    ? (typeof assessment.decision === 'string' ? assessment.decision : assessment.decision.status)
+    : 'UNKNOWN';
+
   const effectiveLayers = useMemo(() => {
     const chatLayers = assessment?.map_layers?.layers || [];
     
@@ -172,13 +183,13 @@ export default function FisherPage({
       baseLayers,
       harborCoords,
       originHarbor,
-      status: assessment?.decision?.status || 'UNKNOWN',
+      status: effectiveDecisionStatus,
       baselineRoutes: sidebarTab === 'voyage' ? [] : routeLayers,
       baselinePFZ: sidebarTab === 'voyage' ? [] : pfzLayers,
       baselineHazards: [],
       chatLayers: chatLayers,
     });
-  }, [baseLayers, harborCoords, originHarbor, assessment, sidebarTab]);
+  }, [baseLayers, harborCoords, originHarbor, assessment, sidebarTab, effectiveDecisionStatus]);
 
   const layerAvailability = {
     pfz: assessment?.pfz_candidates?.length ? 'AVAILABLE' : 'EMPTY',
@@ -266,7 +277,7 @@ export default function FisherPage({
 
                 <WhatIfSimulator
                   currentContext={chat.missionContext}
-                  currentStatus={assessment?.decision?.status || 'UNKNOWN'}
+                  currentStatus={effectiveDecisionStatus}
                   language={chat.language}
                   isLoading={chat.isLoading}
                   activeDiff={chat.activeDiff}

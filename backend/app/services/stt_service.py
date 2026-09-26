@@ -77,12 +77,7 @@ def transcribe_audio_bytes(
 
     api_key = settings.SARVAM_API_KEY or os.getenv("SARVAM_API_KEY")
     if not api_key:
-        logger.warning("SARVAM_API_KEY is not configured. Falling back to mock transcription.")
-        return {
-            "transcript": "Is it safe to go fishing tomorrow?",
-            "language": "en",
-            "normalized_language": "en",
-        }
+        raise STTConfigurationError("SARVAM_API_KEY is not configured on the server.")
 
     try:
         from sarvamai import SarvamAI

@@ -125,6 +125,7 @@ export interface MissionState {
     evidence_ids?: string[];
     timestamp: string;
   };
+  parent_assessment_id?: string;
   created_at: string;
   updated_at: string;
 }

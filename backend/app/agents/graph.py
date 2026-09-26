@@ -2850,6 +2850,7 @@ def run_orca_graph(
     tool_mode: str = "demo",
     llm_provider: Optional[LLMProvider] = None,
     llm_mode: str = "auto",
+    mission_state: Optional[Any] = None,
 ) -> ORCAState:
     """Convenience execution runner to execute a query through the LangGraph pipeline."""
     if tool_mode == "contract_mock":
@@ -2909,6 +2910,7 @@ def run_orca_graph(
         "warnings": [],
         "map_layers": [],
         "suggested_followups": [],
+        "mission_state": mission_state,
     }
 
     final_state = orca_graph.invoke(initial_state)

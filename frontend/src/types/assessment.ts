@@ -1,4 +1,5 @@
-import type { UserContext, Recommendation, MapLayer } from './contracts';
+import type { UserContext, Recommendation, RecommendationStatus, MapLayer } from './contracts';
+import type { MissionState } from './mission';
 
 export interface TripAssessmentRequest {
   origin_harbor?: string;
@@ -10,6 +11,7 @@ export interface TripAssessmentRequest {
   language_preference: string;
   data_mode: string;
   parent_assessment_id?: string;
+  mission_state?: MissionState;
 }
 
 export interface AssessmentSourceStatus {
@@ -35,7 +37,7 @@ export interface TripAssessmentResponse {
   assessment_id: string;
   assessed_at: string;
   trip_context: UserContext;
-  decision: Recommendation;
+  decision: RecommendationStatus | Recommendation;
   conditions: ObservationBundle;
   alerts: Alert[];
   pfz_candidates: Record<string, any>[];
@@ -44,4 +46,5 @@ export interface TripAssessmentResponse {
   evidence: Record<string, any>[];
   source_status: AssessmentSourceStatus[];
   is_durable: boolean;
+  mission_state?: MissionState;
 }

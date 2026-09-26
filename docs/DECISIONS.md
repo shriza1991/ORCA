@@ -708,6 +708,29 @@ Status: ACCEPTED
 - Affected areas: `backend/app/agents/graph.py`, `backend/app/agents/state.py`, `backend/app/contracts/chat.py`, `backend/app/services/state_mapper.py`, `frontend/src/types/contracts.ts`, `backend/app/core/config.py`, `tests/agent_eval/test_m3_decision_object.py`, `tests/agent_eval/test_flagship_flow.py`.
 - Tests/verification: 17/17 dedicated M3 regression tests passing (`test_m3_decision_object.py`), flagship flow passing (`test_flagship_flow.py`), 405/405 agent_eval tests passing, 85/85 domain tests passing, frontend typecheck passing (0 errors), frontend Vite production build passing.
 
+## D044 — Canonical MissionState Context Preservation Across Operational Lifecycles (M1.1)
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior AI/Backend Systems Engineer (M1.1)
+- Task/context: Implement M1.1 MissionState Context across Assessment, Chat, Voice, What-If, and Alerts.
+- Decision:
+  1. **Canonical MissionState Bridge**: Reused canonical `MissionState` contract (`backend/app/contracts/mission.py` & `frontend/src/types/mission.ts`) across all operational pipelines (Assessment, Chat, Voice, What-If, Alerts) without introducing a duplicate model or schema redesign.
+  2. **Additive-Only Integration**: Maintained 100% backward compatibility by keeping all existing `UserContext`, `TripAssessmentRequest`, `ChatRequest`, and `SavedTripRequest` fields intact. Added `mission_state: Optional[MissionState] = None` additively to request/response contracts and `ORCAState`.
+  3. **Operational Parameter Preservation**: Fixed `_build_user_context()` in `routes.py` and `mission_from_user_context()` in `mission.py` to preserve `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id`. Added property accessors to `MissionState` for clean, safe property access.
+  4. **LangGraph Pipeline Pass-Through**: Carried `mission_state` unmodified through `ORCAState` across supervisor, specialist tools, risk evaluation, and response composer nodes.
+  5. **Voice Endpoint Expansion**: Augmented the `/voice/chat` multipart form endpoint to receive operational parameters (`departure_time`, `return_time`, `target_pfz`, `parent_assessment_id`) and construct canonical `MissionState` prior to running the agent.
+  6. **Frontend State & Cache Isolation**: In `useChat.ts` and `useTripAssessment.ts`, maintained persistent `MissionState` forwarding. In `offline-cache.ts`, eliminated key collision by factoring `departure_time` into `samudra_trip_assessment_${originHarbor}_${craftProfile}_${departureTime}`, with fallback to legacy keys for backward compatibility.
+  7. **Decision Type Normalization**: Updated frontend `decision` type to `RecommendationStatus | Recommendation` to natively accommodate both backend status strings and rich recommendation objects without UI crashes.
+  8. **In-Memory Alert Attachment**: Attached `MissionState` alongside registered trips in `AlertService._monitored_trips_mission_state` without creating database tables or schema migrations.
+- Why:
+  Prevents operational context loss across user interaction modalities (Assessment → Chat → Voice → What-If → Alerts), resolves offline cache collision across trips with different departure times, and ensures deterministic risk and reasoning components receive identical voyage parameters.
+- Alternatives considered:
+  - Redesigning `MissionState` with new relational tables (rejected: out of scope, introduces unnecessary migration risk).
+  - Removing legacy `UserContext` fields (rejected: violates additive-only rule and breaks existing API clients and tests).
+- Affected areas: `backend/app/contracts/mission.py`, `backend/app/contracts/assessment.py`, `backend/app/contracts/chat.py`, `backend/app/agents/state.py`, `backend/app/agents/graph.py`, `backend/app/services/agent_run_service.py`, `backend/app/services/assessment_service.py`, `backend/app/services/alert_service.py`, `backend/app/services/state_mapper.py`, `backend/app/api/v1/routes.py`, `frontend/src/types/mission.ts`, `frontend/src/types/assessment.ts`, `frontend/src/types/contracts.ts`, `frontend/src/hooks/useTripAssessment.ts`, `frontend/src/hooks/useChat.ts`, `frontend/src/pages/FisherPage.tsx`, `frontend/src/api/client.ts`, `frontend/src/utils/offline-cache.ts`, `tests/integration/test_m1_1_mission_state.py`, `frontend/src/utils/offline-cache.test.ts`.
+- Tests/verification: 4/4 acceptance tests passing in `test_m1_1_mission_state.py`, 8/8 contract tests passing in `test_mission_contracts.py` & `test_contracts.py`, 246/246 frontend tests passing in Vitest, 0 errors in TypeScript `tsc --noEmit`.
+
 ## Decision template
 
 ### D0XX — <title>
@@ -718,3 +741,4 @@ Alternatives:
 Impact:
 Owner:
 Date:
+

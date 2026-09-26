@@ -6,10 +6,12 @@ Manages saved trips, active actionable alerts, and background reassessment.
 import hashlib
 import logging
 from datetime import datetime, timezone
-from typing import List
+from typing import Any, List
 
 from backend.app.contracts.alerts import ActionableAlertDto, SavedTripRequest, SavedTripResponse
 from backend.app.contracts.assessment import TripAssessmentRequest
+from backend.app.contracts.chat import UserContext
+from backend.app.contracts.mission import MissionState, mission_from_user_context
 from backend.app.db.models import ActionableAlert, SavedTripSubscription
 from backend.app.db.session import SessionLocal
 from backend.app.services.assessment_service import AssessmentService
@@ -22,8 +24,27 @@ def utcnow():
 
 
 class AlertService:
+    # In-memory attachment for monitored trips' canonical MissionState (M1.1)
+    _monitored_trips_mission_state: dict[str, Any] = {}
+
     @staticmethod
     def register_trip_monitoring(request: SavedTripRequest) -> SavedTripResponse:
+        # Resolve canonical MissionState context
+        if request.mission_state:
+            mission_state = request.mission_state
+        else:
+            u_ctx = UserContext(
+                origin_harbor=request.origin_harbor,
+                craft_profile=request.craft_profile,
+                departure_time=request.departure_time,
+                return_time=request.return_time,
+                language_preference=request.language,
+            )
+            mission_state = mission_from_user_context(
+                user_context=u_ctx,
+                message=f"Monitored trip for {request.origin_harbor}",
+            )
+
         try:
             with SessionLocal() as session:
                 sub = SavedTripSubscription(
@@ -37,22 +58,28 @@ class AlertService:
                 session.add(sub)
                 session.commit()
                 session.refresh(sub)
+                sub_id = str(sub.public_id)
+                AlertService._monitored_trips_mission_state[sub_id] = mission_state
                 return SavedTripResponse(
-                    subscription_id=str(sub.public_id),
+                    subscription_id=sub_id,
                     origin_harbor=sub.origin_harbor,
                     craft_profile=sub.craft_profile,
                     is_active=sub.is_active,
-                    created_at=sub.created_at
+                    created_at=sub.created_at,
+                    mission_state=mission_state,
                 )
         except Exception as e:
             logger.warning(f"Database unavailable for register_trip_monitoring: {e}")
             import uuid
+            sub_id = f"fallback-{uuid.uuid4()}"
+            AlertService._monitored_trips_mission_state[sub_id] = mission_state
             return SavedTripResponse(
-                subscription_id=f"fallback-{uuid.uuid4()}",
+                subscription_id=sub_id,
                 origin_harbor=request.origin_harbor,
                 craft_profile=request.craft_profile,
                 is_active=True,
-                created_at=utcnow()
+                created_at=utcnow(),
+                mission_state=mission_state,
             )
 
     @staticmethod
@@ -119,7 +146,8 @@ class AlertService:
                         departure_time=sub.departure_time.isoformat() if sub.departure_time else None,
                         return_time=sub.return_time.isoformat() if sub.return_time else None,
                         language_preference=sub.language,
-                        data_mode="SNAPSHOT"
+                        data_mode="SNAPSHOT",
+                        mission_state=AlertService._monitored_trips_mission_state.get(str(sub.public_id)),
                     )
                     assessment = AssessmentService.assess_trip(req)
 

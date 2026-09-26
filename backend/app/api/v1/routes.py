@@ -28,7 +28,12 @@ from backend.app.contracts.chat import (
     ChatRequest,
     ChatResponse,
     TranscribeResponse,
+    UserContext,
     VoiceChatResponse,
+)
+from backend.app.contracts.mission import (
+    MissionState,
+    mission_from_user_context,
 )
 from backend.app.contracts.situation import SectorHazard, SectorHazardAssociationsResponse, SectorHazardsResponse, SectorOperationalAlertsResponse, SectorSituationResponse, VesselHazardAssociation, VesselHazardOperationalAlert
 from backend.app.core.config import settings
@@ -69,17 +74,40 @@ router.include_router(alerts_router)
 
 
 def _build_user_context(request: ChatRequest) -> dict[str, Any]:
-    """Convert ChatRequest.user_context to the dict expected by ORCAState."""
-    if request.user_context is None:
-        return {}
-    ctx = request.user_context
+    """Convert ChatRequest.user_context and request.mission_state to the dict expected by ORCAState."""
+    ctx = request.user_context or UserContext()
     context = {
         "sector_id": ctx.sector_id,
         "origin_harbor": ctx.origin_harbor,
         "coordinates": ctx.coordinates,
         "craft_profile": ctx.craft_profile or "motorized_boat",
         "language_preference": ctx.language_preference or "auto",
+        "departure_time": ctx.departure_time,
+        "return_time": ctx.return_time,
+        "target_pfz": ctx.target_pfz,
+        "parent_assessment_id": ctx.parent_assessment_id,
     }
+
+    # If mission_state is present, backfill any missing operational fields from it
+    if request.mission_state:
+        ms = request.mission_state
+        if not context.get("origin_harbor") and getattr(ms, "origin", None) and ms.origin.name:
+            context["origin_harbor"] = ms.origin.name
+        if not context.get("coordinates") and getattr(ms, "origin", None) and ms.origin.latitude is not None and ms.origin.longitude is not None:
+            context["coordinates"] = [ms.origin.longitude, ms.origin.latitude]
+        if not context.get("craft_profile") and getattr(ms, "vessel", None) and ms.vessel.type:
+            context["craft_profile"] = ms.vessel.type
+        if not context.get("language_preference") and getattr(ms, "user", None) and ms.user.locale:
+            context["language_preference"] = ms.user.locale
+        if not context.get("departure_time") and getattr(ms, "timing", None) and ms.timing.departure:
+            context["departure_time"] = ms.timing.departure
+        if not context.get("return_time") and getattr(ms, "timing", None) and ms.timing.return_deadline:
+            context["return_time"] = ms.timing.return_deadline
+        if not context.get("target_pfz") and getattr(ms, "destination", None) and ms.destination.name:
+            context["target_pfz"] = ms.destination.name
+        if not context.get("parent_assessment_id") and getattr(ms, "parent_assessment_id", None):
+            context["parent_assessment_id"] = ms.parent_assessment_id
+
     if ctx.sector_id:
         from backend.app.domain.situation import resolve_authority_sector_context
 
@@ -270,12 +298,32 @@ async def chat_endpoint(request: ChatRequest) -> ChatResponse:
     run_id = str(uuid.uuid4())
     user_context = _build_user_context(request)
 
+    # Resolve canonical MissionState context (M1.1)
+    mission_state = request.mission_state
+    if not mission_state:
+        u_ctx = request.user_context or UserContext(
+            origin_harbor=user_context.get("origin_harbor"),
+            coordinates=user_context.get("coordinates"),
+            craft_profile=user_context.get("craft_profile"),
+            departure_time=user_context.get("departure_time"),
+            return_time=user_context.get("return_time"),
+            target_pfz=user_context.get("target_pfz"),
+            language_preference=user_context.get("language_preference"),
+            parent_assessment_id=user_context.get("parent_assessment_id"),
+        )
+        mission_state = mission_from_user_context(
+            user_context=u_ctx,
+            message=request.message,
+            conversation_id=conversation_id,
+        )
+
     try:
         return await agent_run_service.run_agent(
             user_message=request.message,
             conversation_id=conversation_id,
             run_id=run_id,
             user_context=user_context,
+            mission_state=mission_state,
         )
 
     except _DuplicateRunError as exc:
@@ -712,6 +760,10 @@ async def voice_chat_endpoint(
     origin_harbor: str | None = Form(None),
     craft_profile: str | None = Form("motorized_boat"),
     language_preference: str | None = Form("auto"),
+    departure_time: str | None = Form(None),
+    return_time: str | None = Form(None),
+    target_pfz: str | None = Form(None),
+    parent_assessment_id: str | None = Form(None),
 ):
     """End-to-end voice chat adapter around ORCA pipeline."""
     # 1. Validate audio payload
@@ -783,7 +835,27 @@ async def voice_chat_endpoint(
         "origin_harbor": origin_harbor,
         "craft_profile": craft_profile or "motorized_boat",
         "language_preference": effective_lang,
+        "departure_time": departure_time,
+        "return_time": return_time,
+        "target_pfz": target_pfz,
+        "parent_assessment_id": parent_assessment_id,
     }
+
+    # Build MissionState before AgentRunService.run_agent() (M1.1)
+    u_ctx = UserContext(
+        origin_harbor=origin_harbor,
+        craft_profile=craft_profile or "motorized_boat",
+        language_preference=effective_lang,
+        departure_time=departure_time,
+        return_time=return_time,
+        target_pfz=target_pfz,
+        parent_assessment_id=parent_assessment_id,
+    )
+    mission_state = mission_from_user_context(
+        user_context=u_ctx,
+        message=transcript,
+        conversation_id=effective_conv_id,
+    )
 
     try:
         chat_response = await agent_run_service.run_agent(
@@ -791,6 +863,7 @@ async def voice_chat_endpoint(
             conversation_id=effective_conv_id,
             run_id=run_id,
             user_context=user_context,
+            mission_state=mission_state,
         )
     except _DuplicateRunError as exc:
         envelope = Dev2ErrorEnvelope(

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { ChatRequest, ChatResponse } from '../types/contracts';
 import { sendMessage, ApiError } from '../api/client';
-import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type WhatIfParameters } from '../types/mission';
+import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type MissionState, type WhatIfParameters } from '../types/mission';
 
 export interface ChatMessage {
   id: string;
@@ -26,6 +26,7 @@ export function useChat() {
   const [activeResponse, setActiveResponse] = useState<ChatResponse | null>(null);
   const [language, setLanguage] = useState<'en' | 'hi' | 'mr'>('en');
   const [missionContext, setMissionContext] = useState<MissionContext>(DEFAULT_MISSION_CONTEXT);
+  const [missionState, setMissionState] = useState<MissionState | null>(null);
   const [activeDiff, setActiveDiff] = useState<DecisionDiff | null>(null);
 
   const send = useCallback(async (
@@ -67,6 +68,7 @@ export function useChat() {
           language_preference: targetLanguage,
           ...requestContext,
         },
+        mission_state: missionState ?? undefined,
       };
 
       // Always call the live backend API
@@ -76,6 +78,9 @@ export function useChat() {
         setConversationId(response.conversation_id);
       }
 
+      if (response.mission_state) {
+        setMissionState(response.mission_state);
+      }
 
       const assistantMsg: ChatMessage = {
         id: loadingMsg.id,
@@ -110,7 +115,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, language, missionContext]);
+  }, [conversationId, language, missionContext, missionState]);
 
   const simulateWhatIf = useCallback(async (params: WhatIfParameters, queryText: string, currentAssessmentId?: string) => {
     const baselineStatus = activeResponse?.recommendation.status ?? 'READY';
@@ -154,12 +159,17 @@ export function useChat() {
           language_preference: language,
           parent_assessment_id: currentAssessmentId || activeResponse?.assessment_id,
         },
+        mission_state: missionState ?? undefined,
       };
 
       const response = await sendMessage(req);
 
       if (!conversationId && response.conversation_id) {
         setConversationId(response.conversation_id);
+      }
+
+      if (response.mission_state) {
+        setMissionState(response.mission_state);
       }
 
       const assistantMsg: ChatMessage = {
@@ -198,7 +208,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeResponse, conversationId, language, missionContext]);
+  }, [activeResponse, conversationId, language, missionContext, missionState]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
@@ -216,6 +226,8 @@ export function useChat() {
     setLanguage,
     missionContext,
     setMissionContext,
+    missionState,
+    setMissionState,
     activeDiff,
     simulateWhatIf,
     send,

@@ -5,6 +5,7 @@ import {
   extractFisherConditions,
 } from './FisherDecisionSurface';
 import type { TripAssessmentResponse } from '../../types/assessment';
+import type { Recommendation } from '../../types/contracts';
 
 describe('P0-22: Fisherman Decision Surface & Local Conditions', () => {
   const mockSafeResponse: TripAssessmentResponse = {
@@ -44,7 +45,7 @@ describe('P0-22: Fisherman Decision Surface & Local Conditions', () => {
   const mockCautionResponse: TripAssessmentResponse = {
     ...mockSafeResponse,
     decision: {
-      ...mockSafeResponse.decision,
+      ...(mockSafeResponse.decision as Recommendation),
       status: 'CAUTION',
       summary: 'Moderate wave conditions (1.9m waves, 16 kt wind) require operational caution for motorized boat.',
       decisive_factors: ['Moderate wave height 1.9m requires caution.'],
@@ -54,7 +55,7 @@ describe('P0-22: Fisherman Decision Surface & Local Conditions', () => {
   const mockNoGoResponse: TripAssessmentResponse = {
     ...mockSafeResponse,
     decision: {
-      ...mockSafeResponse.decision,
+      ...(mockSafeResponse.decision as Recommendation),
       status: 'NO_GO',
       summary: 'Departure advised against (NO-GO). Severe sea state with wave heights of 3.4m and active IMD squall alert.',
       decisive_factors: [
@@ -84,7 +85,7 @@ describe('P0-22: Fisherman Decision Surface & Local Conditions', () => {
   const mockUnknownResponse: TripAssessmentResponse = {
     ...mockSafeResponse,
     decision: {
-      ...mockSafeResponse.decision,
+      ...(mockSafeResponse.decision as Recommendation),
       status: 'UNKNOWN',
       summary: 'Sensor telemetry is stale or missing. Safe departure evaluation cannot be completed.',
       decisive_factors: ['Missing critical sensor telemetry.'],
