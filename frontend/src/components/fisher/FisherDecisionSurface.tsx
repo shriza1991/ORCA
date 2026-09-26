@@ -21,6 +21,7 @@ import type { AgentCollaborationPayload } from '../../types/contracts';
 import { translateText, type SupportedLanguage, TRANSLATIONS } from '../../i18n/translations';
 import { useSpokenGuidance } from '../../hooks/useSpokenGuidance';
 import AgentCollaborationPanel from '../collaboration/AgentCollaborationPanel';
+import MissionBriefPanel from './MissionBriefPanel';
 
 export type FisherDecisionStatus = 'SAFE_TO_GO' | 'CAUTION' | 'DO_NOT_GO' | 'UNKNOWN';
 
@@ -240,6 +241,7 @@ export default function FisherDecisionSurface({
   assessment,
   isLoading = false,
   error = null,
+  activeDiff = null,
   language = 'en',
   collaboration = null,
   onOpenVoyageSettings,
@@ -373,6 +375,13 @@ export default function FisherDecisionSurface({
           </div>
         )}
       </div>
+
+      <MissionBriefPanel
+        brief={assessment?.brief}
+        delta={collab?.delta}
+        activeDiff={activeDiff}
+        language={language}
+      />
 
       <div className="fisher-conditions-grid" role="group" aria-label="Essential local conditions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '16px' }}>
         <div className="condition-tile" data-testid="condition-waves">

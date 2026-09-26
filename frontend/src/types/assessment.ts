@@ -33,6 +33,15 @@ export interface Alert {
   action: string;
 }
 
+export interface MissionBriefPayload {
+  summary: string;
+  recommended_action: string;
+  positive_factors: string[];
+  negative_factors: string[];
+  confidence: string;
+  confidence_reasons: string[];
+}
+
 export interface TripAssessmentResponse {
   assessment_id: string;
   assessed_at: string;
@@ -47,4 +56,6 @@ export interface TripAssessmentResponse {
   source_status: AssessmentSourceStatus[];
   is_durable: boolean;
   mission_state?: MissionState;
+  brief?: MissionBriefPayload;
 }
+

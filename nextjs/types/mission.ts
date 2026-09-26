@@ -168,3 +168,4 @@ export interface DecisionDeltaContract {
   summary: string;
 }
 
+export type DecisionDelta = DecisionDeltaContract;

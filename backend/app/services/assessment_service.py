@@ -8,7 +8,12 @@ import logging
 from datetime import datetime, UTC
 from typing import List, Optional
 
-from backend.app.contracts.assessment import TripAssessmentRequest, TripAssessmentResponse, AssessmentSourceStatus
+from backend.app.contracts.assessment import (
+    TripAssessmentRequest,
+    TripAssessmentResponse,
+    AssessmentSourceStatus,
+    MissionBriefPayload,
+)
 from backend.app.contracts.observation import ObservationBundle
 from backend.app.contracts.chat import UserContext, RecommendationStatus
 from backend.app.contracts.mission import MissionState, mission_from_user_context
@@ -128,10 +133,19 @@ class AssessmentService:
         
         # 4. Evaluate Risk
         # Ensure hard-stop precedence and incomplete evidence handling
+        brief = None
         if not marine or not weather or not hazard:
             decision = RecommendationStatus.UNKNOWN
             evidence = [{"issue": "Incomplete data", "details": "Critical components failed to load."}]
             alerts = [{"message": "Cannot assess due to missing data. Check source status."}]
+            brief = MissionBriefPayload(
+                summary="Sensor, forecast, or hazard bulletin data are incomplete or unavailable.",
+                recommended_action="Hold departure. Verify with port authorities before navigating.",
+                positive_factors=[],
+                negative_factors=["Critical telemetry components failed to load."],
+                confidence="LOW",
+                confidence_reasons=["Sensor telemetry validity window expired or data feed missing"],
+            )
         else:
             try:
                 # Passing both departure_time (ref_time) and return_time to the risk engine to evaluate the trip window
@@ -147,11 +161,37 @@ class AssessmentService:
                 decision = risk_payload.status # RecommendationStatus type
                 evidence = [t.model_dump() for t in risk_payload.threshold_comparisons]
                 alerts = [{"message": w} for w in risk_payload.warnings]
+
+                if risk_payload.status == RecommendationStatus.GO:
+                    pos_factors = list(risk_payload.decisive_factors) + list(risk_payload.non_decisive_factors)
+                    neg_factors = []
+                else:
+                    pos_factors = list(risk_payload.non_decisive_factors)
+                    neg_factors = list(risk_payload.decisive_factors)
+
+                conf_val = getattr(risk_payload.confidence_level, "value", str(risk_payload.confidence_level))
+
+                brief = MissionBriefPayload(
+                    summary=risk_payload.summary,
+                    recommended_action=risk_payload.recommended_action,
+                    positive_factors=pos_factors,
+                    negative_factors=neg_factors,
+                    confidence=conf_val,
+                    confidence_reasons=list(risk_payload.confidence_reasons),
+                )
             except Exception as e:
                 logger.error(f"Risk evaluation failed: {e}")
                 decision = RecommendationStatus.UNKNOWN
                 evidence = [{"issue": "Evaluation Error", "details": str(e)}]
                 alerts = [{"message": "Internal evaluation error occurred."}]
+                brief = MissionBriefPayload(
+                    summary="Internal evaluation error occurred.",
+                    recommended_action="Hold departure. Contact harbor authority.",
+                    positive_factors=[],
+                    negative_factors=[f"Evaluation error: {str(e)}"],
+                    confidence="LOW",
+                    confidence_reasons=["Risk engine evaluation encountered unexpected exception"],
+                )
 
         # PFZ Evaluation
         pfz_candidates = []
@@ -246,6 +286,7 @@ class AssessmentService:
             source_status=source_status,
             is_durable=is_durable,
             mission_state=mission_state,
+            brief=brief,
         )
 
     @staticmethod
@@ -256,6 +297,14 @@ class AssessmentService:
         error_msg: str,
         mission_state: Optional[MissionState] = None,
     ) -> TripAssessmentResponse:
+        error_brief = MissionBriefPayload(
+            summary=error_msg,
+            recommended_action="Provide valid origin harbor or coordinates before departure.",
+            positive_factors=[],
+            negative_factors=[error_msg],
+            confidence="LOW",
+            confidence_reasons=["Missing mandatory mission context"],
+        )
         return TripAssessmentResponse(
             assessment_id=assessment_id,
             assessed_at=now,
@@ -279,4 +328,5 @@ class AssessmentService:
             source_status=[],
             is_durable=False,
             mission_state=mission_state,
+            brief=error_brief,
         )

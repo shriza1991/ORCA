@@ -78,6 +78,16 @@ class AssessmentSourceStatus(BaseModel):
     error_message: Optional[str] = None
 
 
+class MissionBriefPayload(BaseModel):
+    """Grounded, deterministic mission brief explaining the safety decision (M1.2)."""
+    summary: str
+    recommended_action: str
+    positive_factors: list[str]
+    negative_factors: list[str]
+    confidence: str
+    confidence_reasons: list[str]
+
+
 class TripAssessmentResponse(BaseModel):
     """Unified response payload containing the complete safety assessment."""
 
@@ -110,3 +120,5 @@ class TripAssessmentResponse(BaseModel):
     
     is_durable: bool = Field(False, description="True if this assessment was persisted to the database.")
     mission_state: Optional[MissionState] = Field(None, description="Canonical M1.1 MissionState context.")
+    brief: Optional[MissionBriefPayload] = Field(None, description="Grounded M1.2 deterministic mission brief and why explanation.")
+

@@ -120,7 +120,7 @@ export default function FisherPage({
       baseLayers,
       harborCoords,
       originHarbor,
-      status: assessment?.decision?.status || 'UNKNOWN',
+      status: (assessment?.decision as any)?.status || (typeof assessment?.decision === 'string' ? assessment.decision : 'UNKNOWN'),
       baselineRoutes: [],
       baselinePFZ: [],
       baselineHazards: [],
@@ -171,7 +171,7 @@ export default function FisherPage({
 
             <WhatIfSimulator
               currentContext={chat.missionContext}
-              currentStatus={assessment?.decision?.status || 'UNKNOWN'}
+              currentStatus={(assessment?.decision as any)?.status || (typeof assessment?.decision === 'string' ? assessment.decision : 'UNKNOWN')}
               language={chat.language}
               isLoading={chat.isLoading}
               activeDiff={chat.activeDiff}

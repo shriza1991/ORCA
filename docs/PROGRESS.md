@@ -6,19 +6,28 @@
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
-- Current version: `v0.2.2-features-main-integrated`
+- Current version: `v0.2.3-m1.2-mission-brief`
 - Active branch: `main`
-- Current milestone: **M1.1 Canonical MissionState Context Preservation & M1.1.5 Mission Setup Hardening** (Assessment → Chat → Voice → What-If → Alerts)
+- Current milestone: **M1.2 Mission Brief / Why Panel (Deterministic Presentation & Explainability)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Backend Pytest: 3/3 acceptance tests passing in `tests/integration/test_m1_2_mission_brief.py`, 18/18 passing across full assessment suite (`test_assessments.py`, `test_mission_contracts.py`, `test_m1_1_mission_state.py`, `test_m1_2_mission_brief.py`).
+    - Frontend Vitest: 259/259 passing across 20 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npm run typecheck`).
+    - Next.js Client: 0 errors in `npm run typecheck`, production build passing (`npm run build`).
+  - **M1.2 Mission Brief Deliverables**:
+    - **Additive Backend Contract**: Defined canonical `MissionBriefPayload` (summary, recommended_action, positive_factors, negative_factors, confidence, confidence_reasons) and added `brief: Optional[MissionBriefPayload] = None` to `TripAssessmentResponse`.
+    - **Deterministic Risk Engine Projection**: Populated `brief` in `AssessmentService.assess_trip` directly from existing `RiskAssessmentPayload` fields with zero LLM calls and zero synthetic modifications:
+      - `summary` ← `risk_payload.summary`
+      - `recommended_action` ← `risk_payload.recommended_action`
+      - `positive_factors` ← `risk_payload.decisive_factors + non_decisive_factors` (on `GO`) / `non_decisive_factors` (on `CAUTION`/`NO_GO`)
+      - `negative_factors` ← `[]` (on `GO`) / `risk_payload.decisive_factors` (on `CAUTION`/`NO_GO`)
+      - `confidence` ← `risk_payload.confidence_level`
+      - `confidence_reasons` ← `risk_payload.confidence_reasons`
+    - **MissionBriefPanel Component & Surface Integration**: Rendered `<MissionBriefPanel brief={assessment?.brief} delta={collab?.delta} activeDiff={activeDiff} language={language} />` directly beneath the recommendation banner in `FisherDecisionSurface.tsx` with zero extra network requests or polling.
+    - **What-If Scenario Delta Support**: Dynamically renders "What Changed?" section displaying `delta.changed_factors` or `activeDiff.summary` when counterfactual diffs are present, hiding cleanly otherwise.
+    - **Dual-Client Parity**: Full parity implemented across React (`frontend/`) and Next.js (`nextjs/`).
+- Prior Milestone: **M1.1 Canonical MissionState Context Preservation & M1.1.5 Mission Setup Hardening** (Assessment → Chat → Voice → What-If → Alerts)
   - **Status**: **COMPLETE & VERIFIED** (Backend pytest: 7/7 acceptance tests passing in `tests/integration/test_m1_1_mission_state.py`, 8/8 contract tests passing in `tests/contract/`; Frontend: 253/253 passing in Vitest across 19 suites, TypeScript check: 0 errors).
-  - **M1.1.5 Mission Setup Hardening**:
-    - **Deterministic 7-Step Setup Wizard**: Refactored `GuidedTripSetup` into 7 distinct sequential steps: Harbor → Vessel → Departure DateTime → Return DateTime → Optional PFZ Target → Mission Review → Confirm & Assess.
-    - **ISO-8601 Temporal Precision**: Eliminated informal strings (`"today"`, `"tomorrow"`) across all frontend and backend contracts. Default timestamps and presets compute explicit ISO-8601 strings. Added native `<input type="datetime-local">` controls.
-    - **Local State Isolation & Zero Premature Assessments**: Stored all wizard draft values in local state; global `MissionState` is not mutated during steps 0–5. Guarded `FisherPage` assessment generation with `if (sidebarTab === 'voyage') return;`, guaranteeing zero network assessment requests during wizard completion and exactly one upon confirmation.
-    - **Bidirectional Temporal Window Validation**: Frontend prevents submission if departure is in past or return <= departure; backend `TripAssessmentRequest` enforces valid ISO-8601 timestamps and strictly `return_time > departure_time`, returning HTTP 422 Unprocessable Entity.
-    - **Voice Continuity**: `CallModal` → `useCallSession` → `sendVoiceChat` forward `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id`.
-    - **What-If Simulation Preservation**: Guaranteed `WhatIfSimulator.handleApply` preserves `departure_time` (adjusted with duration preserved if offset is specified), `return_time`, `target_pfz`, and `parent_assessment_id`.
-    - **Dual-Client Parity**: Synchronized both `frontend/` (Vite) and `nextjs/` implementations for `GuidedTripSetup`, `FisherPage`, and `types/mission.ts`.
-  - **Additive Architectural Integration**: Canonical `MissionState` contract bridged across all active pipelines without removing legacy `UserContext`, `TripAssessmentRequest`, `ChatRequest`, or `SavedTripRequest` fields.
   - **Operational Pipelines Bound**:
     - **Assessment Pipeline**: `TripAssessmentRequest` and `TripAssessmentResponse` accept and return `mission_state`; `AssessmentService` uses `MissionState` as the authoritative single source of truth while keeping legacy fields working.
     - **Chat Pipeline**: `ChatRequest` and `ChatResponse` carry `mission_state`; `ORCAState` passes `mission_state` unmodified through supervisor, specialist tools, risk evaluation, and response composer nodes. `_build_user_context()` preserves departure/return times, target PFZ, and parent assessment ID.

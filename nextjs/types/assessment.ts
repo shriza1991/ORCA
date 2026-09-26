@@ -1,4 +1,5 @@
-import type { UserContext, Recommendation, MapLayer, AgentCollaborationPayload } from './contracts';
+import type { UserContext, Recommendation, RecommendationStatus, MapLayer, AgentCollaborationPayload } from './contracts';
+import type { MissionState } from './mission';
 
 export interface TripAssessmentRequest {
   origin_harbor?: string;
@@ -10,6 +11,7 @@ export interface TripAssessmentRequest {
   language_preference: string;
   data_mode: string;
   parent_assessment_id?: string;
+  mission_state?: MissionState;
 }
 
 export interface AssessmentSourceStatus {
@@ -31,11 +33,20 @@ export interface Alert {
   action: string;
 }
 
+export interface MissionBriefPayload {
+  summary: string;
+  recommended_action: string;
+  positive_factors: string[];
+  negative_factors: string[];
+  confidence: string;
+  confidence_reasons: string[];
+}
+
 export interface TripAssessmentResponse {
   assessment_id: string;
   assessed_at: string;
   trip_context: UserContext;
-  decision: Recommendation;
+  decision: RecommendationStatus | Recommendation;
   conditions: ObservationBundle;
   alerts: Alert[];
   pfz_candidates: Record<string, any>[];
@@ -45,4 +56,7 @@ export interface TripAssessmentResponse {
   source_status: AssessmentSourceStatus[];
   is_durable: boolean;
   agent_collaboration?: AgentCollaborationPayload;
+  mission_state?: MissionState;
+  brief?: MissionBriefPayload;
 }
+

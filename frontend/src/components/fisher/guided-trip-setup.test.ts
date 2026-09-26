@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { DEFAULT_MISSION_CONTEXT } from '../../types/mission';
 
 describe('M1.1.5: GuidedTripSetup & Mission Setup Hardening', () => {
@@ -6,8 +6,8 @@ describe('M1.1.5: GuidedTripSetup & Mission Setup Hardening', () => {
     expect(DEFAULT_MISSION_CONTEXT.departure_time).not.toBe('today');
     expect(DEFAULT_MISSION_CONTEXT.return_time).not.toBe('tomorrow');
 
-    const depDate = new Date(DEFAULT_MISSION_CONTEXT.departure_time);
-    const retDate = new Date(DEFAULT_MISSION_CONTEXT.return_time);
+    const depDate = new Date(DEFAULT_MISSION_CONTEXT.departure_time || '');
+    const retDate = new Date(DEFAULT_MISSION_CONTEXT.return_time || '');
 
     expect(isNaN(depDate.getTime())).toBe(false);
     expect(isNaN(retDate.getTime())).toBe(false);
