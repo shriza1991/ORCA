@@ -159,7 +159,7 @@ function evidenceVal(
   return null;
 }
 
-export function extractFisherConditions(response: TripAssessmentResponse | null): FisherConditions {
+export function extractFisherConditions(response: TripAssessmentResponse | null, status?: FisherDecisionStatus): FisherConditions {
   if (!response) {
     return { waves: '—', wind: '—', visibility: '—', tide: '—', hazard: '—', isForecast: false };
   }
@@ -174,6 +174,8 @@ export function extractFisherConditions(response: TripAssessmentResponse | null)
     evidenceKeys: string[],
     unit: string
   ): string => {
+    if (status === 'UNKNOWN') return 'INSUFFICIENT DATA';
+    
     // 1. Try measurements map
     for (const key of measurementKeys) {
       const m = measurements[key];
@@ -202,6 +204,7 @@ export function extractFisherConditions(response: TripAssessmentResponse | null)
 
   // Visibility: not in evidence array today — show '—' (no data) rather than 'N/A'
   const visRaw = (() => {
+    if (status === 'UNKNOWN') return 'INSUFFICIENT DATA';
     for (const key of ['visibility', 'visibility_km']) {
       const m = measurements[key];
       const n = safeNum(m?.value ?? m);
@@ -212,6 +215,7 @@ export function extractFisherConditions(response: TripAssessmentResponse | null)
 
   // Tide: not wired to live data yet — show 'Not available' rather than just a dash
   const tideVal = (() => {
+    if (status === 'UNKNOWN') return 'INSUFFICIENT DATA';
     for (const key of ['tide', 'tide_level', 'tide_height_m']) {
       const m = measurements[key];
       const n = safeNum(m?.value ?? m);
@@ -260,7 +264,7 @@ export default function FisherDecisionSurface({
   const [isEvidenceDrawerOpen, setIsEvidenceDrawerOpen] = useState(false);
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
     let status = getFisherDecisionStatus(assessment, error);
-  const conditions = extractFisherConditions(isLoading || error ? null : assessment);
+  const conditions = extractFisherConditions(isLoading || error ? null : assessment, status);
   const hazardVal = conditions.hazard;
   const hasActiveHazard = hazardVal !== '—' && hazardVal !== 'No Active Hazards' && hazardVal !== 'Status Unknown';
 
@@ -591,7 +595,7 @@ export default function FisherDecisionSurface({
       <PFZDetails assessment={assessment} language={language} />
 
       {/* 7. Route Comparison */}
-      <TripPlanDetails assessment={assessment} language={language} />
+      <TripPlanDetails assessment={assessment} language={language} mainStatus={status} />
 
       {/* Fisher Action Buttons */}
       <div className="fisher-action-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>

@@ -298,7 +298,15 @@ class OpenMeteoConnector(BaseLiveConnector):
                 if fvt_dt.tzinfo is None:
                     fvt_dt = fvt_dt.replace(tzinfo=UTC)
                 observed_at_str = fvt_dt.isoformat()
-                valid_to_str = (fvt_dt + timedelta(hours=1)).isoformat()
+                # valid_to = last slot of the 7-day forecast (real horizon), not just +1h
+                last_time_str = times[-1] if times else None
+                if last_time_str:
+                    last_dt = datetime.fromisoformat(last_time_str.replace("Z", "+00:00"))
+                    if last_dt.tzinfo is None:
+                        last_dt = last_dt.replace(tzinfo=UTC)
+                    valid_to_str = (last_dt + timedelta(hours=1)).isoformat()
+                else:
+                    valid_to_str = (fvt_dt + timedelta(hours=168)).isoformat()  # 7 day fallback
             except (ValueError, TypeError):
                 observed_at_str = None
                 valid_to_str = None
@@ -379,7 +387,15 @@ class OpenMeteoConnector(BaseLiveConnector):
                 if fvt_dt.tzinfo is None:
                     fvt_dt = fvt_dt.replace(tzinfo=UTC)
                 observed_at_str = fvt_dt.isoformat()
-                valid_to_str = (fvt_dt + timedelta(hours=1)).isoformat()
+                # valid_to = last slot of the 7-day forecast (real horizon), not just +1h
+                last_time_str = times[-1] if times else None
+                if last_time_str:
+                    last_dt = datetime.fromisoformat(last_time_str.replace("Z", "+00:00"))
+                    if last_dt.tzinfo is None:
+                        last_dt = last_dt.replace(tzinfo=UTC)
+                    valid_to_str = (last_dt + timedelta(hours=1)).isoformat()
+                else:
+                    valid_to_str = (fvt_dt + timedelta(hours=168)).isoformat()  # 7 day fallback
             except (ValueError, TypeError):
                 observed_at_str = None
                 valid_to_str = None
