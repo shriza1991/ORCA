@@ -15,73 +15,252 @@
 
 When working on ORCA, treat this document as the project's strategic and architectural context.
 
-## 0.1 Core objective
+## 0.1 Final product direction
 
-ORCA is NOT primarily another marine dashboard, alert application, PFZ viewer, weather application, or generic chatbot.
+ORCA is the final product identity: a Marine Mission Intelligence platform.
 
-ORCA is:
-
-> **A mission-intelligence and reasoning layer above India's existing marine information ecosystem.**
-
-The central product loop is:
+Core principle:
 
 ```text
-ASK
-  â†“
-PLAN
-  â†“
-DISCOVER
-  â†“
-REASON
-  â†“
-DECIDE
-  â†“
-EXPLAIN
-  â†“
-SIMULATE
-  â†“
-ADAPT
+ASK → PLAN → DISCOVER → REASON → DECIDE → EXPLAIN → SIMULATE → ADAPT
 ```
 
-The visual/product identity is:
+ORCA is not another marine data dashboard. It is the intelligence and reasoning layer above existing marine information systems.
+
+Primary value:
 
 ```text
-DATA â†’ REASONING â†’ DECISION â†’ ADAPTATION
+DATA → REASONING → DECISION → ADAPTATION
 ```
 
-The primary product promise is:
+Primary user:
+- Fisherman / field marine user
 
-> The user should not need to know which marine system contains the answer. They should describe what they want to do, and ORCA should determine what information is needed, retrieve/correlate the relevant evidence, reason over space/time/context, apply constraints, make a decision, explain it, and recompute it when the mission changes.
+Institutional users:
+- Fisheries officers
+- Fleet / boat operators
+- Researchers
+- Emergency / SAR users
+- Administrators / operations users
 
-## 0.2 Do not optimize for feature count
+The product promise is:
 
-The project has already researched competing implementations and existing Indian marine systems.
+> A field user should describe a marine mission or question in natural language, and ORCA should determine what information is needed, retrieve and correlate the relevant evidence, reason over time and geography, apply safety constraints, decide, explain the rationale, simulate alternatives, and adapt as the mission changes.
 
-Do NOT interpret the solution as:
+## 0.2 Final product strategy
 
-- more agents
-- more dashboards
-- more APIs
-- more LLM calls
-- more languages
-- more map layers
-- more infrastructure
-- more connectors
+ORCA has two product interfaces sharing one intelligence core.
 
-Those are implementation mechanisms, not the product differentiator.
+### A. Mobile Field Application
+Primary field product for:
+- Fishermen
+- Crew
+- Other field users where appropriate
 
-The highest-value work is:
+Purpose:
+- Low-friction interaction
+- Voice-first interaction where useful
+- GPS / location
+- Mission context
+- Marine decision
+- WHY explanation
+- WHAT-IF exploration
+- Maps
+- Alerts
+- Offline / low-connectivity capability
 
-1. reliable evidence
-2. temporal reasoning
-3. mission state
-4. hard constraints
-5. explainability
-6. counterfactual simulation
-7. decision delta
-8. adaptive replanning
-9. source/provenance/confidence handling
-10. reproducible live/cache/demo behavior
+The mobile app is a native field product and does not attempt to reproduce the entire institutional web platform.
+
+### B. Web Platform
+Primary:
+- Public / demo entry point
+- Institutional / operations interface
+- Research / analytics interface
+- Role-specific views
+
+Roles may include:
+- Fisherman
+- Boat owner
+- Fleet operator
+- Fisheries officer
+- Researcher
+- Emergency / SAR
+- Administrator
+
+The web platform exposes more operational and analytical complexity than the mobile field experience, without duplicating the intelligence core.
+
+## 0.3 Shared intelligence core
+
+Mobile and web must use the same ORCA backend and intelligence layer.
+
+```text
+                    ORCA CORE
+                       │
+          +------------+------------+
+          |                         │
+       MOBILE                      WEB
+   React Native + Expo            Next.js
+          │                         │
+          +------------+------------+
+                       │
+                    FastAPI
+                       │
+             Mission / Agent / Data
+                       │
+        Decision + Evidence + GIS
+```
+
+Shared concepts include:
+- MissionState
+- MarineContext
+- Source Registry
+- Decision Engine
+- Safety / Constraint Engine
+- Evidence / Provenance
+- Explanation Engine
+- Route / GIS services
+- Alerts
+- What-if / Decision Delta
+- Data modes
+
+## 0.4 Final platform stack
+
+### Mobile (final)
+React Native + Expo + TypeScript
+
+Use React Native with Expo as the mobile application technology.
+
+Target:
+- Primarily Android for field / SIH use case
+- iOS remains possible for future expansion
+
+The mobile app is a real native product, not a mobile website.
+Expo / EAS is the intended build and distribution path.
+
+Mobile distribution model:
+- EAS build / install distribution for development and demo
+- Google Play testing or release later if appropriate
+
+Important distinction:
+- Web: Next.js → Vercel / hosting → URL
+- Mobile: React Native + Expo → EAS build → Android application → distribution / install link
+
+Expo Web is optional and not the primary mobile strategy.
+
+### Web (final)
+Next.js + React + TypeScript
+
+The web platform is the primary frictionless demo and judging surface. Existing Vercel / Render deployment remains the public demo entry point and should not be replaced or redesigned in this task.
+
+### Backend / core (final intended stack)
+- Python
+- FastAPI
+- PostgreSQL
+- PostGIS
+- Redis
+- SQLAlchemy
+- Alembic
+- Shapely / GeoPandas / PyProj as appropriate
+- LangGraph for agent orchestration where applicable
+- Object storage such as S3 / MinIO for large scientific / EO assets
+- OpenTelemetry + Prometheus / Grafana for observability where already planned
+
+Critical rule:
+- LLMs / agents understand intent, plan, select tools / sources, synthesize, and explain.
+- Deterministic services handle GIS, spatial calculations, temporal validity, route calculations, safety constraints, geofencing, evidence validation, and hard decision rules.
+
+Safety-critical decisions must not depend solely on LLM output.
+
+## 0.5 Mobile vs web responsibility
+
+### Mobile = field-first
+Prioritize:
+- Fisherman workflow
+- Mission setup
+- Ask ORCA
+- Decision
+- WHY
+- WHAT-IF
+- Map
+- GPS
+- Voice
+- Offline / cache
+- Alerts
+
+### Web = platform / institution-first
+Prioritize:
+- Fisherman demo experience
+- Operations
+- Fleet
+- Fisheries
+- Research
+- Emergency / SAR
+- Analytics
+- Evidence
+- Historical / replay views
+- Broader maps / data layers
+
+Do not require feature parity between mobile and web.
+
+## 0.6 Demo / judging strategy
+
+This is final.
+
+Primary demo:
+- Existing deployed Next.js web URL
+
+Reason:
+- Zero installation
+- Immediate judge access
+- Works from PPT link / QR
+- Can expose Fisherman Mode + institutional roles
+- Main judging surface
+
+Mobile:
+- Build a focused native React Native + Expo fisherman MVP
+- Demonstrate in the demo video
+- Can be distributed through an installable EAS / Android link
+
+Judges should not be expected to install the APK as the primary way to experience ORCA.
+
+PPT flow:
+1. Primary QR / link → deployed web demo
+2. Optional QR / link → mobile app distribution / install
+3. Demo video → shows actual mobile app + web platform
+
+Do not create a second web product merely because mobile needs a shareable URL.
+
+## 0.7 Mobile MVP scope
+
+Intended initial mobile scope only:
+1. Mission setup / context
+2. Ask ORCA
+3. Decision: GO / CAUTION / AVOID or applicable decision state
+4. WHY / evidence
+5. WHAT-IF / Decision Delta
+6. Marine map
+7. GPS / location
+8. Voice
+9. Offline / low-connectivity support
+10. Alerts where already supported
+
+Do not expand mobile into a full institutional dashboard.
+
+## 0.8 Demo mode and data honesty
+
+ORCA should support a controlled demo / prototype mode where applicable.
+
+Important distinction:
+- LIVE
+- LIMITED
+- CACHED_REAL
+- HISTORICAL
+- MOCK
+- UNAVAILABLE
+
+Never claim mock / cached data is live.
+
+Demo scenarios should be reproducible and should use the same ORCA reasoning pipeline as much as possible.
 
 ---
 
@@ -2576,3 +2755,114 @@ That is the ORCA transformation.
 The project is not trying to make the biggest marine AI.
 
 It is trying to make the system that can take a real marine mission, reason over the right evidence, make a defensible decision, explain it, and adapt when the mission changes.
+
+---
+
+# 31. ORCA FIELD INTELLIGENCE NETWORK (PLANNED)
+
+> STATUS: ARCHITECTURAL SPECIFICATION & CANONICAL CONTRACT  
+> TARGET INTEGRATION: P1 (Foundation in P0 contract alignment)
+
+## 31.1 Definition and Strategic Identity
+
+The ORCA Field Intelligence Network turns participating fishermen and field users into trusted, privacy-controlled sources of local marine observations, while returning aggregated intelligence and personalized insights to the same community.
+
+It is strictly **NOT** social media, a follower/like graph, or an uncurated bulletin board.
+
+Core loop:
+```text
+OBSERVE → REPORT → VERIFY → CORROBORATE → FUSE → REASON → INFORM → LEARN
+```
+
+## 31.2 Field Signal Concept
+
+Community observations do not enter ORCA reasoning as raw social posts. They enter as **Field Signals** within the canonical Source Registry.
+
+Source classification taxonomy:
+- `OFFICIAL`: INCOIS, IMD, SACHET, DGLL, Navy/Coast Guard restrictions (Primary safety authority)
+- `SCIENTIFIC`: CMFRI, MOSDAC, VLIZ, GEBCO (Ecosystem baselines)
+- `OPERATIONAL`: Fleet telemetry, active replay, corridor models
+- `COMMUNITY`: Verified participatory observations from mariners (**Field Signals**)
+- `DERIVED`: Aggregates, counterfactuals, scenario deltas
+
+## 31.3 Canonical CommunityObservation Schema (Target)
+
+```yaml
+CommunityObservation:
+  id: UUID
+  observer_id: UUID                 # Pseudonymous/hashed
+  identity_state: UNVERIFIED | PHONE_VERIFIED | ESTABLISHED
+  observation_type: CATCH | SEA_CONDITION | CURRENT | WAVE | WIND | FISH_ACTIVITY | HAZARD | UNUSUAL_EVENT | OTHER
+  observed_at: ISO-8601 UTC
+  reported_at: ISO-8601 UTC
+  location_lat: float               # Stored server-side; protected by privacy policy
+  location_lon: float
+  location_precision: EXACT | APPROXIMATE | ZONE
+  location_zone: string             # Resolved sector/harbour name
+  location_grid_cell: string        # 5km / H3 aggregation index
+  sea_state: CALM | MODERATE | ROUGH | VERY_ROUGH
+  current_strength: LIGHT | MODERATE | STRONG | VERY_STRONG
+  wave_height_approx: LOW | MODERATE | HIGH | VERY_HIGH
+  wind_strength: LIGHT | MODERATE | STRONG
+  visibility: GOOD | MODERATE | POOR
+  fish_activity: LOW | MODERATE | HIGH        # Private by default
+  species: string                             # Private by default
+  catch_indication: LOW | MODERATE | HIGH     # Private by default
+  description: string (max 280 chars)
+  has_photo: bool
+  has_gps: bool
+  media_ids: list[UUID]
+  privacy_level: PRIVATE | APPROXIMATE | ZONE | RESEARCH
+  catch_is_private: bool (default true)
+  corroboration_count: int
+  agreement_with_official: CONSISTENT | INCONSISTENT | UNKNOWN
+  status: PENDING | ACCEPTED | REJECTED | FLAGGED
+  rejection_reason: string
+  trip_id: UUID | null
+```
+
+## 31.4 Trust & Evidence Hierarchy (Safety Invariants)
+
+1. **Deterministic Official Supremacy (Invariant C-1)**: Community signals NEVER override deterministic hard safety constraints (IMD cyclone warnings, prohibited naval/sanctuary geofences, vessel craft swamping thresholds).
+2. **Missing Evidence Principle (Invariant C-2)**: Absence of community reports in a sector NEVER implies safety (`Missing community reports != safe`).
+3. **Explicit Labeling (Invariant C-3)**: Community evidence in reasoning outputs must always bear the explicit tag `[FIELD SIGNAL]` and display corroboration count and freshness.
+4. **No Artificial Trust Scores (Invariant C-4)**: Trust is rendered via verifiable categorical facts (`GPS captured`, `Evidence attached`, `Recently reported < 3h`, `Corroborated by N reports`, `Unconfirmed field report`), never arbitrary decimal percentages (`87.4% trusted`).
+5. **Single-Observer Containment (Invariant C-5)**: An uncorroborated report from an unverified contributor cannot alter safety decision status or lower risk thresholds.
+
+## 31.5 Privacy by Design
+
+- **Fishing Ground Secrecy**: Location precision defaults to `APPROXIMATE` (5km grid / zone level). Exact coordinates are never exposed to peer fishers.
+- **Catch Privacy**: Catch volume and species indications are `PRIVATE` by default. Contributor must explicitly opt in to share aggregated catch indicators.
+- **Vessel Protection**: Contributor identities and vessel registrations are strictly scrubbed from public community aggregates.
+
+## 31.6 Community → MarineContext Integration
+
+```text
+Field Observations (Mobile/Web)
+       │
+       ▼
+Auto-Sanitization & Grid Aggregation (Backend)
+       │
+       ▼
+CommunitySignalConnector (Source Registry: COMMUNITY)
+       │
+       ▼
+Unified ObservationBundle (ObservationBundle.community_signals)
+       │
+       ▼
+Validation & Evidence Engine
+       │
+       ├── Official Hard Constraints Evaluated (Risk Engine)
+       │
+       ├── Confidence Calibration (Medium ↔ High modulation only)
+       │
+       ▼
+Reasoning & Explanation Engine ("[FIELD SIGNAL] 9 reports in Malvan indicate...")
+```
+
+## 31.7 Phased Implementation Roadmap
+
+- **P0 Foundation**: Contract extension (`source_type` on `EvidenceItem`), privacy bounds definition, mock community signal in test harness. Does NOT block React → Next.js or Expo core MVP.
+- **P1 Active Field Signals**: 10-15s mobile reporting flow, 5km grid spatial clustering, community signal card on Fisher Decision Surface, researcher spatial signal overlay.
+- **P2 Ecosystem Expansion**: Personal historical catch insights ("My Trips"), cooperative fleet circles, offline SMS/packet bridge.
+

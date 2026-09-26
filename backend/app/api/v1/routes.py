@@ -86,7 +86,7 @@ def _build_user_context(request: ChatRequest) -> dict[str, Any]:
         sector_context = resolve_authority_sector_context(ctx.sector_id)
         if sector_context is None:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Unknown canonical Authority sector '{ctx.sector_id}'.",
             )
         # A validated Authority sector is authoritative for this request; no
@@ -991,8 +991,16 @@ def _resolve_sector_to_harbor_id(sector: str | None) -> str | None:
     """Helper to map a surveillance sector identifier or display name to canonical harbor ID."""
     if not sector:
         return None
+    from backend.app.domain.situation import resolve_sector_harbor_id
+
+    harbor_id = resolve_sector_harbor_id(sector)
+    if harbor_id:
+        return harbor_id
+
     s = sector.strip()
     s_lower = s.lower()
+    # Keep compatibility with historical display-name inputs that are not
+    # present in the canonical sector registry.
     try:
         sectors_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "samudra" / "sectors.json"
         if sectors_path.exists():
@@ -1025,13 +1033,11 @@ def _resolve_sector_to_harbor_id(sector: str | None) -> str | None:
 @router.get("/demo/sectors", tags=["Synthetic Demo"])
 def get_demo_sectors(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
     """List canonical demonstration surveillance sectors."""
-    sectors_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "samudra" / "sectors.json"
-    if sectors_path.exists():
-        try:
-            with open(sectors_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as exc:
-            logger.debug("Failed reading sectors fixture: %s", exc)
+    from backend.app.domain.situation import get_canonical_sectors
+
+    sectors = get_canonical_sectors()
+    if sectors:
+        return sectors
     return _get_synthetic_records("sectors", namespace=namespace)
 
 

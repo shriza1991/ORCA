@@ -45,6 +45,18 @@ export default function FisherPage({
   const [baseLayers, setBaseLayers] = useState<MapLayer[]>([]);
   const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage' | 'chat'>('voyage');
   const [lastPlanTime, setLastPlanTime] = useState<number>(0);
+  const [mapTimeOffset, setMapTimeOffset] = useState<number>(0);
+
+  const handleTimeOffsetChange = (hours: number) => {
+    setMapTimeOffset(hours);
+    const departureDate = new Date(Date.now() + hours * 60 * 60 * 1000);
+    const returnDate = new Date(departureDate.getTime() + 12 * 60 * 60 * 1000);
+    chat.setMissionContext({
+      ...chat.missionContext,
+      departure_time: departureDate.toISOString(),
+      return_time: returnDate.toISOString(),
+    });
+  };
 
   const { data: assessment, isLoading, error, isOffline, isExpired, assessTrip } = useTripAssessment();
   const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
@@ -247,6 +259,7 @@ export default function FisherPage({
                   activeDiff={chat.activeDiff}
                   missionContext={chat.missionContext}
                   language={chat.language}
+                  collaboration={chat.activeResponse?.agent_collaboration || (assessment as any)?.agent_collaboration}
                   onOpenVoyageSettings={() => setSidebarTab('voyage')}
                   onViewMap={onViewMap}
                 />
@@ -290,6 +303,8 @@ export default function FisherPage({
           isTrackingLocation={isTracking}
           onToggleLocation={handleToggleLocation}
           craftProfile={chat.missionContext.craft_profile || 'motorized_boat'}
+          timeOffsetHours={mapTimeOffset}
+          onTimeOffsetChange={handleTimeOffsetChange}
         />
       </div>
     </main>

@@ -1,0 +1,108 @@
+name: ORCA CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'features/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-test:
+    name: Backend Tests & Contracts
+    runs-on: ubuntu-latest
+    env:
+      DATA_MODE: SNAPSHOT
+      APP_ENV: test
+      DEBUG: "false"
+      LLM_MODE: fake
+      LLM_PROVIDER: fake
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev libgdal-dev
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Run Backend Domain & API Test Suite
+        run: |
+          pytest tests/domain tests/api tests/connectors tests/marinewatch -v
+
+  frontend-legacy:
+    name: Legacy Frontend (Vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Run Vitest Suite
+        run: npm test -- --run
+
+      - name: Build Production Bundle
+        run: npm run build
+
+  nextjs-web:
+    name: Next.js Web Platform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./nextjs
+    env:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: nextjs/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Build Next.js Application
+        run: npm run build

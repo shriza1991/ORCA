@@ -26,10 +26,13 @@ All data is strictly tagged as M1_DEMO_DATA / SIMULATED.
 from datetime import datetime, timezone
 from enum import Enum
 import json
+import logging
 import re
 import time
 from typing import Any, Dict, List, Optional
 import uuid
+
+logger = logging.getLogger(__name__)
 
 
 from langgraph.graph import END, START, StateGraph
@@ -63,6 +66,7 @@ from backend.app.agents.integrations.dev2 import (
     WeatherConditionsPayload,
 )
 from backend.app.contracts.observation import ObservationBundle
+from backend.app.contracts.mission import DecisionDelta, DecisionObject
 from backend.app.agents.memory import memory_manager
 from backend.app.agents.response import ResponseComposer, ResponseCompositionInput
 from backend.app.agents.security import PromptInjectionGuard
@@ -226,7 +230,16 @@ GRAPH_NODE_REGISTRY: Dict[NodeId, NodeContract] = {
         name="Response Composer Node",
         description="Synthesizes localized, evidence-backed conversational answer.",
         inputs=["language", "intent", "risk_assessment", "observations", "evidence"],
-        allowed_mutations=["response", "map_layers", "suggested_followups", "trace"],
+        allowed_mutations=[
+            "response",
+            "risk_assessment",
+            "confidence",
+            "map_layers",
+            "suggested_followups",
+            "trace",
+            "decision_object",
+            "decision_delta",
+        ],
         forbidden_actions=["Do NOT alter deterministic recommendation status (GO/CAUTION/NO_GO)."],
     ),
     NodeId.TERMINAL: NodeContract(
@@ -552,6 +565,12 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
         "toofan", "chakrivadal", "khatra", "dhoka", "chetavani",
     ]):
         intent = IntentCategory.HAZARDS
+    elif any(k in msg_lower for k in ["what changed", "what's the difference", "compare with previous", "काय बदलले", "क्या बदला", "decision delta"]):
+        intent = IntentCategory.WHAT_CHANGED
+    elif any(k in msg_lower for k in ["what if", "if i leave at", "suppose i leave", "जार मी", "अगर मैं"]):
+        intent = IntentCategory.WHAT_IF
+    elif any(k in msg_lower for k in ["alternative", "alternate", "different time", "paryayi", "पर्यायी", "वैकल्पिक"]):
+        intent = IntentCategory.ALTERNATIVE
     elif any(k in msg_lower for k in ["route", "passage", "channel", "waypoint", "रास्ता", "मार्ग", "rasta", "marg"]):
         intent = IntentCategory.ROUTE
     elif any(k in msg_lower for k in [
@@ -578,6 +597,8 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
             IntentCategory.HAZARDS,
             IntentCategory.ROUTE,
             IntentCategory.CONDITIONS,
+            IntentCategory.WHAT_IF,
+            IntentCategory.ANALYTICAL_EXPLANATION,
         ]:
             if explicit_harbor or dep_time or any(w in msg_lower for w in continuation_markers):
                 intent = thread_ctx.last_intent
@@ -613,9 +634,14 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
 
     is_route_query = (
         intent == IntentCategory.ROUTE
-        or any(k in msg_lower for k in ["route", "along my route", "on my route", "between", "passage", "channel", "रास्ता", "मार्ग"])
-        or bool(explicit_dest)
-        or (bool(updated_ctx.destination) and any(w in msg_lower for w in ["what about", "how about", "restricted", "hazard", "cyclone", "risk"]))
+        or (
+            intent not in (IntentCategory.ALTERNATIVE, IntentCategory.WHAT_IF)
+            and (
+                any(k in msg_lower for k in ["route", "along my route", "on my route", "between", "passage", "channel", "रास्ता", "मार्ग"])
+                or bool(explicit_dest)
+                or (bool(updated_ctx.destination) and any(w in msg_lower for w in ["what about", "how about", "restricted", "hazard", "cyclone", "risk"]))
+            )
+        )
     )
 
     if is_route_query:
@@ -708,7 +734,10 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
 
         required_capabilities: List[str] = []
         if intent_val == IntentCategory.SAFETY.value:
-            required_capabilities = ["trip_assessment"]
+            if tool_mode == "contract_mock" or not tool_registry.is_capability_available("trip_assessment"):
+                required_capabilities = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
+            else:
+                required_capabilities = ["trip_assessment"]
         elif intent_val == IntentCategory.PFZ.value:
             required_capabilities = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.CONDITIONS.value:
@@ -744,7 +773,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
                 required_capabilities = ["hazard_search", "geospatial_hazard"]
             else:
                 required_capabilities = ["hazard_search"]
-        elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
+        elif intent_val in (IntentCategory.ANALYTICAL_EXPLANATION.value, IntentCategory.WHAT_CHANGED.value):
             if has_geofence:
                 required_capabilities = [
                     "marine_conditions",
@@ -760,6 +789,13 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
                     "hazard_search",
                     "risk_evaluation",
                 ]
+        elif intent_val in (IntentCategory.WHAT_IF.value, IntentCategory.ALTERNATIVE.value):
+            required_capabilities = [
+                "marine_conditions",
+                "weather_conditions",
+                "hazard_search",
+                "risk_evaluation",
+            ]
 
         # 2. Capability availability check
         unavailable = tool_registry.get_unavailable_capabilities(required_capabilities)
@@ -834,11 +870,18 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         if intent_val == IntentCategory.PFZ.value:
             tools = ["marine_conditions", "pfz_search"]
         elif intent_val == IntentCategory.SAFETY.value:
-            tools = ["trip_assessment"]
+            tools = _enforce_dependency_order(required_capabilities)
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_conditions"]
-        elif intent_val in [IntentCategory.HAZARDS.value, IntentCategory.ROUTE.value, IntentCategory.ANALYTICAL_EXPLANATION.value]:
-            tools = _enforce_dependency_order(required_capabilities)  # Handles hazards, route, and analytical explanation
+        elif intent_val in [
+            IntentCategory.HAZARDS.value,
+            IntentCategory.ROUTE.value,
+            IntentCategory.ANALYTICAL_EXPLANATION.value,
+            IntentCategory.WHAT_CHANGED.value,
+            IntentCategory.WHAT_IF.value,
+            IntentCategory.ALTERNATIVE.value,
+        ]:
+            tools = _enforce_dependency_order(required_capabilities)
         else:
             tools = []
 
@@ -847,7 +890,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         if intent_val == IntentCategory.PFZ.value:
             tools = ["pfz_stub"]
         elif intent_val == IntentCategory.SAFETY.value:
-            tools = ["trip_assessment_stub"]
+            tools = ["marine_stub", "weather_stub", "risk_stub"]
         elif intent_val == IntentCategory.CONDITIONS.value:
             tools = ["marine_stub"]
         elif intent_val == IntentCategory.HAZARDS.value:
@@ -1101,10 +1144,31 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
                 req = TripAssessmentRequest(**params)
                 assessment_response = AssessmentService.assess_trip(req)
                 
+                rec_status = assessment_response.decision
+                dec_status = rec_status.value if hasattr(rec_status, "value") else str(rec_status)
+                summary_map = {
+                    "GO": f"Conditions off {harbor or 'harbor'} are within safe operational limits for {craft_type}.",
+                    "CAUTION": f"Marginal conditions detected off {harbor or 'harbor'}. Exercise heightened vigilance.",
+                    "NO_GO": f"Unsafe conditions detected off {harbor or 'harbor'}. Hold departure.",
+                    "UNKNOWN": f"Critical marine/weather data unavailable off {harbor or 'harbor'}. Cannot recommend departure.",
+                }
+                action_map = {
+                    "GO": "Safe to depart. Maintain standard watch and monitor VHF.",
+                    "CAUTION": "Exercise caution. Restrict distance offshore and inspect safety equipment.",
+                    "NO_GO": "Hold departure. Await updated coastal bulletins from authorities.",
+                    "UNKNOWN": "Hold departure and verify local port authority advisories.",
+                }
+                rec_dict = {
+                    "status": dec_status,
+                    "summary": summary_map.get(dec_status, f"Operational evaluation: {dec_status}."),
+                    "decisive_factors": [a.get("message", "") for a in (assessment_response.alerts or []) if a.get("message")] or [f"Assessed status: {dec_status}"],
+                    "next_action": action_map.get(dec_status, "Verify port warnings before departure."),
+                }
+                
                 result_data = {
                     "source_type": "REAL_ASSESSMENT",
                     "assessment_id": assessment_response.assessment_id,
-                    "recommendation": assessment_response.decision.model_dump(),
+                    "recommendation": rec_dict,
                     "confidence": {"level": "MEDIUM", "reasons": ["Generated from deterministic trip assessment service"]},
                     "conditions": assessment_response.conditions.model_dump() if assessment_response.conditions else None,
                 }
@@ -1371,9 +1435,12 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
 
     intent_val = state.get("intent", IntentCategory.UNSUPPORTED.value)
     harbor = state.get("origin_harbor") or state.get("location", {}).get("harbor", "Ratnagiri")
+    thread_id = state.get("thread_id")
     evidence = state.get("evidence", [])
     evidence_names = ", ".join(set(ev.source_name for ev in evidence)) or "No external evidence required"
     lang = state.get("language", "en")
+    decision_object: Optional[DecisionObject] = None
+    decision_delta: Optional[DecisionDelta] = None
 
     if intent_val == IntentCategory.UNSUPPORTED.value:
         if lang == "mr":
@@ -1496,14 +1563,29 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
             )
 
         baseline = state.get("observations", {}).get("baseline_recommendation")
+        if not baseline and thread_id:
+            saved_ctx = memory_manager.load_context(thread_id)
+            baseline = saved_ctx.metadata.get("baseline_risk_assessment") or saved_ctx.metadata.get("last_risk_assessment")
+
         if baseline:
-            base_status_val = baseline.get("status")
+            base_status_val = baseline.get("status") if isinstance(baseline, dict) else getattr(baseline, "status", None)
             base_status = base_status_val.value if hasattr(base_status_val, "value") else str(base_status_val)
             if base_status != rec.status.value:
                 diff_text = f"\n\n[What-If Comparison]\nYour alternative plan changed the safety status from {base_status} to {rec.status.value}."
             else:
                 diff_text = f"\n\n[What-If Comparison]\nYour alternative plan resulted in the same safety status ({rec.status.value}). The underlying environmental conditions for this timeframe/profile are either unchanged or unavailable."
             answer += diff_text
+
+            try:
+                base_st_enum = RecommendationStatus(base_status)
+                decision_delta = DecisionDelta(
+                    original_decision=base_st_enum,
+                    new_decision=rec.status,
+                    decision_changed=(base_st_enum != rec.status),
+                    summary=f"Safety comparison: {base_status} -> {rec.status.value}.",
+                )
+            except Exception as exc:
+                logger.debug("M3: Could not build DecisionDelta for SAFETY baseline: %s", exc)
 
         confidence = state.get("confidence") or Confidence(
             level=ConfidenceLevel.MEDIUM,
@@ -1957,13 +2039,19 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
 
     elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
         rec = state.get("risk_assessment")
+        craft = state.get("user_profile", {}).get("craft_profile", "motorized_boat")
         if rec:
             recommendation = rec
+            # Format canonical 5-step causal explanation (P1-2)
+            facts_list = rec.decisive_factors or [rec.summary]
+            facts_formatted = "\n".join(f"  • {f}" for f in facts_list)
             answer = (
-                f"[{rec.status.value}] Operational Situation Analysis & Explanation for {harbor}:\n\n"
-                f"{rec.summary}\n\n"
-                f"Decisive Factors:\n" + "\n".join(f"- {f}" for f in rec.decisive_factors) + "\n\n"
-                f"Recommended Action: {rec.next_action}\n\n"
+                f"[{rec.status.value}] Grounded Operational Explanation for {harbor}:\n\n"
+                f"1. [FACT / EVIDENCE]:\n{facts_formatted}\n\n"
+                f"2. [RELATION / INFERENCE]: Observed sea-state conditions directly govern vessel stability and navigation risk.\n\n"
+                f"3. [CONSTRAINT]: Evaluated against safety limits for vessel type '{craft}'.\n\n"
+                f"4. [DECISION]: Recommendation verdict is {rec.status.value}.\n\n"
+                f"5. [ACTIONABLE DIRECTIVE]: {rec.next_action}\n\n"
                 f"Supporting Evidence:\n- {evidence_names}"
             )
             confidence = state.get("confidence") or Confidence(
@@ -1989,6 +2077,286 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                 reasons=["Simulated geofence buffer check"],
             )
 
+    elif intent_val == IntentCategory.WHAT_CHANGED.value:
+        rec = state.get("risk_assessment")
+        obs = state.get("observations", {})
+        baseline = obs.get("baseline_recommendation")
+        if not baseline and thread_id:
+            saved_ctx = memory_manager.load_context(thread_id)
+            baseline = saved_ctx.metadata.get("baseline_risk_assessment") or saved_ctx.metadata.get("last_risk_assessment")
+
+        if rec and baseline:
+            base_status_val = baseline.get("status") if isinstance(baseline, dict) else getattr(baseline, "status", None)
+            base_status_str = base_status_val.value if hasattr(base_status_val, "value") else str(base_status_val)
+            try:
+                base_status = RecommendationStatus(base_status_str)
+            except Exception:
+                base_status = RecommendationStatus.UNKNOWN
+
+            changed = (base_status != rec.status)
+            base_factors = baseline.get("decisive_factors", []) if isinstance(baseline, dict) else getattr(baseline, "decisive_factors", [])
+            curr_factors = list(rec.decisive_factors) if rec.decisive_factors else []
+            added_factors = [f for f in curr_factors if f not in base_factors]
+            removed_factors = [f for f in base_factors if f not in curr_factors]
+
+            factor_change = None
+            if base_factors or curr_factors:
+                factor_change = {
+                    "original": base_factors[0] if base_factors else (baseline.get("summary", "") if isinstance(baseline, dict) else getattr(baseline, "summary", "")),
+                    "new": curr_factors[0] if curr_factors else rec.summary,
+                }
+
+            summary_text = (
+                f"Mission comparison: Verdict {'changed' if changed else 'remains unchanged'} "
+                f"from {base_status.value} to {rec.status.value}."
+            )
+            if added_factors:
+                summary_text += f" New decisive factors: {'; '.join(added_factors)}."
+
+            try:
+                decision_delta = DecisionDelta(
+                    original_decision=base_status,
+                    new_decision=rec.status,
+                    decision_changed=changed,
+                    confidence_change=None,
+                    decisive_factor_change=factor_change,
+                    added_factors=added_factors,
+                    removed_factors=removed_factors,
+                    changed_factors=[],
+                    temporal_changes={},
+                    summary=summary_text,
+                )
+            except Exception as exc:
+                logger.warning("M3: DecisionDelta construction failed in WHAT_CHANGED: %s", exc)
+                decision_delta = None
+
+            answer = (
+                f"[DECISION DELTA] Mission Comparison for {harbor}:\n\n"
+                f"- Original Decision: {base_status.value}\n"
+                f"- New Decision: {rec.status.value}\n"
+                f"- Status Changed: {'Yes' if changed else 'No (Conditions remain within same threshold band)'}\n"
+                f"- Decisive Factors: {'; '.join(rec.decisive_factors)}\n\n"
+                f"Actionable Directive: {rec.next_action}\n\n"
+                f"Supporting Evidence:\n- {evidence_names}"
+            )
+            recommendation = rec
+            confidence = state.get("confidence") or Confidence(
+                level=ConfidenceLevel.HIGH,
+                reasons=["Computed deterministic decision delta between baseline and modified mission"],
+            )
+        elif rec:
+            recommendation = rec
+            try:
+                decision_delta = DecisionDelta(
+                    original_decision=RecommendationStatus.UNKNOWN,
+                    new_decision=rec.status,
+                    decision_changed=False,
+                    summary=f"Current evaluated status is {rec.status.value} without prior baseline comparison.",
+                )
+            except Exception as exc:
+                logger.warning("M3: Fallback DecisionDelta failed: %s", exc)
+                decision_delta = None
+
+            answer = (
+                f"[DECISION DELTA] Current Evaluated Status for {harbor}: {rec.status.value}.\n\n"
+                f"{rec.summary}\n\n"
+                f"Actionable Directive: {rec.next_action}"
+            )
+            confidence = state.get("confidence") or Confidence(
+                level=ConfidenceLevel.HIGH,
+                reasons=["Current operational evaluation state"],
+            )
+        else:
+            try:
+                decision_delta = DecisionDelta(
+                    original_decision=RecommendationStatus.UNKNOWN,
+                    new_decision=RecommendationStatus.INFORMATIONAL,
+                    decision_changed=False,
+                    summary=f"No previous mission baseline available for {harbor}.",
+                )
+            except Exception as exc:
+                logger.warning("M3: Fallback DecisionDelta failed: %s", exc)
+                decision_delta = None
+
+            answer = f"[DECISION DELTA] No previous mission baseline found in conversation thread for {harbor} to compare against."
+            recommendation = Recommendation(
+                status=RecommendationStatus.INFORMATIONAL,
+                summary=f"No previous mission baseline available for {harbor}.",
+                decisive_factors=[],
+                next_action="Run initial safety check first.",
+            )
+            confidence = Confidence(level=ConfidenceLevel.MEDIUM, reasons=["No baseline found"])
+
+    elif intent_val == IntentCategory.WHAT_IF.value:
+        rec = state.get("risk_assessment")
+        if not rec:
+            rec = Recommendation(
+                status=RecommendationStatus.UNKNOWN,
+                summary="Insufficient data to evaluate what-if simulation.",
+                decisive_factors=["Missing environmental observations for what-if scenario"],
+                next_action="Request updated observations.",
+            )
+        recommendation = rec
+
+        obs = state.get("observations", {})
+        baseline = obs.get("baseline_recommendation")
+        if not baseline and thread_id:
+            saved_ctx = memory_manager.load_context(thread_id)
+            baseline = saved_ctx.metadata.get("baseline_risk_assessment") or saved_ctx.metadata.get("last_risk_assessment")
+
+        if baseline:
+            base_status_val = baseline.get("status") if isinstance(baseline, dict) else getattr(baseline, "status", None)
+            base_status_str = base_status_val.value if hasattr(base_status_val, "value") else str(base_status_val)
+            try:
+                base_status = RecommendationStatus(base_status_str)
+            except Exception:
+                base_status = RecommendationStatus.UNKNOWN
+
+            changed = (base_status != rec.status)
+            base_factors = baseline.get("decisive_factors", []) if isinstance(baseline, dict) else getattr(baseline, "decisive_factors", [])
+            curr_factors = list(rec.decisive_factors) if rec.decisive_factors else []
+            added_factors = [f for f in curr_factors if f not in base_factors]
+            removed_factors = [f for f in base_factors if f not in curr_factors]
+
+            factor_change = None
+            if base_factors or curr_factors:
+                factor_change = {
+                    "original": base_factors[0] if base_factors else (baseline.get("summary", "") if isinstance(baseline, dict) else getattr(baseline, "summary", "")),
+                    "new": curr_factors[0] if curr_factors else rec.summary,
+                }
+
+            time_win = state.get("time_window") or {}
+            temporal_changes = {}
+            if time_win.get("departure_time"):
+                temporal_changes["simulated_departure"] = time_win["departure_time"]
+
+            summary_text = (
+                f"What-If Simulation: Verdict {'changed' if changed else 'remains unchanged'} "
+                f"from {base_status.value} to {rec.status.value}."
+            )
+            if added_factors:
+                summary_text += f" Contributing factors: {'; '.join(added_factors)}."
+
+            try:
+                decision_delta = DecisionDelta(
+                    original_decision=base_status,
+                    new_decision=rec.status,
+                    decision_changed=changed,
+                    confidence_change=None,
+                    decisive_factor_change=factor_change,
+                    added_factors=added_factors,
+                    removed_factors=removed_factors,
+                    changed_factors=[],
+                    temporal_changes=temporal_changes,
+                    summary=summary_text,
+                )
+            except Exception as exc:
+                logger.warning("M3: DecisionDelta construction failed in WHAT_IF: %s", exc)
+                decision_delta = None
+
+            diff_status_str = f"changed from {base_status.value} to {rec.status.value}" if changed else f"remained {rec.status.value}"
+            answer = (
+                f"[{rec.status.value}] What-If Counterfactual Evaluation for {harbor}:\n\n"
+                f"{rec.summary}\n\n"
+                f"[What-If Comparison]\n"
+                f"- Previous Decision: {base_status.value}\n"
+                f"- Counterfactual Decision: {rec.status.value} ({diff_status_str})\n"
+                f"- Decisive Factors: {'; '.join(rec.decisive_factors) if rec.decisive_factors else 'None'}\n\n"
+                f"Actionable Directive: {rec.next_action}\n\n"
+                f"Supporting Evidence:\n- {evidence_names}"
+            )
+        else:
+            try:
+                decision_delta = DecisionDelta(
+                    original_decision=RecommendationStatus.UNKNOWN,
+                    new_decision=rec.status,
+                    decision_changed=False,
+                    summary="What-If simulation evaluated without prior baseline.",
+                )
+            except Exception as exc:
+                logger.warning("M3: Fallback DecisionDelta construction failed in WHAT_IF: %s", exc)
+                decision_delta = None
+
+            answer = (
+                f"[{rec.status.value}] What-If Counterfactual Evaluation for {harbor}:\n\n"
+                f"{rec.summary}\n\n"
+                f"Notice: No prior baseline found in conversation thread; evaluating as isolated scenario.\n\n"
+                f"Actionable Directive: {rec.next_action}\n\n"
+                f"Supporting Evidence:\n- {evidence_names}"
+            )
+
+        confidence = state.get("confidence") or Confidence(
+            level=ConfidenceLevel.HIGH if rec.status != RecommendationStatus.UNKNOWN else ConfidenceLevel.LOW,
+            reasons=["Counterfactual scenario evaluated against deterministic safety rules"],
+        )
+
+    elif intent_val == IntentCategory.ALTERNATIVE.value:
+        rec = state.get("risk_assessment")
+        route_candidates = state.get("route_candidates", [])
+        obs = state.get("observations", {})
+
+        validated_alternatives = []
+        if route_candidates:
+            for rc in route_candidates:
+                rating = rc.get("risk_rating", "UNKNOWN")
+                if rating in ("LOW", "MODERATE"):
+                    validated_alternatives.append({
+                        "type": "route",
+                        "proposal": f"Route corridor: {rc.get('name', rc.get('route_id', 'Alternative Route'))}",
+                        "resulting_decision": "GO" if rating == "LOW" else "CAUTION",
+                        "relevant_factor": f"Max wave height {rc.get('max_wave_height_m', 'N/A')}m, exposure score {rc.get('exposure_score', 'N/A')}",
+                        "feasibility": "FEASIBLE",
+                        "evidence": f"Distance: {rc.get('distance_km', 'N/A')} km",
+                    })
+
+        if rec:
+            recommendation = rec
+            confidence = state.get("confidence") or Confidence(
+                level=ConfidenceLevel.MEDIUM,
+                reasons=["Evaluated alternatives against authoritative observations and route options"],
+            )
+
+            if validated_alternatives:
+                alt_lines = []
+                for idx, alt in enumerate(validated_alternatives, 1):
+                    alt_lines.append(
+                        f"{idx}. [{alt['resulting_decision']}] {alt['proposal']}\n"
+                        f"   - Factor: {alt['relevant_factor']}\n"
+                        f"   - Feasibility: {alt['feasibility']} ({alt['evidence']})"
+                    )
+                alt_text = "\n\n".join(alt_lines)
+                answer = (
+                    f"[{rec.status.value}] Operational Alternatives Analysis for {harbor}:\n\n"
+                    f"Current Mission Verdict: {rec.status.value} — {rec.summary}\n\n"
+                    f"Validated Alternatives:\n{alt_text}\n\n"
+                    f"Actionable Directive: {rec.next_action}\n\n"
+                    f"Supporting Evidence:\n- {evidence_names}"
+                )
+            else:
+                answer = (
+                    f"[{rec.status.value}] Operational Alternatives Analysis for {harbor}:\n\n"
+                    f"Current Mission Verdict: {rec.status.value} — {rec.summary}\n\n"
+                    f"No validated alternative available with current evidence.\n\n"
+                    f"Actionable Directive: {rec.next_action}\n\n"
+                    f"Supporting Evidence:\n- {evidence_names}"
+                )
+        else:
+            answer = (
+                f"[UNKNOWN] Operational Alternatives Analysis for {harbor}:\n\n"
+                f"No validated alternative available with current evidence.\n\n"
+                f"Actionable Directive: Hold departure until updated observations are retrieved."
+            )
+            recommendation = Recommendation(
+                status=RecommendationStatus.UNKNOWN,
+                summary="Insufficient data to evaluate operational alternatives.",
+                decisive_factors=["Missing environmental observations for alternative analysis"],
+                next_action="Hold departure and obtain updated coastal observations.",
+            )
+            confidence = Confidence(
+                level=ConfidenceLevel.LOW,
+                reasons=["No authoritative risk assessment available for alternative evaluation"],
+            )
+
     else:
         answer = f"[M1 DEMO DATA] Processed query for intent '{intent_val}'."
         recommendation = Recommendation(
@@ -2001,6 +2369,74 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
             level=ConfidenceLevel.MEDIUM,
             reasons=["Simulated M1 dataset"],
         )
+
+    # 3b. M3 Canonical DecisionObject Construction (Deterministic, additive)
+    try:
+        if recommendation is not None:
+            factors = list(recommendation.decisive_factors) if recommendation.decisive_factors else []
+            decisive_factor = factors[0] if factors else recommendation.summary
+            supporting = factors[1:] if len(factors) > 1 else []
+
+            constraints_applied = []
+            for tc in getattr(recommendation, "threshold_comparisons", []):
+                stat = "EXCEEDED" if tc.exceeded else "SAFE"
+                constraints_applied.append(
+                    f"{tc.metric_name} limit {tc.threshold_value}{tc.unit or ''}: "
+                    f"observed {tc.observed_value}{tc.unit or ''} [{stat}]"
+                )
+
+            inferences = []
+            obs = state.get("observations", {})
+            craft = state.get("user_profile", {}).get("craft_profile", "motorized_boat")
+            inferences.append(f"Operating limits evaluated for craft class '{craft}'")
+            if "significant_wave_height_m" in obs:
+                inferences.append(f"Surface wave height {obs['significant_wave_height_m']}m governs small craft stability")
+
+            route_candidates = state.get("route_candidates", [])
+            decision_alts = []
+            if route_candidates:
+                rec_route = obs.get("recommended_route_id") or obs.get("route_comparison", {}).get("recommended_route_id")
+                if rec_route:
+                    supporting.append(f"Recommended route corridor: {rec_route}")
+                for rc in route_candidates:
+                    rc_name = rc.get("name", rc.get("route_id", "route"))
+                    m_wave = rc.get("max_wave_height_m", "N/A")
+                    exp = rc.get("exposure_score", "N/A")
+                    rating = rc.get("risk_rating", "UNKNOWN")
+                    inferences.append(
+                        f"Route corridor '{rc_name}': max wave {m_wave}m, exposure score {exp}, rating {rating}"
+                    )
+                    decision_alts.append({
+                        "type": "route",
+                        "route_id": rc.get("route_id"),
+                        "name": rc_name,
+                        "risk_rating": rating,
+                        "exposure_score": exp,
+                        "distance_km": rc.get("distance_km"),
+                        "feasibility": "FEASIBLE" if rating in ("LOW", "MODERATE") else "HIGH_RISK",
+                    })
+
+            conf_level = confidence.level if confidence else ConfidenceLevel.LOW
+            conf_reasons = confidence.reasons if confidence else ["Default fallback"]
+
+            decision_object = DecisionObject(
+                decision=recommendation.status,
+                confidence=conf_level,
+                confidence_reasons=conf_reasons,
+                decisive_factor=decisive_factor,
+                supporting_factors=supporting,
+                non_decisive_factors=getattr(recommendation, "non_decisive_factors", []),
+                constraints_applied=constraints_applied,
+                evidence=evidence,
+                inferences=inferences,
+                provenance=getattr(recommendation, "provenance", []),
+                uncertainty=list(state.get("warnings", [])),
+                alternatives=decision_alts,
+                recommended_action=recommendation.next_action,
+            )
+    except Exception as exc:
+        logger.warning("M3: Canonical DecisionObject construction failed: %s", exc)
+        decision_object = None
 
     # 4. LLM Response Synthesis (If LLM provider is available)
     llm_provider: Optional[LLMProvider] = state.get("llm_provider")
@@ -2208,6 +2644,27 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
     eval_state["risk_assessment"] = recommendation
     map_layers = generate_map_layers(eval_state)
 
+    # Persist latest operational assessment in thread metadata for multi-turn what-changed comparisons
+    if thread_id and recommendation.status != RecommendationStatus.UNKNOWN and recommendation.status != RecommendationStatus.INFORMATIONAL:
+        try:
+            persisted_ctx = memory_manager.load_context(thread_id)
+            if "baseline_risk_assessment" not in persisted_ctx.metadata and intent_val not in (IntentCategory.WHAT_IF.value, IntentCategory.WHAT_CHANGED.value):
+                persisted_ctx.metadata["baseline_risk_assessment"] = {
+                    "status": recommendation.status.value,
+                    "summary": recommendation.summary,
+                    "decisive_factors": recommendation.decisive_factors,
+                    "next_action": recommendation.next_action,
+                }
+            persisted_ctx.metadata["last_risk_assessment"] = {
+                "status": recommendation.status.value,
+                "summary": recommendation.summary,
+                "decisive_factors": recommendation.decisive_factors,
+                "next_action": recommendation.next_action,
+            }
+            memory_manager.save_context(persisted_ctx)
+        except Exception as e:
+            logger.debug(f"Failed to persist assessment in thread context: {e}")
+
     return {
         "response": answer,
         "risk_assessment": recommendation,
@@ -2215,6 +2672,8 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
         "map_layers": map_layers,
         "suggested_followups": suggested_followups,
         "trace": trace,
+        "decision_object": decision_object,
+        "decision_delta": decision_delta,
     }
 
 
@@ -2310,8 +2769,27 @@ def terminal_node(state: ORCAState) -> Dict[str, Any]:
         evidence_ids=evidence_ids,
     )
 
+    harbor = state.get("origin_harbor") or (state.get("location") or {}).get("harbor", "Ratnagiri")
+    collaboration = None
+    try:
+        from backend.app.domain.agent_collaboration import AgentCollaborationEngine
+        collaboration = AgentCollaborationEngine.derive_collaboration(
+            observations=state.get("observations", {}),
+            risk_assessment=state.get("risk_assessment"),
+            evidence=evidence,
+            trace=trace,
+            user_profile=state.get("user_profile", {}),
+            tool_results=state.get("tool_results", {}),
+            intent=state.get("intent"),
+            language=state.get("language", "en"),
+            harbor=harbor,
+        )
+    except Exception as exc:
+        logger.warning("Failed to derive agent collaboration payload: %s", exc)
+
     return {
         "trace": trace,
+        "agent_collaboration": collaboration,
     }
 
 

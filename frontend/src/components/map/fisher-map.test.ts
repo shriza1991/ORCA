@@ -4,6 +4,7 @@ import type { PFZCandidate, HazardBulletin } from '../../api/researcher-client';
 import {
   createPFZMapLayers,
   createHazardMapLayers,
+  filterFisherBaseLayers,
   mergeFisherLayers,
   formatFishermanPopup,
 } from '../../utils/fisher-map';
@@ -290,5 +291,147 @@ describe('P0-23 Fisherman Interactive Decision Map Utilities & Contracts', () =>
     expect(mergedNoPFZ.some((l) => l.layer_id === 'layer_recommended_route')).toBe(true);
     expect(mergedNoPFZ.some((l) => l.layer_id === 'layer_marine_hazards')).toBe(true);
     expect(mergedNoPFZ.some((l) => l.layer_id === 'layer_pfz_candidates')).toBe(false);
+  });
+
+  it('6. filterFisherBaseLayers eliminates sovereign EEZ, territorial sea fills, and 8km PFZ circles', () => {
+    const rawLayers: MapLayer[] = [
+      {
+        layer_id: 'layer_eez_arabian_sea',
+        name: 'India Exclusive Economic Zone (Arabian Sea)',
+        layer_type: 'geojson',
+        visible: true,
+        style: { color: '#38bdf8', opacity: 0.04, layer_category: 'national_eez' },
+        geojson: { type: 'Feature', geometry: { type: 'Polygon', coordinates: [] }, properties: {} },
+      },
+      {
+        layer_id: 'layer_territorial_sea_12nm',
+        name: 'Territorial Waters (12 Nautical Miles)',
+        layer_type: 'geojson',
+        visible: true,
+        style: { color: '#0ea5e9', opacity: 0.08, layer_category: 'national_boundary' },
+        geojson: { type: 'Feature', geometry: { type: 'Polygon', coordinates: [] }, properties: {} },
+      },
+      {
+        layer_id: 'layer_pfz_thermal_fronts',
+        name: 'PFZ Thermal Front Advisories',
+        layer_type: 'geojson',
+        visible: true,
+        style: { color: '#10b981', opacity: 0.16, layer_category: 'pfz' },
+        geojson: { type: 'FeatureCollection', features: [] },
+      },
+      {
+        layer_id: 'layer_navigational_lighthouses',
+        name: 'Navigational Lighthouses (DGLL)',
+        layer_type: 'geojson',
+        visible: true,
+        style: { color: '#f59e0b', opacity: 1.0, layer_category: 'navigation_aid' },
+        geojson: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [73.28, 16.99] },
+              properties: { name: 'Ratnagiri Light', optical_range_nm: 17 },
+            },
+          ],
+        },
+      },
+    ];
+
+    const cleaned = filterFisherBaseLayers(rawLayers, [73.28, 16.99], 1.5);
+
+    // EEZ, Territorial Waters, and 8km PFZ thermal circles MUST be removed
+    expect(cleaned.some((l) => l.layer_id === 'layer_eez_arabian_sea')).toBe(false);
+    expect(cleaned.some((l) => l.layer_id === 'layer_territorial_sea_12nm')).toBe(false);
+    expect(cleaned.some((l) => l.layer_id === 'layer_pfz_thermal_fronts')).toBe(false);
+
+    // Navigational aid lighthouse MUST be retained
+    expect(cleaned.some((l) => l.layer_id === 'layer_navigational_lighthouses')).toBe(true);
+    expect(cleaned).toHaveLength(1);
+  });
+
+  it('7. filterFisherBaseLayers scopes hazards and geofences to harbor vicinity with subtle opacity', () => {
+    const rawLayers: MapLayer[] = [
+      // Hazard near Ratnagiri (lon: 73.28, lat: 16.99) -> inside 1.5° bbox
+      {
+        layer_id: 'layer_active_hazards_geojson',
+        name: 'Active Marine Hazards',
+        layer_type: 'geojson',
+        visible: true,
+        style: { color: '#ef4444', opacity: 0.5, line_width: 3, layer_category: 'hazard' },
+        geojson: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[[73.1, 16.8], [73.4, 16.8], [73.4, 17.1], [73.1, 17.1], [73.1, 16.8]]],
+              },
+              properties: { headline: 'Local Konkan High Wave Alert', severity: 'WARNING' },
+            },
+            // Distant hazard in Bay of Bengal (lon: 85.0, lat: 18.0) -> outside bbox
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[[84.5, 17.5], [85.5, 17.5], [85.5, 18.5], [84.5, 18.5], [84.5, 17.5]]],
+              },
+              properties: { headline: 'Odisha Coast Squall', severity: 'WARNING' },
+            },
+          ],
+        },
+      },
+      // Distant geofence (Sundarbans MPA, lon: 88.8, lat: 21.8) -> outside bbox
+      {
+        layer_id: 'base_mpa_sundarbans',
+        name: 'Sundarbans Biosphere Reserve',
+        layer_type: 'geojson',
+        visible: true,
+        style: { color: '#f97316', opacity: 0.3 },
+        geojson: {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[[88.5, 21.5], [89.0, 21.5], [89.0, 22.0], [88.5, 22.0], [88.5, 21.5]]],
+          },
+          properties: { name: 'Sundarbans' },
+        },
+      },
+      // Local geofence (Malvan Marine Sanctuary, lon: 73.47, lat: 16.06) -> inside 1.5° bbox
+      {
+        layer_id: 'base_mpa_malvan',
+        name: 'Malvan Marine Sanctuary',
+        layer_type: 'geojson',
+        visible: true,
+        style: { color: '#f97316', opacity: 0.3 },
+        geojson: {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[[73.4, 16.0], [73.5, 16.0], [73.5, 16.2], [73.4, 16.2], [73.4, 16.0]]],
+          },
+          properties: { name: 'Malvan Sanctuary' },
+        },
+      },
+    ];
+
+    const cleaned = filterFisherBaseLayers(rawLayers, [73.28, 16.99], 1.5);
+
+    // Distant Sundarbans MPA must be dropped
+    expect(cleaned.some((l) => l.layer_id === 'base_mpa_sundarbans')).toBe(false);
+
+    // Local Malvan MPA must be kept with subtle styling (opacity: 0.08)
+    const malvan = cleaned.find((l) => l.layer_id === 'base_mpa_malvan');
+    expect(malvan).toBeDefined();
+    expect(malvan?.style?.opacity).toBe(0.08);
+
+    // Hazard layer must contain only the local Konkan feature, with distant Odisha feature stripped
+    const hazard = cleaned.find((l) => l.layer_id === 'layer_active_hazards_geojson');
+    expect(hazard).toBeDefined();
+    expect(hazard?.style?.opacity).toBe(0.15); // subtle fill opacity
+    const fc = hazard?.geojson as GeoJSON.FeatureCollection;
+    expect(fc.features).toHaveLength(1);
+    expect(fc.features[0].properties?.headline).toBe('Local Konkan High Wave Alert');
   });
 });

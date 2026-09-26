@@ -120,7 +120,7 @@ class ImdHazardNormalizer:
         # Distinguish file-import from synthetic
         _bulletin_id = source_bulletin.get("bulletin_id") or source_bulletin.get("public_id")
         _access_method = source_bulletin.get("_source_documentation", {}).get("access_method")
-        if _bulletin_id or _access_method == "FILE_IMPORT":
+        if _access_method == "FILE_IMPORT":
             source_label = f"IMD Cyclone Warning Division (FILE_IMPORT — {_bulletin_id or 'dated bulletin'})"
         else:
             source_label = "IMD Cyclone Warning Division (SYNTHETIC)"

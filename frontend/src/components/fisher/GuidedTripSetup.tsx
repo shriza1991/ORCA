@@ -13,7 +13,19 @@ interface GuidedTripSetupProps {
   onCancel: () => void;
 }
 
-const HARBORS = ['Ratnagiri', 'Malvan', 'Panaji', 'Mumbai', 'Veraval', 'Porbandar'];
+const HARBORS = [
+  'Ratnagiri',
+  'Malvan',
+  'Panaji',
+  'Mumbai',
+  'Veraval',
+  'Mangalore',
+  'Cochin',
+  'Tuticorin',
+  'Chennai',
+  'Visakhapatnam',
+  'Paradip',
+];
 const CRAFT_PROFILES = [
   { value: 'traditional_non_motorized', label: 'Traditional craft' },
   { value: 'motorized_boat', label: 'Motorized boat' },

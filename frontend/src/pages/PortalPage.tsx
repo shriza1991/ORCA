@@ -18,13 +18,11 @@ import {
   ShieldAlert,
   ShipWheel,
   SlidersHorizontal,
-  Waves,
-  Database,
 } from 'lucide-react';
 import { translateText, type SupportedLanguage } from '../i18n/translations';
 
 interface PortalPageProps {
-  onSelectRole: (role: 'fisher' | 'authority' | 'researcher' | 'marinewatch' | 'deckgl-experiment') => void;
+  onSelectRole: (role: 'fisher' | 'authority' | 'researcher' | 'deckgl-experiment') => void;
   language?: SupportedLanguage;
 }
 
@@ -48,54 +46,6 @@ export default function PortalPage({ onSelectRole, language = 'en' }: PortalPage
 
         {/* Portal Selection Cards Grid */}
         <section className="portal-grid" aria-label="Available Operational Portals">
-          {/* Card 0: India MarineWatch (BarentsWatch for India) */}
-          <article className="portal-card marinewatch-portal-card" style={{ borderColor: 'var(--color-accent)' }}>
-            <div className="portal-card-header">
-              <div className="portal-icon-wrapper" style={{ backgroundColor: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}>
-                <Compass size={28} />
-              </div>
-              <div>
-                <span className="portal-card-eyebrow" style={{ color: 'var(--color-accent)', fontWeight: 700 }}>
-                  {tr('National Marine Intelligence (BarentsWatch India)')}
-                </span>
-                <h2>{tr('India MarineWatch')}</h2>
-              </div>
-            </div>
-
-            <p className="portal-card-summary">
-              {tr('Comprehensive Norwegian BarentsWatch-inspired marine intelligence portal for India. Connects real INCOIS forecasts, astronomical tides, CMFRI landing centres, CAA aquaculture, and GEBCO bathymetry.')}
-            </p>
-
-            <ul className="portal-features-list">
-              <li>
-                <CheckCircle2 size={15} className="feature-check" />
-                <span><strong>{tr('OceanWatch Unified GIS:')}</strong> {tr('Interactive forecast scrubber (Now to +48h), wave vectors, and point query panel.')}</span>
-              </li>
-              <li>
-                <MapPinned size={15} className="feature-check" />
-                <span><strong>{tr('FisherWatch & PortWatch:')}</strong> {tr('Active INCOIS PFZ advisories, vessel safety limits, and CMFRI harbour census.')}</span>
-              </li>
-              <li>
-                <Waves size={15} className="feature-check" />
-                <span><strong>{tr('Astronomical PAT Tides:')}</strong> {tr('High/Low water harmonic predictions for Mumbai, Ratnagiri, and Goa.')}</span>
-              </li>
-              <li>
-                <Database size={15} className="feature-check" />
-                <span><strong>{tr('§212 Data Catalogue:')}</strong> {tr('30 authoritative datasets across INCOIS, IMD, GEBCO, and CAA.')}</span>
-              </li>
-            </ul>
-
-            <button
-              type="button"
-              className="portal-cta-btn"
-              style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff' }}
-              onClick={() => onSelectRole('marinewatch')}
-            >
-              <span>{tr('Launch India MarineWatch')}</span>
-              <ArrowRight size={16} />
-            </button>
-          </article>
-
           {/* Card 1: Fisher / Skipper Console */}
           <article className="portal-card fisher-portal-card">
             <div className="portal-card-header">

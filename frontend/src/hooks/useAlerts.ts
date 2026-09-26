@@ -3,40 +3,49 @@ import type { ActionableAlertDto, SavedTripRequest, SavedTripResponse } from '..
 import { useSpokenGuidance } from './useSpokenGuidance';
 import { translateText, type SupportedLanguage } from '../i18n/translations';
 
+// Centralized API base — must match client.ts to hit the deployed backend.
+// On Vercel production, VITE_API_BASE_URL = https://samudra-1.onrender.com/api/v1
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
+
 export function useAlerts(language: SupportedLanguage) {
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<ActionableAlertDto[]>([]);
   const [isPolling, setIsPolling] = useState(false);
   const { speak } = useSpokenGuidance({ language });
-  
-  // Track announced alerts to avoid repeating
+
+  // Track announced alerts to avoid repeating TTS
   const announcedAlertsRef = useRef<Set<string>>(new Set());
 
   const registerTrip = useCallback(async (req: SavedTripRequest) => {
     try {
-      const res = await fetch('/api/v1/alerts/monitor', {
+      const res = await fetch(`${API_BASE}/alerts/monitor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req)
+        body: JSON.stringify(req),
       });
-      if (!res.ok) throw new Error('Failed to register trip');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: SavedTripResponse = await res.json();
       setSubscriptionId(data.subscription_id);
       setIsPolling(true);
       return data;
     } catch (e) {
-      console.error("Failed to register trip:", e);
+      // Non-critical — trip monitoring is best-effort. Silently degrade.
+      console.warn('Trip monitoring unavailable:', e);
     }
   }, []);
 
   const acknowledgeAlert = useCallback(async (alertId: string) => {
     try {
-      const res = await fetch(`/api/v1/alerts/${alertId}/acknowledge`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/alerts/${alertId}/acknowledge`, {
+        method: 'POST',
+      });
       if (res.ok) {
-        setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, is_acknowledged: true } : a));
+        setAlerts((prev) =>
+          prev.map((a) => (a.id === alertId ? { ...a, is_acknowledged: true } : a)),
+        );
       }
     } catch (e) {
-      console.error("Failed to acknowledge alert:", e);
+      console.warn('Failed to acknowledge alert:', e);
     }
   }, []);
 
@@ -45,35 +54,34 @@ export function useAlerts(language: SupportedLanguage) {
 
     const poll = async () => {
       try {
-        const res = await fetch(`/api/v1/alerts/${subscriptionId}`);
+        const res = await fetch(`${API_BASE}/alerts/${subscriptionId}`);
         if (!res.ok) return;
         const data = await res.json();
-        
-        // Check for new, unacknowledged alerts to announce
+
+        // Announce new, unacknowledged alerts exactly once
         data.alerts.forEach((alert: ActionableAlertDto) => {
           if (!alert.is_acknowledged && !announcedAlertsRef.current.has(alert.id)) {
-            // New alert! 
-            const alertPrefix = translateText('Alert', language);
-            speak(`${alertPrefix}: ${alert.title}. ${alert.recommended_action}`);
+            const prefix = translateText('Alert', language);
+            speak(`${prefix}: ${alert.title}. ${alert.recommended_action}`);
             announcedAlertsRef.current.add(alert.id);
           }
         });
 
         setAlerts(data.alerts);
       } catch (e) {
-        console.error("Polling failed", e);
+        console.warn('Alert polling failed', e);
       }
     };
 
-    poll(); // Initial poll
-    const interval = setInterval(poll, 15000); // 15s for demo responsiveness
+    poll();
+    const interval = setInterval(poll, 15000);
     return () => clearInterval(interval);
-  }, [subscriptionId, isPolling, speak]);
+  }, [subscriptionId, isPolling, speak, language]);
 
   return {
     subscriptionId,
     alerts,
     registerTrip,
-    acknowledgeAlert
+    acknowledgeAlert,
   };
 }

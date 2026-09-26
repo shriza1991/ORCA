@@ -122,7 +122,7 @@ class DeterministicRiskEngine:
                 else:
                     ref_dt = reference_time
                 now_utc = ref_dt if ref_dt.tzinfo is not None else ref_dt.replace(tzinfo=timezone.utc)
-            except ValueError:
+            except (ValueError, TypeError):
                 now_utc = datetime.now(UTC)
         else:
             now_utc = datetime.now(UTC)
@@ -135,7 +135,7 @@ class DeterministicRiskEngine:
                 else:
                     ret_dt = return_time
                 window_end_utc = ret_dt if ret_dt.tzinfo is not None else ret_dt.replace(tzinfo=timezone.utc)
-            except ValueError:
+            except (ValueError, TypeError):
                 window_end_utc = now_utc
 
         # ---------------------------------------------------------------------
@@ -161,18 +161,20 @@ class DeterministicRiskEngine:
                     pass
 
             is_marine_degraded = marine_stale or "DEGRADED" in (marine.source_name or "").upper()
+            marine_source = marine.source_name or "INCOIS Ocean State Forecast"
+            marine_provider = "Open-Meteo" if "open-meteo" in marine_source.lower() else "INCOIS"
             prov_marine = DataProvenance(
-                provider_name="INCOIS",
-                source_name=marine.source_name or "INCOIS Ocean State Forecast",
+                provider_name=marine_provider,
+                source_name=marine_source,
                 source_url=marine.source_url,
                 observed_time=marine.observed_at,
                 valid_to=marine.valid_to,
                 data_mode=data_mode,
                 is_stale=marine_stale,
-                quality_flags=["official_source"] if not is_marine_degraded else ["degraded", "stale_telemetry"],
+                quality_flags=["official_source"] if not is_marine_degraded and marine_provider == "INCOIS" else (["fallback_model"] if not is_marine_degraded else ["degraded", "stale_telemetry"]),
             )
             provenance_list.append(prov_marine)
-            evidence_ids.append("EV-INCOIS-OSF-01")
+            evidence_ids.append(f"EV-{marine_provider.upper()}-OSF-01")
 
         if weather is not None:
             if weather.valid_to:
@@ -190,18 +192,20 @@ class DeterministicRiskEngine:
                     pass
 
             is_weather_degraded = weather_stale or "DEGRADED" in (weather.source_name or "").upper()
+            weather_source = weather.source_name or "IMD Coastal Weather Bulletin"
+            weather_provider = "Open-Meteo" if "open-meteo" in weather_source.lower() else "IMD"
             prov_weather = DataProvenance(
-                provider_name="IMD",
-                source_name=weather.source_name or "IMD Coastal Weather Bulletin",
+                provider_name=weather_provider,
+                source_name=weather_source,
                 source_url=weather.source_url,
                 observed_time=weather.observed_at,
                 valid_to=weather.valid_to,
                 data_mode=data_mode,
                 is_stale=weather_stale,
-                quality_flags=["official_source"] if not is_weather_degraded else ["degraded", "stale_telemetry"],
+                quality_flags=["official_source"] if not is_weather_degraded and weather_provider == "IMD" else (["fallback_model"] if not is_weather_degraded else ["degraded", "stale_telemetry"]),
             )
             provenance_list.append(prov_weather)
-            evidence_ids.append("EV-IMD-WEATHER-01")
+            evidence_ids.append(f"EV-{weather_provider.upper()}-WEATHER-01")
 
         if hazard is not None:
             if hazard.valid_to:
@@ -219,9 +223,11 @@ class DeterministicRiskEngine:
                     pass
 
             is_hazard_degraded = hazard_stale or "DEGRADED" in (hazard.source_name or "").upper()
+            hazard_source = hazard.source_name or "IMD Hazard Division"
+            hazard_provider = "IMD"
             prov_hazard = DataProvenance(
-                provider_name="IMD",
-                source_name=hazard.source_name or "IMD Hazard Division",
+                provider_name=hazard_provider,
+                source_name=hazard_source,
                 source_url=hazard.source_url,
                 valid_from=hazard.valid_from,
                 valid_to=hazard.valid_to,
@@ -230,7 +236,7 @@ class DeterministicRiskEngine:
                 quality_flags=["official_source"] if not is_hazard_degraded else ["degraded", "stale_bulletin"],
             )
             provenance_list.append(prov_hazard)
-            evidence_ids.append("EV-IMD-HAZARD-01")
+            evidence_ids.append(f"EV-{hazard_provider.upper()}-HAZARD-01")
 
         # Check for missing critical inputs or degraded telemetry
         is_data_degraded = (
@@ -394,10 +400,14 @@ class DeterministicRiskEngine:
             )
 
         # ---------------------------------------------------------------------
-        # 5. Final Deterministic Status Synthesis
+        # 5. Final Deterministic Status Synthesis & Hard Constraints Hierarchy
+        #    Hierarchy: SAFETY (Cyclones/Squall) -> LEGAL (Geofence) -> VESSEL (Wave/Wind) -> DATA INTEGRITY -> OPPORTUNITY
         # ---------------------------------------------------------------------
         has_nogo = any(tc.impact == "NO_GO_TRIGGER" for tc in threshold_checks)
         has_caution = any(tc.impact == "CAUTION_TRIGGER" for tc in threshold_checks)
+
+        # Check if fallback sources (e.g. Open-Meteo or snapshot) were used for complete valid data
+        is_fallback_source = any("fallback" in prov.quality_flags for prov in provenance_list)
 
         if has_nogo:
             status = RecommendationStatus.NO_GO
@@ -431,7 +441,13 @@ class DeterministicRiskEngine:
             decisive_factors.append("No active severe weather bulletins.")
             conf_reasons = ["All environmental parameters strictly within safe operating envelope"]
 
-        confidence_level = ConfidenceLevel.LOW if is_data_degraded else ConfidenceLevel.HIGH
+        if is_data_degraded:
+            confidence_level = ConfidenceLevel.LOW
+        elif is_fallback_source:
+            confidence_level = ConfidenceLevel.MEDIUM
+            conf_reasons.append("Evaluated using verified fallback marine model observations")
+        else:
+            confidence_level = ConfidenceLevel.HIGH
 
         return RiskAssessmentPayload(
             status=status,

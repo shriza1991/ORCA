@@ -32,6 +32,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from backend.app.contracts.chat import (
+    AgentCollaborationPayload,
     AgentTraceItem,
     ChatResponse,
     Confidence,
@@ -57,6 +58,9 @@ class ResponseCompositionInput(BaseModel):
     trace: List[AgentTraceItem] = Field(default_factory=list, description="Sanitized audit trace")
     warnings: List[str] = Field(default_factory=list, description="Operational caveats")
     raw_observations: dict = Field(default_factory=dict, description="Observations dictionary")
+    agent_collaboration: Optional[AgentCollaborationPayload] = Field(
+        None, description="Multi-agent reasoning, evidence, arbitration, and timeline"
+    )
 
 
 class ResponseComposer:
@@ -394,6 +398,7 @@ class ResponseComposer:
             trace=composition_input.trace,
             warnings=composition_input.warnings,
             suggested_followups=followups,
+            agent_collaboration=composition_input.agent_collaboration,
         )
 
         ResponseComposer.validate_safety_invariance(

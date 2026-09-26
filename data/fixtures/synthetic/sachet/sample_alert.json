@@ -1,0 +1,29 @@
+{
+  "identifier": "SACHET-NDMA-2026-09-SQUALL-02",
+  "sender": "ndma-sachet-marine@gov.in",
+  "sent": "2026-09-23T11:00:00+00:00",
+  "status": "Actual",
+  "msgType": "Alert",
+  "scope": "Public",
+  "info": [
+    {
+      "category": "Met",
+      "event": "Squall Alert & High Wave Warning",
+      "urgency": "Expected",
+      "severity": "Moderate",
+      "certainty": "Likely",
+      "effective": "2026-09-23T11:00:00+00:00",
+      "expires": "2026-09-24T12:00:00+00:00",
+      "senderName": "National Disaster Management Authority (SACHET)",
+      "headline": "Squally Wind Warning for Gujarat-Maharashtra Coastal Waters",
+      "description": "Squally weather with wind speed reaching 40-50 kmph gusting to 60 kmph likely to prevail over coastal waters. Fishermen are advised to exercise caution.",
+      "instruction": "Small vessel operators should remain near shore and monitor weather bulletins.",
+      "area": [
+        {
+          "areaDesc": "Ratnagiri and Raigad coastal strip",
+          "circle": "16.99,73.28,30.0"
+        }
+      ]
+    }
+  ]
+}

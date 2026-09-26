@@ -5,6 +5,7 @@ Owned by Dev 2 (Backend Platform).
 """
 
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,7 +30,7 @@ class Settings(BaseSettings):
     # Server
     BACKEND_HOST: str = "0.0.0.0"
     BACKEND_PORT: int = 8000
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://samudra-qxx1.vercel.app"
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -40,7 +41,24 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://samudra_user:samudra_password_placeholder@localhost:5432/samudra_db"
-    SYNC_DATABASE_URL: str = "postgresql+psycopg2://samudra_user:samudra_password_placeholder@localhost:5432/samudra_db"
+    # Render supplies DATABASE_URL. Derive the synchronous SQLAlchemy URL
+    # automatically unless a local/test override is explicitly provided.
+    SYNC_DATABASE_URL: str = ""
+
+    @model_validator(mode="after")
+    def derive_sync_database_url(self) -> "Settings":
+        if not self.SYNC_DATABASE_URL:
+            if self.DATABASE_URL.startswith("postgresql+asyncpg://"):
+                self.SYNC_DATABASE_URL = self.DATABASE_URL.replace(
+                    "postgresql+asyncpg://", "postgresql+psycopg2://", 1
+                )
+            elif self.DATABASE_URL.startswith("postgresql://"):
+                self.SYNC_DATABASE_URL = self.DATABASE_URL.replace(
+                    "postgresql://", "postgresql+psycopg2://", 1
+                )
+            else:
+                self.SYNC_DATABASE_URL = self.DATABASE_URL
+        return self
 
     # Data Strategy
     DATA_MODE: str = "HYBRID"  # LIVE | HYBRID | SNAPSHOT
@@ -64,6 +82,12 @@ class Settings(BaseSettings):
     OPEN_METEO_BASE_URL: str = "https://marine-api.open-meteo.com/v1/marine"
     OPEN_METEO_CACHE_TTL_SECONDS: int = 3600
     SARVAM_API_KEY: str = ""
+    SACHET_API_BASE_URL: str = "https://sachet.ndma.gov.in/api/v1/cap/placeholder"
+    SACHET_API_KEY: str = ""
+
+    # Rate Limiting
+    RATE_LIMIT_CHAT_PER_MINUTE: int = 60
+    RATE_LIMIT_VOICE_PER_MINUTE: int = 20
 
     # LLM Settings
     GROQ_API_KEY: str = ""

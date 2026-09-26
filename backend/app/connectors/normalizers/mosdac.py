@@ -109,7 +109,7 @@ PRODUCT_SOURCE_NAMES: dict[str, str] = {
     "GHRSST_AVHRR": "NOAA AVHRR Pathfinder SST",
     "OCEANSAT3_SST": "ISRO Oceansat-3 SST",
     "OCEANSAT3_CHL": "ISRO Oceansat-3 OCM Chl-a",
-    "SYNTHETIC": "MOSDAC/EO Synthetic Demo",
+    "SYNTHETIC": "MOSDAC / ISRO Synthetic Demo",
 }
 
 PRODUCT_SOURCE_URLS: dict[str, str] = {
@@ -171,12 +171,13 @@ class MosdacEONormalizer:
         # ── Extract values using product-specific variable names ──────────────
         sst_key = variable_map.get("sst") or variable_map.get("chlorophyll_a")
         sst = clean_val(source_cell.get(sst_key)) if sst_key else None
+        if sst is None:
+            sst = clean_val(source_cell.get("sst_c") or source_cell.get("SST") or source_cell.get("sst"))
 
         # For CHL products, get chlorophyll directly
         chl_key = variable_map.get("chlorophyll_a")
-        if chl_key:
-            chl = clean_val(source_cell.get(chl_key))
-        else:
+        chl = clean_val(source_cell.get(chl_key)) if chl_key else None
+        if chl is None:
             # Fallback: try common chlorophyll keys alongside SST
             chl = clean_val(
                 source_cell.get("CHL_A")

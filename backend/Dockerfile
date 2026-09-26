@@ -45,7 +45,7 @@ LABEL org.opencontainers.image.source="https://github.com/shriza1991/SAMUDRA"
 # Runtime system libraries for PostGIS/Shapely
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
-    libgdal32 \
+    libgdal36 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder stage
@@ -57,8 +57,12 @@ WORKDIR /app
 # Copy backend source
 COPY . /app
 
+# Create symlink so 'from backend.app...' and 'from app...' both resolve cleanly
+RUN ln -s /app /app/backend 2>/dev/null || true
+ENV PYTHONPATH="/app:${PYTHONPATH}"
+
 # Non-root user for security
-RUN useradd -m -u 1001 samudra
+RUN useradd -m -u 1001 samudra && chown -R samudra:samudra /app
 USER samudra
 
 # Default environment (overridden at runtime via --env-file or -e flags)
@@ -73,9 +77,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD python -c "import httpx; httpx.get('http://localhost:8000/api/v1/health', timeout=5)"
 
-# Use exec form for proper signal handling
-CMD ["uvicorn", "app.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--workers", "1", \
-     "--log-level", "info"]
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --log-level info"]

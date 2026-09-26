@@ -56,6 +56,8 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
 
   // Keep track of the currently speaking utterance so we can cancel it
   const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
+  const pendingSpeakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speechRequestId = useRef(0);
 
   // Load voices on mount and whenever the browser's voice list changes
   useEffect(() => {
@@ -76,6 +78,11 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
   // Cancel speech when component unmounts
   useEffect(() => {
     return () => {
+      speechRequestId.current += 1;
+      if (pendingSpeakTimer.current !== null) {
+        clearTimeout(pendingSpeakTimer.current);
+        pendingSpeakTimer.current = null;
+      }
       if (synth) synth.cancel();
     };
   }, [synth]);
@@ -85,6 +92,12 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
       if (!synth || !text?.trim()) return;
 
       // Cancel any currently queued or playing utterance
+      speechRequestId.current += 1;
+      const requestId = speechRequestId.current;
+      if (pendingSpeakTimer.current !== null) {
+        clearTimeout(pendingSpeakTimer.current);
+        pendingSpeakTimer.current = null;
+      }
       synth.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
@@ -114,12 +127,16 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
       utterance.onstart = () => setIsPlaying(true);
       utterance.onend = () => setIsPlaying(false);
       utterance.onerror = (e) => {
+        // Cancellation is expected when navigation/action changes replace speech.
+        if (e.error === 'interrupted' || e.error === 'canceled') return;
         console.warn('[TTS] Speech synthesis error:', e.error);
         setIsPlaying(false);
       };
 
       // 50 ms buffer gives the browser time to swap the TTS engine after cancel()
-      setTimeout(() => {
+      pendingSpeakTimer.current = setTimeout(() => {
+        pendingSpeakTimer.current = null;
+        if (requestId !== speechRequestId.current) return;
         synth.speak(utterance);
       }, 50);
     },
@@ -128,7 +145,13 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
 
   const stop = useCallback(() => {
     if (synth) {
+      speechRequestId.current += 1;
+      if (pendingSpeakTimer.current !== null) {
+        clearTimeout(pendingSpeakTimer.current);
+        pendingSpeakTimer.current = null;
+      }
       synth.cancel();
+      currentUtterance.current = null;
       setIsPlaying(false);
     }
   }, [synth]);

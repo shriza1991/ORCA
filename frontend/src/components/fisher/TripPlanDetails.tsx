@@ -42,9 +42,14 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
 
   // Estimate arrival date/time
   let departureTimeMs = Date.now();
-  const rawDep = (assessment.trip_context?.departure_time || '').toLowerCase();
-  if (rawDep.includes('tomorrow')) {
-    departureTimeMs += 24 * 60 * 60 * 1000;
+  const rawDep = assessment.trip_context?.departure_time;
+  if (rawDep) {
+    const parsed = Date.parse(rawDep);
+    if (!isNaN(parsed)) {
+      departureTimeMs = parsed;
+    } else if (rawDep.toLowerCase().includes('tomorrow')) {
+      departureTimeMs += 24 * 60 * 60 * 1000;
+    }
   }
   const arrivalDate = new Date(departureTimeMs + etaHours * 60 * 60 * 1000);
   const arrivalStr = isNaN(arrivalDate.getTime()) ? 'Unknown' : arrivalDate.toLocaleString('en-IN', {
