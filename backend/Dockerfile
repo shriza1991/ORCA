@@ -38,8 +38,8 @@ RUN pip install --upgrade pip \
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
 
-LABEL org.opencontainers.image.title="SAMUDRA Backend"
-LABEL org.opencontainers.image.description="Smart Autonomous Marine Understanding, Decision & Risk Assistant"
+LABEL org.opencontainers.image.title="ORCA Backend"
+LABEL org.opencontainers.image.description="ORCA — Marine EcOsystem Reasoning with Collaborative Agents"
 LABEL org.opencontainers.image.source="https://github.com/shriza1991/SAMUDRA"
 
 # Runtime system libraries for PostGIS/Shapely

@@ -585,3 +585,15 @@ None
 - Production and staging startup now require a reachable PostgreSQL/PostGIS connection; development/demo retains the intentional offline test fallback.
 - Added safe Render/Vercel environment guidance and documented the backend-only database topology.
 - Alembic head verified at `e1a2b3c4d5e6`; no live PostgreSQL/PostGIS instance was available in this environment for upgrade execution.
+
+## 2026-09-26 - Final Production Hardening, Canonical Decision Alignment & Deployment Release
+
+- Status: IMPLEMENTED / VERIFIED.
+- Fixed state_mapper.py DecisionObject fallback construction when confidence payload arrives as a dictionary, preventing AttributeError during degraded/offline runs.
+- Resolved remaining SAMUDRA branding occurrences across frontend error messages (useChat.ts, ChatWindow.tsx), voice chat endpoints (routes.py), backend fallback responses (state_mapper.py), and Docker container metadata (backend/Dockerfile).
+- Added production render.yaml specification for Render web service deployment and managed PostgreSQL database.
+- Added nextjs/vercel.json for frontend deployment on Vercel.
+- Verification:
+  - Backend persistence test suite: 19/19 passed in 18s (tests/domain/test_f04_persistence.py, tests/domain/test_f05_offline_persistence.py).
+  - Next.js TypeScript compilation: clean with 0 errors (npx tsc --noEmit).
+  - Core test baseline: 773 passing / 52 skipped.
