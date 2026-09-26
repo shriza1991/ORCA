@@ -23,11 +23,11 @@ class SectorSituationResponse(BaseModel):
     situation_status: RecommendationStatus = Field(
         ..., description="Authoritative risk engine recommendation status: GO | CAUTION | NO_GO | UNKNOWN"
     )
-    fleet_count: int = Field(
-        ..., ge=0, description="Count of canonical vessels assigned to this sector's home harbor"
+    fleet_count: Optional[int] = Field(
+        ..., ge=0, description="Count of canonical vessels; null when the source is unavailable"
     )
-    active_hazard_count: int = Field(
-        ..., ge=0, description="Count of active marine weather hazard bulletins affecting this sector"
+    active_hazard_count: Optional[int] = Field(
+        ..., ge=0, description="Count of active hazards; null when the source is unavailable"
     )
     evaluated_at: str = Field(..., description="ISO-8601 UTC evaluation timestamp")
     summary: str = Field(..., description="Executive situation summary from the deterministic risk engine")
@@ -40,6 +40,7 @@ class SectorSituationResponse(BaseModel):
     warnings: List[str] = Field(
         default_factory=list, description="Data quality, staleness, or operational advisory warnings"
     )
+    data_mode: Optional[str] = Field(None, description="Source mode used to produce this situation")
 
 
 class SectorHazard(BaseModel):

@@ -929,6 +929,15 @@ Status: ACCEPTED
   - Frontend Vitest suite: 21 test files, 266/266 tests passing (`npm run test`).
   - Frontend TypeScript compiler: 0 errors (`npx tsc --noEmit`).
 
+### D051 — Safe Failure Responses and Explicit Runtime Origin
+Status: ACCEPTED
+Decision: Keep `create_app()` returning a FastAPI instance; place safe exception-response middleware inside explicit-origin CORS. Situation-data failures return `UNKNOWN` with null unavailable counts and source mode `UNAVAILABLE`. Render CORS names the deployed Vercel origin rather than using `*`.
+Reason: Production probes showed configuration drift and an unhandled situation 500 surfaced to browsers as a CORS failure. Null values distinguish unavailable data from measured zero; `UNKNOWN` preserves the marine safety abstention invariant.
+Alternatives: Return zero counts (rejected as misleading); wrap FastAPI externally (rejected because it changes the app-factory return contract); wildcard CORS (rejected as unnecessarily permissive).
+Impact: Consumers tolerate nullable sector counts and may display `data_mode=UNAVAILABLE`. Health exposes deployment metadata. This does not redeploy Render or establish the remote exception cause.
+Owner: ORCA engineering
+Date: 2026-09-26
+
 ## Decision template
 
 ### D0XX — <title>

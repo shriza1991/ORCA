@@ -17,11 +17,12 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from backend.app.contracts.chat import (
@@ -223,16 +224,23 @@ async def health_check():
 
     except Exception as e:
         logger.debug("Database health check failed (service offline): %s", e)
-        db_status = f"disconnected ({e})"
+        db_status = "disconnected"
         global_status = "unavailable"
 
+    timestamp = datetime.now(UTC).isoformat()
     return {
         "status": global_status,
+        "api_status": global_status,
         "app_name": settings.APP_NAME,
         "app_env": settings.APP_ENV,
         "data_mode": settings.DATA_MODE,
         "database": db_status,
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": timestamp,
+        "last_updated": timestamp,
+        "deployment": {
+            "git_commit": os.getenv("RENDER_GIT_COMMIT"),
+            "git_branch": os.getenv("RENDER_GIT_BRANCH"),
+        },
     }
 
 
@@ -1136,20 +1144,68 @@ def get_demo_sectors(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]
     tags=["Synthetic Demo"],
 )
 def get_demo_sector_situation(
+    request: Request,
     sector_id: str,
     reference_time: str | None = None,
     craft_profile: str = "motorized_boat",
     namespace: str = "SAMUDRA_DEMO_V1",
 ) -> SectorSituationResponse:
     """Retrieve authoritative situation, fleet count, active hazards, and deterministic risk for a sector."""
-    from backend.app.domain.situation import evaluate_sector_situation
+    from backend.app.domain.situation import evaluate_sector_situation, resolve_authority_sector_context
+    from backend.app.contracts.chat import Confidence, ConfidenceLevel, Recommendation, RecommendationStatus
 
-    situation = evaluate_sector_situation(
-        sector_id=sector_id,
-        reference_time=reference_time,
-        craft_profile=craft_profile,
-        namespace=namespace,
-    )
+    context = resolve_authority_sector_context(sector_id)
+    if context is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Surveillance sector '{sector_id}' not found.",
+        )
+
+    try:
+        situation = evaluate_sector_situation(
+            sector_id=sector_id,
+            reference_time=reference_time,
+            craft_profile=craft_profile,
+            namespace=namespace,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Sector situation source unavailable",
+            extra={
+                "request_id": getattr(getattr(request, "state", None), "request_id", "unknown"),
+                "route": "/api/v1/demo/sectors/{sector_id}/situation",
+                "method": "GET",
+                "error_type": type(exc).__name__,
+                "safe_message": "Situation sources unavailable; returning UNKNOWN.",
+                "data_mode": settings.DATA_MODE,
+            },
+        )
+        evaluated_at = datetime.now(UTC).isoformat()
+        recommendation = Recommendation(
+            status=RecommendationStatus.UNKNOWN,
+            summary="Marine situation data is unavailable; safety cannot be assessed.",
+            decisive_factors=["Required marine data source unavailable."],
+            next_action="Do not rely on this response for departure. Verify with port authorities.",
+            confidence=Confidence(
+                level=ConfidenceLevel.LOW,
+                reasons=["Situation data could not be retrieved."],
+            ),
+            warnings=["SITUATION_UNAVAILABLE"],
+        )
+        return SectorSituationResponse(
+            sector_id=context["sector_id"],
+            sector_name=context["sector_name"],
+            harbor_id=context["harbor_id"],
+            harbor_name=context["origin_harbor"],
+            situation_status=RecommendationStatus.UNKNOWN,
+            fleet_count=None,
+            active_hazard_count=None,
+            evaluated_at=evaluated_at,
+            summary=recommendation.summary,
+            recommendation=recommendation,
+            warnings=["SITUATION_UNAVAILABLE", "No departure decision can be made from this response."],
+            data_mode="UNAVAILABLE",
+        )
     if situation is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

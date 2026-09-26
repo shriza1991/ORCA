@@ -64,7 +64,7 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
     <div className="data-mode-indicator">
       <span className={`mode-badge ${getModeClass()}`} title="System Data Ingestion Mode">
         <Database size={12} />
-        <span>{t('DataModeIndicator.mode', 'Mode:') + ' ' + t('DataModeIndicator.' + mode, mode)}</span>
+        <span>{t('DataModeIndicator.mode', { val: t('DataModeIndicator.' + mode, mode) })}</span>
       </span>
       {health?.database && !health.database.includes('{{') && (
         <span
@@ -72,7 +72,7 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
           title={databaseConnected ? 'PostgreSQL Database Connected' : 'PostgreSQL Database Offline (Operating in in-memory snapshot mode)'}
         >
           <ShieldCheck size={12} />
-          <span>{t('DataModeIndicator.db', 'DB:') + ' ' + (databaseConnected ? t('DataModeIndicator.Connected', 'Connected') : t('DataModeIndicator.Offline', 'Offline'))}</span>
+          <span>{t('DataModeIndicator.db', { val: databaseConnected ? t('DataModeIndicator.Connected', 'Connected') : t('DataModeIndicator.Offline', 'Offline') })}</span>
         </span>
       )}
     </div>

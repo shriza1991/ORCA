@@ -101,11 +101,14 @@ export async function sendVoiceChat(
 
 export interface HealthResponse {
   status: string;
+  api_status?: string;
   app_name?: string;
   app_env?: string;
   data_mode?: string;
   database?: string;
   timestamp?: string;
+  last_updated?: string;
+  deployment?: { git_commit?: string; git_branch?: string };
 }
 
 export async function getHealth(): Promise<HealthResponse> {
@@ -338,13 +341,14 @@ export interface SectorSituation {
   harbor_id: string;
   harbor_name: string;
   situation_status: RecommendationStatus;
-  fleet_count: number;
-  active_hazard_count: number;
+  fleet_count: number | null;
+  active_hazard_count: number | null;
   evaluated_at: string;
   summary: string;
   recommendation: Recommendation;
   evidence: EvidenceItem[];
   warnings: string[];
+  data_mode?: string;
 }
 
 export async function getDemoSectorSituation(

@@ -14,6 +14,8 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse
 
+from backend.app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,10 +25,39 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
+        request.state.request_started_at = time.perf_counter()
         
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
+
+
+class UnhandledExceptionMiddleware(BaseHTTPMiddleware):
+    """Convert uncaught request failures into safe JSON responses."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        try:
+            return await call_next(request)
+        except Exception as exc:
+            request_id = getattr(request.state, "request_id", "unknown")
+            started_at = getattr(request.state, "request_started_at", None)
+            duration_ms = round((time.perf_counter() - started_at) * 1000, 2) if started_at else None
+            logger.error(
+                "Unhandled request failure",
+                extra={
+                    "request_id": request_id,
+                    "route": request.url.path,
+                    "method": request.method,
+                    "error_type": type(exc).__name__,
+                    "safe_message": "The request could not be completed.",
+                    "duration_ms": duration_ms,
+                    "data_mode": settings.DATA_MODE,
+                },
+            )
+            return JSONResponse(
+                status_code=500,
+                content={"error": {"code": "INTERNAL_ERROR", "message": "ORCA could not complete this request. Please retry.", "request_id": request_id}},
+            )
 
 
 class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
@@ -152,13 +183,15 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
 
         # Structured request summary log without leaking secrets or payload
         logger.info(
-            "HTTP %s %s status=%d duration_ms=%.2f request_id=%s",
-            request.method,
-            request.url.path,
-            response.status_code,
-            elapsed_ms,
-            request_id,
-            extra={"request_id": request_id},
+            "HTTP request completed",
+            extra={
+                "method": request.method,
+                "route": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": round(elapsed_ms, 2),
+                "request_id": request_id,
+                "data_mode": settings.DATA_MODE,
+            },
         )
 
         return response

@@ -48,28 +48,29 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.DEBUG else None,
     )
 
-    # CORS Middleware
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
     from backend.app.api.middleware import (
         ObservabilityMiddleware,
         RateLimitMiddleware,
         RequestIDMiddleware,
         RequestSizeLimitMiddleware,
+        UnhandledExceptionMiddleware,
     )
-    app.add_middleware(RequestIDMiddleware)
+    app.add_middleware(UnhandledExceptionMiddleware)
     app.add_middleware(ObservabilityMiddleware)
+    app.add_middleware(RequestIDMiddleware)
     app.add_middleware(RequestSizeLimitMiddleware, max_upload_size=1048576)
     app.add_middleware(
         RateLimitMiddleware,
         chat_limit=settings.RATE_LIMIT_CHAT_PER_MINUTE,
         voice_limit=settings.RATE_LIMIT_VOICE_PER_MINUTE,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+        expose_headers=["X-Request-ID", "X-Response-Time-Ms"],
     )
 
     # Register API Routers

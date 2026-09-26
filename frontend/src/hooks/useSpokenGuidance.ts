@@ -119,9 +119,6 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
       } else {
         // At minimum set the lang so the browser can try its internal routing
         utterance.lang = chain[0];
-        console.warn(
-          `[TTS] No voice found for chain [${chain.join(', ')}]. Falling back to browser default.`
-        );
       }
 
       utterance.onstart = () => setIsPlaying(true);

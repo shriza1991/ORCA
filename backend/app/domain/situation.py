@@ -505,4 +505,5 @@ def evaluate_sector_situation(
         recommendation=recommendation,
         evidence=evidence_items,
         warnings=risk_assessment.warnings,
+        data_mode=bundle.data_mode,
     )

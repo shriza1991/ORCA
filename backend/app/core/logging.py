@@ -28,6 +28,9 @@ class RedactingJsonFormatter(logging.Formatter):
         # but for now we keep it simple or assume it's passed in extra)
         if hasattr(record, "request_id"):
             log_data["request_id"] = record.request_id
+        for key in ("route", "method", "status_code", "error_type", "safe_message", "duration_ms", "data_mode"):
+            if hasattr(record, key):
+                log_data[key] = getattr(record, key)
 
         # Format message to string
         msg = log_data["message"]

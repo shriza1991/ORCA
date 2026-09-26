@@ -224,10 +224,6 @@ class ChatResponse(BaseModel):
     recommendation: Recommendation = Field(
         ..., description="Deterministic safety recommendation"
     )
-    decision_object: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Canonical decision object shared by mission and map surfaces.",
-    )
     confidence: Confidence = Field(..., description="Evidence-backed confidence rating")
     evidence: List[EvidenceItem] = Field(
         default_factory=list, description="Verifiable citations for all factual assertions"

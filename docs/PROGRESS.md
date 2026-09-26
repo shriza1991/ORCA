@@ -15,6 +15,15 @@
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
+### 2026-09-26 Deployment Drift & Error-Path Resilience (current branch)
+
+- **ROOT CAUSE VERIFIED FROM LIVE RESPONSES**: Render `/api/v1/health` reports `app_env=development` and `data_mode=SNAPSHOT`, while the checked-in Render blueprint specifies `production` and `HYBRID`; the deployed build/config is not aligned with this repository state. Render logs were not accessible, so the exception causing the live situation 500 remains unverified.
+- **IMPLEMENTED**: replaced wildcard Render CORS configuration with the explicit Vercel origin; CORS now wraps a safe unhandled-exception middleware while `create_app()` remains a FastAPI instance.
+- **IMPLEMENTED**: situation-provider failures preserve sector identity but return `UNKNOWN`, null counts, `data_mode=UNAVAILABLE`, and a do-not-rely-on-this-response action; unavailable data is not represented as zero.
+- **IMPLEMENTED**: health responses expose API status, update timestamp, and Render commit/branch metadata; database errors no longer appear in the public health payload.
+- **IMPLEMENTED**: fixed Vite mode/DB i18n interpolation and removed expected missing-voice warnings.
+- **VERIFIED**: targeted backend resilience/sector tests: 11 passed. Full suites, production deployment, and browser verification remain pending.
+
 - Current version: `v0.2.5-m4-deckgl-optimization`
 - Active branch: `feat/m4-mission-twin`
 - Current feature: **Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle (§D049)**
