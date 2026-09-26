@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { ChatRequest, ChatResponse } from '../types/contracts';
 import { sendMessage, ApiError } from '../api/client';
-import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type WhatIfParameters } from '../types/mission';
+import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type MissionState, type WhatIfParameters } from '../types/mission';
+import { deriveCounterfactualFlip } from '../utils/counterfactual';
 
 export interface ChatMessage {
   id: string;
@@ -24,8 +25,15 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [activeResponse, setActiveResponse] = useState<ChatResponse | null>(null);
-  const [language, setLanguage] = useState<'en' | 'hi' | 'mr'>('en');
+  const [language, setLanguage] = useState<'en' | 'hi' | 'mr' | 'ta' | 'te'>('en');
+
+  useEffect(() => {
+    import('../i18n/i18n').then((module) => {
+      module.default.changeLanguage(language);
+    });
+  }, [language]);
   const [missionContext, setMissionContext] = useState<MissionContext>(DEFAULT_MISSION_CONTEXT);
+  const [missionState, setMissionState] = useState<MissionState | null>(null);
   const [activeDiff, setActiveDiff] = useState<DecisionDiff | null>(null);
 
   const send = useCallback(async (
@@ -64,9 +72,10 @@ export function useChat() {
         message: text,
         user_context: {
           ...missionContext,
-          language_preference: targetLanguage,
+          language_preference: targetLanguage as any,
           ...requestContext,
         },
+        mission_state: missionState ?? undefined,
       };
 
       // Always call the live backend API
@@ -76,6 +85,9 @@ export function useChat() {
         setConversationId(response.conversation_id);
       }
 
+      if (response.mission_state) {
+        setMissionState(response.mission_state);
+      }
 
       const assistantMsg: ChatMessage = {
         id: loadingMsg.id,
@@ -110,7 +122,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, language, missionContext]);
+  }, [conversationId, language, missionContext, missionState]);
 
   const simulateWhatIf = useCallback(async (params: WhatIfParameters, queryText: string, currentAssessmentId?: string) => {
     const baselineStatus = activeResponse?.recommendation.status ?? 'READY';
@@ -151,15 +163,20 @@ export function useChat() {
         message: queryText,
         user_context: {
           ...effectiveContext,
-          language_preference: language,
+          language_preference: language as any,
           parent_assessment_id: currentAssessmentId || activeResponse?.assessment_id,
         },
+        mission_state: missionState ?? undefined,
       };
 
       const response = await sendMessage(req);
 
       if (!conversationId && response.conversation_id) {
         setConversationId(response.conversation_id);
+      }
+
+      if (response.mission_state) {
+        setMissionState(response.mission_state);
       }
 
       const assistantMsg: ChatMessage = {
@@ -173,7 +190,16 @@ export function useChat() {
       setMessages(prev => prev.map(m => (m.id === loadingMsg.id ? assistantMsg : m)));
       setActiveResponse(response);
 
-      // Construct Decision Diff
+      // Construct Decision Diff with Deterministic Flip Attribution (M1.4)
+      const bComps = activeResponse?.recommendation?.threshold_comparisons || [];
+      const sComps = response?.recommendation?.threshold_comparisons || [];
+      const flipExplanation = deriveCounterfactualFlip(
+        baselineStatus,
+        response.recommendation.status,
+        bComps,
+        sComps
+      );
+
       setActiveDiff({
         baselineStatus,
         simulatedStatus: response.recommendation.status,
@@ -181,6 +207,7 @@ export function useChat() {
         timeOffsetHours: params.timeOffsetHours,
         craftProfile: effectiveContext.craft_profile,
         timestamp: new Date().toISOString(),
+        flip_explanation: flipExplanation,
       });
     } catch (err) {
       let errorMsg = 'Failed to run simulation. Please check server connectivity.';
@@ -198,7 +225,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeResponse, conversationId, language, missionContext]);
+  }, [activeResponse, conversationId, language, missionContext, missionState]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
@@ -216,6 +243,8 @@ export function useChat() {
     setLanguage,
     missionContext,
     setMissionContext,
+    missionState,
+    setMissionState,
     activeDiff,
     simulateWhatIf,
     send,

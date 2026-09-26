@@ -62,7 +62,7 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
         self,
         context: ToolInvocationContext,
         raw_features: List[Dict[str, Any]],
-        max_search_radius_nm: float = 60.0,
+        max_search_radius_nm: float = 1000.0,
     ) -> PFZRankingPayload:
         """Parses raw PFZ feature points, validates geometry, calculates geodesic distance/bearing,
         and ranks candidates deterministically.
@@ -89,10 +89,10 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
                 props = feat.get("properties", {})
             elif "lat" in feat and "lon" in feat:
                 lat, lon = float(feat["lat"]), float(feat["lon"])
-                props = feat
+                props = feat.get("properties", feat)
             elif "latitude" in feat and "longitude" in feat:
                 lat, lon = float(feat["latitude"]), float(feat["longitude"])
-                props = feat
+                props = feat.get("properties", feat)
 
             if lat is None or lon is None:
                 continue
@@ -112,6 +112,7 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
             sst = props.get("sst") or props.get("sea_surface_temp_c")
             chlorophyll = props.get("chlorophyll") or props.get("chlorophyll_mg_m3")
             depth = props.get("depth_m") or props.get("water_depth_m")
+            loc_ref = props.get("location_reference")
 
             cand = PFZCandidatePayload(
                 candidate_id=cid,
@@ -122,6 +123,7 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
                 water_depth_m=float(depth) if depth is not None else None,
                 sea_surface_temp_c=float(sst) if sst is not None else None,
                 chlorophyll_mg_m3=float(chlorophyll) if chlorophyll is not None else None,
+                location_reference=str(loc_ref) if loc_ref else None,
                 rank=1,  # Assigned after sorting
             )
             candidates.append(cand)

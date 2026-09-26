@@ -14,8 +14,10 @@ CRITICAL INVARIANTS:
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime, timezone, timedelta
+from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+import json
 
 from backend.app.agents.integrations.contracts import ToolInvocationContext
 from backend.app.agents.integrations.dev2 import (
@@ -30,6 +32,12 @@ from backend.app.contracts.chat import (
     DataProvenance,
     RecommendationStatus,
     ThresholdComparison,
+)
+from backend.app.contracts.assessment import (
+    DecisionBoundaryItem,
+    DecisionStabilityPayload,
+    SafeMissionWindow,
+    CounterfactualFlipExplanation,
 )
 
 logger = logging.getLogger(__name__)
@@ -484,4 +492,496 @@ def evaluate_deterministic_risk(
         data_mode=data_mode,
         reference_time=reference_time,
         return_time=return_time,
+    )
+
+
+# =============================================================================
+# M1.4 Deterministic Decision Delta & Counterfactual Intelligence
+# =============================================================================
+
+def compute_decision_boundaries(
+    threshold_checks: List[ThresholdComparison],
+    craft_profile: str = "motorized_boat",
+) -> List[DecisionBoundaryItem]:
+    """Pure deterministic helper to calculate boundary proximity and margins (M1.4)."""
+    limits = CRAFT_THRESHOLDS.get(craft_profile, CRAFT_THRESHOLDS[DEFAULT_CRAFT_PROFILE])
+    boundaries: List[DecisionBoundaryItem] = []
+
+    for tc in threshold_checks:
+        if isinstance(tc.observed_value, bool) or isinstance(tc.threshold_value, bool):
+            continue
+        try:
+            obs = float(tc.observed_value)
+            thresh = float(tc.threshold_value)
+        except (ValueError, TypeError):
+            continue
+
+        # Upper bound constraint (marine ceilings: wave, wind, gust)
+        # margin = threshold - observed
+        # For lower bound constraints: margin = observed - threshold
+        if tc.operator in ("<", "<="):
+            margin = obs - thresh
+        else:
+            margin = thresh - obs
+
+        margin = round(margin, 2)
+        margin_percent = round((margin / thresh) * 100.0, 1) if thresh != 0 else 0.0
+
+        if tc.exceeded:
+            target_tier = "GO"
+        elif thresh == limits.get("wave_nogo_m") or thresh == limits.get("wind_nogo_knots") or thresh == limits.get("gust_nogo_knots"):
+            target_tier = "NO_GO"
+        else:
+            target_tier = "CAUTION"
+
+        boundaries.append(
+            DecisionBoundaryItem(
+                metric_name=tc.metric_name,
+                observed_value=obs,
+                threshold_value=thresh,
+                operator=tc.operator,
+                unit=tc.unit,
+                margin=margin,
+                margin_percent=margin_percent,
+                target_tier=target_tier,
+                is_nearest_boundary=False,
+            )
+        )
+
+    # Determine nearest_boundary as smallest positive safe margin
+    positive_margins = [b for b in boundaries if b.margin > 0]
+    if positive_margins:
+        nearest = min(positive_margins, key=lambda b: b.margin)
+        nearest.is_nearest_boundary = True
+
+    # Return ordered boundary list: nearest first, then positive by margin ascending, then breached
+    boundaries.sort(key=lambda b: (not b.is_nearest_boundary, b.margin <= 0, b.margin))
+    return boundaries
+
+
+def compute_minimal_safe_adjustment(
+    threshold_checks: List[ThresholdComparison],
+) -> Optional[str]:
+    """Compute minimal adjustment required to revert to safe state (M1.4)."""
+    breached: List[Dict[str, Any]] = []
+
+    for tc in threshold_checks:
+        if not tc.exceeded:
+            continue
+        if isinstance(tc.observed_value, bool) or isinstance(tc.threshold_value, bool):
+            continue
+        try:
+            obs = float(tc.observed_value)
+            thresh = float(tc.threshold_value)
+        except (ValueError, TypeError):
+            continue
+
+        delta = round(abs(obs - thresh), 2)
+        breached.append({
+            "metric_name": tc.metric_name,
+            "delta": delta,
+            "unit": tc.unit,
+            "obs": obs,
+            "thresh": thresh,
+        })
+
+    if not breached:
+        return None
+
+    # Select smallest required adjustment
+    smallest = min(breached, key=lambda b: b["delta"])
+    metric = smallest["metric_name"]
+    delta = smallest["delta"]
+
+    if metric == "significant_wave_height_m":
+        return f"Reduce wave height by {delta:.1f}m to reach GO threshold."
+    elif metric == "wind_speed_knots":
+        return f"Reduce wind speed by {delta:.1f} kt to reach GO threshold."
+    elif metric == "wind_gust_knots":
+        return f"Reduce wind gust by {delta:.1f} kt to reach GO threshold."
+    else:
+        metric_clean = metric.replace("_", " ")
+        return f"Reduce {metric_clean} by {delta:.1f} {smallest['unit']} to reach GO threshold."
+
+
+def compute_sensitivity_ranking(
+    threshold_checks: List[ThresholdComparison],
+) -> List[str]:
+    """Deterministic 3-tier sensitivity ranking (M1.4)."""
+    tier1: List[str] = []
+    tier2: List[tuple[float, str]] = []
+    tier3: List[tuple[float, str]] = []
+
+    for tc in threshold_checks:
+        # Tier 1 checks: Severe hazards always first
+        if tc.metric_name == "cyclone_warning_active" and bool(tc.observed_value):
+            tier1.append("Cyclone warnings (Active IMD cyclone bulletin)")
+        elif tc.metric_name == "squall_alert" and bool(tc.observed_value):
+            tier1.append("Squall alerts (Active IMD squall warning)")
+        elif tc.metric_name in ("geofence_restriction", "geofence") and bool(tc.observed_value):
+            tier1.append("Geofence hazards (Restricted maritime zone)")
+
+        # Numerical checks
+        if isinstance(tc.observed_value, bool) or isinstance(tc.threshold_value, bool):
+            continue
+        try:
+            obs = float(tc.observed_value)
+            thresh = float(tc.threshold_value)
+        except (ValueError, TypeError):
+            continue
+
+        unit = "m" if "m" in tc.unit else ("kt" if "knot" in tc.unit else tc.unit)
+        label = (
+            "Wave Height" if "wave" in tc.metric_name else
+            "Wind Speed" if "wind_speed" in tc.metric_name else
+            "Wind Gust" if "gust" in tc.metric_name else
+            tc.metric_name.replace("_", " ").title()
+        )
+
+        if tc.exceeded:
+            # Tier 2: Breached metrics sorted by (observed - threshold) / threshold descending
+            ratio = (obs - thresh) / thresh if thresh != 0 else 0.0
+            line = f"{label} (+{ratio * 100:.1f}% breach: {obs:.1f}{unit} vs {thresh:.1f}{unit} limit)"
+            tier2.append((ratio, line))
+        else:
+            # Tier 3: Safe metrics sorted by (threshold - observed) / threshold ascending
+            ratio = (thresh - obs) / thresh if thresh != 0 else 0.0
+            line = f"{label} ({ratio * 100:.1f}% safe margin: {obs:.1f}{unit} vs {thresh:.1f}{unit} limit)"
+            tier3.append((ratio, line))
+
+    tier2.sort(key=lambda x: x[0], reverse=True)
+    tier3.sort(key=lambda x: x[0])
+
+    return tier1 + [x[1] for x in tier2] + [x[1] for x in tier3]
+
+
+def compute_decision_stability(
+    boundaries: List[DecisionBoundaryItem],
+    threshold_checks: List[ThresholdComparison],
+    bulletins_active: bool = False,
+) -> DecisionStabilityPayload:
+    """Assess deterministic recommendation stability level (M1.4)."""
+    nearest = next((b for b in boundaries if b.is_nearest_boundary), None)
+    has_breach = any(
+        tc.exceeded and tc.impact in ("NO_GO_TRIGGER", "CAUTION_TRIGGER", "UNKNOWN_TRIGGER")
+        for tc in threshold_checks
+    ) or any(b.margin < 0 for b in boundaries)
+
+    # Stability Rules:
+    # LOW: active breached metric OR nearest margin < 10%
+    # MEDIUM: nearest margin between 10% and 25% (or hazard bulletin active)
+    # HIGH: all margins > 25% AND no active hazard bulletins
+    if has_breach or (nearest and nearest.margin_percent < 10.0):
+        level = "LOW"
+    elif nearest and 10.0 <= nearest.margin_percent <= 25.0:
+        level = "MEDIUM"
+    elif nearest and nearest.margin_percent > 25.0:
+        level = "MEDIUM" if bulletins_active else "HIGH"
+    else:
+        level = "LOW" if not boundaries else "MEDIUM"
+
+    unit_str = f" {nearest.unit}" if nearest and nearest.unit else ""
+    metric_str = nearest.metric_name.replace("_", " ") if nearest else "safety"
+
+    if level == "LOW":
+        if has_breach:
+            headline = "Low Decision Stability — Active Breaches"
+            reason = "Operating outside safe envelope with one or more threshold breaches."
+        elif nearest:
+            headline = "Low Decision Stability — Narrow Safety Margins"
+            reason = f"Nearest margin on {metric_str} is only {nearest.margin_percent:.1f}% ({nearest.margin:.2f}{unit_str}). Highly vulnerable to weather shifts."
+        else:
+            headline = "Low Decision Stability — Degraded Telemetry"
+            reason = "Safety margins cannot be validated due to missing or degraded telemetry."
+    elif level == "MEDIUM":
+        if bulletins_active:
+            headline = "Moderate Decision Stability — Active Bulletin"
+            reason = "Active atmospheric advisory in effect despite acceptable environmental margins."
+        elif nearest:
+            headline = "Moderate Decision Stability — Operational Buffers"
+            reason = f"Nearest margin on {metric_str} is {nearest.margin_percent:.1f}% ({nearest.margin:.2f}{unit_str}). Monitor for deterioration."
+        else:
+            headline = "Moderate Decision Stability"
+            reason = "Conditions are acceptable but warrant continuous vigilance."
+    else:  # HIGH
+        headline = "High Decision Stability — Robust Margins"
+        reason = f"All environmental margins exceed 25% safety buffer (nearest buffer {nearest.margin_percent:.1f}% on {metric_str}) with no active hazard bulletins." if nearest else "All parameters comfortably within safe limits with no active hazard bulletins."
+
+    min_adj = compute_minimal_safe_adjustment(threshold_checks)
+    sensitivity = compute_sensitivity_ranking(threshold_checks)
+
+    return DecisionStabilityPayload(
+        level=level,
+        headline=headline,
+        reason=reason,
+        nearest_boundary=nearest,
+        minimal_safe_adjustment=min_adj,
+        sensitivity_ranking=sensitivity,
+    )
+
+
+def attribute_counterfactual_flip(
+    baseline_decision: str,
+    simulated_decision: str,
+    baseline_evidence: List[Union[ThresholdComparison, Dict[str, Any]]],
+    simulated_evidence: List[Union[ThresholdComparison, Dict[str, Any]]],
+) -> CounterfactualFlipExplanation:
+    """Explain causal driver when a simulated scenario flips the decision (M1.4)."""
+    b_dec = (baseline_decision or "UNKNOWN").upper()
+    s_dec = (simulated_decision or "UNKNOWN").upper()
+    flipped = (b_dec != s_dec)
+
+    if not flipped:
+        return CounterfactualFlipExplanation(
+            baseline_decision=b_dec,
+            simulated_decision=s_dec,
+            decision_flipped=False,
+            primary_cause_metric="none",
+            observed_before="—",
+            observed_after="—",
+            threshold_crossed="—",
+            explanation_text=f"Decision remained {b_dec}. No safety threshold boundaries were crossed.",
+            minimal_adjustment_to_revert=None,
+        )
+
+    # Normalize evidence dictionaries
+    b_map: Dict[str, Dict[str, Any]] = {}
+    for item in baseline_evidence:
+        d = item if isinstance(item, dict) else item.model_dump()
+        if "metric_name" in d:
+            b_map[d["metric_name"]] = d
+
+    s_map: Dict[str, Dict[str, Any]] = {}
+    for item in simulated_evidence:
+        d = item if isinstance(item, dict) else item.model_dump()
+        if "metric_name" in d:
+            s_map[d["metric_name"]] = d
+
+    candidates = []
+    for metric, s_item in s_map.items():
+        b_item = b_map.get(metric)
+        s_obs = s_item.get("observed_value")
+        s_thresh = s_item.get("threshold_value")
+        b_obs = b_item.get("observed_value") if b_item else None
+
+        if isinstance(s_obs, (int, float)) and isinstance(s_thresh, (int, float)):
+            obs_after = float(s_obs)
+            thresh = float(s_thresh)
+            obs_before = float(b_obs) if isinstance(b_obs, (int, float)) else obs_after
+            unit = s_item.get("unit", "")
+            unit_str = "m" if "meter" in unit else ("kt" if "knot" in unit else unit)
+
+            # Check if this metric crossed threshold into breach
+            if s_item.get("exceeded") and (not b_item or not b_item.get("exceeded") or obs_after > obs_before):
+                rel_severity = (obs_after - thresh) / thresh if thresh != 0 else 0.0
+                candidates.append({
+                    "metric": metric,
+                    "obs_before": obs_before,
+                    "obs_after": obs_after,
+                    "threshold": thresh,
+                    "unit": unit_str,
+                    "impact": s_item.get("impact", "CAUTION_TRIGGER"),
+                    "severity": rel_severity,
+                })
+
+    if candidates:
+        primary = max(candidates, key=lambda c: c["severity"])
+        metric_name = primary["metric"]
+        metric_display = (
+            "Significant Wave Height" if "wave" in metric_name else
+            "Wind Speed" if "wind_speed" in metric_name else
+            "Wind Gust" if "gust" in metric_name else
+            metric_name.replace("_", " ").title()
+        )
+        tier_label = "NO_GO" if "NO_GO" in primary["impact"] else "CAUTION"
+        delta = round(abs(primary["obs_after"] - primary["threshold"]), 2)
+
+        exp_text = (
+            f"Decision flipped {b_dec} → {s_dec}.\n\n"
+            f"Primary Cause:\n{metric_display}\n\n"
+            f"{primary['obs_before']:.1f}{primary['unit']} → {primary['obs_after']:.1f}{primary['unit']}\n\n"
+            f"Crossed:\n{primary['threshold']:.1f}{primary['unit']} {tier_label} threshold."
+        )
+        revert_msg = f"Reduce {metric_display.lower()} by {delta:.1f}{primary['unit']} to revert to {b_dec}."
+
+        return CounterfactualFlipExplanation(
+            baseline_decision=b_dec,
+            simulated_decision=s_dec,
+            decision_flipped=True,
+            primary_cause_metric=metric_display,
+            observed_before=primary["obs_before"],
+            observed_after=primary["obs_after"],
+            threshold_crossed=primary["threshold"],
+            explanation_text=exp_text,
+            minimal_adjustment_to_revert=revert_msg,
+        )
+
+    # Fallback if no numerical metric breached
+    return CounterfactualFlipExplanation(
+        baseline_decision=b_dec,
+        simulated_decision=s_dec,
+        decision_flipped=True,
+        primary_cause_metric="Severe Weather Bulletin",
+        observed_before="Normal",
+        observed_after="Active Bulletin",
+        threshold_crossed="Normal Status",
+        explanation_text=f"Decision flipped {b_dec} → {s_dec} due to an active weather advisory or craft restriction.",
+        minimal_adjustment_to_revert=f"Wait for weather advisory clearance to revert to {b_dec}.",
+    )
+
+
+def compute_safe_window(
+    craft_profile: str = "motorized_boat",
+    hourly_records: Optional[List[Dict[str, Any]]] = None,
+    reference_time: Optional[Union[datetime, str]] = None,
+    trip_duration_hours: int = 4,
+    current_status: Optional[Union[RecommendationStatus, str]] = None,
+) -> SafeMissionWindow:
+    """Find contiguous safe mission windows from hourly forecast series (M1.4)."""
+    limits = CRAFT_THRESHOLDS.get(craft_profile, CRAFT_THRESHOLDS[DEFAULT_CRAFT_PROFILE])
+
+    if hourly_records is None:
+        try:
+            from backend.app.connectors.snapshot import SnapshotConnector
+            hourly_records = SnapshotConnector()._load_osf_fixture()
+        except Exception:
+            hourly_records = []
+
+    # Parse reference time
+    ref_dt: datetime
+    if reference_time:
+        if isinstance(reference_time, str):
+            try:
+                ref_dt = datetime.fromisoformat(reference_time.replace("Z", "+00:00"))
+            except Exception:
+                ref_dt = datetime(2026, 9, 12, 6, 0, tzinfo=timezone.utc)
+        else:
+            ref_dt = reference_time
+    else:
+        ref_dt = datetime(2026, 9, 12, 6, 0, tzinfo=timezone.utc)
+
+    if ref_dt.tzinfo is None:
+        ref_dt = ref_dt.replace(tzinfo=timezone.utc)
+
+    # Classify each future hour
+    evaluated_hours: List[Dict[str, Any]] = []
+    for r in hourly_records:
+        t_str = r.get("observation_time") or r.get("timestamp_utc") or r.get("observed_at")
+        if not t_str:
+            continue
+        try:
+            t_dt = datetime.fromisoformat(str(t_str).replace("Z", "+00:00"))
+            if t_dt.tzinfo is None:
+                t_dt = t_dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+
+        if t_dt < ref_dt:
+            continue
+
+        swh = float(r.get("swh") or r.get("wave_height_m") or r.get("significant_wave_height_m") or 0.0)
+        wspd = float(r.get("wind_speed_knots") or 0.0)
+        gust = float(r.get("wind_gust_knots") or 0.0)
+
+        if swh > limits["wave_nogo_m"] or wspd > limits["wind_nogo_knots"] or gust >= limits["gust_nogo_knots"]:
+            h_status = "NO_GO"
+        elif swh >= limits["wave_caution_m"] or wspd >= limits["wind_caution_knots"]:
+            h_status = "CAUTION"
+        else:
+            h_status = "GO"
+
+        evaluated_hours.append({
+            "dt": t_dt,
+            "status": h_status,
+            "swh": swh,
+            "wspd": wspd,
+        })
+
+    evaluated_hours.sort(key=lambda h: h["dt"])
+
+    def to_ist(dt: datetime) -> str:
+        ist_dt = dt + timedelta(hours=5, minutes=30)
+        return ist_dt.strftime("%H:%M IST")
+
+    def to_ist_day(dt: datetime) -> str:
+        ist_dt = dt + timedelta(hours=5, minutes=30)
+        now_ist = ref_dt + timedelta(hours=5, minutes=30)
+        if ist_dt.date() > now_ist.date():
+            return f"Tomorrow {ist_dt.strftime('%H:%M')}"
+        return ist_dt.strftime("%H:%M")
+
+    # If no future hours evaluated
+    if not evaluated_hours:
+        is_safe = (current_status in (RecommendationStatus.GO, "GO"))
+        return SafeMissionWindow(
+            is_current_safe=is_safe,
+            window_summary="Current departure conditions evaluated; forecast horizon telemetry unavailable for future hours.",
+        )
+
+    # Check if current departure is safe
+    first_hour = evaluated_hours[0]
+    is_current_safe = (first_hour["status"] == "GO")
+    if current_status is not None:
+        c_status_str = current_status.value if isinstance(current_status, RecommendationStatus) else str(current_status)
+        if c_status_str != "GO":
+            is_current_safe = False
+
+    if is_current_safe:
+        safe_end = first_hour["dt"]
+        for h in evaluated_hours:
+            if h["status"] == "GO":
+                safe_end = h["dt"] + timedelta(hours=1)
+            else:
+                break
+
+        start_iso = first_hour["dt"].isoformat()
+        end_iso = safe_end.isoformat()
+        summary = f"Current departure window is safe until {to_ist(safe_end)}."
+        return SafeMissionWindow(
+            is_current_safe=True,
+            recommended_window_start=start_iso,
+            recommended_window_end=end_iso,
+            earliest_safer_departure=start_iso,
+            window_summary=summary,
+        )
+
+    # Current departure is unsafe / caution: Find first contiguous GO block meeting duration
+    contiguous_blocks: List[List[Dict[str, Any]]] = []
+    current_block: List[Dict[str, Any]] = []
+
+    for h in evaluated_hours:
+        if h["status"] == "GO":
+            current_block.append(h)
+        else:
+            if current_block:
+                contiguous_blocks.append(current_block)
+                current_block = []
+    if current_block:
+        contiguous_blocks.append(current_block)
+
+    target_block = next((b for b in contiguous_blocks if len(b) >= trip_duration_hours), None)
+    if not target_block and contiguous_blocks:
+        target_block = max(contiguous_blocks, key=len)
+
+    if target_block:
+        b_start = target_block[0]["dt"]
+        b_end = target_block[-1]["dt"] + timedelta(hours=1)
+        start_label = to_ist_day(b_start)
+        end_label = (b_end + timedelta(hours=5, minutes=30)).strftime("%H:%M IST")
+
+        summary = f"Earliest safer departure window: {start_label}–{end_label}."
+        return SafeMissionWindow(
+            is_current_safe=False,
+            recommended_window_start=b_start.isoformat(),
+            recommended_window_end=b_end.isoformat(),
+            earliest_safer_departure=b_start.isoformat(),
+            window_summary=summary,
+        )
+
+    return SafeMissionWindow(
+        is_current_safe=False,
+        recommended_window_start=None,
+        recommended_window_end=None,
+        earliest_safer_departure=None,
+        window_summary="No safe departure window detected within the 24-hour forecast horizon.",
     )

@@ -29,6 +29,7 @@ from backend.app.agents.intent import IntentCategory
 from backend.app.agents.integrations.mocks import register_m2_contract_mocks
 from backend.app.agents.tools import tool_registry
 from backend.app.contracts.chat import RecommendationStatus
+from backend.app.contracts.mission import DecisionDelta, DecisionObject
 
 
 @pytest.fixture(autouse=True)
@@ -59,6 +60,9 @@ def test_flagship_multi_turn_flow():
     assert t1["risk_assessment"].status in (RecommendationStatus.GO, RecommendationStatus.CAUTION, RecommendationStatus.NO_GO)
     assert len(t1["evidence"]) > 0
     assert "Ratnagiri" in t1["response"]
+    assert t1.get("decision_object") is not None
+    assert isinstance(t1["decision_object"], DecisionObject)
+    assert t1["decision_object"].decision == t1["risk_assessment"].status
 
     # -------------------------------------------------------------------------
     # Turn 2: "Why?" (Grounded Explanation Engine)
@@ -93,6 +97,10 @@ def test_flagship_multi_turn_flow():
     assert t3["location"]["harbor"] == "Ratnagiri"
     assert t3["risk_assessment"] is not None
     assert len(t3["trace"]) > 0
+    assert t3.get("decision_object") is not None
+    assert isinstance(t3["decision_object"], DecisionObject)
+    assert t3.get("decision_delta") is not None
+    assert isinstance(t3["decision_delta"], DecisionDelta)
 
     # -------------------------------------------------------------------------
     # Turn 4: "What changed?" (Decision Delta Comparison)
@@ -107,3 +115,6 @@ def test_flagship_multi_turn_flow():
     assert t4["intent"] == IntentCategory.WHAT_CHANGED.value
     assert "[DECISION DELTA]" in t4["response"]
     assert "Ratnagiri" in t4["response"]
+    assert t4.get("decision_delta") is not None
+    assert isinstance(t4["decision_delta"], DecisionDelta)
+    assert t4["decision_delta"].summary != ""

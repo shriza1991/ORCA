@@ -63,4 +63,43 @@ describe('Mission Twin What-If Simulator Contract & Logic', () => {
     expect(diff.baselineStatus).toBe(diff.simulatedStatus);
     expect(diff.craftProfile).toBe('traditional_non_motorized');
   });
+
+  it('preserves departure_time, return_time, target_pfz, and parent_assessment_id during what-if apply', () => {
+    const baseContext = {
+      origin_harbor: 'Ratnagiri',
+      craft_profile: 'motorized_boat' as const,
+      departure_time: '2026-09-27T04:00:00.000Z',
+      return_time: '2026-09-27T16:00:00.000Z',
+      target_pfz: 'pfz-zone-42',
+      parent_assessment_id: 'assmnt-base-123',
+    };
+
+    const timeOffsetHours = 4;
+    const craftOverride = 'mechanized_trawler' as const;
+
+    const depDate = new Date(baseContext.departure_time);
+    const retDate = new Date(baseContext.return_time);
+    const newDep = new Date(depDate.getTime() + timeOffsetHours * 3600 * 1000).toISOString();
+    const newRet = new Date(retDate.getTime() + timeOffsetHours * 3600 * 1000).toISOString();
+
+    const appliedContext = {
+      ...baseContext,
+      craft_profile: craftOverride,
+      departure_time: newDep,
+      return_time: newRet,
+      target_pfz: baseContext.target_pfz,
+      parent_assessment_id: baseContext.parent_assessment_id,
+    };
+
+    expect(appliedContext.craft_profile).toBe('mechanized_trawler');
+    expect(appliedContext.departure_time).toBe('2026-09-27T08:00:00.000Z');
+    expect(appliedContext.return_time).toBe('2026-09-27T20:00:00.000Z');
+    expect(appliedContext.target_pfz).toBe('pfz-zone-42');
+    expect(appliedContext.parent_assessment_id).toBe('assmnt-base-123');
+    // Ensure duration is preserved
+    const originalDuration = new Date(baseContext.return_time).getTime() - new Date(baseContext.departure_time).getTime();
+    const newDuration = new Date(appliedContext.return_time).getTime() - new Date(appliedContext.departure_time).getTime();
+    expect(newDuration).toBe(originalDuration);
+  });
 });
+

@@ -4,8 +4,6 @@ import GuidedTripSetup from '../components/fisher/GuidedTripSetup';
 import FisherDecisionSurface from '../components/fisher/FisherDecisionSurface';
 import WhatIfSimulator from '../components/mission/WhatIfSimulator';
 import OceanDetails from '../components/fisher/OceanDetails';
-import PFZDetails from '../components/fisher/PFZDetails';
-import TripPlanDetails from '../components/fisher/TripPlanDetails';
 import ChatPanel from '../components/chat/ChatPanel';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
@@ -19,7 +17,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useGeofence } from '../hooks/useGeofence';
 import LocationWarningsOverlay from '../components/map/LocationWarningsOverlay';
 import { RefreshCw, MessageSquare, Navigation } from 'lucide-react';
-import { DEFAULT_MISSION_CONTEXT } from '../types/mission';
+import { DEFAULT_MISSION_CONTEXT, type MissionContext } from '../types/mission';
 
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
@@ -43,7 +41,20 @@ export default function FisherPage({
   const harborCoords = useMemo(() => getHarborCoordinates(originHarbor), [originHarbor]);
   
   const [baseLayers, setBaseLayers] = useState<MapLayer[]>([]);
-  const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage' | 'chat'>('decision');
+  const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage' | 'chat'>('voyage');
+  const [lastPlanTime, setLastPlanTime] = useState<number>(0);
+  const [mapTimeOffset, setMapTimeOffset] = useState<number>(0);
+
+  const handleTimeOffsetChange = (hours: number) => {
+    setMapTimeOffset(hours);
+    const departureDate = new Date(Date.now() + hours * 60 * 60 * 1000);
+    const returnDate = new Date(departureDate.getTime() + 12 * 60 * 60 * 1000);
+    chat.setMissionContext({
+      ...chat.missionContext,
+      departure_time: departureDate.toISOString(),
+      return_time: returnDate.toISOString(),
+    });
+  };
 
   const { data: assessment, isLoading, error, isOffline, isExpired, assessTrip } = useTripAssessment();
   const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
@@ -63,6 +74,14 @@ export default function FisherPage({
     setSidebarTab('voyage');
   };
 
+  const handleCompletePlan = (confirmedContext?: MissionContext) => {
+    if (confirmedContext) {
+      chat.setMissionContext(confirmedContext);
+    }
+    setSidebarTab('decision');
+    setLastPlanTime(Date.now());
+  };
+
   // 1. Fetch base geofences & boundaries
   useEffect(() => {
     fetchAndFormatBaseLayers()
@@ -70,13 +89,18 @@ export default function FisherPage({
       .catch(() => setBaseLayers([]));
   }, []);
 
-  // 2. Auto-assess trip when context changes
+  // 2. Assess trip when context changes (inhibited while wizard is active to prevent premature network calls)
   useEffect(() => {
+    if (sidebarTab === 'voyage') {
+      return;
+    }
+
     assessTrip({
       origin_harbor: chat.missionContext.origin_harbor,
       craft_profile: chat.missionContext.craft_profile || 'motorized_boat',
       departure_time: chat.missionContext.departure_time,
       return_time: chat.missionContext.return_time,
+      destination_id: chat.missionContext.target_pfz,
       language_preference: chat.language,
       data_mode: 'HYBRID',
     });
@@ -89,14 +113,27 @@ export default function FisherPage({
       language: chat.language,
     });
   }, [
+    sidebarTab,
     chat.missionContext.origin_harbor,
     chat.missionContext.craft_profile,
     chat.missionContext.departure_time,
     chat.missionContext.return_time,
+    chat.missionContext.target_pfz,
     chat.language,
     assessTrip,
     registerTrip,
   ]);
+
+  // Synchronize canonical mission_state across assessment -> chat (M1.1)
+  useEffect(() => {
+    if (assessment?.mission_state) {
+      chat.setMissionState(assessment.mission_state);
+    }
+  }, [assessment?.mission_state, chat]);
+
+  const effectiveDecisionStatus = assessment?.decision
+    ? (typeof assessment.decision === 'string' ? assessment.decision : assessment.decision.status)
+    : 'UNKNOWN';
 
   const effectiveLayers = useMemo(() => {
     const chatLayers = assessment?.map_layers?.layers || [];
@@ -152,13 +189,13 @@ export default function FisherPage({
       baseLayers,
       harborCoords,
       originHarbor,
-      status: assessment?.decision?.status || 'UNKNOWN',
-      baselineRoutes: routeLayers,
-      baselinePFZ: pfzLayers,
+      status: effectiveDecisionStatus,
+      baselineRoutes: sidebarTab === 'voyage' ? [] : routeLayers,
+      baselinePFZ: sidebarTab === 'voyage' ? [] : pfzLayers,
       baselineHazards: [],
       chatLayers: chatLayers,
     });
-  }, [baseLayers, harborCoords, originHarbor, assessment]);
+  }, [baseLayers, harborCoords, originHarbor, assessment, sidebarTab, effectiveDecisionStatus]);
 
   const layerAvailability = {
     pfz: assessment?.pfz_candidates?.length ? 'AVAILABLE' : 'EMPTY',
@@ -175,12 +212,12 @@ export default function FisherPage({
               context={chat.missionContext}
               language={chat.language}
               onContextChange={chat.setMissionContext}
-              onComplete={() => setSidebarTab('decision')}
+              onComplete={handleCompletePlan}
               onCancel={() => setSidebarTab('decision')}
             />
           </div>
         ) : (
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', minHeight: '100%' }}>
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', maxHeight: '100vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
@@ -228,8 +265,6 @@ export default function FisherPage({
                   onReplay={(text) => speak(text)} 
                 />
 
-                <TripPlanDetails assessment={assessment} language={chat.language} />
-
                 <FisherDecisionSurface
                   assessment={assessment}
                   isLoading={isLoading}
@@ -246,7 +281,7 @@ export default function FisherPage({
 
                 <WhatIfSimulator
                   currentContext={chat.missionContext}
-                  currentStatus={assessment?.decision?.status || 'UNKNOWN'}
+                  currentStatus={effectiveDecisionStatus}
                   language={chat.language}
                   isLoading={chat.isLoading}
                   activeDiff={chat.activeDiff}
@@ -254,7 +289,6 @@ export default function FisherPage({
                   onApplyContext={(newCtx) => chat.setMissionContext(newCtx)}
                 />
 
-                <PFZDetails assessment={assessment} language={chat.language} />
                 <OceanDetails assessment={assessment} language={chat.language} />
               </>
             )}
@@ -273,6 +307,7 @@ export default function FisherPage({
           theme={theme}
           center={harborCoords}
           zoom={9.5}
+          resetViewTrigger={lastPlanTime > 0 ? lastPlanTime : undefined}
           language={chat.language}
           customPopupRenderer={formatFishermanPopup}
           layerAvailability={layerAvailability}
@@ -282,6 +317,8 @@ export default function FisherPage({
           isTrackingLocation={isTracking}
           onToggleLocation={handleToggleLocation}
           craftProfile={chat.missionContext.craft_profile || 'motorized_boat'}
+          timeOffsetHours={mapTimeOffset}
+          onTimeOffsetChange={handleTimeOffsetChange}
         />
       </div>
     </main>

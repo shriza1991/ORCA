@@ -24,6 +24,10 @@ interface CallModalProps {
   language?: SupportedLanguage;
   originHarbor?: string;
   craftProfile?: string;
+  departureTime?: string;
+  returnTime?: string;
+  targetPfz?: string;
+  parentAssessmentId?: string;
 }
 
 function getLanguageLabel(code: string | null): { name: string; flag: string } {
@@ -42,6 +46,10 @@ export default function CallModal({
   language = 'en',
   originHarbor = 'Ratnagiri',
   craftProfile = 'motorized_boat',
+  departureTime,
+  returnTime,
+  targetPfz,
+  parentAssessmentId,
 }: CallModalProps) {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -62,6 +70,10 @@ export default function CallModal({
   } = useCallSession({
     originHarbor,
     craftProfile,
+    departureTime,
+    returnTime,
+    targetPfz,
+    parentAssessmentId,
     silenceTimeoutMs: 3000, // ~3 seconds silence detection
     speechThreshold: 0.032,
     minSpeechDurationMs: 300,

@@ -1,4 +1,5 @@
-import type { UserContext, Recommendation, MapLayer } from './contracts';
+import type { UserContext, Recommendation, RecommendationStatus, MapLayer, AgentCollaborationPayload, ThresholdComparison } from './contracts';
+import type { MissionState } from './mission';
 
 export interface TripAssessmentRequest {
   origin_harbor?: string;
@@ -10,6 +11,7 @@ export interface TripAssessmentRequest {
   language_preference: string;
   data_mode: string;
   parent_assessment_id?: string;
+  mission_state?: MissionState;
 }
 
 export interface AssessmentSourceStatus {
@@ -31,17 +33,73 @@ export interface Alert {
   action: string;
 }
 
+export interface MissionBriefPayload {
+  summary: string;
+  recommended_action: string;
+  positive_factors: string[];
+  negative_factors: string[];
+  confidence: string;
+  confidence_reasons: string[];
+}
+
+export interface DecisionBoundaryItem {
+  metric_name: string;
+  observed_value: number;
+  threshold_value: number;
+  operator: string;
+  unit: string;
+  margin: number;
+  margin_percent: number;
+  target_tier: string;
+  is_nearest_boundary: boolean;
+}
+
+export interface DecisionStabilityPayload {
+  level: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  headline: string;
+  reason: string;
+  nearest_boundary?: DecisionBoundaryItem | null;
+  minimal_safe_adjustment?: string | null;
+  sensitivity_ranking: string[];
+}
+
+export interface SafeMissionWindow {
+  is_current_safe: boolean;
+  recommended_window_start?: string | null;
+  recommended_window_end?: string | null;
+  earliest_safer_departure?: string | null;
+  window_summary: string;
+}
+
+export interface CounterfactualFlipExplanation {
+  baseline_decision: string;
+  simulated_decision: string;
+  decision_flipped: boolean;
+  primary_cause_metric: string;
+  observed_before: number | string;
+  observed_after: number | string;
+  threshold_crossed: number | string;
+  explanation_text: string;
+  minimal_adjustment_to_revert?: string | null;
+}
+
 export interface TripAssessmentResponse {
   assessment_id: string;
   assessed_at: string;
   trip_context: UserContext;
-  decision: Recommendation;
+  decision: RecommendationStatus | Recommendation;
   conditions: ObservationBundle;
   alerts: Alert[];
   pfz_candidates: Record<string, any>[];
   route_candidates: Record<string, any>[];
   map_layers: { layers: MapLayer[] };
-  evidence: Record<string, any>[];
+  evidence: (ThresholdComparison | Record<string, any>)[];
   source_status: AssessmentSourceStatus[];
   is_durable: boolean;
+  mission_state?: MissionState;
+  brief?: MissionBriefPayload;
+  agent_collaboration?: AgentCollaborationPayload;
+  stability?: DecisionStabilityPayload | null;
+  safe_window?: SafeMissionWindow | null;
 }
+

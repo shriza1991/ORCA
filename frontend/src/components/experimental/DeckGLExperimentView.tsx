@@ -35,6 +35,7 @@ import {
   Ship,
   MapPin,
 } from 'lucide-react';
+import { useTranslation } from "react-i18next";
 
 interface DeckGLExperimentViewProps {
   onBackToPortal: () => void;
@@ -107,6 +108,7 @@ function generateTrajectoryFromRoute(
 }
 
 export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimentViewProps) {
+    const { t } = useTranslation();
   const [baseLayers, setBaseLayers] = useState<MapLayer[]>([]);
   const [hazards, setHazards] = useState<HazardBulletin[]>([]);
   const [pfzCandidates, setPfzCandidates] = useState<PFZCandidate[]>([]);
@@ -614,7 +616,7 @@ export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimen
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Gauge size={14} color="#38bdf8" />
-                    <span>{activeVesselPosition?.speed_knots || 0} kn</span>
+                    <span>{t('DeckGLExperimentView.valkn', { val: activeVesselPosition?.speed_knots || 0 })}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Compass size={14} color="#10b981" />
@@ -711,7 +713,7 @@ export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimen
                       <div style={{ fontWeight: 600, color: isSelected ? '#06b6d4' : '#e2e8f0' }}>{r.name}</div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginTop: '2px', fontSize: '11px' }}>
                         <span>Dist: {r.distance_km} km</span>
-                        <span>Exposure: {r.exposure_score}</span>
+                        <span>{t('DeckGLExperimentView.exposureval', { val: r.exposure_score })}</span>
                       </div>
                     </button>
                   );

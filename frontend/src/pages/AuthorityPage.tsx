@@ -2,12 +2,14 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Activity,
   AlertTriangle,
+  Anchor,
   Building2,
   FileCheck2,
   FlaskConical,
   RadioTower,
   Ship,
   ShieldCheck,
+  Bookmark,
 } from 'lucide-react';
 import ChatPanel from '../components/chat/ChatPanel';
 import AuthorityDeckGLMap from '../components/authority/AuthorityDeckGLMap';
@@ -16,6 +18,8 @@ import AgentTimeline from '../components/trace/AgentTimeline';
 import ScenarioBenchmarkDeck from '../components/authority/ScenarioBenchmarkDeck';
 import FleetTrackingDeck from '../components/authority/FleetTrackingDeck';
 import AgentCollaborationPanel from '../components/collaboration/AgentCollaborationPanel';
+import PortWatchRegistry from '../components/authority/PortWatchRegistry';
+import AquaWatchRegistry from '../components/authority/AquaWatchRegistry';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
 import {
@@ -36,8 +40,10 @@ import {
   createAuthorityRouteLayers,
   FALLBACK_DEMO_SECTORS,
   fetchAndFormatBaseLayers,
+  NATIONAL_COASTAL_BOOKMARKS,
 } from '../utils/geo';
 import { translateText } from '../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 export interface AuthorityPageProps {
   chat: ReturnType<typeof useChat>;
@@ -47,7 +53,7 @@ export interface AuthorityPageProps {
   onBack: () => void;
 }
 
-export type AuthorityTab = 'terminal' | 'fleet' | 'benchmarks' | 'audit';
+export type AuthorityTab = 'terminal' | 'fleet' | 'ports' | 'aquaculture' | 'benchmarks' | 'audit';
 
 /**
  * Authority Command Deck Page
@@ -58,11 +64,12 @@ export type AuthorityTab = 'terminal' | 'fleet' | 'benchmarks' | 'audit';
  */
 export default function AuthorityPage({
   chat,
-  theme: _theme,
+  theme,
   mobileView,
   onOpenEvidence,
   onBack,
 }: AuthorityPageProps) {
+    const { t } = useTranslation();
   const [sectors, setSectors] = useState<DemoSector[]>(FALLBACK_DEMO_SECTORS);
   const [selectedSector, setSelectedSector] = useState<string>(FALLBACK_DEMO_SECTORS[0].public_id);
   const [authorityTab, setAuthorityTab] = useState<AuthorityTab>('terminal');
@@ -266,6 +273,31 @@ export default function AuthorityPage({
               ))}
             </select>
           </label>
+
+          <label className="authority-sector-selector" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Bookmark size={13} className="text-muted-foreground shrink-0" />
+            <select
+              value=""
+              onChange={(e) => {
+                const b = NATIONAL_COASTAL_BOOKMARKS.find((item) => item.name === e.target.value);
+                if (b) {
+                  const matchedSector = sectors.find(
+                    (s) => s.name.toLowerCase().includes(b.name.split(' ')[0].toLowerCase()) || (b.harbor && s.harbor_id?.includes(b.harbor.toLowerCase()))
+                  );
+                  if (matchedSector) {
+                    setSelectedSector(matchedSector.public_id);
+                  }
+                }
+              }}
+              className="authority-sector-select"
+              aria-label="National Coastal Landmark Jump"
+            >
+              <option value="" disabled>Jump to Coast…</option>
+              {NATIONAL_COASTAL_BOOKMARKS.map((b) => (
+                <option key={b.name} value={b.name}>{b.name}</option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {/* Center: Sleek Segmented Switcher Pill */}
@@ -289,6 +321,26 @@ export default function AuthorityPage({
           >
             <Ship size={13} />
             <span>{translateText('Fleet Surveillance', chat.language)}</span>
+          </button>
+          <button
+            type="button"
+            className={`authority-segment-btn ${authorityTab === 'ports' ? 'active' : ''}`}
+            onClick={() => setAuthorityTab('ports')}
+            role="tab"
+            aria-selected={authorityTab === 'ports'}
+          >
+            <Anchor size={13} />
+            <span>{translateText('Port Census', chat.language)}</span>
+          </button>
+          <button
+            type="button"
+            className={`authority-segment-btn ${authorityTab === 'aquaculture' ? 'active' : ''}`}
+            onClick={() => setAuthorityTab('aquaculture')}
+            role="tab"
+            aria-selected={authorityTab === 'aquaculture'}
+          >
+            <ShieldCheck size={13} />
+            <span>{translateText('Aquaculture', chat.language)}</span>
           </button>
           <button
             type="button"
@@ -351,11 +403,10 @@ export default function AuthorityPage({
           {authorityActiveResponse?.agent_collaboration && (
             <button
               type="button"
-              className={`authority-kpi-chip authority-evidence-btn ${authorityTab === 'audit' ? 'active' : ''}`}
+              className={`authority-kpi-chip authority-decision-chip ${authorityTab === 'audit' ? 'active' : ''}`}
               onClick={() => setAuthorityTab('audit')}
               title={translateText('Inspect Decision Authority & Multi-Agent Arbitration', chat.language)}
               data-testid="kpi-decision-authority"
-              style={{ borderColor: '#86efac', background: '#f0fdf4', color: '#166534' }}
             >
               <ShieldCheck size={13} className="status-accent" />
               <span>
@@ -419,6 +470,7 @@ export default function AuthorityPage({
                 trajectoryLayer={trajectoryLayer}
                 sectorRouteLayers={sectorRouteLayers}
                 language={chat.language}
+                theme={theme}
               />
             </div>
           </div>
@@ -461,8 +513,21 @@ export default function AuthorityPage({
                 trajectoryLayer={trajectoryLayer}
                 sectorRouteLayers={sectorRouteLayers}
                 language={chat.language}
+                theme={theme}
               />
             </div>
+          </div>
+        )}
+
+        {authorityTab === 'ports' && (
+          <div className="authority-benchmarks-container" style={{ background: 'var(--background)' }}>
+            <PortWatchRegistry />
+          </div>
+        )}
+
+        {authorityTab === 'aquaculture' && (
+          <div className="authority-benchmarks-container" style={{ background: 'var(--background)' }}>
+            <AquaWatchRegistry />
           </div>
         )}
 
@@ -476,23 +541,16 @@ export default function AuthorityPage({
           /* Audit View: Direct In-Page Evidence & Agent Trace Logs */
           <div className="authority-audit-view">
             {authorityActiveResponse?.agent_collaboration && (
-              <div className="authority-collaboration-audit-section" style={{ gridColumn: '1 / -1', marginBottom: '20px' }} data-testid="authority-collaboration-section">
-                <div className="audit-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ShieldCheck size={18} color="#0284c7" />
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
+              <div className="authority-collaboration-audit-section" data-testid="authority-collaboration-section">
+                <div className="authority-collaboration-audit-header">
+                  <div className="authority-collaboration-audit-title">
+                    <ShieldCheck size={18} style={{ color: 'var(--color-accent)' }} />
+                    <h3>
                       {translateText('Statutory Decision Authority & Multi-Agent Arbitration Audit', chat.language)}
                     </h3>
                   </div>
                   <span
-                    style={{
-                      fontSize: '0.8rem',
-                      padding: '4px 10px',
-                      borderRadius: '9999px',
-                      background: authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? '#fef3c7' : '#dcfce7',
-                      color: authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? '#92400e' : '#166534',
-                      fontWeight: 700,
-                    }}
+                    className={`authority-consensus-badge ${authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected ? 'conflict' : 'consensus'}`}
                   >
                     {authorityActiveResponse.agent_collaboration.arbitration?.conflict_detected
                       ? translateText('Protocol D010 Invoked', chat.language)
@@ -508,13 +566,13 @@ export default function AuthorityPage({
 
             <div className="authority-audit-column">
               {selectedOperationalAlert && (
-                <section className="fleet-alert-inspection" aria-label="Alert evidence" style={{ marginBottom: '14px', padding: '12px', border: '1px solid rgba(250, 204, 21, 0.5)', borderRadius: '8px' }}>
+                <section className="fleet-alert-inspection" aria-label="Alert evidence">
                   <div className="audit-section-header"><AlertTriangle size={16} /><h3>{translateText('Alert Evidence', chat.language)}</h3></div>
                   <p className="authority-empty-note">{translateText('Canonical containment observation; this is not a risk prediction.', chat.language)}</p>
-                  <div className="alert-card-footer"><span>Sector: {selectedOperationalAlert.sector_id}</span><span>Vessel: {selectedOperationalAlert.vessel_id}</span></div>
-                  <div className="alert-card-footer"><span>Hazard: {selectedOperationalAlert.hazard_id}</span><span>Association: IN_HAZARD_AREA</span></div>
-                  <div className="alert-card-footer"><span>Position observed: {selectedAlertAssociation?.evaluated_at ?? 'Unavailable'}</span><span>Hazard status: {selectedAlertHazard?.status ?? 'Unavailable'}</span></div>
-                  <div className="alert-card-footer"><span>Hazard validity: {selectedAlertHazard?.valid_to ?? 'Unavailable'}</span><span>Severity: {selectedOperationalAlert.severity}</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.sectorval', { val: selectedOperationalAlert.sector_id })}</span><span>{t('AuthorityPage.vesselval', { val: selectedOperationalAlert.vessel_id })}</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.hazardval', { val: selectedOperationalAlert.hazard_id })}</span><span>Association: IN_HAZARD_AREA</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.positionobserve', { val: selectedAlertAssociation?.evaluated_at ?? 'Unavailable' })}</span><span>{t('AuthorityPage.hazardstatusval', { val: selectedAlertHazard?.status ?? 'Unavailable' })}</span></div>
+                  <div className="alert-card-footer"><span>{t('AuthorityPage.hazardvalidityv', { val: selectedAlertHazard?.valid_to ?? 'Unavailable' })}</span><span>{t('AuthorityPage.severityval', { val: selectedOperationalAlert.severity })}</span></div>
                 </section>
               )}
               <div className="audit-section-header">

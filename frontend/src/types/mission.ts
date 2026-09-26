@@ -1,4 +1,5 @@
 import type { UserContext } from './contracts';
+import type { CounterfactualFlipExplanation } from './assessment';
 
 /** UI-only presentation mode. It deliberately does not grant server permissions. */
 export type OperationalRole = 'fisher' | 'authority';
@@ -8,13 +9,16 @@ export type OperationalRole = 'fisher' | 'authority';
  * ChatRequest.user_context shape. Route/time fields are intentionally absent
  * until their API contract is available.
  */
-export type MissionContext = Pick<UserContext, 'origin_harbor' | 'craft_profile' | 'departure_time' | 'return_time'>;
+export type MissionContext = Pick<
+  UserContext,
+  'origin_harbor' | 'craft_profile' | 'departure_time' | 'return_time' | 'target_pfz' | 'parent_assessment_id'
+>;
 
 export const DEFAULT_MISSION_CONTEXT: MissionContext = {
   origin_harbor: 'Ratnagiri',
   craft_profile: 'motorized_boat',
-  departure_time: 'today',
-  return_time: 'tomorrow',
+  departure_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  return_time: new Date(Date.now() + 13 * 60 * 60 * 1000).toISOString(),
 };
 
 /** Counterfactual simulation parameters for Mission Twin */
@@ -38,6 +42,7 @@ export interface DecisionDiff {
   timeOffsetHours: number;
   craftProfile: MissionContext['craft_profile'];
   timestamp: string;
+  flip_explanation?: CounterfactualFlipExplanation | null;
 }
 
 /** Operational corridor modes for multi-route evaluation */
@@ -125,6 +130,7 @@ export interface MissionState {
     evidence_ids?: string[];
     timestamp: string;
   };
+  parent_assessment_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -161,3 +167,4 @@ export interface DecisionDeltaContract {
   summary: string;
 }
 
+export type DecisionDelta = DecisionDeltaContract;

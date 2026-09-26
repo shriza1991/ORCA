@@ -1,14 +1,15 @@
 import { useState, Component, type ErrorInfo, type ReactNode } from 'react';
 import {
-  Beaker, Waves, Database, FlaskConical, MessageSquareText, AlertOctagon, RotateCcw,
+  Beaker, Waves, Database, FlaskConical, MessageSquareText, AlertOctagon, RotateCcw, BookOpen,
 } from 'lucide-react';
 import OceanDataExplorer from '../components/researcher/OceanDataExplorer';
 import DataSourceMonitor from '../components/researcher/DataSourceMonitor';
 import ScenarioLab from '../components/researcher/ScenarioLab';
 import QueryWorkbench from '../components/researcher/QueryWorkbench';
+import DataCatalogueView from '../components/marinewatch/DataCatalogueView';
 import { CANONICAL_DATA_MODE_LABEL, CANONICAL_DATA_MODE_TOOLTIP } from '../api/researcher-client';
 
-type ResearcherDeck = 'ocean' | 'sources' | 'scenarios' | 'query';
+type ResearcherDeck = 'ocean' | 'sources' | 'catalogue' | 'scenarios' | 'query';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -68,6 +69,7 @@ class DeckErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 const DECKS: { id: ResearcherDeck; label: string; icon: typeof Waves }[] = [
   { id: 'ocean', label: 'Ocean Data', icon: Waves },
   { id: 'sources', label: 'Data Sources', icon: Database },
+  { id: 'catalogue', label: 'Data Catalogue (§212)', icon: BookOpen as typeof Waves },
   { id: 'scenarios', label: 'Scenario Lab', icon: FlaskConical },
   { id: 'query', label: 'Query Workbench', icon: MessageSquareText },
 ];
@@ -116,6 +118,7 @@ export default function ResearcherPage() {
         <DeckErrorBoundary key={activeDeck}>
           {activeDeck === 'ocean' && <OceanDataExplorer />}
           {activeDeck === 'sources' && <DataSourceMonitor />}
+          {activeDeck === 'catalogue' && <DataCatalogueView />}
           {activeDeck === 'scenarios' && <ScenarioLab />}
           {activeDeck === 'query' && <QueryWorkbench />}
         </DeckErrorBoundary>

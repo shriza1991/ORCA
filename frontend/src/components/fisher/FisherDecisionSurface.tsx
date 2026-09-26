@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -14,6 +15,8 @@ import {
   Volume2,
   VolumeX,
   Map as MapIcon,
+  FileText,
+  Clock,
 } from 'lucide-react';
 import type { TripAssessmentResponse } from '../../types/assessment';
 import type { DecisionDiff, MissionContext } from '../../types/mission';
@@ -21,6 +24,10 @@ import type { AgentCollaborationPayload } from '../../types/contracts';
 import { translateText, type SupportedLanguage, TRANSLATIONS } from '../../i18n/translations';
 import { useSpokenGuidance } from '../../hooks/useSpokenGuidance';
 import AgentCollaborationPanel from '../collaboration/AgentCollaborationPanel';
+import MissionBriefPanel from './MissionBriefPanel';
+import PFZDetails from './PFZDetails';
+import TripPlanDetails from './TripPlanDetails';
+import EvidenceDrawer from '../evidence/EvidenceDrawer';
 
 export type FisherDecisionStatus = 'SAFE_TO_GO' | 'CAUTION' | 'DO_NOT_GO' | 'UNKNOWN';
 
@@ -240,6 +247,7 @@ export default function FisherDecisionSurface({
   assessment,
   isLoading = false,
   error = null,
+  activeDiff = null,
   language = 'en',
   collaboration = null,
   onOpenVoyageSettings,
@@ -247,11 +255,26 @@ export default function FisherDecisionSurface({
   isOffline = false,
   isExpired = false,
 }: FisherDecisionSurfaceProps) {
+  const { t: i18nT } = useTranslation();
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [isEvidenceDrawerOpen, setIsEvidenceDrawerOpen] = useState(false);
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
-  const status = getFisherDecisionStatus(assessment, error);
-  const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
+    let status = getFisherDecisionStatus(assessment, error);
   const conditions = extractFisherConditions(isLoading || error ? null : assessment);
+  const hazardVal = conditions.hazard;
+  const hasActiveHazard = hazardVal !== '—' && hazardVal !== 'No Active Hazards' && hazardVal !== 'Status Unknown';
+
+  if (hasActiveHazard && status === 'SAFE_TO_GO') {
+    const highestAlert = assessment?.alerts?.find((a: any) => a.affects_trip) || assessment?.alerts?.[0];
+    const alertSeverity = highestAlert?.severity ? String(highestAlert.severity).toUpperCase() : '';
+    if (highestAlert && (alertSeverity === 'CRITICAL' || alertSeverity === 'HIGH')) {
+      status = 'DO_NOT_GO';
+    } else {
+      status = 'CAUTION';
+    }
+  }
+
+  const explanation = getFisherExplanation(assessment, status, language, error, isLoading);
   const { speak, stop, isPlaying } = useSpokenGuidance({ language });
   const collab = collaboration || (assessment as any)?.agent_collaboration;
 
@@ -287,15 +310,13 @@ export default function FisherDecisionSurface({
 
   const currentCfg = isLoading
     ? {
-        label: translateText('CHECKING…', language),
+        label: i18nT('FisherDecisionSurface.CHECKING…', 'CHECKING…'),
         bgClass: 'decision-loading',
         icon: <Loader2 size={32} className="decision-icon spin-icon" />,
         testId: 'status-loading',
       }
     : statusConfig[status];
 
-  const hazardVal = conditions.hazard;
-  const hasActiveHazard = hazardVal !== '—' && hazardVal !== 'No Active Hazards' && hazardVal !== 'Status Unknown';
 
   const handleSpeak = () => {
     if (isPlaying) {
@@ -303,9 +324,9 @@ export default function FisherDecisionSurface({
     } else {
       let textToSpeak = `${currentCfg.label}. ${explanation}.`;
       if (hasActiveHazard) {
-        const alertPrefix = translateText('Alert', language);
-        const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
-        const hazardText = hazardVal ? translateText(hazardVal, language) : '';
+        const alertPrefix = i18nT('FisherDecisionSurface.Alert', 'Alert');
+        const affectsSuffix = i18nT('FisherDecisionSurface.affects your planned trip. Do not depart.', 'affects your planned trip. Do not depart.');
+        const hazardText = hazardVal ? i18nT('Hazard.' + hazardVal, hazardVal) : '';
         textToSpeak += ` ${alertPrefix}: ${hazardText} ${affectsSuffix}`;
       }
       speak(textToSpeak);
@@ -318,6 +339,7 @@ export default function FisherDecisionSurface({
       aria-label="Primary Mission Decision and Conditions"
       data-testid="fisher-decision-surface"
     >
+      {/* 1. Decision Banner */}
       <div className={`fisher-decision-card ${currentCfg.bgClass}`} data-testid={currentCfg.testId}>
         {/* Connectivity / Data Status Indicator */}
         {(() => {
@@ -363,80 +385,89 @@ export default function FisherDecisionSurface({
         {assessment && (
           <div style={{ marginTop: '16px', fontSize: '0.9rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div>
-              <strong>{translateText('Evaluated Window:', language)}</strong>{' '}
+              <strong>{i18nT('FisherDecisionSurface.Evaluated Window:', 'Evaluated Window:')}</strong>{' '}
               {assessment.trip_context.departure_time || 'Now'} - {assessment.trip_context.return_time || 'End of trip'}
             </div>
             <div>
-              <strong>{translateText('Assessment Time:', language)}</strong>{' '}
+              <strong>{i18nT('FisherDecisionSurface.Assessment Time:', 'Assessment Time:')}</strong>{' '}
               {new Date(assessment.assessed_at).toLocaleString()}
             </div>
           </div>
         )}
-      </div>
 
-      <div className="fisher-conditions-grid" role="group" aria-label="Essential local conditions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '16px' }}>
-        <div className="condition-tile" data-testid="condition-waves">
-          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
-            <WavesIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Waves', language)}</span>
-          </div>
-          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.waves}</div>
-        </div>
-        <div className="condition-tile" data-testid="condition-wind">
-          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
-            <WindIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Wind', language)}</span>
-          </div>
-          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.wind}</div>
-        </div>
-        <div className="condition-tile" data-testid="condition-visibility">
-          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
-            <VisibilityIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Visibility', language)}</span>
-          </div>
-          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.visibility}</div>
-        </div>
-        <div className="condition-tile" data-testid="condition-tide">
-          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
-            <TideIcon size={16} className="condition-icon" />
-            <span className="condition-label">{translateText('Tide', language)}</span>
-          </div>
-          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>
-            {translateText(conditions.tide, language)}
-          </div>
-        </div>
-      </div>
-      
-      <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '12px', textAlign: 'center' }}>
-        {conditions.isForecast ? translateText('Based on forecast', language) : translateText('Based on current observation', language)}
-      </div>
-
-      {hasActiveHazard && (
-        <div className="fisher-actionable-alert" style={{ background: '#fef2f2', borderLeft: '8px solid #ef4444', padding: '16px', marginTop: '16px', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 8px 0', color: '#991b1b', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={24} />
-            {translateText(hazardVal, language)}
-          </h3>
-          <p style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#7f1d1d' }}>
-            <strong>{translateText('What is happening:', language)}</strong> {translateText(hazardVal, language)}.<br/>
-            <strong>{translateText('Does it affect this trip?', language)}</strong> {translateText('Yes, it directly affects your planned route.', language)}<br/>
-            <strong>{translateText('What to do next:', language)}</strong> {translateText('Do not depart. Await further clearance.', language)}
-          </p>
-          <button
-            onClick={() => {
-              const alertPrefix = translateText('Alert', language);
-              const affectsSuffix = translateText('affects your planned trip. Do not depart.', language);
-              const hearAdvisory = translateText('Hear the official advisory', language);
-              speak(`${alertPrefix}: ${translateText(hazardVal, language)}. ${affectsSuffix} ${hearAdvisory}`);
+        {/* M1.4 Safe Mission Window Summary */}
+        {assessment?.safe_window && (
+          <div
+            data-testid="safe-window-summary"
+            style={{
+              marginTop: '12px',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              backgroundColor: assessment.safe_window.is_current_safe ? '#f0fdf4' : '#fffbeb',
+              border: `1px solid ${assessment.safe_window.is_current_safe ? '#bbf7d0' : '#fde68a'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '0.875rem',
+              color: assessment.safe_window.is_current_safe ? '#166534' : '#92400e',
+              fontWeight: 600,
             }}
-            style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#ef4444', color: 'white', borderRadius: '8px', border: 'none', width: '100%' }}
           >
-            <Volume2 size={24} />
-            {translateText('Hear the official advisory', language)}
-          </button>
-        </div>
-      )}
+            <Clock size={16} />
+            <span>{translateText(assessment.safe_window.window_summary, language)}</span>
+          </div>
+        )}
+      </div>
 
+      {/* 2. Mission Brief */}
+      <MissionBriefPanel
+        brief={assessment?.brief}
+        delta={collab?.delta}
+        activeDiff={activeDiff}
+        stability={assessment?.stability}
+        language={language}
+      />
+
+      {/* 3. Inspect Evidence & Data Feeds Button */}
+      <div className="inspect-evidence-container" style={{ marginTop: '14px' }}>
+        <button
+          type="button"
+          onClick={() => setIsEvidenceDrawerOpen(true)}
+          className="fisher-inspect-evidence-btn"
+          data-testid="inspect-evidence-btn"
+          style={{
+            width: '100%',
+            padding: '12px 18px',
+            borderRadius: '10px',
+            border: '1px solid #cbd5e1',
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            fontSize: '0.9375rem',
+            fontWeight: 600,
+            color: '#0f172a',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          }}
+        >
+          <FileText size={18} color="#0284c7" />
+          <span>{translateText('Inspect Evidence & Data Feeds', language)}</span>
+        </button>
+      </div>
+
+      <EvidenceDrawer
+        isOpen={isEvidenceDrawerOpen}
+        onClose={() => setIsEvidenceDrawerOpen(false)}
+        evidence={assessment?.evidence}
+        sourceStatus={assessment?.source_status}
+        brief={assessment?.brief}
+        stability={assessment?.stability}
+        language={language}
+      />
+
+      {/* 4. Agent Collaboration Accordion */}
       {collab && (
         <div className="fisher-collaboration-container" style={{ marginTop: '16px' }} data-testid="fisher-collaboration-container">
           <button
@@ -492,6 +523,77 @@ export default function FisherDecisionSurface({
         </div>
       )}
 
+      {/* 5. Ocean Conditions */}
+      <div className="fisher-conditions-grid" role="group" aria-label="Essential local conditions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '16px' }}>
+        <div className="condition-tile" data-testid="condition-waves">
+          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
+            <WavesIcon size={16} className="condition-icon" />
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Waves', 'Waves')}</span>
+          </div>
+          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.waves}</div>
+        </div>
+        <div className="condition-tile" data-testid="condition-wind">
+          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
+            <WindIcon size={16} className="condition-icon" />
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Wind', 'Wind')}</span>
+          </div>
+          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.wind}</div>
+        </div>
+        <div className="condition-tile" data-testid="condition-visibility">
+          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
+            <VisibilityIcon size={16} className="condition-icon" />
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Visibility', 'Visibility')}</span>
+          </div>
+          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>{conditions.visibility}</div>
+        </div>
+        <div className="condition-tile" data-testid="condition-tide">
+          <div className="condition-tile-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b' }}>
+            <TideIcon size={16} className="condition-icon" />
+            <span className="condition-label">{i18nT('FisherDecisionSurface.Tide', 'Tide')}</span>
+          </div>
+          <div className="condition-value" style={{ fontSize: '1.25rem', marginTop: '4px' }}>
+            {translateText(conditions.tide, language)}
+          </div>
+        </div>
+      </div>
+      
+      <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '12px', textAlign: 'center' }}>
+        {conditions.isForecast ? i18nT('FisherDecisionSurface.Based on forecast', 'Based on forecast') : i18nT('FisherDecisionSurface.Based on current observation', 'Based on current observation')}
+      </div>
+
+      {hasActiveHazard && (
+        <div className="fisher-actionable-alert" style={{ background: status === 'DO_NOT_GO' ? '#fef2f2' : '#fffbeb', borderLeft: `8px solid ${status === 'DO_NOT_GO' ? '#ef4444' : '#f59e0b'}`, padding: '16px', marginTop: '16px', borderRadius: '8px' }}>
+          <h3 style={{ margin: '0 0 8px 0', color: status === 'DO_NOT_GO' ? '#991b1b' : '#b45309', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={24} />
+            {i18nT('Hazard.' + hazardVal, hazardVal)}
+          </h3>
+          <p style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: status === 'DO_NOT_GO' ? '#7f1d1d' : '#92400e' }}>
+            <strong>{i18nT('FisherDecisionSurface.What is happening:', 'What is happening:')}</strong> {i18nT('Hazard.' + hazardVal, hazardVal)}.<br/>
+            <strong>{i18nT('FisherDecisionSurface.Does it affect this trip?', 'Does it affect this trip?')}</strong> {i18nT('FisherDecisionSurface.Yes, it directly affects your planned route.', 'Yes, it directly affects your planned route.')}<br/>
+            <strong>{i18nT('FisherDecisionSurface.What to do next:', 'What to do next:')}</strong> {status === 'DO_NOT_GO' ? i18nT('FisherDecisionSurface.Do not depart. Await further clearance.', 'Do not depart. Await further clearance.') : i18nT('FisherDecisionSurface.Proceed with caution.', 'Proceed with caution.')}
+          </p>
+          <button
+            onClick={() => {
+              const alertPrefix = i18nT('FisherDecisionSurface.Alert', 'Alert');
+              const affectsSuffix = i18nT('FisherDecisionSurface.affects your planned trip. Do not depart.', 'affects your planned trip. Do not depart.');
+              const hearAdvisory = i18nT('FisherDecisionSurface.Hear the official advisory', 'Hear the official advisory');
+              speak(`${alertPrefix}: ${i18nT('Hazard.' + hazardVal, hazardVal)}. ${affectsSuffix} ${hearAdvisory}`);
+            }}
+            style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#ef4444', color: 'white', borderRadius: '8px', border: 'none', width: '100%' }}
+          >
+            <Volume2 size={24} />
+            {i18nT('FisherDecisionSurface.Hear the official advisory', 'Hear the official advisory')}
+          </button>
+        </div>
+      )}
+
+      {/* 6. PFZ Explainability */}
+      <PFZDetails assessment={assessment} language={language} />
+
+      {/* 7. Route Comparison */}
+      <TripPlanDetails assessment={assessment} language={language} />
+
+      {/* Fisher Action Buttons */}
       <div className="fisher-action-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
         <button
           onClick={handleSpeak}

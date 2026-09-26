@@ -347,3 +347,42 @@ def test_boundaries_includes_restrictions(client: TestClient):
     assert "IMBL_ADVISORY_BORDER" in feature_types
 
 
+def test_forecast_time_offset_variations(client: TestClient):
+    """Test that time_offset_hours returns dynamic and varying forecast conditions."""
+    r0 = client.get("/api/v1/forecast/point?lat=16.99&lon=73.28&time_offset_hours=0")
+    r3 = client.get("/api/v1/forecast/point?lat=16.99&lon=73.28&time_offset_hours=3")
+    r12 = client.get("/api/v1/forecast/point?lat=16.99&lon=73.28&time_offset_hours=12")
+
+    assert r0.status_code == 200
+    assert r3.status_code == 200
+    assert r12.status_code == 200
+
+    d0 = r0.json()
+    d3 = r3.json()
+    d12 = r12.json()
+
+    # The observed timestamps must differ
+    assert d0["forecast"]["observed_at"] != d3["forecast"]["observed_at"]
+    assert d3["forecast"]["observed_at"] != d12["forecast"]["observed_at"]
+
+    # Tide heights must change over the tidal cycle
+    t0 = d0["tide"]["current_height_m"]
+    t3 = d3["tide"]["current_height_m"]
+    assert t0 != t3 or d0["tide"]["phase"] != d3["tide"]["phase"]
+
+
+def test_spatial_query_time_offset(client: TestClient):
+    """Test that POST /spatial/query accepts time_offset_hours and updates ocean_state."""
+    resp = client.post(
+        "/api/v1/spatial/query",
+        json={"lat": 16.99, "lon": 73.28, "time_offset_hours": 6},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "ocean_state" in data
+    assert "wave_height_m" in data["ocean_state"]
+    assert "wind_speed_kn" in data["ocean_state"]
+    assert "astronomical_tide" in data
+
+
+

@@ -1,13 +1,14 @@
+import { useTranslation } from 'react-i18next';
 import DataModeIndicator from './DataModeIndicator';
 import { FileText, LogOut, Settings } from 'lucide-react';
-import { TRANSLATIONS, translateText, type SupportedLanguage } from '../../i18n/translations';
+import { TRANSLATIONS, type SupportedLanguage } from '../../i18n/translations';
 
 interface HeaderProps {
   language: SupportedLanguage;
   evidenceCount: number;
   onOpenEvidence: () => void;
   theme: 'light' | 'dark';
-  currentPortal?: 'selection' | 'fisher' | 'authority' | 'researcher' | 'marinewatch' | 'settings' | 'deckgl-experiment';
+  currentPortal?: 'selection' | 'fisher' | 'authority' | 'researcher' | 'settings' | 'deckgl-experiment';
   onLogout?: () => void;
   onReturnToPortal?: () => void;
   onOpenSettings?: () => void;
@@ -23,7 +24,8 @@ export default function Header({
   onReturnToPortal,
   onOpenSettings,
 }: HeaderProps) {
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const { t } = useTranslation();
+  const tLegacy = TRANSLATIONS[language] || TRANSLATIONS.en;
   const handleLogout = onLogout || onReturnToPortal;
 
   return (
@@ -31,7 +33,7 @@ export default function Header({
       <div className="app-header-left">
         <h1 className="app-title">ORCA</h1>
         <p className="app-tagline">
-          {t.appTagline}
+          {tLegacy.appTagline}
         </p>
       </div>
 
@@ -41,10 +43,10 @@ export default function Header({
           <button
             className="evidence-toggle-btn"
             onClick={onOpenEvidence}
-            aria-label={`${t.evidenceBtn} (${evidenceCount})`}
+            aria-label={`${tLegacy.evidenceBtn} (${evidenceCount})`}
           >
             <FileText size={14} />
-            <span>{t.evidenceBtn} ({evidenceCount})</span>
+            <span>{tLegacy.evidenceBtn} ({evidenceCount})</span>
           </button>
         )}
         {onOpenSettings && (
@@ -52,11 +54,11 @@ export default function Header({
             type="button"
             className={`header-settings-btn ${currentPortal === 'settings' ? 'active' : ''}`}
             onClick={onOpenSettings}
-            title={translateText('Settings & Preferences', language)}
-            aria-label={translateText('Settings & Preferences', language)}
+            title={t('Header.settings_preferences', 'Settings & Preferences')}
+            aria-label={t('Header.settings_preferences', 'Settings & Preferences')}
           >
             <Settings size={14} />
-            <span className="header-settings-label">{translateText('Settings', language)}</span>
+            <span className="header-settings-label">{t('Header.settings', 'Settings')}</span>
             <span className="header-settings-pill">
               {language.toUpperCase()} · {theme === 'dark' ? '🌙' : '☀️'}
             </span>
@@ -67,11 +69,11 @@ export default function Header({
             type="button"
             className="header-logout-btn"
             onClick={handleLogout}
-            title={t.logoutBtn || 'Logout'}
-            aria-label={t.logoutBtn || 'Logout'}
+            title={tLegacy.logoutBtn || 'Logout'}
+            aria-label={tLegacy.logoutBtn || 'Logout'}
           >
             <LogOut size={14} />
-            <span>{t.logoutBtn || 'Logout'}</span>
+            <span>{tLegacy.logoutBtn || 'Logout'}</span>
           </button>
         )}
       </div>

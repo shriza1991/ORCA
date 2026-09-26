@@ -51,6 +51,9 @@ class UserContext(BaseModel):
     return_time: Optional[str] = Field(
         None, description="Structured planned return time (ISO-8601 UTC)"
     )
+    target_pfz: Optional[str] = Field(
+        None, description="Target PFZ candidate preference (auto | custom)"
+    )
 
 
 class ChatRequest(BaseModel):
@@ -60,6 +63,9 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, description="Natural language user query")
     user_context: Optional[UserContext] = Field(
         default_factory=UserContext, description="Optional spatial or operational context"
+    )
+    mission_state: Optional[Any] = Field(
+        None, description="Canonical M1.1 MissionState context"
     )
 
 
@@ -242,6 +248,18 @@ class ChatResponse(BaseModel):
     agent_collaboration: Optional["AgentCollaborationPayload"] = Field(
         None,
         description="Multi-agent reasoning, evidence provenance, conflict arbitration, and causal timeline",
+    )
+    decision_object: Optional[Any] = Field(
+        None,
+        description="Canonical M3 DecisionObject produced by deterministic reasoning pipeline",
+    )
+    decision_delta: Optional[Any] = Field(
+        None,
+        description="Structured M3 DecisionDelta comparing counterfactual/current to baseline",
+    )
+    mission_state: Optional[Any] = Field(
+        None,
+        description="Canonical M1.1 MissionState context",
     )
 
 

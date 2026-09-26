@@ -76,6 +76,7 @@ class PFZCandidatePayload(BaseModel):
     water_depth_m: Optional[float] = Field(None, description="Bathymetric water depth at location")
     sea_surface_temp_c: Optional[float] = Field(None, description="SST at PFZ coordinate")
     chlorophyll_mg_m3: Optional[float] = Field(None, description="Chlorophyll concentration")
+    location_reference: Optional[str] = Field(None, description="Human readable location reference from raw data")
     rank: int = Field(..., ge=1, description="1-indexed proximity and productivity ranking")
 
 
@@ -105,6 +106,15 @@ class EvaluatedRouteItem(BaseModel):
     infeasibility_reasons: List[str] = Field(default_factory=list, description="Why the route is infeasible")
     is_synthetic: bool = Field(False, description="True if route is a demo/synthetic corridor")
     missing_data_state: Optional[str] = Field(None, description="Explanation if data was missing")
+    waypoint_timeline: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="Time-indexed waypoint meteorological exposure breakdown"
+    )
+    current_adjusted: bool = Field(
+        default=False, description="True if ETA and fuel account for surface ocean current vectors"
+    )
+    peak_exposure_point: Optional[Dict[str, Any]] = Field(
+        default=None, description="Coordinate and timestamp of peak sea state exposure"
+    )
 
 
 class RouteExposurePayload(BaseModel):
@@ -116,6 +126,12 @@ class RouteExposurePayload(BaseModel):
     routes: List[EvaluatedRouteItem] = Field(default_factory=list, description="Evaluated passage options")
     origin_coordinates: Optional[List[float]] = Field(None, description="[lon, lat] departure coordinates")
     destination_coordinates: Optional[List[float]] = Field(None, description="[lon, lat] destination coordinates")
+    departure_windows: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="Evaluated departure time windows within forecast envelope"
+    )
+    optimal_departure_recommendation: Optional[str] = Field(
+        default=None, description="Actionable recommendation for optimal departure window"
+    )
 
 
 class GeospatialHazardPayload(BaseModel):
@@ -127,6 +143,12 @@ class GeospatialHazardPayload(BaseModel):
     distance_to_boundary_km: Optional[float] = Field(None, description="Distance to nearest restricted polygon")
     hard_stop: bool = Field(False, description="True if passage is strictly prohibited (NO_GO)")
     restricted: bool = Field(False, description="True if operational caution or restriction applies (CAUTION)")
+    time_to_cross_hours: Optional[float] = Field(
+        default=None, description="Projected time in hours before vessel crosses restricted boundary"
+    )
+    projected_intersection: bool = Field(
+        default=False, description="True if vessel projected trajectory intercepts restricted zone"
+    )
 
 
 # =============================================================================

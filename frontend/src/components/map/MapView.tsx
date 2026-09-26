@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import maplibregl from 'maplibre-gl';
@@ -7,8 +8,19 @@ import type { MapLayer } from '../../types/contracts';
 import type { OperationalMode } from '../../types/mission';
 import LayerManager from './LayerManager';
 import MissionMapBrief from './MissionMapBrief';
-import { Layers, Navigation, Play, Square, Ship, Sailboat } from 'lucide-react';
-import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { Layers, Navigation, Play, Square, Ship, Sailboat, Clock, Waves, X, Bookmark, RefreshCw } from 'lucide-react';
+import type { SupportedLanguage } from '../../i18n/translations';
+import { executeSpatialQuery, type UnifiedSpatialQueryResponse } from '../../api/marinewatch-client';
+import { NATIONAL_COASTAL_BOOKMARKS } from '../../utils/geo';
+
+const TIME_STEPS = [
+  { label: 'Now', hours: 0 },
+  { label: '+3h', hours: 3 },
+  { label: '+6h', hours: 6 },
+  { label: '+12h', hours: 12 },
+  { label: '+24h', hours: 24 },
+  { label: '+48h', hours: 48 },
+];
 
 /** Initial fallback center (Indian coastal waters) */
 const INITIAL_CENTER: [number, number] = [73.28, 16.99];
@@ -38,6 +50,8 @@ interface MapViewProps {
   isTrackingLocation?: boolean;
   onToggleLocation?: () => void;
   craftProfile?: string;
+  timeOffsetHours?: number;
+  onTimeOffsetChange?: (hours: number) => void;
 }
 
 export default function MapView({
@@ -56,10 +70,14 @@ export default function MapView({
   isTrackingLocation,
   onToggleLocation,
   craftProfile = 'motorized_boat',
+  timeOffsetHours,
+  onTimeOffsetChange,
 }: MapViewProps) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const activeLayersRef = useRef<{ layers: string[]; sources: string[] }>({ layers: [], sources: [] });
+  const domMarkersRef = useRef<maplibregl.Marker[]>([]);
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>({});
   const [isSimulating, setIsSimulating] = useState(false);
@@ -67,6 +85,85 @@ export default function MapView({
   const simulationRootRef = useRef<Root | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [selectedCorridorMode, setSelectedCorridorMode] = useState<OperationalMode>('safest');
+  const [selectedTimeStep, setSelectedTimeStep] = useState<number>(timeOffsetHours ?? 0);
+  const selectedTimeStepRef = useRef(selectedTimeStep);
+  selectedTimeStepRef.current = selectedTimeStep;
+
+  useEffect(() => {
+    if (timeOffsetHours !== undefined && timeOffsetHours !== selectedTimeStep) {
+      setSelectedTimeStep(timeOffsetHours);
+    }
+  }, [timeOffsetHours]);
+
+  const [mapForecast, setMapForecast] = useState<{
+    loading: boolean;
+    wave_height_m: number;
+    wind_speed_kn: number;
+    wind_direction_deg: number;
+    swell_height_m: number;
+    swell_period_s: number;
+    sst_c: number;
+    tide_height_m: number;
+    tide_phase: string;
+    status: 'GO' | 'CAUTION' | 'NO_GO';
+  } | null>(null);
+
+  const [inspectedPoint, setInspectedPoint] = useState<{
+    lat: number;
+    lon: number;
+    data: UnifiedSpatialQueryResponse | null;
+    loading: boolean;
+  } | null>(null);
+  const [showBookmarks, setShowBookmarks] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const targetLat = inspectedPoint ? inspectedPoint.lat : (center ? center[1] : 16.99);
+    const targetLon = inspectedPoint ? inspectedPoint.lon : (center ? center[0] : 73.28);
+
+    setMapForecast((prev) => (prev ? { ...prev, loading: true } : null));
+
+    executeSpatialQuery(targetLat, targetLon, 50, selectedTimeStep)
+      .then((res) => {
+        if (isCancelled) return;
+        const wave = res.ocean_state.wave_height_m;
+        const craftUpper = (craftProfile || 'motorized_boat').toUpperCase();
+        let limit = 2.2;
+        if (craftUpper.includes('NON_MOTORIZED') || craftUpper.includes('CANOE')) limit = 1.4;
+        else if (craftUpper.includes('MECHANIZED') || craftUpper.includes('TRAWLER')) limit = 3.5;
+
+        let status: 'GO' | 'CAUTION' | 'NO_GO' = 'GO';
+        if (wave > limit) status = 'NO_GO';
+        else if (wave > limit * 0.8) status = 'CAUTION';
+
+        setMapForecast({
+          loading: false,
+          wave_height_m: res.ocean_state.wave_height_m,
+          wind_speed_kn: res.ocean_state.wind_speed_kn,
+          wind_direction_deg: res.ocean_state.wind_direction_deg,
+          swell_height_m: res.ocean_state.swell_height_m,
+          swell_period_s: res.ocean_state.swell_period_s,
+          sst_c: res.ocean_state.sst_c,
+          tide_height_m: res.astronomical_tide.current_height_m,
+          tide_phase: res.astronomical_tide.phase,
+          status,
+        });
+
+        if (inspectedPoint) {
+          setInspectedPoint((curr) => curr ? { ...curr, data: res, loading: false } : null);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to update forecast for time step:', err);
+        if (!isCancelled) {
+          setMapForecast((prev) => (prev ? { ...prev, loading: false } : null));
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedTimeStep, center?.[0], center?.[1], craftProfile]);
 
   const activeStyle = theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
   const currentStyleRef = useRef(activeStyle);
@@ -296,10 +393,27 @@ export default function MapView({
     simulationRootRef.current = root;
 
     let Icon = Ship;
-    if (craftProfile === 'traditional_non_motorized') Icon = Sailboat;
-    else if (craftProfile === 'mechanized_trawler') Icon = Ship; // using Ship for both, but we can differentiate color
+    let iconColor = '#2563eb';
+    let bgColor = 'white';
     
-    root.render(<Icon size={24} color="#2563eb" fill={craftProfile === 'mechanized_trawler' ? '#bfdbfe' : 'none'} />);
+    if (craftProfile === 'traditional_non_motorized') {
+      Icon = Sailboat;
+      iconColor = '#16a34a';
+      el.style.borderColor = '#16a34a';
+    } else if (craftProfile === 'mechanized_trawler') {
+      Icon = Ship;
+      bgColor = '#bfdbfe';
+      iconColor = '#1e3a8a';
+      el.style.borderColor = '#1e3a8a';
+    }
+
+    // Lucide icons generally point UP or RIGHT. Ship and Sailboat might need rotation.
+    // Wrap the icon in a div that corrects its default orientation to face UP (0 degrees).
+    root.render(
+      <div style={{ transform: 'rotate(-90deg)', display: 'flex' }}>
+        <Icon size={22} color={iconColor} fill={bgColor} />
+      </div>
+    );
 
     const marker = new maplibregl.Marker({ element: el, pitchAlignment: 'map', rotationAlignment: 'map' })
       .setLngLat(line.geometry.coordinates[0] as [number, number])
@@ -363,6 +477,50 @@ export default function MapView({
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
+    map.on('style.load', () => {
+      if (!map.hasImage('icon-anchor')) {
+        const createEmojiImg = (char: string) => {
+          const c = document.createElement('canvas');
+          c.width = 40;
+          c.height = 40;
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            ctx.font = '28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(char, 20, 22);
+            return ctx.getImageData(0, 0, 40, 40);
+          }
+          return null;
+        };
+        const anchorImg = createEmojiImg('⚓');
+        if (anchorImg) map.addImage('icon-anchor', anchorImg);
+        const fishImg = createEmojiImg('🐟');
+        if (fishImg) map.addImage('icon-fish', fishImg);
+      }
+    });
+
+    map.on('click', async (e) => {
+      const lat = parseFloat(e.lngLat.lat.toFixed(4));
+      const lon = parseFloat(e.lngLat.lng.toFixed(4));
+      setInspectedPoint({ lat, lon, data: null, loading: true });
+      try {
+        const queryRes = await executeSpatialQuery(lat, lon, 50, selectedTimeStepRef.current);
+        setInspectedPoint({ lat, lon, data: queryRes, loading: false });
+      } catch (err) {
+        console.error('Failed to inspect ocean point:', err);
+        setInspectedPoint(null);
+      }
+    });
+
+    const updateZoomTier = () => {
+      if (!containerRef.current) return;
+      const z = map.getZoom();
+      const tier = z < 7 ? 'overview' : z < 10 ? 'regional' : 'detail';
+      containerRef.current.setAttribute('data-zoom-tier', tier);
+    };
+    map.on('zoom', updateZoomTier);
+    updateZoomTier();
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
     });
@@ -371,7 +529,10 @@ export default function MapView({
     mapRef.current = map;
 
     return () => {
+      map.off('zoom', updateZoomTier);
       resizeObserver.disconnect();
+      domMarkersRef.current.forEach((m) => m.remove());
+      domMarkersRef.current = [];
       map.remove();
       mapRef.current = null;
     };
@@ -474,6 +635,9 @@ export default function MapView({
     if (!map) return;
 
     const syncLayers = () => {
+      domMarkersRef.current.forEach((m) => m.remove());
+      domMarkersRef.current = [];
+
       const vis: Record<string, boolean> = {};
       const newRegisteredLayers: string[] = [];
       const newRegisteredSources: string[] = [];
@@ -606,7 +770,7 @@ export default function MapView({
           newRegisteredLayers.push(lineLayerId);
         }
 
-        // 3. Point positions & markers
+        // 3. Point positions & markers (DOM icon markers with suppressed canvas dots)
         if (hasPointFeature) {
           const pointLayerId = (hasPolygonFeature || hasLineFeature) ? `${layerId}-circle` : layerId;
           if (!map.getLayer(pointLayerId)) {
@@ -616,19 +780,96 @@ export default function MapView({
               source: sourceId,
               filter: ['in', '$type', 'Point'],
               paint: {
-                'circle-radius': circleRadius,
+                'circle-radius': 0, // Suppress canvas dot in favor of custom DOM icon markers
                 'circle-color': color,
-                'circle-opacity': opacity,
-                'circle-stroke-width': 2,
+                'circle-opacity': 0,
+                'circle-stroke-width': 0,
                 'circle-stroke-color': '#ffffff',
               },
             });
           } else {
-            map.setPaintProperty(pointLayerId, 'circle-radius', circleRadius);
+            map.setPaintProperty(pointLayerId, 'circle-radius', 0);
             map.setPaintProperty(pointLayerId, 'circle-color', color);
-            map.setPaintProperty(pointLayerId, 'circle-opacity', opacity);
+            map.setPaintProperty(pointLayerId, 'circle-opacity', 0);
           }
           newRegisteredLayers.push(pointLayerId);
+
+          // Build custom interactive DOM icon markers
+          if (layer.visible !== false) {
+            const pointFeatures: any[] = [];
+            if (geojson.type === 'Feature' && (geojson.geometry?.type === 'Point' || geojson.geometry?.type === 'MultiPoint')) {
+              pointFeatures.push(geojson);
+            } else if (geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+              for (const f of geojson.features) {
+                if (f && f.geometry && (f.geometry.type === 'Point' || f.geometry.type === 'MultiPoint')) {
+                  pointFeatures.push(f);
+                }
+              }
+            }
+
+            for (const f of pointFeatures) {
+              const rawCoords = f.geometry.coordinates;
+              const coordsList: [number, number][] =
+                f.geometry.type === 'Point' ? [rawCoords] : Array.isArray(rawCoords) ? rawCoords : [];
+
+              for (const pt of coordsList) {
+                if (!Array.isArray(pt) || pt.length < 2) continue;
+                const [lng, lat] = pt;
+                if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) continue;
+
+                const cfg = getPointMarkerConfig(f, layer);
+                const el = document.createElement('div');
+                el.className = 'marinewatch-custom-marker';
+                const inner = document.createElement('div');
+                inner.className = `marinewatch-marker-inner ${cfg.className}`;
+                inner.innerHTML = `<span class="marker-emoji" style="filter: drop-shadow(0 0 3px ${cfg.color});">${cfg.emoji}</span>`;
+                el.appendChild(inner);
+                el.title = cfg.title;
+
+                el.onclick = (e) => {
+                  e.stopPropagation();
+                  activePopupRef.current?.remove();
+
+                  let html: string | null = null;
+                  if (customPopupRendererRef.current) {
+                    try {
+                      html = customPopupRendererRef.current(f, layer);
+                    } catch {
+                      html = null;
+                    }
+                  }
+
+                  if (!html) {
+                    const ignoredKeys = new Set([
+                      'polygon_id', 'id', 'polygon_type', 'is_hard_restriction', 'objectid', 'object_id',
+                      'layer_id', 'layer_type', 'source', 'type', 'geometry_type', 'home_harbor_id'
+                    ]);
+                    const fProps = f.properties || {};
+                    const entries = Object.entries(fProps).filter(([k]) => !ignoredKeys.has(k.toLowerCase()));
+
+                    const content = entries.length > 0
+                      ? entries
+                          .slice(0, 6)
+                          .map(([k, v]) => `<div style="margin-bottom:2px"><strong>${k.replace(/_/g, ' ')}:</strong> ${formatPropValue(v)}</div>`)
+                          .join('')
+                      : `<div><em>${layer.name}</em></div>`;
+
+                    html = `<div class="map-popup"><h5 style="margin:0 0 6px;color:${cfg.color};font-size:12px;font-weight:700">${layer.name}</h5>${content}</div>`;
+                  }
+
+                  const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '300px', offset: 12, className: 'fisher-map-popup' })
+                    .setLngLat([lng, lat])
+                    .setHTML(html)
+                    .addTo(map);
+
+                  activePopupRef.current = popup;
+                };
+
+                const marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
+                domMarkersRef.current.push(marker);
+              }
+            }
+          }
 
           // Register active vessel marker for calm telemetry tracking pulse
           const isVesselPoint = layerId === 'layer_fleet_vessel_replay' || layer.style?.layer_category === 'fleet_replay' || layerId === 'layer_vessel_position';
@@ -680,7 +921,13 @@ export default function MapView({
               html = `<div class="map-popup"><h5 style="margin:0 0 6px;color:#0284c7;font-size:12px;font-weight:700">${layer.name}</h5>${content}</div>`;
             }
 
-            const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px', offset: 10 })
+            const isFisherDark = html.includes('map-popup-fisher');
+            const popup = new maplibregl.Popup({ 
+              closeButton: true, 
+              maxWidth: '280px', 
+              offset: 10,
+              className: isFisherDark ? 'dark-theme-popup' : ''
+            })
               .setLngLat(e.lngLat)
               .setHTML(html)
               .addTo(map);
@@ -903,7 +1150,7 @@ export default function MapView({
               style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: isTrackingLocation ? '#eff6ff' : 'white', color: isTrackingLocation ? '#2563eb' : '#0f172a', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: isTrackingLocation ? 'bold' : 'normal' }}
             >
               <Navigation size={24} fill={isTrackingLocation ? '#2563eb' : 'none'} />
-              {translateText('My Location', language) || 'My Location'}
+              {t('MapView.my_location', 'My Location')}
             </button>
           )}
           <button
@@ -911,7 +1158,7 @@ export default function MapView({
             style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'white', color: '#0f172a', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           >
             <Layers size={24} />
-            {translateText('Fit Trip', language) || 'Fit Trip'}
+            {t('MapView.fit_trip', 'Fit Trip')}
           </button>
           {layerAvailability?.routes === 'AVAILABLE' && (
             <button
@@ -919,7 +1166,7 @@ export default function MapView({
               style={{ padding: '16px', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', background: isSimulating ? '#fee2e2' : 'white', color: isSimulating ? '#dc2626' : '#2563eb', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
             >
               {isSimulating ? <Square size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
-              {isSimulating ? 'Stop' : 'Simulate'}
+              {isSimulating ? t('MapView.stop', 'Stop') : t('MapView.simulate', 'Simulate')}
             </button>
           )}
         </div>
@@ -958,6 +1205,295 @@ export default function MapView({
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
+      )}
+
+      {/* Quick Jump Coastal Bookmarks */}
+      <div
+        className="map-coastal-bookmarks"
+        style={{
+          position: 'absolute',
+          top: '16px',
+          left: hideAdvancedControls ? '180px' : '16px',
+          zIndex: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowBookmarks(!showBookmarks)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            background: theme === 'dark' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid var(--border, #334155)',
+            borderRadius: '8px',
+            color: 'var(--foreground, #0f172a)',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+          }}
+          aria-label="Toggle coastal landmarks"
+        >
+          <Bookmark size={14} style={{ color: '#0ea5e9' }} />
+          <span>Coastal Bookmarks</span>
+        </button>
+
+        {showBookmarks && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '42px',
+              left: 0,
+              background: theme === 'dark' ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.98)',
+              border: '1px solid var(--border, #334155)',
+              borderRadius: '8px',
+              padding: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '3px',
+              maxHeight: '260px',
+              overflowY: 'auto',
+              width: '210px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+              zIndex: 30,
+            }}
+          >
+            {NATIONAL_COASTAL_BOOKMARKS.map((b) => (
+              <button
+                type="button"
+                key={b.name}
+                onClick={() => {
+                  mapRef.current?.flyTo({ center: [b.lon, b.lat], zoom: b.zoom, duration: 900 });
+                  setShowBookmarks(false);
+                }}
+                style={{
+                  textAlign: 'left',
+                  padding: '6px 8px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--foreground, #0f172a)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{b.name}</span>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontSize: '10px' }}>{b.state?.slice(0, 6)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Floating Active Forecast Telemetry Card (Anchored above Time Scrubber) */}
+      <div
+        className="map-forecast-telemetry"
+        style={{
+          position: 'absolute',
+          bottom: '66px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          background: theme === 'dark' ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid var(--border, #334155)',
+          borderRadius: '16px',
+          padding: '5px 14px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
+          fontSize: '11px',
+          whiteSpace: 'nowrap',
+          color: 'var(--foreground, #0f172a)',
+        }}
+      >
+        {mapForecast?.loading ? (
+          <span style={{ color: 'var(--muted-foreground, #94a3b8)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <RefreshCw size={12} className="spin" /> Updating forecast (+{selectedTimeStep}h)…
+          </span>
+        ) : mapForecast ? (
+          <>
+            <span
+              style={{
+                padding: '2px 7px',
+                borderRadius: '9999px',
+                fontWeight: 700,
+                fontSize: '10px',
+                background:
+                  mapForecast.status === 'GO' ? '#dcfce7' : mapForecast.status === 'CAUTION' ? '#fef3c7' : '#fee2e2',
+                color:
+                  mapForecast.status === 'GO' ? '#166534' : mapForecast.status === 'CAUTION' ? '#92400e' : '#991b1b',
+              }}
+            >
+              {mapForecast.status}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              🌊 {mapForecast.wave_height_m}m <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontWeight: 400 }}>Wave</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              💨 {mapForecast.wind_speed_kn}kn <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontWeight: 400 }}>({mapForecast.wind_direction_deg}°)</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              🌊 {mapForecast.tide_height_m}m <span style={{ color: 'var(--muted-foreground, #94a3b8)', fontWeight: 400 }}>({mapForecast.tide_phase})</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+              🌡️ {mapForecast.sst_c}°C
+            </span>
+          </>
+        ) : (
+          <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Forecast ready</span>
+        )}
+      </div>
+
+      {/* Floating Time Scrubber (+0h to +48h) */}
+      <div
+        className="map-time-scrubber"
+        style={{
+          position: 'absolute',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          background: theme === 'dark' ? 'rgba(15, 23, 42, 0.90)' : 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid var(--border, #334155)',
+          borderRadius: '24px',
+          padding: '4px 10px',
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: 'var(--muted-foreground, #94a3b8)', marginRight: '4px' }}>
+          <Clock size={13} />
+          <span>Forecast:</span>
+        </span>
+        {TIME_STEPS.map((step) => (
+          <button
+            type="button"
+            key={step.hours}
+            onClick={() => {
+              setSelectedTimeStep(step.hours);
+              onTimeOffsetChange?.(step.hours);
+            }}
+            style={{
+              padding: '3px 9px',
+              fontSize: '11px',
+              fontWeight: selectedTimeStep === step.hours ? 700 : 500,
+              borderRadius: '16px',
+              border: 'none',
+              background: selectedTimeStep === step.hours ? '#2563eb' : 'transparent',
+              color: selectedTimeStep === step.hours ? '#ffffff' : 'var(--foreground, #0f172a)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {step.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Floating Point Depth & Ocean Telemetry Inspector HUD */}
+      {inspectedPoint && (
+        <div
+          className="map-point-inspector"
+          style={{
+            position: 'absolute',
+            bottom: '72px',
+            right: '16px',
+            zIndex: 15,
+            width: '290px',
+            background: theme === 'dark' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid var(--border, #334155)',
+            borderRadius: '10px',
+            padding: '12px',
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.22)',
+            fontSize: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '6px' }}>
+            <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', color: '#0ea5e9' }}>
+              <Waves size={15} />
+              Ocean Depth & Tide Telemetry
+            </span>
+            <button
+              type="button"
+              onClick={() => setInspectedPoint(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground, #94a3b8)', padding: '2px' }}
+              aria-label="Close telemetry HUD"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div style={{ color: 'var(--muted-foreground, #94a3b8)', fontFamily: 'monospace', fontSize: '11px', marginBottom: '8px' }}>
+            📍 {inspectedPoint.lat.toFixed(4)}°N, {inspectedPoint.lon.toFixed(4)}°E
+          </div>
+
+          {inspectedPoint.loading ? (
+            <div style={{ padding: '12px 0', textAlign: 'center', color: '#94a3b8' }}>
+              Querying bathymetry & tides…
+            </div>
+          ) : inspectedPoint.data ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Seabed Depth:</span>
+                <strong style={{ color: '#38bdf8' }}>{inspectedPoint.data.bathymetry_and_shelf.bathymetry_depth_m} m</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Shelf Zone:</span>
+                <span style={{ fontWeight: 600 }}>{inspectedPoint.data.bathymetry_and_shelf.shelf_zone}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Distance to Shore:</span>
+                <span style={{ fontWeight: 600 }}>{inspectedPoint.data.bathymetry_and_shelf.distance_to_shore_km} km</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Predicted Tide:</span>
+                <strong style={{ color: '#10b981' }}>
+                  {inspectedPoint.data.astronomical_tide.current_height_m} m CD ({inspectedPoint.data.astronomical_tide.phase})
+                </strong>
+              </div>
+              {inspectedPoint.data.ocean_state && (
+                <>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Wave Height:</span>
+                    <strong style={{ color: inspectedPoint.data.ocean_state.wave_height_m > 2.0 ? '#ef4444' : '#10b981' }}>
+                      {inspectedPoint.data.ocean_state.wave_height_m} m (Swell {inspectedPoint.data.ocean_state.swell_height_m}m @ {inspectedPoint.data.ocean_state.swell_period_s}s)
+                    </strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Wind Speed:</span>
+                    <span style={{ fontWeight: 600 }}>
+                      {inspectedPoint.data.ocean_state.wind_speed_kn} kn ({inspectedPoint.data.ocean_state.wind_direction_deg}°)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Sea Surface Temp:</span>
+                    <span style={{ fontWeight: 600 }}>{inspectedPoint.data.ocean_state.sst_c} °C</span>
+                  </div>
+                </>
+              )}
+              {inspectedPoint.data.nearby_lighthouses?.[0] && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Nearest Light:</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {inspectedPoint.data.nearby_lighthouses[0].name} ({inspectedPoint.data.nearby_lighthouses[0].range_nm} nm range)
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
       )}
     </section>
   );
@@ -1001,6 +1537,145 @@ function getGeometryType(geojson: MapLayer['geojson']): string {
     return (geojson as GeoJSON.Feature).geometry?.type || 'Point';
   }
   return (geojson as any)?.geometry?.type || 'Point';
+}
+
+/**
+ * Maps point features to MarineWatch-style DOM icon markers:
+ * ⚓ Landing Harbour / Departure Station
+ * 🎯 Voyage Target / Destination Point
+ * 🗼 DGLL Coastal Lighthouse
+ * 🐟 Potential Fishing Zone (PFZ)
+ * 🦐 CAA Aquaculture Farm
+ * ⚠️ Marine Hazard Alert
+ * ⛵ Live Vessel / Monitored Craft
+ */
+function getPointMarkerConfig(
+  feature: any,
+  layer: MapLayer,
+): { emoji: string; className: string; color: string; title: string } {
+  const props = feature.properties || {};
+  const layerId = (layer.layer_id || '').toLowerCase();
+  const layerCategory = (layer.style?.layer_category || '').toLowerCase();
+  const pointType = (props.point_type || props.type || '').toLowerCase();
+  const name = props.name || props.harbor || props.location || layer.name || '';
+
+  // 1. Departure Station / Port / Landing Harbour
+  if (
+    pointType.includes('departure') ||
+    pointType.includes('harbor') ||
+    layerId.includes('harbor') ||
+    layerId.includes('port') ||
+    layerCategory === 'navigation_terminal' ||
+    layerId === 'layer_route_start_marker'
+  ) {
+    return {
+      emoji: '⚓',
+      className: 'port-marker',
+      color: '#0284c7',
+      title: `${name} (Departure Station / Landing Centre)`,
+    };
+  }
+
+  // 2. Destination / Target
+  if (
+    pointType.includes('destination') ||
+    layerId === 'layer_route_end_marker' ||
+    pointType.includes('target') ||
+    name.toLowerCase().includes('target')
+  ) {
+    return {
+      emoji: '🎯',
+      className: 'destination-marker',
+      color: '#f59e0b',
+      title: `${name} (Voyage Target / Destination)`,
+    };
+  }
+
+  // 3. DGLL Navigational Lighthouse
+  if (
+    pointType.includes('lighthouse') ||
+    layerId.includes('lighthouse') ||
+    layerCategory === 'navigation_aid'
+  ) {
+    const range = props.optical_range_nm || props.range_nm || 15;
+    return {
+      emoji: '🗼',
+      className: 'lighthouse-marker',
+      color: '#eab308',
+      title: `${name} (DGLL Coastal Lighthouse · ${range}nm)`,
+    };
+  }
+
+  // 4. Potential Fishing Zone (PFZ)
+  if (
+    layerId.includes('pfz') ||
+    layerCategory === 'pfz' ||
+    props.candidate_id ||
+    (props.public_id && String(props.public_id).startsWith('pfz'))
+  ) {
+    const rank = props.rank ? ` #${props.rank}` : '';
+    const dist = props.distance_km ? ` · ${props.distance_km.toFixed(1)} km` : '';
+    return {
+      emoji: '🐟',
+      className: 'pfz-marker',
+      color: '#10b981',
+      title: `PFZ Candidate${rank}${dist}`,
+    };
+  }
+
+  // 5. CAA Aquaculture Farm
+  if (
+    layerId.includes('aqua') ||
+    layerCategory === 'aquaculture' ||
+    props.farm_name ||
+    props.farm_code
+  ) {
+    return {
+      emoji: '🦐',
+      className: 'aqua-marker',
+      color: '#f97316',
+      title: `${props.farm_name || name} (CAA Aquaculture)`,
+    };
+  }
+
+  // 6. Point Hazard / Warning
+  if (
+    layerId.includes('hazard') ||
+    layerCategory === 'hazard' ||
+    props.severity ||
+    props.headline
+  ) {
+    return {
+      emoji: '⚠️',
+      className: 'hazard-marker',
+      color: '#ef4444',
+      title: `${props.headline || name || 'Hazard Alert'}`,
+    };
+  }
+
+  // 7. Live Vessel / Monitored Craft
+  if (
+    pointType.includes('location') ||
+    pointType.includes('vessel') ||
+    layerId.includes('vessel') ||
+    layerId === 'layer_live_location' ||
+    layerId === 'layer_fleet_vessel_replay'
+  ) {
+    return {
+      emoji: '⛵',
+      className: 'vessel-marker',
+      color: '#2563eb',
+      title: `${name || 'Monitored Vessel'}`,
+    };
+  }
+
+  // Default fallback icon
+  return {
+    emoji: '📍',
+    className: 'port-marker',
+    color: layer.style?.color || '#0284c7',
+    title: name || layer.name,
+  };
 }
 
 function formatPropValue(val: unknown): string {

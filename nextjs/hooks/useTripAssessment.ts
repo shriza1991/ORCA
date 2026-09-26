@@ -68,10 +68,11 @@ export function useTripAssessment() {
             const expiredData: TripAssessmentResponse = {
               ...cached.data,
               decision: {
-                ...cached.data.decision,
+                ...(typeof cached.data.decision === 'object' ? cached.data.decision : { status: cached.data.decision }),
                 status: 'UNKNOWN',
                 summary: 'Offline mode: Cached assessment has expired. Safety status is unknown.',
                 next_action: 'Please reconnect to the internet to fetch fresh assessments.',
+                decisive_factors: ['Cached evidence exceeded 6-hour limit.'],
               }
             };
             setData(expiredData);

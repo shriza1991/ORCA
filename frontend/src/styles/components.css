@@ -3389,17 +3389,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 16px;
+  padding: 6px 14px;
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
-  gap: 12px;
-  min-height: 44px;
+  gap: 10px;
+  min-height: 48px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.authority-command-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .authority-bar-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -3428,13 +3434,25 @@
 }
 
 .authority-sector-select {
-  padding: 4px 8px;
-  font-size: 11px;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  font-weight: 600;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.authority-sector-select:hover {
+  border-color: var(--color-border-hover);
+}
+
+.authority-sector-select:focus {
+  border-color: var(--color-accent);
 }
 
 /* Center Segmented View Switcher Pill */
@@ -3442,19 +3460,20 @@
   display: inline-flex;
   align-items: center;
   padding: 3px;
-  background: var(--color-bg-primary);
+  background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .authority-segment-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
+  gap: 5px;
+  padding: 4px 10px;
   border-radius: calc(var(--radius-md) - 2px);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -3466,7 +3485,7 @@
 
 .authority-segment-btn:hover {
   color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .authority-segment-btn.active {
@@ -3495,12 +3514,13 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 8px;
+  padding: 4px 8px;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 11px;
   color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .authority-kpi-chip strong {
@@ -3528,6 +3548,84 @@
   background: rgba(56, 189, 248, 0.12);
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+.authority-decision-chip {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.authority-decision-chip:hover {
+  border-color: #22c55e;
+}
+
+[data-theme='dark'] .authority-decision-chip {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+
+[data-theme='dark'] .authority-decision-chip:hover {
+  border-color: #4ade80;
+}
+
+.authority-collaboration-audit-section {
+  grid-column: 1 / -1;
+  margin-bottom: 20px;
+}
+
+.authority-collaboration-audit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.authority-collaboration-audit-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.authority-collaboration-audit-title h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.authority-consensus-badge {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-weight: 700;
+}
+
+.authority-consensus-badge.conflict {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.authority-consensus-badge.consensus {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+[data-theme='dark'] .authority-consensus-badge.conflict {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme='dark'] .authority-consensus-badge.consensus {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
 }
 
 /* Authority Body & Grid */
@@ -4445,6 +4543,122 @@ button.fleet-alert-card.active {
   justify-content: space-between;
   font-size: 10px;
   color: var(--color-text-dim);
+}
+
+.fleet-loading-text {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.fleet-empty-state {
+  padding: 24px 16px;
+  text-align: center;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  margin: 8px 0;
+}
+
+.fleet-empty-icon {
+  margin: 0 auto 8px auto;
+  opacity: 0.4;
+  color: var(--color-text-muted);
+}
+
+.fleet-alert-inspection {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-caution);
+  background: var(--color-caution-bg);
+  border-radius: var(--radius-md);
+}
+
+.fleet-offline-banner {
+  background-color: var(--color-no-go-bg);
+  border: 1px solid var(--color-no-go-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-no-go-text);
+  font-size: 13px;
+}
+
+.fleet-offline-banner p {
+  margin: 2px 0 0 0;
+  opacity: 0.9;
+  font-size: 12px;
+  color: var(--color-no-go-text);
+}
+
+.fleet-empty-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.fleet-empty-desc {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.fleet-replay-unavailable-card {
+  padding: 12px 14px;
+  background: var(--color-caution-bg);
+  border: 1px solid var(--color-caution-border);
+  border-radius: var(--radius-md);
+  margin: 10px 0;
+  color: var(--color-text-primary);
+}
+
+.fleet-replay-unavail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--color-caution);
+}
+
+.fleet-replay-unavail-text {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.fleet-alerts-unavailable {
+  color: var(--color-caution);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.fleet-alerts-empty {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.fleet-broadcast-title {
+  margin-top: 14px;
+}
+
+.telemetry-icon-start {
+  color: var(--color-go);
+}
+
+.telemetry-icon-dest {
+  color: var(--color-caution);
+}
+
+.scrubber-eyebrow-trajectory {
+  margin-top: 10px;
 }
 
 /* ==========================================================================
@@ -11076,5 +11290,503 @@ button.fleet-alert-card.active {
   .fisher-conditions-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ==========================================================================
+   PortWatch Registry & Ocean Harbours Census Styles
+   ========================================================================== */
+.portwatch-view {
+  flex: 1 1 0%;
+  min-height: 0;
+  padding: 20px 24px;
+  overflow-y: auto;
+  background-color: var(--color-bg-primary);
+}
+
+.portwatch-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.portwatch-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.portwatch-header-subtitle {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 800px;
+}
+
+.portwatch-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.portwatch-count-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--color-accent);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  white-space: nowrap;
+}
+
+.portwatch-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.portwatch-refresh-btn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+}
+
+/* PortWatch KPI Cards Grid */
+.portwatch-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.portwatch-kpi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-height: 72px;
+}
+
+.portwatch-kpi-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.portwatch-kpi-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  margin-top: 4px;
+}
+
+.portwatch-kpi-value.accent-emerald {
+  color: #10b981;
+}
+
+.portwatch-kpi-value.accent-blue {
+  color: #38bdf8;
+}
+
+/* PortWatch Toolbar */
+.portwatch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.portwatch-search-wrap {
+  position: relative;
+  flex: 1 1 0%;
+}
+
+.portwatch-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-dim);
+  pointer-events: none;
+}
+
+.portwatch-search-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 14px 0 36px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.portwatch-search-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.portwatch-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.portwatch-filter-select {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.portwatch-filter-select:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* PortWatch Table */
+.portwatch-table-wrap {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.portwatch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.portwatch-table th {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.portwatch-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  color: var(--color-text-secondary);
+}
+
+.portwatch-table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.portwatch-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme='light'] .portwatch-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.port-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.port-type-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(14, 165, 233, 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  white-space: nowrap;
+}
+
+.port-vhf-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.port-tide-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.port-clearance-note {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   AquaWatch Registry & Biosecurity Styles
+   ========================================================================== */
+.aquawatch-view {
+  flex: 1 1 0%;
+  min-height: 0;
+  padding: 20px 24px;
+  overflow-y: auto;
+  background-color: var(--color-bg-primary);
+}
+
+.aquawatch-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.aquawatch-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.aquawatch-header-subtitle {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 800px;
+}
+
+.aquawatch-count-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+}
+
+.aquawatch-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.aquawatch-kpi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-height: 72px;
+}
+
+.aquawatch-kpi-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.aquawatch-kpi-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  margin-top: 4px;
+}
+
+.aquawatch-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 14px;
+}
+
+.aquawatch-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.aquawatch-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.aquawatch-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.aquawatch-farm-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.aquawatch-reg-no {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--color-text-dim);
+  margin-top: 2px;
+}
+
+.aquawatch-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  white-space: nowrap;
+}
+
+.aquawatch-attr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12px;
+}
+
+.aquawatch-attr-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.aquawatch-attr-label {
+  color: var(--color-text-muted);
+}
+
+.aquawatch-attr-value {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.aquawatch-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--color-text-dim);
+}
+
+@media (max-width: 900px) {
+  .portwatch-kpi-grid,
+  .aquawatch-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .portwatch-kpi-grid,
+  .aquawatch-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .portwatch-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.map-popup-fisher { background-color: #0f172a; border-radius: 8px; margin: -10px -10px -15px -10px; padding: 12px; }
+
+.dark-theme-popup .maplibregl-popup-content,
+.dark-theme-popup .mapboxgl-popup-content {
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme-popup .maplibregl-popup-tip,
+.dark-theme-popup .mapboxgl-popup-tip {
+  border-top-color: #0f172a !important;
+  border-bottom-color: #0f172a !important;
+}
+
+.dark-theme-popup .maplibregl-popup-close-button,
+.dark-theme-popup .mapboxgl-popup-close-button {
+  color: #94a3b8;
+  padding: 4px 6px;
+  font-size: 16px;
+}
+
+.dark-theme-popup .maplibregl-popup-close-button:hover,
+.dark-theme-popup .mapboxgl-popup-close-button:hover {
+  background: transparent;
+  color: #f1f5f9;
 }
 

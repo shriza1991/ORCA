@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Waves, Calendar, Info, AlertTriangle, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
 import type { MarineObservation } from '../../api/researcher-client';
+import { useTranslation } from "react-i18next";
 
 export interface TideTimeSeriesChartProps {
   observations: MarineObservation[];
@@ -48,6 +49,7 @@ export default function TideTimeSeriesChart({
   harborName,
   loading = false,
 }: TideTimeSeriesChartProps) {
+    const { t } = useTranslation();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Chronologically sort observations by observation_time ascending
@@ -367,7 +369,7 @@ export default function TideTimeSeriesChart({
               );
             })}
           </div>
-          <span className="tide-kpi-sub">Reference Datum: {datum}</span>
+          <span className="tide-kpi-sub">{t('TideTimeSeriesChart.referencedatumv', { val: datum })}</span>
         </div>
       </div>
 

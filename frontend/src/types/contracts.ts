@@ -5,7 +5,7 @@
  * Owned by Dev 1 (Frontend Lead) & Dev 2 (Backend Platform).
  */
 
-import type { DecisionObject } from './mission';
+import type { DecisionObject, MissionState } from './mission';
 
 export type RecommendationStatus = 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN' | 'INFORMATIONAL';
 
@@ -21,12 +21,14 @@ export interface UserContext {
   return_time?: string;
   language_preference?: 'auto' | 'en' | 'hi' | 'mr' | 'ta';
   parent_assessment_id?: string;
+  target_pfz?: string;
 }
 
 export interface ChatRequest {
   conversation_id?: string;
   message: string;
   user_context?: UserContext;
+  mission_state?: MissionState;
 }
 
 export interface ThresholdComparison {
@@ -130,6 +132,8 @@ export interface ChatResponse {
   warnings: string[];
   suggested_followups: string[];
   agent_collaboration?: AgentCollaborationPayload;
+  decision_delta?: any;
+  mission_state?: MissionState;
 }
 
 export type DataQualityRating = 'Verified' | 'Partial' | 'Snapshot Fallback' | 'Limited';

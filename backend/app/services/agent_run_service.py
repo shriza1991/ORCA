@@ -192,6 +192,7 @@ class AgentRunService:
         conversation_id: str,
         run_id: str,
         user_context: dict[str, Any] | None = None,
+        mission_state: Any | None = None,
     ) -> ChatResponse:
         """Run the ORCA graph in provider mode and persist the results."""
         # ------------------------------------------------------------------
@@ -295,6 +296,7 @@ class AgentRunService:
             user_context=user_context or {},
             tool_mode="provider",  # Use registered providers
             llm_mode=settings.LLM_MODE,  # Config-driven dispatch (auto | deterministic | fake | provider)
+            mission_state=mission_state,
         )
 
         try:

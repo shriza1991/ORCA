@@ -47,12 +47,14 @@ const PROVIDERS = [
 ];
 
 import { type SupportedLanguage } from '../../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 interface DataCatalogueViewProps {
   language?: SupportedLanguage;
 }
 
 export default function DataCatalogueView({ language = 'en' }: DataCatalogueViewProps) {
+    const { t } = useTranslation();
   void language; // Disable TS lint rule until strings are wrapped
   const [datasets, setDatasets] = useState<DatasetItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -143,8 +145,8 @@ export default function DataCatalogueView({ language = 'en' }: DataCatalogueView
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  Category: {c}
-                </option>
+                                    {t('DataCatalogueView.categoryval', { val: c })}
+                                  </option>
               ))}
             </select>
           </div>
@@ -158,8 +160,8 @@ export default function DataCatalogueView({ language = 'en' }: DataCatalogueView
             >
               {PROVIDERS.map((p) => (
                 <option key={p} value={p}>
-                  Provider: {p}
-                </option>
+                                    {t('DataCatalogueView.providerval', { val: p })}
+                                  </option>
               ))}
             </select>
           </div>

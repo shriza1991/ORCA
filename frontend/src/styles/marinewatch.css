@@ -710,6 +710,24 @@
   border: 2px solid #f97316;
 }
 
+.destination-marker {
+  border: 2px solid #f59e0b;
+}
+
+.vessel-marker {
+  border: 2px solid #2563eb;
+}
+
+.hazard-marker {
+  border: 2px solid #ef4444;
+}
+
+[data-theme="dark"] .marinewatch-marker-inner {
+  background-color: #1e293b;
+  color: #f8fafc;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.6);
+}
+
 /* Zoom-Tier Adaptive Sizing for whole India overview vs local harbors */
 [data-zoom-tier="overview"] .marinewatch-custom-marker {
   width: 22px;

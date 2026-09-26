@@ -411,9 +411,12 @@ export default function DeckGLMarineMap({
           data: vesselData,
           pickable: false,
           getPosition: (d: any) => (enable3DExtrusion ? [d.position[0], d.position[1], 3200] : [d.position[0], d.position[1]]),
-          getText: (d: any) => `🚢 ${d.vessel_id} (${d.speed_knots} kn · ${d.heading_deg}°)`,
+          getText: (d: any) => `🚢 ${d.vessel_id} (${d.speed_knots} kn - ${d.heading_deg}°)`,
           getSize: 12,
           getColor: [254, 240, 138, 255],
+          fontFamily: 'ui-sans-serif, system-ui, -apple-system',
+          fontWeight: 'bold',
+          fontSettings: { sdf: true },
           pixelOffset: [0, -18],
           getTextAnchor: 'middle',
           getAlignmentBaseline: 'bottom',
@@ -600,6 +603,8 @@ export default function DeckGLMarineMap({
         layers={deckLayers}
         getTooltip={getTooltip}
         onClick={handleClick}
+        useDevicePixels={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1}
+        pickingRadius={4}
       />
     </div>
   );

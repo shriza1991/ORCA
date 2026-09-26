@@ -3,7 +3,7 @@
 Owned by Dev 2 (Backend Platform).
 """
 
-from typing import List, Optional
+from typing import Any, List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -14,6 +14,7 @@ class SavedTripRequest(BaseModel):
     departure_time: Optional[str] = Field(None, description="ISO-8601 departure time")
     return_time: Optional[str] = Field(None, description="ISO-8601 return time")
     language: str = Field("en", description="Preferred language for alerts")
+    mission_state: Optional[Any] = Field(None, description="Canonical MissionState context")
 
 
 class SavedTripResponse(BaseModel):
@@ -22,6 +23,7 @@ class SavedTripResponse(BaseModel):
     craft_profile: str
     is_active: bool
     created_at: datetime
+    mission_state: Optional[Any] = Field(None, description="Canonical MissionState context")
 
 
 class ActionableAlertDto(BaseModel):

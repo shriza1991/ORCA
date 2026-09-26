@@ -35,6 +35,7 @@ import {
   type SpatialSearchResult,
 } from '../../api/marinewatch-client';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 const TIME_STEPS = [
   { label: 'Now', hours: 0 },
@@ -78,6 +79,7 @@ interface OceanWatchGISProps {
 }
 
 export default function OceanWatchGIS({ theme = 'light', language = 'en' }: OceanWatchGISProps) {
+    const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -430,12 +432,25 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                 '#1e3a8a',
               ],
               'line-width': [
-                'case',
-                ['==', ['get', 'depth_m'], 50],
-                ['interpolate', ['linear'], ['zoom'], 4, 0.8, 8, 1.2, 12, 2.0],
-                ['==', ['get', 'depth_m'], 100],
-                ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 1.8, 12, 2.8],
-                ['interpolate', ['linear'], ['zoom'], 4, 1.6, 8, 2.5, 12, 3.8],
+                'interpolate', ['linear'], ['zoom'],
+                4, [
+                  'case',
+                  ['==', ['get', 'depth_m'], 50], 0.8,
+                  ['==', ['get', 'depth_m'], 100], 1.2,
+                  1.6
+                ],
+                8, [
+                  'case',
+                  ['==', ['get', 'depth_m'], 50], 1.2,
+                  ['==', ['get', 'depth_m'], 100], 1.8,
+                  2.5
+                ],
+                12, [
+                  'case',
+                  ['==', ['get', 'depth_m'], 50], 2.0,
+                  ['==', ['get', 'depth_m'], 100], 2.8,
+                  3.8
+                ]
               ],
             },
           });
@@ -1319,8 +1334,8 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                           <tr key={lh.id}>
                             <td className="font-semibold">{lh.name}</td>
                             <td>{lh.state}</td>
-                            <td><strong>{lh.range_nm} nm</strong></td>
-                            <td>{lh.focal_height_m} m</td>
+                            <td><strong>{t('OceanWatchGIS.valnm', { val: lh.range_nm })}</strong></td>
+                            <td>{t('OceanWatchGIS.valm', { val: lh.focal_height_m })}</td>
                             <td><span className="font-mono text-xs">{lh.light_character}</span></td>
                             <td>{lh.year_built}</td>
                             <td className="text-xs text-muted-foreground">{lh.authority}</td>
@@ -1388,9 +1403,9 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                             <td className="font-semibold">{f.farm_name}</td>
                             <td>{f.district}, {f.state}</td>
                             <td>{f.cultured_species}</td>
-                            <td>{f.water_spread_area_ha} ha</td>
+                            <td>{t('OceanWatchGIS.valha', { val: f.water_spread_area_ha })}</td>
                             <td>{f.ponds_count}</td>
-                            <td>{f.water_salinity_ppt} ppt</td>
+                            <td>{t('OceanWatchGIS.valppt', { val: f.water_salinity_ppt })}</td>
                             <td><span className="font-mono text-xs">{f.caa_registration_number}</span></td>
                           </tr>
                         ))}
@@ -1472,7 +1487,7 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                     {translateText(pointData.bathymetry_and_shelf.shelf_zone, language)}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {translateText("Distance to coast:", language)} <strong>{pointData.bathymetry_and_shelf.distance_to_shore_km} km</strong>
+                    {translateText("Distance to coast:", language)} <strong>{t('OceanWatchGIS.valkm', { val: pointData.bathymetry_and_shelf.distance_to_shore_km })}</strong>
                     {pointData.bathymetry_and_shelf.nearest_landing_centre && (
                       <span> ({translateText("nearest:", language)} {pointData.bathymetry_and_shelf.nearest_landing_centre})</span>
                     )}
@@ -1486,8 +1501,8 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                     <div>
                       <span className="text-xs text-muted-foreground">{translateText("Elevation Above Chart Datum", language)}</span>
                       <div className="text-lg font-bold">
-                        {pointData.astronomical_tide.current_height_m} m
-                      </div>
+                                                                  {t('OceanWatchGIS.valm', { val: pointData.astronomical_tide.current_height_m })}
+                                                                </div>
                       <span className="text-[11px] text-muted-foreground">
                         {translateText("Station:", language)} {pointData.astronomical_tide.station_name}
                       </span>
@@ -1499,11 +1514,11 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                   <div className="tide-extrema-row">
                     <div className="extrema-box">
                       <span className="extrema-label">{translateText("Next High Water", language)}</span>
-                      <span className="extrema-val">{pointData.astronomical_tide.next_high.height_m} m</span>
+                      <span className="extrema-val">{t('OceanWatchGIS.valm', { val: pointData.astronomical_tide.next_high.height_m })}</span>
                     </div>
                     <div className="extrema-box">
                       <span className="extrema-label">{translateText("Next Low Water", language)}</span>
-                      <span className="extrema-val">{pointData.astronomical_tide.next_low.height_m} m</span>
+                      <span className="extrema-val">{t('OceanWatchGIS.valm', { val: pointData.astronomical_tide.next_low.height_m })}</span>
                     </div>
                   </div>
                 </div>
@@ -1516,7 +1531,7 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                       <Waves size={16} className="text-blue-500" />
                       <div>
                         <span className="condition-label">{translateText("Wave Height", language)}</span>
-                        <span className="condition-val">{pointData.ocean_state.wave_height_m} m</span>
+                        <span className="condition-val">{t('OceanWatchGIS.valm', { val: pointData.ocean_state.wave_height_m })}</span>
                       </div>
                     </div>
                     <div className="condition-item">
@@ -1530,14 +1545,14 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                       <Wind size={16} className="text-sky-500" />
                       <div>
                         <span className="condition-label">{translateText("Wind Speed", language)}</span>
-                        <span className="condition-val">{pointData.ocean_state.wind_speed_kn} kn</span>
+                        <span className="condition-val">{t('OceanWatchGIS.valkn', { val: pointData.ocean_state.wind_speed_kn })}</span>
                       </div>
                     </div>
                     <div className="condition-item">
                       <Compass size={16} className="text-indigo-500" />
                       <div>
                         <span className="condition-label">{translateText("Swell Period", language)}</span>
-                        <span className="condition-val">{pointData.ocean_state.swell_period_s} s</span>
+                        <span className="condition-val">{t('OceanWatchGIS.vals', { val: pointData.ocean_state.swell_period_s })}</span>
                       </div>
                     </div>
                   </div>

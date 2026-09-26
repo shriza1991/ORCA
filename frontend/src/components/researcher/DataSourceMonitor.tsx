@@ -5,6 +5,7 @@ import {
   Layers, Info,
 } from 'lucide-react';
 import { fetchHealthStatus, DATA_SOURCES, type HealthStatus, type DataSourceInfo } from '../../api/researcher-client';
+import { useTranslation } from "react-i18next";
 
 function StatusIcon({ status }: { status: DataSourceInfo['status'] }) {
   switch (status) {
@@ -16,6 +17,7 @@ function StatusIcon({ status }: { status: DataSourceInfo['status'] }) {
 }
 
 export default function DataSourceMonitor() {
+    const { t } = useTranslation();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +53,7 @@ export default function DataSourceMonitor() {
           </div>
           <div className="researcher-health-stat">
             <Shield size={13} />
-            <span>Mode: {health?.data_mode ?? 'SNAPSHOT'}</span>
+            <span>{t('DataSourceMonitor.modeval', { val: health?.data_mode ?? 'SNAPSHOT' })}</span>
           </div>
           <div className="researcher-health-stat">
             <Layers size={13} />

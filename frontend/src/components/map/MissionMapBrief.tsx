@@ -3,6 +3,7 @@ import { AlertTriangle, ChevronDown, ChevronUp, Compass, Fish, Focus, MapPinned,
 import type { MapLayer } from '../../types/contracts';
 import type { OperationalMode } from '../../types/mission';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { useTranslation } from "react-i18next";
 
 interface MissionMapBriefProps {
   layers: MapLayer[];
@@ -159,6 +160,7 @@ export default function MissionMapBrief({
   onResetView,
   layerAvailability,
 }: MissionMapBriefProps) {
+    const { t } = useTranslation();
   const [internalMode, setInternalMode] = useState<OperationalMode>('safest');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const activeMode = controlledMode ?? internalMode;
@@ -296,10 +298,10 @@ export default function MissionMapBrief({
                   <>
                     <div className="map-route-metrics-bar" style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                       <span className="map-route-metric">
-                        {translateText('Est. Distance:', language)} <strong>{activeCandidate.distance_km} km</strong>
+                        {translateText('Est. Distance:', language)} <strong>{t('MissionMapBrief.valkm', { val: activeCandidate.distance_km })}</strong>
                       </span>
                       <span className="map-route-metric">
-                        {translateText('Max Wave:', language)} <strong>{activeCandidate.max_wave_height_m}m</strong>
+                        {translateText('Max Wave:', language)} <strong>{t('MissionMapBrief.valm', { val: activeCandidate.max_wave_height_m })}</strong>
                       </span>
                       <span className="map-route-metric">
                         {translateText('Exposure:', language)} <strong>{activeCandidate.exposure_score}</strong>

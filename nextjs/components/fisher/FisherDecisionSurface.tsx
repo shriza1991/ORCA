@@ -21,6 +21,7 @@ import type { AgentCollaborationPayload } from '../../types/contracts';
 import { translateText, type SupportedLanguage, TRANSLATIONS } from '../../i18n/translations';
 import { useSpokenGuidance } from '../../hooks/useSpokenGuidance';
 import AgentCollaborationPanel from '../collaboration/AgentCollaborationPanel';
+import MissionBriefPanel from './MissionBriefPanel';
 
 export type FisherDecisionStatus = 'SAFE_TO_GO' | 'CAUTION' | 'DO_NOT_GO' | 'UNKNOWN';
 
@@ -161,7 +162,7 @@ export function extractFisherConditions(response: TripAssessmentResponse | null)
     const highestAlert = response.alerts.find(a => a.affects_trip) || response.alerts[0];
     hazardVal = highestAlert.title || (highestAlert as any).message || '—';
   } else {
-    const status = response.decision?.status;
+    const status = (response.decision as any)?.status || (typeof response.decision === 'string' ? response.decision : undefined);
     if (status === 'GO') {
       hazardVal = 'No Active Hazards';
     } else if (status === 'UNKNOWN') {
@@ -187,6 +188,7 @@ export default function FisherDecisionSurface({
   assessment,
   isLoading = false,
   error = null,
+  activeDiff = null,
   language = 'en',
   collaboration,
   onOpenVoyageSettings,
@@ -305,6 +307,13 @@ export default function FisherDecisionSurface({
           </div>
         )}
       </div>
+
+      <MissionBriefPanel
+        brief={assessment?.brief}
+        delta={collab?.delta}
+        activeDiff={activeDiff}
+        language={language}
+      />
 
       <div className="fisher-conditions-grid" role="group" aria-label="Essential local conditions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '16px' }}>
         <div className="condition-tile" data-testid="condition-waves">

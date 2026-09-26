@@ -73,6 +73,9 @@ class ORCAState(TypedDict, total=False):
     llm_provider: Optional[Any]
     """Optional LLMProvider instance for cognitive assistance (M3)."""
 
+    mission_state: Optional[Any]
+    """Canonical M1.1 MissionState context preserved across assessment, chat, and voice."""
+
     # -------------------------------------------------------------------------
     # 2. Cognitive Extraction & Intent
     # -------------------------------------------------------------------------
@@ -132,6 +135,15 @@ class ORCAState(TypedDict, total=False):
 
     warnings: List[str]
     """Operational caveats, degraded fallback notices, or sensor stale flags."""
+
+    # -------------------------------------------------------------------------
+    # 5b. Canonical M3 Decision Contracts (Additive)
+    # -------------------------------------------------------------------------
+    decision_object: Optional[Any]
+    """Canonical M3 DecisionObject produced by deterministic reasoning pipeline."""
+
+    decision_delta: Optional[Any]
+    """Structured M3 DecisionDelta comparing counterfactual/current to baseline."""
 
     # -------------------------------------------------------------------------
     # 6. Final Output & Presentation

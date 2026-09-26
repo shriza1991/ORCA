@@ -150,7 +150,9 @@ export default function ScenarioBenchmarkDeck({ language = 'en' }: ScenarioBench
                 </div>
                 <div className="scenario-meta-item">
                   <span>{translateText('Expected Status', language)}</span>
-                  <strong className="status-pill status-go">{selectedScenario.expected_status || 'GO'}</strong>
+                  <strong className={`status-pill status-${(selectedScenario.expected_status || 'GO').toLowerCase().replace('_', '-')}`}>
+                    {selectedScenario.expected_status || 'GO'}
+                  </strong>
                 </div>
                 <div className="scenario-meta-item">
                   <span>{translateText('Confidence Bar', language)}</span>

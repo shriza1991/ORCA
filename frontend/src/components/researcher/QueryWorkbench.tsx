@@ -29,6 +29,7 @@ import DeckGLMapFoundation from '../map/DeckGLMapFoundation';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import type { MapLayer, AgentTraceItem } from '../../types/contracts';
 import { CANONICAL_DATA_MODE_LABEL, CANONICAL_DATA_MODE_TOOLTIP } from '../../api/researcher-client';
+import { useTranslation } from "react-i18next";
 import AgentCollaborationPanel from '../collaboration/AgentCollaborationPanel';
 
 function parseHexOrRgb(colorStr?: string, defaultAlpha = 200): [number, number, number, number] {
@@ -143,6 +144,7 @@ function formatInteractionTime(d?: Date): string {
 }
 
 export default function QueryWorkbench() {
+    const { t } = useTranslation();
   const chat = useChat();
   const [inputValue, setInputValue] = useState('');
   const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});
@@ -624,10 +626,10 @@ export default function QueryWorkbench() {
                                           </td>
                                           <td className="cell-time">
                                             {ev.observed_time && (
-                                              <div>Obs: {new Date(ev.observed_time).toLocaleString()}</div>
+                                              <div>{t('QueryWorkbench.obsval', { val: new Date(ev.observed_time).toLocaleString() })}</div>
                                             )}
                                             {ev.valid_to && (
-                                              <div className="valid-to-time">Valid to: {new Date(ev.valid_to).toLocaleString()}</div>
+                                              <div className="valid-to-time">{t('QueryWorkbench.validtoval', { val: new Date(ev.valid_to).toLocaleString() })}</div>
                                             )}
                                             {!ev.observed_time && !ev.valid_to && (
                                               <span className="text-dim">Retrieved snapshot</span>
@@ -656,8 +658,8 @@ export default function QueryWorkbench() {
                                 <span className="section-title">ORCA Reasoning Trace ({resp.trace.length} steps)</span>
                                 {executedTools.length > 0 && (
                                   <span className="tools-summary-tag">
-                                    Tools: {executedTools.join(', ')}
-                                  </span>
+                                                                                          {t('QueryWorkbench.toolsval', { val: executedTools.join(', ') })}
+                                                                                        </span>
                                 )}
                               </div>
                               {isTraceOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -677,16 +679,16 @@ export default function QueryWorkbench() {
                                 )}
 
                                 <div className="researcher-trace-timeline">
-                                  {resp.trace.map((t, i) => (
-                                    <div key={i} className={`researcher-trace-step status-${t.status}`}>
-                                      <span className="researcher-trace-num">#{t.step}</span>
-                                      <span className="researcher-trace-node">{t.node}</span>
-                                      {t.agent && <span className="researcher-trace-agent">[{t.agent}]</span>}
-                                      <span className="researcher-trace-action">{t.action}</span>
-                                      {t.duration_ms !== undefined && (
-                                        <span className="researcher-trace-duration">{t.duration_ms}ms</span>
+                                  {resp.trace.map((traceItem, i) => (
+                                    <div key={i} className={`researcher-trace-step status-${traceItem.status}`}>
+                                      <span className="researcher-trace-num">#{traceItem.step}</span>
+                                      <span className="researcher-trace-node">{traceItem.node}</span>
+                                      {traceItem.agent && <span className="researcher-trace-agent">[{traceItem.agent}]</span>}
+                                      <span className="researcher-trace-action">{traceItem.action}</span>
+                                      {traceItem.duration_ms !== undefined && (
+                                        <span className="researcher-trace-duration">{t('QueryWorkbench.valms', { val: traceItem.duration_ms })}</span>
                                       )}
-                                      <span className={`researcher-trace-status ${t.status}`}>{t.status}</span>
+                                      <span className={`researcher-trace-status ${traceItem.status}`}>{traceItem.status}</span>
                                     </div>
                                   ))}
                                 </div>

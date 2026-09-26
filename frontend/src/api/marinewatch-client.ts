@@ -274,13 +274,15 @@ export interface UnifiedSpatialQueryResponse {
 export async function fetchPointForecast(
   lat: number,
   lon: number,
-  timestamp?: string
+  timestamp?: string,
+  timeOffsetHours?: number
 ): Promise<PointForecastResponse> {
   const params = new URLSearchParams({
     lat: lat.toString(),
     lon: lon.toString(),
   });
   if (timestamp) params.append('timestamp', timestamp);
+  if (timeOffsetHours !== undefined) params.append('time_offset_hours', timeOffsetHours.toString());
 
   const res = await fetch(`${API_BASE}/forecast/point?${params.toString()}`);
   if (!res.ok) throw new Error(`Failed to fetch point forecast: ${res.statusText}`);
@@ -289,13 +291,17 @@ export async function fetchPointForecast(
 
 export async function fetchRouteForecast(
   waypoints: Array<[number, number]>,
-  craftProfile = 'MOTORIZED_FIBERGLASS'
+  craftProfile = 'MOTORIZED_FIBERGLASS',
+  timeOffsetHours?: number,
+  timestamp?: string
 ): Promise<RouteForecastResponse> {
   const wpStr = waypoints.map(([lat, lon]) => `${lat},${lon}`).join(';');
   const params = new URLSearchParams({
     waypoints: wpStr,
     craft_profile: craftProfile,
   });
+  if (timestamp) params.append('timestamp', timestamp);
+  if (timeOffsetHours !== undefined) params.append('time_offset_hours', timeOffsetHours.toString());
 
   const res = await fetch(`${API_BASE}/forecast/route?${params.toString()}`);
   if (!res.ok) throw new Error(`Failed to fetch route forecast: ${res.statusText}`);
@@ -432,12 +438,18 @@ export async function searchMarineFeatures(query: string): Promise<{ query: stri
 export async function executeSpatialQuery(
   lat: number,
   lon: number,
-  radiusKm = 50
+  radiusKm = 50,
+  timeOffsetHours?: number,
+  timestamp?: string
 ): Promise<UnifiedSpatialQueryResponse> {
+  const payload: Record<string, any> = { lat, lon, radius_km: radiusKm };
+  if (timeOffsetHours !== undefined) payload.time_offset_hours = timeOffsetHours;
+  if (timestamp) payload.timestamp = timestamp;
+
   const res = await fetch(`${API_BASE}/spatial/query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lat, lon, radius_km: radiusKm }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`Failed to execute spatial query: ${res.statusText}`);
   return res.json();

@@ -9,6 +9,7 @@ import OceanDetails from '../components/fisher/OceanDetails';
 import PFZDetails from '../components/fisher/PFZDetails';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
+import type { MissionContext } from '../types/mission';
 import { getHarborCoordinates, fetchAndFormatBaseLayers } from '../utils/geo';
 import { mergeFisherLayers, formatFishermanPopup } from '../utils/fisher-map';
 import { useTripAssessment } from '../hooks/useTripAssessment';
@@ -43,6 +44,18 @@ export default function FisherPage({
   
   const [baseLayers, setBaseLayers] = useState<MapLayer[]>([]);
   const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage'>('decision');
+  const [mapTimeOffset, setMapTimeOffset] = useState<number>(0);
+
+  const handleTimeOffsetChange = (hours: number) => {
+    setMapTimeOffset(hours);
+    const departureDate = new Date(Date.now() + hours * 60 * 60 * 1000);
+    const returnDate = new Date(departureDate.getTime() + 12 * 60 * 60 * 1000);
+    chat.setMissionContext({
+      ...chat.missionContext,
+      departure_time: departureDate.toISOString(),
+      return_time: returnDate.toISOString(),
+    });
+  };
 
   const { data: assessment, isLoading, error, isOffline, isExpired, assessTrip } = useTripAssessment();
   const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
@@ -56,6 +69,13 @@ export default function FisherPage({
     else startTracking();
   };
 
+  const handleCompletePlan = (confirmedContext?: MissionContext) => {
+    if (confirmedContext) {
+      chat.setMissionContext(confirmedContext);
+    }
+    setSidebarTab('decision');
+  };
+
   // 1. Fetch base geofences & boundaries
   useEffect(() => {
     fetchAndFormatBaseLayers()
@@ -63,8 +83,10 @@ export default function FisherPage({
       .catch(() => setBaseLayers([]));
   }, []);
 
-  // 2. Auto-assess trip when context changes
+  // 2. Assess trip when context changes (inhibited while wizard is active to prevent premature network calls)
   useEffect(() => {
+    if (sidebarTab === 'voyage') return;
+
     assessTrip({
       origin_harbor: chat.missionContext.origin_harbor,
       craft_profile: chat.missionContext.craft_profile || 'motorized_boat',
@@ -82,6 +104,7 @@ export default function FisherPage({
       language: chat.language,
     });
   }, [
+    sidebarTab,
     chat.missionContext.origin_harbor,
     chat.missionContext.craft_profile,
     chat.missionContext.departure_time,
@@ -97,7 +120,7 @@ export default function FisherPage({
       baseLayers,
       harborCoords,
       originHarbor,
-      status: assessment?.decision?.status || 'UNKNOWN',
+      status: (assessment?.decision as any)?.status || (typeof assessment?.decision === 'string' ? assessment.decision : 'UNKNOWN'),
       baselineRoutes: [],
       baselinePFZ: [],
       baselineHazards: [],
@@ -119,8 +142,7 @@ export default function FisherPage({
             <GuidedTripSetup
               context={chat.missionContext}
               language={chat.language}
-              onContextChange={chat.setMissionContext}
-              onComplete={() => setSidebarTab('decision')}
+              onComplete={handleCompletePlan}
               onCancel={() => setSidebarTab('decision')}
             />
           </div>
@@ -149,7 +171,7 @@ export default function FisherPage({
 
             <WhatIfSimulator
               currentContext={chat.missionContext}
-              currentStatus={assessment?.decision?.status || 'UNKNOWN'}
+              currentStatus={(assessment?.decision as any)?.status || (typeof assessment?.decision === 'string' ? assessment.decision : 'UNKNOWN')}
               language={chat.language}
               isLoading={chat.isLoading}
               activeDiff={chat.activeDiff}
@@ -182,6 +204,9 @@ export default function FisherPage({
           liveLocationStatus={geoStatus}
           isTrackingLocation={isTracking}
           onToggleLocation={handleToggleLocation}
+          craftProfile={chat.missionContext.craft_profile || 'motorized_boat'}
+          timeOffsetHours={mapTimeOffset}
+          onTimeOffsetChange={handleTimeOffsetChange}
         />
       </div>
     </main>

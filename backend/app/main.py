@@ -97,8 +97,8 @@ def create_app() -> FastAPI:
     from backend.app.agents.integrations.mocks import register_m2_contract_mocks
     from backend.app.agents.tools import tool_registry
     from backend.app.connectors.imd_hazard import ImdHazardConnector
-    from backend.app.connectors.imd_weather import ImdWeatherConnector
     from backend.app.connectors.incois import IncoisOceanStateConnector
+    from backend.app.connectors.open_meteo import OpenMeteoConnector
     from backend.app.connectors.manager import ConnectorManager
     from backend.app.connectors.registration import register_dev2_provider_tools, register_dev4_operational_engines
     from backend.app.connectors.snapshot import SnapshotConnector
@@ -107,12 +107,15 @@ def create_app() -> FastAPI:
     from backend.app.connectors.sachet import SachetConnector
 
     snapshot_connector = SnapshotConnector()
-    marine_live = IncoisOceanStateConnector()
-    weather_live = ImdWeatherConnector()
+    open_meteo_live = OpenMeteoConnector()
+    incois_live = IncoisOceanStateConnector()
     hazard_live = ImdHazardConnector()
     sachet_live = SachetConnector()
-    pfz_live = marine_live
-    svas_live = marine_live
+    
+    marine_live = open_meteo_live
+    weather_live = open_meteo_live
+    pfz_live = incois_live
+    svas_live = incois_live
 
     manager = ConnectorManager(
         None,

@@ -1,0 +1,5535 @@
+[
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/App.tsx",
+    "type": "JsxText",
+    "text": "Chat"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/App.tsx",
+    "type": "JsxText",
+    "text": "Map"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/App.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Mobile viewport selection"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxText",
+    "text": "..."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxText",
+    "text": "Association: IN_HAZARD_AREA"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Authority Command Deck"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Operational Command Bar"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Authority views"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "kpi-verdict"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "kpi-fleet"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "kpi-hazards"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "kpi-evidence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Terminal Pane"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Fleet Surveillance Pane"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/AuthorityPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Alert evidence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/FisherPage.tsx",
+    "type": "JsxText",
+    "text": "Plan"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/FisherPage.tsx",
+    "type": "JsxText",
+    "text": "Assistant"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/FisherPage.tsx",
+    "type": "JsxText",
+    "text": "Reset"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "🦐"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Coastal Aquaculture Authority (CAA) Farm Registry"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Statutory brackish-water shrimp and fish aquaculture facilities registered under the Coastal\r\n                  Aquaculture Authority Act, 2005. Environmental parameters, biosecurity status, and water sources."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Certified Farms"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "District"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": ","
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Cultured Species"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Water Source"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Salinity"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Water Spread Area"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "ha ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "ponds)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Biosecurity / ETP"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Coordinates:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "°E"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "CAA Official Registry"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Active Marine Hazards & Port Warning Signals"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Official warnings issued by the India Meteorological Department (IMD) and INCOIS.\r\n                  Includes squall warnings, high swell alerts, and port danger flag signals."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Active Bulletins"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Area:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Local Port Signals:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Signal"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Valid until:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "IST"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "CMFRI Fish Landing Centres & Major Ports"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Comprehensive infrastructure, craft census statistics, and communication frequencies for\r\n                  fishing ports across the Konkan and West Coast maritime sectors."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Harbour Name"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "District & State"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Type"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Total Fleet"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Mechanized"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Motorized"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "VHF Channel"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Key Facilities"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": ","
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/MarineWatchPage.tsx",
+    "type": "JsxText",
+    "text": "Ch"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/PortalPage.tsx",
+    "type": "JsxText",
+    "text": "Experimental Visual Benchmark: deck.gl (WebGL2)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/PortalPage.tsx",
+    "type": "JsxText",
+    "text": "EXPERIMENTAL"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/PortalPage.tsx",
+    "type": "JsxText",
+    "text": "Visually compare deck.gl against production MapLibre with real hazards, PFZ points, corridors, vessel telemetry & Turf.js."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/PortalPage.tsx",
+    "type": "JsxText",
+    "text": "Open deck.gl Experiment"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/PortalPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Available Operational Portals"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/PortalPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Experimental Visualization"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/ResearcherPage.tsx",
+    "type": "JsxText",
+    "text": "Deck Rendering Error"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/ResearcherPage.tsx",
+    "type": "JsxText",
+    "text": "Retry Component"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/ResearcherPage.tsx",
+    "type": "JsxText",
+    "text": "Researcher Lab"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/ResearcherPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Research deck navigation"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "ENGINE MODE"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "HYBRID (Live Feeds + Open-Meteo Fallback)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "INCOIS INTEGRATION"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "OSF (Ocean State), PFZ (Fishing Zones), SVAS"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "IMD INTEGRATION"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "Coastal Weather & Cyclone Squall Warnings"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "LOCAL PERSISTENCE"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxText",
+    "text": "In-Memory Cache · PostgreSQL/PostGIS Ready"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-labelledby",
+    "text": "theme-heading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-labelledby",
+    "text": "lang-heading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-labelledby",
+    "text": "mission-heading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-labelledby",
+    "text": "voice-heading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/pages/SettingsPage.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-labelledby",
+    "text": "diagnostics-heading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": "Vessels:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": "Hazards:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": "Speed:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": "Heading:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": "ETA:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/AuthorityDeckGLMap.tsx",
+    "type": "JsxText",
+    "text": "Dist:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "m"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "HP"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "T ="
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "°"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "°E"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "IN_HAZARD_AREA"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Fleet Surveillance & Vessel Replay Deck"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxAttribute",
+    "attr": "min",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/FleetTrackingDeck.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Operational alert inspection"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": "&ldquo;"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": "&rdquo;"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Canonical Scenario Benchmark Suite"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Scenarios selection"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/authority/ScenarioBenchmarkDeck.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Benchmark Test Outcome"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": "🎙️ Speak naturally in"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": "मराठी"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": ","
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": "हिन्दी"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": ", or"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": "English"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": "."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxText",
+    "text": "SAMUDRA automatically detects when you speak and pauses for 3 seconds before responding."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-hidden",
+    "text": "true"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/call/CallModal.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Call live transcript"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatInput.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Dismiss error"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatInput.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-live",
+    "text": "polite"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatInput.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-hidden",
+    "text": "true"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatInput.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-live",
+    "text": "polite"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatInput.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-hidden",
+    "text": "true"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatInput.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "currentColor"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Chat interface"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/chat/ChatPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-live",
+    "text": "polite"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/common/ErrorState.tsx",
+    "type": "JsxText",
+    "text": "Retry Query"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceCard.tsx",
+    "type": "JsxText",
+    "text": "Valid:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceCard.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceCard.tsx",
+    "type": "JsxText",
+    "text": ": ["
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceCard.tsx",
+    "type": "JsxText",
+    "text": "]"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceCard.tsx",
+    "type": "JsxText",
+    "text": "Source"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceCard.tsx",
+    "type": "JsxAttribute",
+    "attr": "target",
+    "text": "_blank"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceCard.tsx",
+    "type": "JsxAttribute",
+    "attr": "rel",
+    "text": "noopener noreferrer"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceDrawer.tsx",
+    "type": "JsxText",
+    "text": "&"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceDrawer.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceDrawer.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceDrawer.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceDrawer.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/evidence/EvidenceDrawer.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Close drawer"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Return to Portal"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "DECK.GL VISUAL EXPERIMENT"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "WebGL2 Accelerated"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Isolated marine evaluation deck · Production MapLibre remains untouched · Real SAMUDRA Data & Turf.js"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Data Mode:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "CANONICAL SNAPSHOT"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Loading real SAMUDRA marine layers & spatial vectors…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Deck.gl 3D Controls"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Camera View Angle:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Tactical 3D"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "High Orbit"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "2D Flat"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "⚠️ Marine Hazards ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "🧭 Route Corridors ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "🐟 PFZ 3D Columns ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "🚢 Vessel & 3D Beacon"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "🌐 UNCLOS EEZ & Territorial"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "💡 Right-Click + Drag or Ctrl + Drag to orbit"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Reset"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "x"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "°"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "°E"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Departure"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Waypoint"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "/"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Turf.js Spatial Analytics"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Harbor → Nearest PFZ:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "km ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "°)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Vessel Cross-Track:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "km off line"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Point-in-Hazard:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Route Hazard Crossings:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "intersection(s)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Evaluated Corridors"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Dist:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "km"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Selected Feature"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Layer:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "ID:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Deck.gl vs. MapLibre Evaluation"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxText",
+    "text": "Deck.gl excels at 3D extruded hazard volumes and custom WebGL shader pulse animations. MapLibre GL excels at low-overhead vector tile basemaps, text rendering, and lightweight DOM popups."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#10b981"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#38bdf8"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "55° Isometric perspective"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "68° Orbit perspective"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "0° Top-Down 2D view"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Reset to departure"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#f59e0b"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#38bdf8"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#10b981"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/experimental/DeckGLExperimentView.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#f43f5e"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherAlertPanel.tsx",
+    "type": "JsxText",
+    "text": "Replay"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherAlertPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#ef4444"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherAlertPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#ef4444"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherAlertPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#ef4444"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxText",
+    "text": "-"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxText",
+    "text": "."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Primary Mission Decision and Conditions"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "fisher-decision-surface"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "decision-explanation"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Essential local conditions"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "condition-waves"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "condition-wind"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "condition-visibility"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/FisherDecisionSurface.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "condition-tide"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/GuidedTripSetup.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/GuidedTripSetup.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/GuidedTripSetup.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/GuidedTripSetup.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/GuidedTripSetup.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Go back"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/OceanDetails.tsx",
+    "type": "JsxText",
+    "text": "Sea Surface Temp"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/OceanDetails.tsx",
+    "type": "JsxText",
+    "text": "Chlorophyll-a"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/PFZDetails.tsx",
+    "type": "JsxText",
+    "text": "📍"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/PFZDetails.tsx",
+    "type": "JsxText",
+    "text": "nm,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/PFZDetails.tsx",
+    "type": "JsxText",
+    "text": "°"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/PFZDetails.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#3b82f6"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/TripPlanDetails.tsx",
+    "type": "JsxText",
+    "text": "No route estimates available for this trip. Check your data connection."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/TripPlanDetails.tsx",
+    "type": "JsxText",
+    "text": "💡 AI Insight:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/TripPlanDetails.tsx",
+    "type": "JsxText",
+    "text": "⚠️ Early Warning:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/TripPlanDetails.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#3b82f6"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/TripPlanDetails.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#3b82f6"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/TripPlanDetails.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#f59e0b"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/fisher/TripPlanDetails.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#ef4444"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/DataModeIndicator.tsx",
+    "type": "JsxText",
+    "text": "Backend Offline"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/DataModeIndicator.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Backend service not connected"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/DataModeIndicator.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "System Data Ingestion Mode"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/Header.tsx",
+    "type": "JsxText",
+    "text": "SAMUDRA"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/Header.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/Header.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/Header.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/layout/LanguageSelector.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Language selection"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxText",
+    "text": "Z:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxText",
+    "text": "| P:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxText",
+    "text": "° | B:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxText",
+    "text": "°"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Zoom In"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Zoom In"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Zoom Out"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Zoom Out"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Tilt 3D Angle Up"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Tilt 3D Angle Up"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Rotate Compass Bearing"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Rotate Bearing"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Reset View"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Reset View"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/DeckGLMapFoundation.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Toggle Fullscreen"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/LayerManager.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/LayerManager.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/LayerManager.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Map layer controls"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/LayerManager.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Close layer panel"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/LayerManager.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#f43f5e"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/LayerManager.tsx",
+    "type": "JsxAttribute",
+    "attr": "color",
+    "text": "#0ea5e9"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MapView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Geospatial map viewport"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MapView.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "currentColor"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MapView.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "currentColor"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MapView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Toggle layer panel"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MapView.tsx",
+    "type": "JsxAttribute",
+    "attr": "side",
+    "text": "bottom"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MapView.tsx",
+    "type": "JsxAttribute",
+    "attr": "align",
+    "text": "end"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MissionMapBrief.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MissionMapBrief.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MissionMapBrief.tsx",
+    "type": "JsxText",
+    "text": "➔"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MissionMapBrief.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Mission map summary and corridor selection"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/map/MissionMapBrief.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Operational navigation mode"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "India MarineWatch — §212 National Catalogue"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Authoritative Marine & Coastal Dataset Registry"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Official oceanographic, meteorological, bathymetric, and fisheries datasets curated for India's maritime domain.\r\n            Every dataset maintains strict provenance, update cadence, and licensing compliance."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Active Datasets"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "12"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Institutions"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "100%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Verified Provenance"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Loading dataset catalogue…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Provider"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Category"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Update Cadence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Access Mode"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Inspect Provenance"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Description & Purpose"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Spatial Bounds"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Temporal Resolution"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Update Interval"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Quality Level"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Licensing & Governance (§216-§218)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Compliant with official government portal terms and open attribution guidelines. No unauthorized redistribution."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Source Provenance & Live Access"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "India MarineWatch §212 Baseline Registry · Verified"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxText",
+    "text": "Close"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxAttribute",
+    "attr": "placeholder",
+    "text": "Search datasets by title, provider (INCOIS, IMD, GEBCO), or parameter…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Filter by Category"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Filter by Provider"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Close details"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxAttribute",
+    "attr": "target",
+    "text": "_blank"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/DataCatalogueView.tsx",
+    "type": "JsxAttribute",
+    "attr": "rel",
+    "text": "noreferrer"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Loading FisherWatch data…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "FisherWatch India — Operational Pelagic Intelligence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "LIVE TELEMETRY ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Potential Fishing Zones & Harbours Directory"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Real INCOIS PFZ advisories synthesized with CMFRI landing centres, craft safety ceilings, and\r\n            passage evaluation. Official data provided by INCOIS & Central Marine Fisheries Research Institute."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Vessel Safety Limits (INCOIS Ceilings)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Non-Motorized"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "≤ 1.4 m wave"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Motorized OBM"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "≤ 2.2 m wave"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Mechanized Trawler"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "≤ 3.5 m wave"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Sector:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Passage Safety & Departure Evaluator"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Deterministic Evaluation (No AI Hallucinations)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Departure Harbour / Landing Centre"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": ","
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Target Potential Fishing Zone (PFZ)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "(Bearing"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "°, ~"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "km)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Vessel Profile"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Non-Motorized Country Craft (≤1.4m limit)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Motorized OBM Fiberglass (≤2.2m limit)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Mechanized Inboard Trawler (≤3.5m limit)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Distance:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "km)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Max Significant Wave:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Active INCOIS PFZ Advisories"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Active Zones"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "INCOIS ADVISORY"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "°E · Depth"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "SST:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "°C"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Chl-a:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "mg/m³"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Bearing:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "°"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Target Species:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Oceansat-3 OCM"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "CMFRI Fish Landing Centres & Ports"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": ","
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "°E"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Mechanized"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Motorized"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Traditional"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "Total Fleet"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxText",
+    "text": "VHF Ch"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Departure Harbour"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Target PFZ"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Vessel Profile"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxAttribute",
+    "attr": "value",
+    "text": "NON_MOTORIZED_CANOE"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxAttribute",
+    "attr": "value",
+    "text": "MOTORIZED_FIBERGLASS"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/FisherWatchView.tsx",
+    "type": "JsxAttribute",
+    "attr": "value",
+    "text": "MECHANIZED_TRAWLER"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🌊"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🐟"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "⚓"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🗼"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🦐"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "📏"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🏔️"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "⚠️"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "National Maritime Registry & Catalog"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Sovereign Indian EEZ coverage across all 9 coastal states & island territories."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "⚓ Harbours ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🗼 Lighthouses ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🐟 PFZs ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🦐 Aquaculture ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "CMFRI Fishing Harbours & Landing Centres Across India"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Harbour / Landing Centre"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "District / State"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Total Fleet"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Mechanized"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Motorized"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Major Fishing Gears"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "VHF"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ","
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "craft"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Ch"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "DGLL Coastal Lighthouses & Navigational Landfall Beacons"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Lighthouse"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "State / Coast"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Optical Range"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Focal Plane"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Light Characteristic"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Built"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Authority"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "INCOIS Potential Fishing Zone (PFZ) Advisories"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Sector / Location"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Coordinates"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "SST (°C)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Chl-a (mg/m³)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Target Species"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Recommended Gears"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Validity"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "°E"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "°C"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "mg/m³"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "CAA Registered Coastal Aquaculture & Mariculture Facilities"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Farm Name"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "District / State"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Cultured Species"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Water Spread"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Ponds"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Salinity"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "CAA Registration"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ","
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "°E"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Regulations:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "°C"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "NEARBY DGLL LIGHTHOUSES"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "🗼"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "km away · Range"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "nm ·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "NEARBY CMFRI HARBOURS"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "km away · VHF Ch"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "IMD & INCOIS WARNINGS"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Official Sources: INCOIS, IMD, GEBCO 2024, CMFRI, DGLL, CAA"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxText",
+    "text": "Click anywhere on the Indian Ocean, Arabian Sea, or Bay of Bengal to inspect conditions, bathymetry, and tide."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxAttribute",
+    "attr": "placeholder",
+    "text": "Search all India harbours, lighthouses, PFZs, MPAs, aquaculture…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Real-time telemetry auto-refreshes every 30s without page reload"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Refresh real-time data now"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/marinewatch/OceanWatchGIS.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Close selection"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/MissionContextPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Mission context and dashboard view"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/MissionContextPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-hidden",
+    "text": "true"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/MissionContextPanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-hidden",
+    "text": "true"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxText",
+    "text": "Voyage brief"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxText",
+    "text": "Evidence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxText",
+    "text": "Authority operational view"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxText",
+    "text": "Decision audit summary"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxText",
+    "text": "Review evidence and high-level execution trace"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Voyage brief"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Operational monitoring summary"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxAttribute",
+    "attr": "label",
+    "text": "Evidence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxAttribute",
+    "attr": "label",
+    "text": "Trace steps"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/OperationalSnapshot.tsx",
+    "type": "JsxAttribute",
+    "attr": "label",
+    "text": "Warnings"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/WhatIfSimulator.tsx",
+    "type": "JsxText",
+    "text": "."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/WhatIfSimulator.tsx",
+    "type": "JsxText",
+    "text": "+"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/WhatIfSimulator.tsx",
+    "type": "JsxText",
+    "text": "h"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/WhatIfSimulator.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Mission Twin What-If Simulator"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/WhatIfSimulator.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Departure delay offset"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/mission/WhatIfSimulator.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Decision Diff Analysis"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/recommendation/RecommendationBanner.tsx",
+    "type": "JsxText",
+    "text": "Deterministic Threshold Verification"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/recommendation/RecommendationBanner.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/recommendation/RecommendationBanner.tsx",
+    "type": "JsxText",
+    "text": "•"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Loading dataset provenance & quality metadata…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Dataset Trust & Provenance:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Quality and provenance metadata unavailable for this selection."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Quality:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "/"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "valid ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "%)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Source Lineage & Product"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Provider:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Source Product:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Reference Time:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Documentation:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Quality Control Breakdown"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Confidence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Status"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Mean Pixel Uncertainty:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "±"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "Scientific Semantics & Data Disclosure"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "SYNTHETIC DATA DISCLOSURE:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxText",
+    "text": "This dataset is a deterministic, source-faithful synthetic snapshot modeled on official documented specifications. It is not connected to live real-time operational sensors."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "data-provenance-loading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "data-provenance-unavailable"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "data-provenance-panel"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Toggle provenance and quality details"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "provenance-expanded-details"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "target",
+    "text": "_blank"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataProvenancePanel.tsx",
+    "type": "JsxAttribute",
+    "attr": "rel",
+    "text": "noopener noreferrer"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "System Status"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "configured profiles"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Configured Prototype Source Profiles"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "The profiles below describe the authoritative schema, provider semantics, and update cadences configured for this prototype environment. All observations are deterministic synthetic snapshots modeled on published Indian oceanographic data formats."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Configured Data Source Profiles"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Authoritative Source Precedence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "IMD — Cyclone Warning Division"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Supreme authority for severe weather, cyclone tracks, and coastal alerts. Triggers hard-stop NO_GO."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "INCOIS — Ocean State Forecast"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Primary authority for wave height, swell, currents, and sea surface temperature."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "3"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "INCOIS — PFZ Advisory"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Primary authority for Potential Fishing Zone advisories. Satellite SST/Chl-a provides corroboration."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Open-Meteo Marine"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxText",
+    "text": "Unauthoritative fallback profile. Used only when primary synthetic feeds simulate timeout or unavailability."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/DataSourceMonitor.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Refresh health"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Earth Observation 5×5 Spatial Grid"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Loading Earth Observation satellite grid telemetry..."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Earth Observation 5×5 Spatial Grid"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "5×5 Centroid"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Metric:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Valid Cells:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "/"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Min:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Mean:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Max:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Cloud:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Scale:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "26°C (Cool)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "32°C (Warm)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "0.2 (Low)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "3.0+ (High)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "0% (Clear)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "100% (Overcast)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Open Arabian Sea 5×5 Offshore Grid"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Cell"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Coordinates:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "°E"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "SST:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Chlorophyll-a:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Cloud Cover:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Satellite / Sensor:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "m)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "eo-spatial-loading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "eo-spatial-container"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "eo-date-navigator"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Previous snapshot date"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Previous date"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Next snapshot date"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Next date"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "eo-metric-dropdown-container"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Select spatial observation metric"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "eo-spatial-stats-strip"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "eo-cell-inspect-drawer"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOGridSpatialMap.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Close details"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Earth Observation 14-Day Temporal Trend"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "-Day Snapshot"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Daily Spatial Mean across 5×5 Grid (25 Cells) ·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "14-Day Mean"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Spatial average across all days"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Spatial Variance (Min — Max)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "14-day observed range"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Valid Grid Cell Coverage"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "/"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "cells)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Cloud-clear valid pixels"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Spatial Mean"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Spatial Spread (Min — Max):"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Valid Data Coverage:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "/"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "cells ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "%)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Mean Pixel Uncertainty:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "±"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "No multi-day Earth Observation grid data available for temporal analysis."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "Loading 14-day Earth Observation grid snapshot…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxText",
+    "text": "MOSDAC/EO-style daily observations · 14-day synthetic snapshot · Spatial mean across valid grid cells"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "eo-temporal-chart"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Select EO Metric"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x2",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y2",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "0%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.32"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "100%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(51, 65, 85, 0.45)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeDasharray",
+    "text": "4 4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "end"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(100, 116, 139, 0.6)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(100, 116, 139, 0.6)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "middle"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fillOpacity",
+    "text": "0.10"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "2.5"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeLinecap",
+    "text": "round"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeLinejoin",
+    "text": "round"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "#0f172a"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "transparent"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "#ffffff"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1.2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeDasharray",
+    "text": "3 3"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "opacity",
+    "text": "0.8"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "#ffffff"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/EOTemporalAnalysisChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Hazard Bulletin 3D Spatial Zones"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Bulletins)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Loading hazards..."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Critical / Warning"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Alert"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Watch"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/HazardSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Extrusion: Severity threat tier"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Loading ocean data…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Refresh"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Marine Conditions —"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Wave Height"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "m"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Swell"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "s"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Sea Surface Temp"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "°C"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Wind Speed"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "kn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "° direction"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Current Speed"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "kn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Visibility"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "nm"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Observation Timeline"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Time (UTC)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Wave (m)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "SST (°C)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Wind (kn)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Swell (s)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Tide (m)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Phase"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "QC Status"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Source"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Flags"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Earth Observation Grid (Latest Snapshot)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Cell"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Chl-a (mg/m³)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "SST (°C)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Cloud %"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Satellite"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Res."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "PFZ Advisory Candidates"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "#"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "km ·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "°"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "· ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "°N,"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "°E)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "SST Gradient:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "· Chl-a"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Valid:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Observed / Advisory Hazard Bulletins"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "Valid:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxText",
+    "text": "→"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Select harbor"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanDataExplorer.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Refresh data"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Loading 48-hour marine time series…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "No observation time-series data available for"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "48-Hour Marine Observation Time Series —"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "→"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "hourly observations)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Valid Observation"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "QC Flagged"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Missing / Gap"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Wave Height (SWH):"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Sea Surface Temp (SST):"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Wind Speed:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Swell Period:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "s"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "· Current:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "kn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "INCOIS OSF-style hourly observations · 48-hour synthetic snapshot"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "ocean-time-series-chart"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x2",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y2",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "0%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#06b6d4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.35"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "100%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#06b6d4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.02"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x2",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y2",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "0%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#f59e0b"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.35"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "100%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#f59e0b"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.02"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x2",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y2",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "0%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#8b5cf6"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.35"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "100%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#8b5cf6"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.02"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "rgba(15, 23, 42, 0.45)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(51, 65, 85, 0.4)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "rx",
+    "text": "4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(51, 65, 85, 0.3)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "end"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "#ef4444"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeDasharray",
+    "text": "4 4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1.2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "end"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "#ef4444"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "2.2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeLinecap",
+    "text": "round"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeLinejoin",
+    "text": "round"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "#ef4444"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1.5"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "opacity",
+    "text": "0.6"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "#f59e0b"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "#78350f"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1.5"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(51, 65, 85, 0.6)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(51, 65, 85, 0.25)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeDasharray",
+    "text": "3 3"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(148, 163, 184, 0.6)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "middle"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "rgba(255, 255, 255, 0.7)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1.2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeDasharray",
+    "text": "3 3"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/OceanTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "pointerEvents",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "PFZ Advisory 3D Analysis"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Active Candidates)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Loading telemetry..."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "High Conf"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Medium Conf"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Low Conf"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/PFZSpatialMap.tsx",
+    "type": "JsxText",
+    "text": "Column height: Chlorophyll-a density (mg/m³)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Analytical Query Workbench"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "New Analysis"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Marine Analytical Query Workbench"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Directly query the deterministic ORCA reasoning engine and LangGraph specialist pipeline.\r\n              Every answer is synthesized against verifiable marine observations, hazard bulletins,\r\n              potential fishing zones, and safety thresholds with full inline evidence, reasoning trace,\r\n              and spatial vector layers."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Structured Research Inquiries"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Analysis operates strictly on canonical synthetic demo snapshots. No live operational feeds."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Intent:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Analyzing marine observations & executing specialist pipeline…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Evaluating wave heights, weather bulletins, and deterministic safety bounds"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Analysis Execution Failed"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "The reasoning pipeline could not return a valid result. Check backend connection or try a different inquiry."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Recommendation:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Confidence:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Evidence Items"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "✓ Grounded"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Spatial Layers"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Operational Uncertainty & Quality Notice"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "•"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "⚠️"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Operational Directive:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Decisive Drivers:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Safe / Nominal Baseline Context:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "•"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Evaluated Threshold Safety Bounds:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Metric"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Observed"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Operator"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Safety Threshold"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Exceeded"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Impact"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Verified Supporting Evidence ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "items)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "✓ Grounded"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Issuing Authority / Source"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Metric / Observation"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Observed Value"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Unit"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "QC & Quality Badges"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Observation / Validity Window"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "No flags"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Retrieved snapshot"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "ORCA Reasoning Trace ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "steps)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Specialist Tools Invoked:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "✓"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "#"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "["
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "]"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Returned Spatial Vector Layers ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "layers)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "No spatial vector layers returned for this inquiry."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Follow-up Exploratory Inquiries"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "·"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxText",
+    "text": "Queries evaluate deterministic synthetic fixtures & ORCA agent reasoning."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "researcher-query-workbench"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Clear conversation history and start fresh analysis"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-clear-btn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-welcome-state"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-loading-state"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-error-card"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-uncertainty-callout"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "response-answer-text"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-evidence-section"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-trace-section"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-map-section"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "placeholder",
+    "text": "Ask a marine-data inquiry (e.g. conditions, hazards, evidence, thresholds, or route safety)…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-input"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Send analytical inquiry"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/QueryWorkbench.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "query-send-btn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "RUNNING"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "NOT RUN"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "ERROR"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "PASS"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "FAIL"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "COMPLETED"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Scenario Comparative Analysis ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Selected)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "of"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "executed"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Executing Selected…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Run Selected ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Reset"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Analytical Dimension"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Rerun"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Query Prompt"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Intent Classification"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "ERROR"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Recommendation Status"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Expected:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Actual:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Confidence Rating"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Verified Evidence Items"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "0 (Error)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "items"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Grounded"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Executed Domain Tools"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Execution Latency"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Graph Trace Steps"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "—"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Side-by-Side Reasoning & Validation Details"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Execution Failed"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Mariner Synthesis"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Decisive Factors"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Validation Breakdown"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Warnings"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Not yet executed in this comparison session."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Run"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxText",
+    "text": "Scenario Benchmark Runner (S1–S8) · Deterministic ORCA Graph Execution · Results evaluated on synthetic marine snapshot context."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "scenario-comparison-view"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "run-selected-scenarios-btn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxAttribute",
+    "attr": "title",
+    "text": "Reset scenario selection and comparison view"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "clear-comparison-btn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioComparisonView.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "scenario-comparison-table"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Loading scenarios…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Evaluation Suite (S1–S8)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Compare:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "/4 selected"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Run All"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Single Inspection"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Scenario Comparison ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Clear Comparison"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Executing…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Run Scenario"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Query Input"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Intent:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Expected:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Harbor:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Execution Results"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Scenario Execution Unavailable"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Error Details"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Status"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Confidence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Evidence"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Trace"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Latency"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Response"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Executed Tools ("
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Decisive Factors / Validation"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Warnings"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Click"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Run Scenario"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "to execute this evaluation\r\n                  through the SAMUDRA pipeline."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxText",
+    "text": "Select a scenario to view details and run evaluations."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "scenario-lab-loading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "scenario-lab"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "run-all-scenarios-btn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "tab-single-inspector"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "tab-scenario-comparison"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/ScenarioLab.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "run-single-scenario-btn"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tide Temporal Analysis —"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Loading tide observations…"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tide Temporal Analysis —"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "No tide observations available for"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "The synthetic marine snapshot does not contain recorded tide gauge or model levels for this selection."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tide Temporal Analysis —"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "48-Hour Snapshot"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Datum:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "(Chart Datum)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Latest Tide Level"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "m"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tidal Range (48h)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "m"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Min:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "m · Max:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "m"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Observation Coverage"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "/"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "valid"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tidal Flow Breakdown"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": ":"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tide Level (m above"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": ")"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tide Level:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tidal Phase:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Categorical Phase Legend:"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxText",
+    "text": "Tide level and phase from the synthetic marine observation snapshot. Values reflect the source observation records; no astronomical tide forecast is generated."
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "tide-chart-loading"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "tide-chart-empty"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "tide-temporal-chart"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x2",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y2",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "0%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#0284c7"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.32"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "85%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#0284c7"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.04"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "100%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#0284c7"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopOpacity",
+    "text": "0.00"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y1",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "x2",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "y2",
+    "text": "0"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "0%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#0284c7"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "offset",
+    "text": "100%"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stopColor",
+    "text": "#38bdf8"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "var(--color-bg-secondary, #0f172a)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "rx",
+    "text": "4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "opacity",
+    "text": "0.4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "var(--color-border, #334155)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeDasharray",
+    "text": "3 3"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "opacity",
+    "text": "0.4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "end"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "var(--color-text-dim, #94a3b8)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fontSize",
+    "text": "10"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fontFamily",
+    "text": "monospace"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "transform",
+    "text": "rotate(-90)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "middle"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "var(--color-text-muted, #cbd5e1)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fontSize",
+    "text": "11"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fontWeight",
+    "text": "600"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "url(#tideAreaGrad)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "url(#tideLineGrad)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "2.4"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeLinecap",
+    "text": "round"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeLinejoin",
+    "text": "round"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "none"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "opacity",
+    "text": "0.6"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "#0ea5e9"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeDasharray",
+    "text": "3 3"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1.2"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "opacity",
+    "text": "0.8"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "stroke",
+    "text": "var(--color-border, #334155)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "strokeWidth",
+    "text": "1"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "textAnchor",
+    "text": "middle"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "var(--color-text-dim, #94a3b8)"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fontSize",
+    "text": "10"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fontFamily",
+    "text": "monospace"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "fill",
+    "text": "transparent"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/researcher/TideTimeSeriesChart.tsx",
+    "type": "JsxAttribute",
+    "attr": "data-testid",
+    "text": "tide-tooltip"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/trace/AgentTimeline.tsx",
+    "type": "JsxText",
+    "text": "Agent Activity"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/trace/AgentTimeline.tsx",
+    "type": "JsxText",
+    "text": "Step"
+  },
+  {
+    "file": "C:/Users/vikram/OneDrive/Desktop/SAMUDRA/frontend/src/components/trace/AgentTimeline.tsx",
+    "type": "JsxAttribute",
+    "attr": "aria-label",
+    "text": "Agent activity timeline"
+  }
+]

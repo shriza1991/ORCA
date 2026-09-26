@@ -15,9 +15,53 @@
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
-- Current version: `v0.2.2-features-main-integrated`
-- Active branch: `main`
-- Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**
+- Current version: `v0.2.5-m4-deckgl-optimization`
+- Active branch: `feat/m4-mission-twin`
+- Current feature: **Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle (§D049)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Frontend Vitest: 266/266 passing across 21 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npx tsc --noEmit`).
+    - Dual-Client Parity: 100% synchronized across Vite (`frontend/`) and Next.js (`nextjs/`).
+    - Optimizations Delivered:
+      - High-DPI buffer clamping (`useDevicePixels` capped at 2) to eliminate Retina/4K `readPixels` GPU stalls.
+      - Reduced `pickingRadius={4}` for low-latency hover detection.
+      - MapLibre camera synchronization throttled via `requestAnimationFrame` and `cancelAnimationFrame`.
+      - Conditional pulse ticking in `AuthorityDeckGLMap` (stops completely to 0 idle CPU when no alert or vessel is selected; smoothed to 150ms).
+      - Telemetry position fetching keyed by vessel IDs list rather than unstable array reference.
+      - Decoupled memoization of Deck.gl layers (`staticSectorLayers`, `hazardLayers`, `vesselData`, `vesselTrackLayers`, `vesselAuraLayers`), completely eliminating redundant layer recreation and trigonometric geometry recalculations during pulses.
+- Prior Feature: **Authority Command Deck Light Mode 3D Deck.gl Map (§D048)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Frontend Vitest: 266/266 passing across 21 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npx tsc --noEmit`).
+    - Dual-Client Parity: 100% synchronized across Vite (`frontend/`) and Next.js (`nextjs/`).
+    - In-browser visual verification: Carto Positron basemap active in Light Mode; Deck.gl vector layers (boundaries, sector geofences, hazards, routes, 3D beacons, wake trails, text labels) adaptively contrast against daylight surfaces. Deck.gl outline warnings resolved with SDF fonts; middle-dot missing characters eliminated.
+- Prior Milestone: **M1.2 Mission Brief / Why Panel (Deterministic Presentation & Explainability)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Backend Pytest: 3/3 acceptance tests passing in `tests/integration/test_m1_2_mission_brief.py`, 18/18 passing across full assessment suite (`test_assessments.py`, `test_mission_contracts.py`, `test_m1_1_mission_state.py`, `test_m1_2_mission_brief.py`).
+    - Frontend Vitest: 259/259 passing across 20 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npm run typecheck`).
+    - Next.js Client: 0 errors in `npm run typecheck`, production build passing (`npm run build`).
+  - **M1.2 Mission Brief Deliverables**:
+    - **Additive Backend Contract**: Defined canonical `MissionBriefPayload` (summary, recommended_action, positive_factors, negative_factors, confidence, confidence_reasons) and added `brief: Optional[MissionBriefPayload] = None` to `TripAssessmentResponse`.
+    - **Deterministic Risk Engine Projection**: Populated `brief` in `AssessmentService.assess_trip` directly from existing `RiskAssessmentPayload` fields with zero LLM calls and zero synthetic modifications:
+      - `summary` ← `risk_payload.summary`
+      - `recommended_action` ← `risk_payload.recommended_action`
+      - `positive_factors` ← `risk_payload.decisive_factors + non_decisive_factors` (on `GO`) / `non_decisive_factors` (on `CAUTION`/`NO_GO`)
+      - `negative_factors` ← `[]` (on `GO`) / `risk_payload.decisive_factors` (on `CAUTION`/`NO_GO`)
+      - `confidence` ← `risk_payload.confidence_level`
+      - `confidence_reasons` ← `risk_payload.confidence_reasons`
+    - **MissionBriefPanel Component & Surface Integration**: Rendered `<MissionBriefPanel brief={assessment?.brief} delta={collab?.delta} activeDiff={activeDiff} language={language} />` directly beneath the recommendation banner in `FisherDecisionSurface.tsx` with zero extra network requests or polling.
+    - **What-If Scenario Delta Support**: Dynamically renders "What Changed?" section displaying `delta.changed_factors` or `activeDiff.summary` when counterfactual diffs are present, hiding cleanly otherwise.
+    - **Dual-Client Parity**: Full parity implemented across React (`frontend/`) and Next.js (`nextjs/`).
+- Prior Milestone: **M1.1 Canonical MissionState Context Preservation & M1.1.5 Mission Setup Hardening** (Assessment → Chat → Voice → What-If → Alerts)
+  - **Status**: **COMPLETE & VERIFIED** (Backend pytest: 7/7 acceptance tests passing in `tests/integration/test_m1_1_mission_state.py`, 8/8 contract tests passing in `tests/contract/`; Frontend: 253/253 passing in Vitest across 19 suites, TypeScript check: 0 errors).
+  - **Operational Pipelines Bound**:
+    - **Assessment Pipeline**: `TripAssessmentRequest` and `TripAssessmentResponse` accept and return `mission_state`; `AssessmentService` uses `MissionState` as the authoritative single source of truth while keeping legacy fields working.
+    - **Chat Pipeline**: `ChatRequest` and `ChatResponse` carry `mission_state`; `ORCAState` passes `mission_state` unmodified through supervisor, specialist tools, risk evaluation, and response composer nodes. `_build_user_context()` preserves departure/return times, target PFZ, and parent assessment ID.
+    - **Voice Pipeline**: `/voice/chat` endpoint accepts `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id`, constructing canonical `MissionState` before agent execution.
+    - **Frontend State & Cache Isolation**: `useTripAssessment` and `useChat` maintain persistent `MissionState` references; `offline-cache.ts` isolates keys using `samudra_trip_assessment_${originHarbor}_${craftProfile}_${departureTime}`, preventing collisions across different departure hours.
+    - **Decision Type Normalization**: Updated frontend `decision` contract to `RecommendationStatus | Recommendation` to eliminate runtime crashes between backend string statuses and rich recommendation objects.
+    - **Alert Service Attachment**: In-memory attachment of `MissionState` to monitored trip registrations.
 - Client Architecture Migration: **IN PROGRESS (Next.js Multi-Agent Reasoning Port & Full Route Support)**
   - Dual interface model locked: React Native + Expo (field mobile) & Next.js + React (web platform & demo).
   - Migration principle: `REUSE → ADAPT → EXTRACT → REWRITE`.
@@ -62,6 +106,94 @@
     - `QueryWorkbench.tsx`: Researcher analytical collaboration panel and Decision Authority KPI badge.
     - `AuthorityPage.tsx`: Statutory Decision Authority & Multi-Agent Arbitration audit section.
     - Adaptive stakeholder views for Fisherman, Authority, and Researcher.
+
+### Milestone Feature: Operational Integration of India MarineWatch & Dashboard Consolidation (§D037)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Vite production build: succeeded cleanly; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`).
+- **Core Architecture & Experience Transformation**:
+  - Eliminated standalone `/marinewatch` dashboard and removed its 4th portal card to unify all ocean intelligence under the 3 authoritative operational personas: **Fisher Console (`/fisher`)**, **Authority Command Deck (`/authority`)**, and **Researcher Lab (`/researcher`)**.
+  - **Researcher Lab (`/researcher`)**:
+    - Embedded `Unified GIS Explorer` (`gis` tab) featuring MapLibre GL nationwide interactive map, click-to-query depth profiles, INCOIS astronomical predicted tides (PAT), 13 geographic bookmark presets, time scrubber, and zoom-invariant clickable vector geometries (MPAs, 12nm territorial sea, 200nm EEZ, IMD/INCOIS hazard alerts, PFZ thermal fronts, bathymetric contours).
+    - Embedded `Data Catalogue (§212)` (`catalogue` tab) showcasing the complete registry of 30 institutional marine datasets.
+  - **Authority Command Deck (`/authority`)**:
+    - Embedded `PortWatch Registry` (`ports` tab): CMFRI 30-Harbour Census detailing mechanized/motorized vessel capacity, quay berths, draft limits, and VHF monitoring channels.
+    - Embedded `AquaWatch Registry` (`aquaculture` tab): Coastal Aquaculture Authority (CAA) registered farms with salinity (ppt), culture species, water source, and biosecurity audit tracking.
+  - **Fisher Console (`/fisher`)**:
+    - Enriched `OceanDetails.tsx`: Live INCOIS Astronomical Predicted Tide (PAT) water elevation above Chart Datum, tidal trend (Flood/Ebb), Next High Water, Next Low Water, nearest DGLL Coastal Lighthouse aid, and GEBCO bathymetric seabed depth.
+    - Enriched `PFZDetails.tsx`: Target pelagic catch recommendations, optimal fishing gears (gillnet/purse seine/longline), distance/bearing from harbour, and thermal front indices.
+  - **Dual-Client Synchronization**: Updated both `frontend/` (Vite) and `nextjs/` (Next.js) codebases to maintain 100% design and behavioral parity.
+
+### Milestone Feature: Granular Dissolution of MarineWatch GIS into Fisher & Authority Dashboards (§D038)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Vite production build: succeeded cleanly in 11.4s; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`).
+- **Core Architecture & Experience Transformation**:
+  - Removed GIS Explorer map tab (`OceanWatchGIS`) entirely from `ResearcherPage.tsx` and `nextjs/views/ResearcherPage.tsx`. Researcher Lab is now exclusively focused on its 5 core scientific/analytical tools:
+    1. Research Query Workbench (multi-agent evidence gathering and causal reasoning)
+    2. Ocean Data Explorer (time-series marine observations, EO satellite grids, PFZ candidates, active hazards)
+    3. Data Source Monitor (authoritative source health, freshness indicators, precedence hierarchy)
+    4. Scenario Lab (S1–S8 benchmark evaluation suite with execution KPIs)
+    5. Data Catalogue (§212) (30 institutional marine datasets across INCOIS, IMD, CMFRI, DGLL, and ISRO)
+  - Granular distribution of all 8 MarineWatch map features into operational dashboards:
+    1. **Maritime Boundaries & Restricted Zones**: Integrated 12nm Territorial Waters, 24nm Contiguous Zones, 200nm EEZ, MPAs, Naval Firing Ranges, and Sir Creek IMBL buffer into Fisher `MapView` base layers and popup formatters (`🛡️ Marine Sanctuary / Naval Range`).
+    2. **DGLL Navigational Lighthouses**: 15 primary landfall lighthouses integrated into Fisher `MapView` with custom popups displaying optical range (nm), focal elevation, light character, and VHF Ch 16.
+    3. **Bathymetry & Interactive Point Depth Inspector**: Added interactive Ocean Telemetry & Depth Inspector HUD to Fisher `MapView`. Clicking anywhere on the ocean triggers real-time spatial queries showing depth (m), distance to shore, continental shelf categorization, tidal elevation, and nearest lighthouse.
+    4. **Astronomical Predicted Tides (PAT)**: Surfaced in Fisher Point Depth HUD and `OceanDetails.tsx`, as well as Authority Command Deck `PortWatchRegistry` with real-time draught clearance indicators.
+    5. **PFZ Advisory Thermal Front Polygons**: Geodesic concentric thermal front circles generated and rendered on Fisher `MapView` with pelagic species, gear recommendations, and SST/Chl-a gradients.
+    6. **Active Hazard Alert Corridors**: IMD/INCOIS cyclone tracks, squalls, and high swell warning polygons dynamically rendered on Fisher `MapView` and monitored on Authority Deck.
+    7. **Multi-Hour Time Scrubber**: Floating time scrubber pill (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) directly embedded into Fisher `MapView` for departure and voyage planning.
+    8. **National Coastal Bookmarks**: 13 quick-jump coastal landmark selector chips (Ratnagiri, Mumbai, Kochi, Mannar, Chennai, Vizag, etc.) embedded as a floating control on Fisher `MapView` and as a dropdown in Authority Command Deck.
+  - Nationwide Harbours expansion in `GuidedTripSetup.tsx` across both west and east coasts.
+  - Maintained 100% architectural parity across `frontend/src/` and `nextjs/`.
+
+### Milestone Feature: Authority Deck Layout & Semantic Styling Refactor (§D039)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; visual verification complete via Chrome DevTools MCP across light & dark themes).
+- **Core Visual & Architectural Polish**:
+  - **Command Bar Responsive Overflow**: Fixed horizontal clipping of right-hand telemetry chips (`VERDICT`, `FLEET`, `HAZARDS`, `EVIDENCE`) by applying horizontal scroll containment (`overflow-x: auto; scrollbar-width: none`), flexible gap constraints, and responsive chip padding.
+  - **PortWatch & AquaWatch Semantic Architecture**: Replaced unstyled Tailwind utility classes (unprocessed in Vite) with dedicated semantic CSS classes in `components.css`:
+    - PortWatch: `.portwatch-view`, `.portwatch-header`, `.portwatch-kpi-grid`, `.portwatch-kpi-card`, `.portwatch-toolbar`, `.portwatch-search-input`, `.portwatch-filter-select`, `.portwatch-table-wrap`, `.portwatch-table`, `.port-name-cell`, `.port-type-tag`, `.port-vhf-tag`, `.port-tide-tag`.
+    - AquaWatch: `.aquawatch-view`, `.aquawatch-header`, `.aquawatch-kpi-grid`, `.aquawatch-kpi-card`, `.aquawatch-cards-grid`, `.aquawatch-card`, `.aquawatch-card-header`, `.aquawatch-attr-list`, `.aquawatch-status-badge`.
+  - **Top Map Overlay HUD Collision**: Corrected `deckgl-top-overlay` right margin (`right: showControls ? 116 : 10`), completely eliminating collision with DeckGL camera controls (`[Tactical 3D] [High Orbit] [2D Flat]`).
+  - **Theme Tokenization & Hex Leak Removal**: Replaced hardcoded inline hex colors (`#86efac`, `#f0fdf4`, `#166534`, etc.) with CSS variable tokens (`var(--color-*)`) across light and dark modes, ensuring WCAG contrast compliance and zero visual leaks in dark mode.
+  - **Dynamic Benchmark Status Pills**: Updated `ScenarioBenchmarkDeck.tsx` to dynamically assign status pill classes (`.status-go`, `.status-caution`, `.status-no-go`) matching `expected_status` instead of hardcoded `.status-go`.
+  - **FleetDeck Utility Standardization**: Added semantic classes for `.fleet-offline-banner`, `.fleet-replay-unavailable-card`, `.fleet-empty-state`, `.fleet-alert-inspection`, `.fleet-alerts-empty`, `.telemetry-icon-start`, and `.telemetry-icon-dest`.
+  - **100% Dual-Client Parity**: Synchronized all component refactors and CSS definitions to `nextjs/` (`components/authority/`, `components/map/`, `views/`, and `styles/components.css`).
+
+### Milestone Feature: Fisher Console Clutter Pruning & Interactive DOM Icon Markers (§D040)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 244/244 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; visual verification complete via Chrome DevTools MCP across light & dark themes).
+- **Core Visual & Operational Refactor**:
+  - **Pruning Excessive Macro-Areas & Nationwide Polygons**:
+    - Filtered out 200nm sovereign Exclusive Economic Zone (EEZ) polygon fills and 12nm Territorial Waters fills from the Fisher Console (`/fisher`) map layers.
+    - Filtered out 8km concentric circle PFZ thermal front polygons (`layer_pfz_thermal_fronts`).
+    - Filtered out macro-regional weather hazard polygons spanning > 2.0 degrees (e.g. 700km IMD squall corridors covering 14°N to 21°N) and opposite-coast hazards, while retaining local navigation hazards with subtle opacity (`fill: 0.15`, `line_width: 2.0`).
+    - Scoped base boundaries and marine protected areas (e.g. Malvan MPA) to local harbor operational vicinity (< 1.5° bbox) with clean, subtle outlines (`opacity: 0.08`, `line_width: 1.5`).
+  - **Interactive DOM Icon Markers**:
+    - Suppressed MapLibre canvas circle point layers (`circle-radius: 0`, `circle-opacity: 0`) to eliminate plain, generic colored dots.
+    - Replaced with interactive DOM markers styled with `.marinewatch-custom-marker` and `.marinewatch-marker-inner`:
+      - ⚓ `port-marker` for Departure Harbor Stations and Landing Harbours (`#0284c7`)
+      - 🎯 `destination-marker` for Voyage Targets & Waypoint Destinations (`#f59e0b`)
+      - 🗼 `lighthouse-marker` for DGLL Coastal Landfall Lighthouses (`#eab308`)
+      - 🐟 `pfz-marker` for Potential Fishing Zone advisory locations (`#10b981`)
+      - 🦐 `aqua-marker` for CAA Coastal Aquaculture facilities (`#f97316`)
+      - ⚠️ `hazard-marker` for Point Marine Hazards (`#ef4444`)
+      - ⛵ `vessel-marker` for Live Vessel Positions and Fleet Tracking (`#2563eb`)
+  - **Mariner Interactivity & Zoom Adaptation**:
+    - Marker click opens mariner popup cards (`formatFishermanPopup`) with operational data (depth, distance, VHF channel, coordinates).
+    - Marker hover scales markers by 1.32x with CSS drop-shadows without jitter.
+    - Dynamic zoom listener assigns `[data-zoom-tier="overview" | "regional" | "detail"]` on container for smooth scaling.
+  - **100% Dual-Client Parity**:
+    - Synchronized all filtering utilities (`fisher-map.ts`, `geo.ts`), marker rendering (`MapView.tsx`), and CSS tokens (`marinewatch.css`) across Vite (`frontend/`) and Next.js (`nextjs/`).
+
+### Milestone Feature: Dynamic Live Hourly Marine Forecasts & Scrubber Integration (§D041)
+- **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 244/244 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 25/25 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; dual-client parity confirmed).
+- **Core Architecture & Experience Transformation**:
+  - **Eliminated Hardcoded Constants**: Removed static coastal heuristic approximations (`base_wave = 1.2`, static wind, static SST) from `marinewatch_service.py`.
+  - **Live Hourly Forecasts via Open-Meteo**: Integrated real-time hourly queries to `marine-api.open-meteo.com` and `api.open-meteo.com`, dynamically extracting hourly slots via `_select_hour_index(times, target_dt)`.
+  - **Physics-Grounded Temporal Fallback**: Added diurnal solar wind cycle, tidal modulation, and distance-to-shore scaling to guarantee dynamically varying ocean parameters even during offline fallback or unit tests.
+  - **Multi-Hour API Parameters**: Added `time_offset_hours` and `timestamp` across `GET /forecast/point`, `GET /forecast/route`, and `POST /spatial/query`.
+  - **Fisher Map Scrubber & Telemetry Badge**:
+    - Floating telemetry card above the time scrubber renders live dynamic conditions: `🌊 Wave`, `💨 Wind`, `🌊 Tide`, `🌡️ SST`, and craft safety badge (`[GO / CAUTION / NO_GO]`).
+    - Stepping forward in time (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) queries dynamic hourly forecasts for harbor and updates `chat.missionContext.departure_time`.
+    - Map click point inspector HUD passes the scrubber's selected time offset to evaluate wave height, swell period, wind direction, and astronomical tide for that future hour.
+    - `OceanDetails.tsx` and `TripPlanDetails.tsx` dynamically refresh with the selected departure timestamp.
+  - **100% Dual-Client Parity**: Fully synchronized across `frontend/` (Vite) and `nextjs/` (Next.js).
 
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
@@ -507,6 +639,12 @@ None
 - Hardened database persistence in `backend/app/services/assessment_service.py` to ensure graceful fallback when PostgreSQL is offline.
 - Verified test suite: `pytest tests/agent_eval/` (387 passed, 1 skipped), frontend Vitest (224 passed across 16 test suites, zero TypeScript errors).
 
+### P0-27 — Map Rendering Reliability & Harbour Precision Alignment
+- Fixed MapLibre interpolation crashes by extracting zoom interpolators to the root level of layer expressions.
+- Bypassed MapLibre text-font dependency for emoji glyph rendering by injecting dynamic Canvas `ImageData` directly into the map style registry.
+- Precision-aligned all 15 Indian coastal harbour coordinates in `geo.ts` directly to their true shoreline positions, resolving inland plotting artifacts.
+- Fixed backend snapshot resolution by using absolute environment paths, guaranteeing robust local file loads independent of Uvicorn cwd.
+
 ---
 
 
@@ -530,8 +668,38 @@ None
 
 | **M1** | Frontend & UI | READY | MapLayer schema alignment, voice call interface, Fisher/Authority separate pages, single portal switching, header logout button, dynamic MapView with harbor auto-pan & sector surveillance layers, base operational geofences integration, canonical scenario benchmark runner (S1–S8), data-driven fleet trajectory replay scrubber & notifications driven by canonical backend dataset (`GET /api/v1/demo/sectors`, `vessels`, `replay`, `notifications`, `hazards`), removal of all fabricated mock telemetry, strict offline banners, full coverage for 8 monitored vessels across Ratnagiri and Malvan, inline voice audio/TTS listen button, UI decluttering, end-to-end multilingual localization (EN, HI, MR) across all pages, decks, and simulators, modern web standards integration (standard thin scrollbars, text-wrap balancing & orphan prevention, container queries), Radix UI/shadcn overlay primitives integration (Dialog, Sheet, Popover for EvidenceDrawer, CallModal, LayerManager), sidebar layout stabilization (eliminated horizontal/vertical overflow, unified single-row tab & context header, resilient 2-row chat card), CallModal design system alignment (replaced hardcoded skeuomorphic dark styles with native theme tokens across Light and Dark modes), header decluttering (removed redundant Call SAMUDRA button from header, anchored exclusively in chat toolbar), dedicated Settings Page (centralized theme toggle, vernacular language cards, operational voyage defaults, voice assistance/VAD parameters, feed diagnostics, seamless two-way portal return routing), authority page decluttering (consolidated dual command and tab bars into unified command bar with segmented pill switcher, removed redundant empty evidence tab and double terminal headers, fully styled S1–S8 Benchmark Runner deck with 2-column layout, spec cards, and live execution audit metrics), Fisher Console CTA text contrast fix (high-contrast white in light mode, dark navy in dark mode), end-to-end mobile/tablet responsive layout stabilization across portal, fisher, authority, and settings views, unified 3-column single row layout for Fisher, Authority, and Researcher persona cards on the portal selection page (`max-width: 1320px`, `repeat(3, 1fr)`), dedicated Researcher Lab persona dashboard with 4 modular decks (Ocean Data Explorer, Data Source Monitor, Scenario Lab with S1–S8 benchmark evaluation, and Query Workbench with inline evidence & trace) strictly preserving Fisher and Authority dashboards untouched, hardened with deck error boundaries, resilient backend payload normalization, and multi-day EO cell de-duplication | Vitest (93 passed) |
 | **M2** | Backend Platform & Connectors | OFFLINE_VERIFIED | Harbors loader, INCOIS OSF/PFZ/SVAS, IMD weather/hazard, Open-Meteo fallback, ConnectorManager, P0-3 non-fabricating partial payload contracts | pytest connectors & contracts (71 passed) |
-| **M3** | Agent Orchestration & Explainability | OFFLINE_VERIFIED | Tool adapters, capability catalog registration, trace & evidence contracts, P0-2 Benchmark Runner runtime state isolation, P0-3 robust partial payload extraction in specialist_tools_node & conftest contract mock isolation | pytest scenario & isolation (30 passed), agent_eval (47 passed), domain (25 passed) |
-| **M4** | Marine, Geo, Risk & Route Domain | OFFLINE_VERIFIED | Deterministic risk engine (with P0-4 time-stable reference clock support for deterministic regression testing), Shapely geofence evaluation, PFZ Haversine ranking engine, Synthetic demo dataset generator with 5 sectors, 14 canonical monitored vessels, and 420 replay positions across Ratnagiri, Malvan, Goa, Mumbai, and Veraval, and P0-8G three evaluated route alternatives (Safest, Balanced, Direct) via RouteExposureEngine | pytest domain & synthetic (26 passed), observation_bundle (7 passed), route_balanced (53 passed) |
+| **M3** | Agent Orchestration, Decision Reasoning & Explainability | READY | Canonical DecisionObject emission, structured DecisionDelta for WHAT_CHANGED and WHAT_IF, real ALTERNATIVE intent branch with validated departure windows and corridors, route exposure inference integration, 100% backward-compatible Recommendation preservation, graceful degradation | pytest agent_eval (405 passed, 1 skipped), test_m3_decision_object (17 passed), domain (85 passed) |
+| **M4** | Marine, Geo, Risk & Route Domain | READY | Deterministic risk engine (with P0-4 time-stable reference clock support for deterministic regression testing), Shapely geofence evaluation, PFZ Haversine ranking engine, Synthetic demo dataset generator with 5 sectors, 14 canonical monitored vessels, and 420 replay positions across Ratnagiri, Malvan, Goa, Mumbai, and Veraval, three evaluated route alternatives (Safest, Balanced, Direct), dynamic TrajectoryExposureEngine (waypoint arrival ETA × hourly forecast lookup), time-dependent MarinePathfinder with surface ocean current vector fields, DepartureWindowEvaluator scanning +48h forecast envelope, proactive trajectory geofence monitoring with time-to-cross (TTC) calculations | pytest domain (95 passed), agent_eval (406 passed) |
+
+---
+
+### M3 — Canonical DecisionObject, Structured DecisionDelta, Alternatives & Route Exposure
+- Status: **COMPLETE & VERIFIED** (P0 & P1 MVP features fully implemented, tested, and backward-compatible).
+- **GAP-1: Canonical DecisionObject Emitted by Runtime**:
+  - Implemented deterministic `DecisionObject` creation in `response_composer_node` within `backend/app/agents/graph.py`.
+  - Populated all canonical fields (`decision`, `confidence`, `mission`, `decisive_factor`, `supporting_factors`, `constraints`, `evidence`, `inferences`, `provenance`, `uncertainty`, `alternatives`) directly from deterministic risk assessment state, route exposure metrics, and observation bundle evidence.
+  - Zero LLM generation of safety decisions or constraints. Additively attached to `ORCAState["decision_object"]` and serialized in `ChatResponse.decision_object`.
+- **GAP-2 & GAP-4: Structured DecisionDelta for WHAT_CHANGED & WHAT_IF**:
+  - Replaced legacy string diffing with canonical Pydantic `DecisionDelta` in `backend/app/agents/graph.py`.
+  - Evaluates baseline vs current risk assessments to populate `added_factors`, `removed_factors`, `changed_factors`, `temporal_changes`, and generates a deterministic mariner synthesis summary.
+  - WHAT_IF simulations cleanly run through the same deterministic engine and output structured deltas into `ORCAState["decision_delta"]` and `ChatResponse.decision_delta`.
+- **GAP-3: Dedicated ALTERNATIVE Response Branch**:
+  - Implemented explicit `IntentCategory.ALTERNATIVE.value` handling in `response_composer_node`.
+  - Reuses existing risk assessment and route exposure candidates to recommend validated departure time windows and corridor alternatives without fallback to demo data.
+  - Returns honest "No validated alternative available with current evidence." if no safe alternatives exist.
+- **GAP-5: Route Corridor Exposure Surfacing**:
+  - Integrated `RouteExposureEngine` route candidates directly into `DecisionObject.inferences` and `alternatives` with exposure metrics and wave limits.
+- **Backward Compatibility & Safety Invariants**:
+  - Legacy `risk_assessment` (`Recommendation`) and `ChatResponse` structure preserved 100% intact.
+  - Graceful degradation: wrapped all M3 construction in exception-safe fallbacks logging errors without failing missions.
+  - Updated CORS configuration in `backend/app/core/config.py` to allow deployed Vercel frontend (`https://samudra-qxx1.vercel.app`).
+- **Verification**:
+  - `tests/agent_eval/test_m3_decision_object.py`: 17/17 passed.
+  - `tests/agent_eval/test_flagship_flow.py`: 1/1 passed.
+  - `tests/agent_eval/`: 405 passed, 1 skipped, 0 failed.
+  - `tests/domain/`: 85 passed, 0 failed.
+  - Frontend typecheck (`npm run typecheck`): 0 errors.
+  - Frontend production build (`npm run build`): Clean build (`✓ built in 43.16s`).
 
 ---
 
@@ -568,8 +736,25 @@ None
 - [x] **Phase 1: Reference Data Loaders** (`harbors.py` typed loaders & indexing verified)
 - [x] **Phase 2: P0 Connectors & Fallback Foundation** (INCOIS OSF/PFZ/SVAS, IMD, Pilot GIS, Open-Meteo)
 - [x] **Phase 3: Real Database / PostGIS Integration & SACHET CAP Feed** (Alembic migrations, spatial repos, SACHET CAP, rate limiting, observability)
-- [ ] **Phase 4: Mission Twin Simulation Engine** (P1 — Counterfactual evaluation & temporal forecasting)
-- [ ] **Phase 5: Vernacular Voice & Audio Pipelines** (P1 — Whisper / Sarvam AI integration)
+- [x] **Phase 4: M3 Decision/Risk/Reasoning MVP** (Canonical DecisionObject, structured DecisionDelta, ALTERNATIVE branch, WHAT_IF reasoning, route exposure)
+- [x] **Phase 5: Mission Twin Simulation Engine** (P1 — Dynamic Trajectory Exposure, Current Vector A* Routing, Temporal Departure Windows, Proactive Geofencing)
+- [ ] **Phase 6: Vernacular Voice & Audio Pipelines** (P1 — Whisper / Sarvam AI integration)
+
+## 2026-09-26 - M4 Mission Twin, Dynamic Trajectory Exposure & Departure Windows
+
+- Status: IMPLEMENTED & VERIFIED.
+- **Dynamic Trajectory Exposure Engine**: Implemented `TrajectoryExposureEngine` in `backend/app/domain/trajectory_exposure.py`. Computes waypoint ETA arrival times along evaluated passages based on craft speed (`motorized_boat`: 8kt, `mechanized_trawler`: 10kt, `traditional_non_motorized`: 3kt). Evaluates time-indexed marine weather at each waypoint to identify peak wave exposure along the trajectory.
+- **Time-Dependent Marine Routing with Ocean Current Vectors**: Extended `MarinePathfinder` in `backend/app/domain/marine_routing.py` with surface current vector field integration ($V_{\parallel} = \vec{v}_c \cdot \hat{u}$). Adjusts effective speed and edge cost in A* to optimize paths for fuel and time efficiency against currents.
+- **Temporal Departure Window Scanner**: Implemented `DepartureWindowEvaluator` in `backend/app/domain/departure_window.py`. Evaluates candidate departure windows across the +48h forecast envelope at step intervals, recommending safe delay windows (e.g. "Recommend delaying departure by +6h to 2026-09-26T12:00:00Z. Wave height drops from 2.8m to 1.4m").
+- **Proactive Trajectory Geofence Monitoring**: Extended `DeterministicGeospatialEngine` in `backend/app/domain/geo_restrictions.py` with `check_projected_trajectory_hazards`. Projects vessel heading forward over a 2.0h lookahead window using spherical geodesics, computing time-to-cross ($TTC$) and distance-to-boundary before restricted zones are breached.
+- **Data Snapshot Checksum Resynchronization**: Updated SHA-256 checksum and validity window in `data/source_snapshots/pfz_advisories.json`, resolving 6 snapshot test regressions.
+- **Verification**:
+  - `tests/domain/`: 95/95 passed.
+  - `tests/agent_eval/`: 406/406 passed.
+  - `tests/contract/test_connector_contracts.py` & `tests/integration/test_data_service.py`: 44/44 passed.
+  - Frontend Vitest: 17/17 test files passed, 244/244 tests passed.
+  - Frontend typecheck (`tsc --noEmit`): 0 errors.
+
 ## 2026-09-26 - Production Demo Hardening
 
 - Status: IMPLEMENTED / VERIFIED (focused).
@@ -585,6 +770,83 @@ None
 - Production and staging startup now require a reachable PostgreSQL/PostGIS connection; development/demo retains the intentional offline test fallback.
 - Added safe Render/Vercel environment guidance and documented the backend-only database topology.
 - Alembic head verified at `e1a2b3c4d5e6`; no live PostgreSQL/PostGIS instance was available in this environment for upgrade execution.
+
+## 2026-09-26 - Sequential Merge Reconciliation: feat/m3-decision-reasoning & features
+
+- Status: MERGED & VERIFIED.
+- Sequentially merged `origin/feat/m3-decision-reasoning` and `origin/features` into `main`.
+- Resolved merge conflicts across:
+  - `backend/app/main.py`: Unified live connector registrations (Open-Meteo, INCOIS, IMD, SACHET CAP).
+  - `backend/app/connectors/open_meteo.py`: Preserved contract rule 2 in `_select_hour_index` returning index 0 when `target_utc is None`.
+  - `frontend/src/utils/geo.ts`: Preserved canonical harbor coordinates for regression suite while supporting extended coastal-aligned harbor aliases and `portsLayer`.
+  - `frontend/src/components/map/MapView.tsx`: Integrated dynamic icon image generation with §D040 custom DOM icon markers and click inspection.
+  - `frontend/src/components/fisher/PFZDetails.tsx`: Preserved rich rank header and bilingual translation while incorporating location reference and multi-format distance/bearing metrics.
+  - `frontend/src/pages/FisherPage.tsx`: Integrated initial GuidedTripSetup voyage workflow with map time-offset scrubber controls.
+  - `frontend/src/styles/components.css`: Combined PortWatch census styles with dark-theme popup styles.
+  - `docs/PROGRESS.md`: Unified Phase 4 status summary and audit logs.
+- Verification:
+  - Frontend typecheck (`tsc --noEmit`): 0 errors.
+  - Frontend test suite (`npx vitest run`): 17/17 test files passed, 244/244 tests passed.
+  - Backend test suite (`pytest`): 118/118 focused connectors & M3 decision object tests passed, 586/590 full backend suite passed (4 Open-Meteo contract regressions resolved).
+
+## 2026-09-26 — M1.3 Explainability & Evidence View Implementation
+- Status: **COMPLETE & VERIFIED**
+- **1. Assessment-Level Agent Collaboration**:
+  - Added additive `agent_collaboration: Optional[AgentCollaborationPayload] = None` to `TripAssessmentResponse` in `backend/app/contracts/assessment.py`.
+  - In `AssessmentService.assess_trip()`, invoked `AgentCollaborationEngine.derive_collaboration(...)` directly from deterministic risk evaluation outputs, observations, and trace items.
+  - Exposes Marine, Weather, Geospatial, and Safety agent stances, arbitration results, and causal reasoning timeline immediately after assessment without requiring a chat flow or LLM generation.
+- **2. Deterministic Threshold Comparison Matrix**:
+  - Implemented `ThresholdTable.tsx` in `frontend/src/components/evidence/ThresholdTable.tsx`.
+  - Renders all `ThresholdComparison` records from `assessment.evidence` across 8 canonical columns: `Metric`, `Observed`, `Operator`, `Threshold`, `Unit`, `Impact`, `Status`, `Description`.
+  - Status badges strictly color-coded by impact enum (`SAFE`, `CAUTION_TRIGGER`, `NO_GO_TRIGGER`, `UNKNOWN_TRIGGER`) without inferring additional meaning.
+- **3. Assessment-Mode Evidence Drawer**:
+  - Upgraded `EvidenceDrawer.tsx` to support in-memory inspection of `assessment.evidence`, `assessment.source_status`, `assessment.brief`, and trace.
+  - Wired "Inspect Evidence & Data Feeds" button in `FisherDecisionSurface.tsx` operating on in-memory data with zero network calls, zero polling, and zero websocket subscriptions.
+- **4. PFZ Explainability & Multi-Candidate Rationale**:
+  - Upgraded `PFZDetails.tsx` to display top 3 ranked PFZ candidates with complete metrics (`Rank`, `Distance nm`, `Bearing`, `Depth`, `SST`, `Chlorophyll`).
+  - Added deterministic selection rationale explaining distance advantage over Candidate #2 (e.g. `Selected because it is the nearest viable PFZ. Distance advantage: 8.2nm closer than Candidate #2.`) using existing candidate metrics only.
+- **5. Route Comparison View**:
+  - Upgraded `TripPlanDetails.tsx` with complete evaluated routes table displaying `Route`, `Distance`, `Wave Height`, `ETA`, `Fuel`, `Exposure Score`, `Risk Rating`, `Feasible`, and `infeasibility_reasons` for infeasible corridors.
+  - Visually indicates the recommended route using Dev 4 backend exposure values without recalculation.
+- **6. Fisher Decision Surface Integration**:
+  - Organized canonical decision flow in `FisherDecisionSurface.tsx`:
+    Decision Banner $\rightarrow$ Mission Brief $\rightarrow$ Inspect Evidence $\rightarrow$ Agent Collaboration $\rightarrow$ Ocean Conditions $\rightarrow$ PFZ Explainability $\rightarrow$ Route Comparison.
+- **Verification**:
+  - Backend integration tests: 3/3 passed (`pytest tests/integration/test_m1_3_explainability.py`).
+  - Frontend test suite: 21 test files, 266/266 passed (`vitest run`).
+  - Frontend TypeScript validation: 0 errors (`tsc --noEmit`).
+
+## 2026-09-26 — M1.4 Decision Delta & Counterfactual Intelligence Implementation (§D048)
+- Status: **COMPLETE & VERIFIED**
+- **1. Backend Additive Contracts**:
+  - Defined canonical models `DecisionBoundaryItem`, `DecisionStabilityPayload`, `SafeMissionWindow`, and `CounterfactualFlipExplanation` in `backend/app/contracts/assessment.py`.
+  - Extended `TripAssessmentResponse` with `stability: Optional[DecisionStabilityPayload] = None` and `safe_window: Optional[SafeMissionWindow] = None` without modifying existing fields.
+- **2. Decision Boundary Analysis**:
+  - Implemented pure deterministic helper `compute_decision_boundaries(...)` in `backend/app/domain/risk_engine.py` evaluating upper/lower bound margins, margin percentages, and identifying `nearest_boundary` as the smallest positive safe margin.
+- **3. Recommendation Stability Assessment**:
+  - Implemented pure deterministic helper `compute_decision_stability(...)` classifying stability into `LOW` (active breached metric or nearest margin < 10%), `MEDIUM` (nearest margin between 10% and 25%), or `HIGH` (all margins > 25% with no active hazard bulletins), populated with deterministic reason and headline.
+- **4. Minimal Safe Adjustment**:
+  - Implemented deterministic calculation of `minimal_safe_adjustment` indicating the exact minimal delta required on the primary breached metric to reach the `GO` threshold.
+- **5. Deterministic Sensitivity Ranking**:
+  - Implemented pure ranking ordering Tier 1 (severe hazards: cyclones, squalls, geofences), Tier 2 (breached metrics ordered by relative breach severity descending), and Tier 3 (safe metrics ordered by relative margin ascending).
+- **6. Counterfactual Flip Attribution**:
+  - Implemented `attribute_counterfactual_flip(...)` and frontend `deriveCounterfactualFlip(...)` determining exact primary cause metric, observed shift, crossed threshold, and deterministic revert adjustment when a scenario flips states (e.g. `GO` → `CAUTION`/`NO_GO`).
+- **7. Earliest Safe Mission Window**:
+  - Implemented `compute_safe_window(...)` evaluating future hourly forecast slots for contiguous `GO` intervals meeting voyage duration.
+- **8. Assessment Service & Frontend Surface Integration**:
+  - Populated `stability` and `safe_window` directly in `AssessmentService.assess_trip` from existing in-memory evaluations with zero extra API calls.
+  - Implemented `DecisionStabilityCard.tsx` (rendered under confidence section in `MissionBriefPanel.tsx`).
+  - Implemented `DecisionDeltaPanel.tsx` (rendered in `WhatIfSimulator.tsx` whenever a diff exists).
+  - Enhanced `ThresholdTable.tsx` with `Margin` and `Margin %` columns.
+  - Enhanced `EvidenceDrawer.tsx` with `Decision Boundaries` and `Sensitivity Ranking` tabs.
+  - Enhanced `FisherDecisionSurface.tsx` with Safe Window Summary badge and stability card.
+- **9. Deterministic Safety & Zero-Network Invariant**:
+  - 100% deterministic Python and TypeScript logic. Zero LLMs, zero ML models, zero invented probabilities, zero external API additions, and zero new frontend network requests.
+- **Verification**:
+  - Backend integration tests: 7/7 passed (`pytest tests/integration/test_m1_4_decision_delta.py`).
+  - Backend M1.3 tests: 3/3 passed (`pytest tests/integration/test_m1_3_explainability.py`).
+  - Frontend test suite: 22 test files, 272/272 passed (`npm test` in Vitest).
+  - Frontend TypeScript validation: 0 errors (`npm run typecheck`).
 
 ## 2026-09-26 - Final Production Hardening, Canonical Decision Alignment & Deployment Release
 
