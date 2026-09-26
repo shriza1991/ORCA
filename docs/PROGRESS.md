@@ -6,9 +6,27 @@
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
-- Current version: `v0.2.3-m1.2-mission-brief`
-- Active branch: `main`
-- Current milestone: **M1.2 Mission Brief / Why Panel (Deterministic Presentation & Explainability)**
+- Current version: `v0.2.5-m4-deckgl-optimization`
+- Active branch: `feat/m4-mission-twin`
+- Current feature: **Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle (§D049)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Frontend Vitest: 266/266 passing across 21 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npx tsc --noEmit`).
+    - Dual-Client Parity: 100% synchronized across Vite (`frontend/`) and Next.js (`nextjs/`).
+    - Optimizations Delivered:
+      - High-DPI buffer clamping (`useDevicePixels` capped at 2) to eliminate Retina/4K `readPixels` GPU stalls.
+      - Reduced `pickingRadius={4}` for low-latency hover detection.
+      - MapLibre camera synchronization throttled via `requestAnimationFrame` and `cancelAnimationFrame`.
+      - Conditional pulse ticking in `AuthorityDeckGLMap` (stops completely to 0 idle CPU when no alert or vessel is selected; smoothed to 150ms).
+      - Telemetry position fetching keyed by vessel IDs list rather than unstable array reference.
+      - Decoupled memoization of Deck.gl layers (`staticSectorLayers`, `hazardLayers`, `vesselData`, `vesselTrackLayers`, `vesselAuraLayers`), completely eliminating redundant layer recreation and trigonometric geometry recalculations during pulses.
+- Prior Feature: **Authority Command Deck Light Mode 3D Deck.gl Map (§D048)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Frontend Vitest: 266/266 passing across 21 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npx tsc --noEmit`).
+    - Dual-Client Parity: 100% synchronized across Vite (`frontend/`) and Next.js (`nextjs/`).
+    - In-browser visual verification: Carto Positron basemap active in Light Mode; Deck.gl vector layers (boundaries, sector geofences, hazards, routes, 3D beacons, wake trails, text labels) adaptively contrast against daylight surfaces. Deck.gl outline warnings resolved with SDF fonts; middle-dot missing characters eliminated.
+- Prior Milestone: **M1.2 Mission Brief / Why Panel (Deterministic Presentation & Explainability)**
   - **Status**: **COMPLETE & VERIFIED**
     - Backend Pytest: 3/3 acceptance tests passing in `tests/integration/test_m1_2_mission_brief.py`, 18/18 passing across full assessment suite (`test_assessments.py`, `test_mission_contracts.py`, `test_m1_1_mission_state.py`, `test_m1_2_mission_brief.py`).
     - Frontend Vitest: 259/259 passing across 20 test suites (`npm run test`).

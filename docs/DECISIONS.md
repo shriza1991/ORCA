@@ -857,6 +857,66 @@ Status: ACCEPTED
   - Frontend test suite: 22 test files, 272/272 passed (`npm test` in Vitest).
   - Frontend TypeScript validation: 0 errors (`npm run typecheck`).
 
+## D049 — Light Mode Support for Authority Command Deck 3D Deck.gl Map
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior Frontend / Visualization Engineer
+- Task/context: Provide high-contrast, theme-adaptive Light Mode support for the 3D Map in Authority Command Deck while eliminating Deck.gl text rendering warnings.
+- Decision:
+  1. **Dual Basemap Vector Styles**: Configured `DeckGLMapFoundation` with Carto Positron (`https://basemaps.cartocdn.com/gl/positron-gl-style/style.json`) for Light Mode and Dark Matter for Dark Mode, switching dynamically via `map.setStyle()` on theme transition.
+  2. **Theme-Adaptive Deck.gl Vector Layers**:
+     - Boundaries & Geofences: High-contrast cyan/sky line colors in Light Mode against pale coastal waters.
+     - Active Surveillance Sector & Radar Node: Vibrant purple borders and station markers.
+     - Operational Hazards: Crimson/amber stroked polygons with responsive warning fill.
+     - Operational Routes: Emerald green for recommended corridor, slate for alternate corridors.
+     - Vessel Wake Trail & Breadcrumbs: Luminous amber tracks with dark-outline visibility.
+     - 3D Extruded Beacon & Pulse Aura: Semi-translucent gold beacon with warm amber perimeter.
+     - Vessel Icons & Vectors: Gold (selected) and cyan (monitored) craft chevrons.
+     - Text Layers: High-contrast slate typography (`[15, 23, 42]`) with clean white halo outline (`[255, 255, 255]`) in Light Mode, inverted in Dark Mode.
+  3. **Deck.gl Outline & Character Set Resolution**:
+     - Added `fontSettings: { sdf: true }` to all Deck.gl TextLayers with `outlineWidth`, eliminating `fontSettings.sdf is required to render outline`.
+     - Replaced non-ASCII middle-dot characters (`·`) with standard hyphens (`-`), eliminating `Missing character: · (183)` console warnings.
+  4. **Glassmorphic Floating HUD Overlays**:
+     - Restyled camera preset selector ("Tactical 3D", "High Orbit", "2D Flat"), quick navigation toolbar, top Sector Command Header strip, and bottom Vessel Voyage Telemetry HUD with high-contrast translucent white surfaces (`rgba(255, 255, 255, 0.94)`), slate borders, and dark slate typography.
+  5. **100% Dual-Client Parity**:
+     - Synchronized changes across React (`frontend/src/components/map/DeckGLMapFoundation.tsx`, `frontend/src/components/authority/AuthorityDeckGLMap.tsx`, `frontend/src/pages/AuthorityPage.tsx`) and Next.js (`nextjs/components/map/DeckGLMapFoundation.tsx`, `nextjs/components/authority/AuthorityDeckGLMap.tsx`, `nextjs/views/AuthorityPage.tsx`).
+- Why:
+  Authority operators working in well-lit maritime command centers and port control offices require a bright, daylight-readable, glare-free tactical map interface matching the application's global Light Mode theme.
+- Affected areas:
+  `frontend/src/components/map/DeckGLMapFoundation.tsx`, `frontend/src/components/authority/AuthorityDeckGLMap.tsx`, `frontend/src/pages/AuthorityPage.tsx`, `nextjs/components/map/DeckGLMapFoundation.tsx`, `nextjs/components/authority/AuthorityDeckGLMap.tsx`, `nextjs/views/AuthorityPage.tsx`.
+- Tests/verification:
+  - Frontend test suite: 21 test files, 266/266 tests passing in Vitest (`npm run test`).
+  - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
+  - In-browser visual verification via Chrome DevTools: verified Carto Positron basemap, 3D extruded vessel beacon, waypoint breadcrumbs, and floating telemetry HUD. Console warnings for Deck.gl outlines and missing characters completely eliminated.
+
+## D050 — Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior Frontend / Visualization Engineer
+- Task/context: Optimize Deck.gl rendering pipeline and MapLibre synchronization to eliminate GPU readback stalls, CPU diffing thrashing, and high re-render frequencies.
+- Decision:
+  1. **Clamped High-DPI Drawing Buffers**: Added `useDevicePixels={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1}` to `DeckGLMapFoundation` and `DeckGLMarineMap`. Clamps canvas drawing buffer to a maximum of 2x on high-DPI (Retina/4K) displays, preventing 3x/4x buffer allocations and GPU `readPixels` stalls during picking.
+  2. **Reduced Picking Radius**: Set `pickingRadius={4}` on `<DeckGL>`, narrowing pointer hit-testing area for faster hover/click detection.
+  3. **RAF-Throttled MapLibre Camera Synchronization**: Replaced synchronous 60 FPS `jumpTo` camera invocation in `useEffect` with `requestAnimationFrame` and `cancelAnimationFrame`. Prevents redundant camera repositioning calls during rapid mouse/touch dragging.
+  4. **Conditional Pulse Ticking**: The pulse ticker in `AuthorityDeckGLMap` now runs conditionally (`hasPulsingElements = activeHazardIds.size > 0 || !!selectedVesselId`). When no alert hazard or vessel is selected, the pulse timer completely stops (`setPulseTick(0)`), achieving 0 idle timer interrupts and 0 idle re-renders. Rate was smoothed to 150ms.
+  5. **Vessel Position Fetch Keying**: Keyed vessel telemetry position fetching by `vesselIdsKey = vessels.map((v) => v.public_id).join(',')`, eliminating redundant fetch cycles when parent components re-render with identical vessel rosters.
+  6. **Decoupled Memoized Layer Architecture**: Split the monolithic `deckLayers` into 4 decoupled, memoized sub-layer groups:
+     - `staticSectorLayers` (memoized on `[boundaryFeatures, activeSector, lineRoutes, isLight]`): boundaries, sector polygon, radar station, operational routes. Retains identical references during pulse ticks or vessel position changes, so Deck.gl skips all layer diffing.
+     - `hazardLayers` (memoized on `[hazardFeatures, pulseTick, isLight]`): uses `updateTriggers: { getLineColor: [pulseTick, isLight], getFillColor: [pulseTick] }`.
+     - `vesselData` and `vesselVectorPaths` (memoized on `[vessels, selectedVesselId, activeReplayInfo?.currentPos, vesselPositionsMap]`): trigonometric computations (`tipLng`, `tipLat`) occur only when coordinates change, NEVER on pulse ticks.
+     - `vesselTrackLayers` (memoized on `[vesselData, vesselVectorPaths, selectedVesselId, activeReplayInfo, activeTrajectoryCoords, isLight]`): wake trails, breadcrumbs, trajectories, 3D beacon, craft icons, telemetry labels. Completely static while pulsing.
+     - `vesselAuraLayers`: the only vessel layer that updates on `pulseTick`, using `updateTriggers: { getRadius: [pulseTick] }`.
+  7. **Full Dual-Client Parity**: Identical changes synced across `frontend/src/` and `nextjs/`.
+- Why:
+  High-frequency timer-driven re-renders recreating all 12 layer instances caused severe WebGL buffer diffing overhead and high-DPI GPU stalls. Decoupling static layers allows Deck.gl's layer diffing algorithm to perform near-zero work during pulsing.
+- Affected areas:
+  `frontend/src/components/map/DeckGLMapFoundation.tsx`, `frontend/src/components/authority/AuthorityDeckGLMap.tsx`, `frontend/src/components/experimental/DeckGLMarineMap.tsx`, `nextjs/components/map/DeckGLMapFoundation.tsx`, `nextjs/components/authority/AuthorityDeckGLMap.tsx`, `nextjs/components/experimental/DeckGLMarineMap.tsx`.
+- Tests/verification:
+  - Frontend Vitest suite: 21 test files, 266/266 tests passing (`npm run test`).
+  - Frontend TypeScript compiler: 0 errors (`npx tsc --noEmit`).
+
 ## Decision template
 
 ### D0XX — <title>

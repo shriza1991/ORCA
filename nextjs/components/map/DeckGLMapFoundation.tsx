@@ -38,9 +38,11 @@ export const DEFAULT_VIEW_STATE: MapViewState = {
   minZoom: 4,
 };
 
-const BASEMAP_STYLE_DARK = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+export const BASEMAP_STYLE_LIGHT = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+export const BASEMAP_STYLE_DARK = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
 export interface DeckGLMapFoundationProps {
+  theme?: 'light' | 'dark';
   layers: any[];
   viewState?: MapViewState;
   onViewStateChange?: (vs: MapViewState) => void;
@@ -64,6 +66,7 @@ export interface DeckGLMapFoundationProps {
 }
 
 export default function DeckGLMapFoundation({
+  theme = 'light',
   layers,
   viewState: externalViewState,
   onViewStateChange: externalOnViewStateChange,
@@ -84,6 +87,9 @@ export default function DeckGLMapFoundation({
   style,
   children,
 }: DeckGLMapFoundationProps) {
+  const isLight = theme === 'light';
+  const activeStyle = isLight ? BASEMAP_STYLE_LIGHT : BASEMAP_STYLE_DARK;
+
   const [internalViewState, setInternalViewState] = useState<MapViewState>(() => ({
     ...DEFAULT_VIEW_STATE,
     longitude: initialCenter ? initialCenter[0] : DEFAULT_VIEW_STATE.longitude,
@@ -109,13 +115,16 @@ export default function DeckGLMapFoundation({
     try {
       const map = new maplibregl.Map({
         container: maplibreContainerRef.current,
-        style: BASEMAP_STYLE_DARK,
+        style: activeStyle,
         center: [activeViewState.longitude, activeViewState.latitude],
         zoom: activeViewState.zoom,
         pitch: activeViewState.pitch ?? 0,
         bearing: activeViewState.bearing ?? 0,
         interactive: false,
         attributionControl: false,
+        fadeDuration: 0,
+        trackResize: true,
+        refreshExpiredTiles: false,
       });
 
       maplibreMapRef.current = map;
@@ -125,25 +134,40 @@ export default function DeckGLMapFoundation({
         maplibreMapRef.current = null;
       };
     } catch {
-      // Degrades gracefully to dark background if WebGL2 context or style is unreachable
+      // Degrades gracefully if WebGL2 context or style is unreachable
     }
   }, []);
 
-  // Synchronize background MapLibre camera with DeckGL viewState at 60 FPS
+  // Dynamically update basemap style when theme toggles
+  useEffect(() => {
+    const map = maplibreMapRef.current;
+    if (!map) return;
+    try {
+      map.setStyle(activeStyle);
+    } catch {
+      // Ignore transient style-switch errors
+    }
+  }, [activeStyle]);
+
+  // Synchronize background MapLibre camera with DeckGL viewState via requestAnimationFrame
   useEffect(() => {
     const map = maplibreMapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    try {
-      map.jumpTo({
-        center: [activeViewState.longitude, activeViewState.latitude],
-        zoom: activeViewState.zoom,
-        pitch: activeViewState.pitch ?? 0,
-        bearing: activeViewState.bearing ?? 0,
-      });
-    } catch {
-      // Ignore transient camera sync errors during fast resizing
-    }
+    const rafId = requestAnimationFrame(() => {
+      try {
+        map.jumpTo({
+          center: [activeViewState.longitude, activeViewState.latitude],
+          zoom: activeViewState.zoom,
+          pitch: activeViewState.pitch ?? 0,
+          bearing: activeViewState.bearing ?? 0,
+        });
+      } catch {
+        // Ignore transient camera sync errors during fast resizing
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [
     activeViewState.longitude,
     activeViewState.latitude,
@@ -261,19 +285,19 @@ export default function DeckGLMapFoundation({
   return (
     <div
       ref={containerRef}
-      className={`deckgl-foundation-container ${className}`}
+      className={`deckgl-foundation-container ${className} ${isLight ? 'theme-light' : 'theme-dark'}`}
       style={{
         position: 'relative',
         width: '100%',
         height: '100%',
         minHeight: '380px',
-        background: '#070b14',
+        background: isLight ? '#f1f5f9' : '#070b14',
         overflow: 'hidden',
         borderRadius: '8px',
         ...style,
       }}
     >
-      {/* Underlying Synchronized CartoDB Dark Matter Basemap (Coastline, Indian Landmass & Bathymetry) */}
+      {/* Underlying Synchronized CartoDB Basemap (Positron in Light, Dark Matter in Dark) */}
       <div
         ref={maplibreContainerRef}
         style={{
@@ -302,6 +326,8 @@ export default function DeckGLMapFoundation({
         layers={layers}
         getTooltip={getTooltip}
         onClick={onClick}
+        useDevicePixels={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1}
+        pickingRadius={4}
       />
 
       {/* Top HUD Overlay Slot */}
@@ -344,36 +370,53 @@ export default function DeckGLMapFoundation({
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '2px',
-                background: 'rgba(15, 23, 42, 0.85)',
+                background: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(15, 23, 42, 0.85)',
                 backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
+                border: isLight ? '1px solid rgba(203, 213, 225, 0.9)' : '1px solid rgba(56, 189, 248, 0.3)',
                 borderRadius: '6px',
                 padding: '3px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                boxShadow: isLight ? '0 4px 14px rgba(0,0,0,0.08)' : '0 4px 12px rgba(0,0,0,0.5)',
               }}
             >
-              {CAMERA_PRESETS.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setCameraPreset(p.id)}
-                  style={{
-                    background: currentPreset === p.id ? 'rgba(14, 165, 233, 0.35)' : 'transparent',
-                    color: currentPreset === p.id ? '#38bdf8' : '#94a3b8',
-                    border: currentPreset === p.id ? '1px solid rgba(56, 189, 248, 0.6)' : '1px solid transparent',
-                    borderRadius: '4px',
-                    padding: '3px 7px',
-                    fontSize: '11px',
-                    fontWeight: currentPreset === p.id ? 700 : 500,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.15s ease',
-                  }}
-                  title={`${p.label} (Pitch: ${p.pitch}°, Bearing: ${p.bearing}°)`}
-                >
-                  {p.label}
-                </button>
-              ))}
+              {CAMERA_PRESETS.map((p) => {
+                const isActive = currentPreset === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setCameraPreset(p.id)}
+                    style={{
+                      background: isActive
+                        ? isLight
+                          ? 'rgba(14, 165, 233, 0.16)'
+                          : 'rgba(14, 165, 233, 0.35)'
+                        : 'transparent',
+                      color: isActive
+                        ? isLight
+                          ? '#0284c7'
+                          : '#38bdf8'
+                        : isLight
+                        ? '#475569'
+                        : '#94a3b8',
+                      border: isActive
+                        ? isLight
+                          ? '1px solid rgba(2, 132, 199, 0.45)'
+                          : '1px solid rgba(56, 189, 248, 0.6)'
+                        : '1px solid transparent',
+                      borderRadius: '4px',
+                      padding: '3px 7px',
+                      fontSize: '11px',
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                    title={`${p.label} (Pitch: ${p.pitch}°, Bearing: ${p.bearing}°)`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -384,18 +427,18 @@ export default function DeckGLMapFoundation({
               display: 'flex',
               flexDirection: 'column',
               gap: '3px',
-              background: 'rgba(15, 23, 42, 0.85)',
+              background: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(15, 23, 42, 0.85)',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(51, 65, 85, 0.6)',
+              border: isLight ? '1px solid rgba(203, 213, 225, 0.9)' : '1px solid rgba(51, 65, 85, 0.6)',
               borderRadius: '6px',
               padding: '3px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              boxShadow: isLight ? '0 4px 14px rgba(0,0,0,0.08)' : '0 4px 12px rgba(0,0,0,0.5)',
             }}
           >
             <button
               type="button"
               onClick={zoomIn}
-              style={controlBtnStyle}
+              style={getControlBtnStyle(isLight)}
               title="Zoom In"
               aria-label="Zoom In"
             >
@@ -404,7 +447,7 @@ export default function DeckGLMapFoundation({
             <button
               type="button"
               onClick={zoomOut}
-              style={controlBtnStyle}
+              style={getControlBtnStyle(isLight)}
               title="Zoom Out"
               aria-label="Zoom Out"
             >
@@ -413,7 +456,7 @@ export default function DeckGLMapFoundation({
             <button
               type="button"
               onClick={() => adjustPitch(10)}
-              style={controlBtnStyle}
+              style={getControlBtnStyle(isLight)}
               title="Tilt 3D Angle Up"
               aria-label="Tilt 3D Angle Up"
             >
@@ -422,7 +465,7 @@ export default function DeckGLMapFoundation({
             <button
               type="button"
               onClick={() => rotateBearing(15)}
-              style={controlBtnStyle}
+              style={getControlBtnStyle(isLight)}
               title="Rotate Compass Bearing"
               aria-label="Rotate Bearing"
             >
@@ -431,7 +474,7 @@ export default function DeckGLMapFoundation({
             <button
               type="button"
               onClick={resetView}
-              style={controlBtnStyle}
+              style={getControlBtnStyle(isLight)}
               title="Reset View"
               aria-label="Reset View"
             >
@@ -440,7 +483,7 @@ export default function DeckGLMapFoundation({
             <button
               type="button"
               onClick={toggleFullscreen}
-              style={controlBtnStyle}
+              style={getControlBtnStyle(isLight)}
               title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
               aria-label="Toggle Fullscreen"
             >
@@ -476,8 +519,9 @@ export default function DeckGLMapFoundation({
           right: 10,
           fontSize: '10px',
           fontFamily: 'monospace',
-          color: 'rgba(148, 163, 184, 0.7)',
-          background: 'rgba(15, 23, 42, 0.65)',
+          color: isLight ? 'rgba(51, 65, 85, 0.9)' : 'rgba(148, 163, 184, 0.7)',
+          background: isLight ? 'rgba(255, 255, 255, 0.88)' : 'rgba(15, 23, 42, 0.65)',
+          border: isLight ? '1px solid rgba(203, 213, 225, 0.8)' : 'none',
           padding: '2px 6px',
           borderRadius: '4px',
           pointerEvents: 'none',
@@ -492,10 +536,10 @@ export default function DeckGLMapFoundation({
   );
 }
 
-const controlBtnStyle: React.CSSProperties = {
+const getControlBtnStyle = (isLight: boolean): React.CSSProperties => ({
   background: 'transparent',
   border: 'none',
-  color: '#cbd5e1',
+  color: isLight ? '#334155' : '#cbd5e1',
   padding: '5px',
   borderRadius: '4px',
   cursor: 'pointer',
@@ -503,4 +547,4 @@ const controlBtnStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   transition: 'background 0.15s, color 0.15s',
-};
+});
