@@ -703,3 +703,22 @@ None
 - Added safe Render/Vercel environment guidance and documented the backend-only database topology.
 - Alembic head verified at `e1a2b3c4d5e6`; no live PostgreSQL/PostGIS instance was available in this environment for upgrade execution.
 
+## 2026-09-26 - Sequential Merge Reconciliation: feat/m3-decision-reasoning & features
+
+- Status: MERGED & VERIFIED.
+- Sequentially merged `origin/feat/m3-decision-reasoning` and `origin/features` into `main`.
+- Resolved merge conflicts across:
+  - `backend/app/main.py`: Unified live connector registrations (Open-Meteo, INCOIS, IMD, SACHET CAP).
+  - `backend/app/connectors/open_meteo.py`: Preserved contract rule 2 in `_select_hour_index` returning index 0 when `target_utc is None`.
+  - `frontend/src/utils/geo.ts`: Preserved canonical harbor coordinates for regression suite while supporting extended coastal-aligned harbor aliases and `portsLayer`.
+  - `frontend/src/components/map/MapView.tsx`: Integrated dynamic icon image generation with §D040 custom DOM icon markers and click inspection.
+  - `frontend/src/components/fisher/PFZDetails.tsx`: Preserved rich rank header and bilingual translation while incorporating location reference and multi-format distance/bearing metrics.
+  - `frontend/src/pages/FisherPage.tsx`: Integrated initial GuidedTripSetup voyage workflow with map time-offset scrubber controls.
+  - `frontend/src/styles/components.css`: Combined PortWatch census styles with dark-theme popup styles.
+  - `docs/PROGRESS.md`: Unified Phase 4 status summary and audit logs.
+- Verification:
+  - Frontend typecheck (`tsc --noEmit`): 0 errors.
+  - Frontend test suite (`npx vitest run`): 17/17 test files passed, 244/244 tests passed.
+  - Backend test suite (`pytest`): 118/118 focused connectors & M3 decision object tests passed, 586/590 full backend suite passed (4 Open-Meteo contract regressions resolved).
+
+
