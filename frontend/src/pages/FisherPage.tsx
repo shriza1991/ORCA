@@ -19,7 +19,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useGeofence } from '../hooks/useGeofence';
 import LocationWarningsOverlay from '../components/map/LocationWarningsOverlay';
 import { RefreshCw, MessageSquare, Navigation } from 'lucide-react';
-import { DEFAULT_MISSION_CONTEXT } from '../types/mission';
+import { DEFAULT_MISSION_CONTEXT, type MissionContext } from '../types/mission';
 
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
@@ -76,7 +76,10 @@ export default function FisherPage({
     setSidebarTab('voyage');
   };
 
-  const handleCompletePlan = () => {
+  const handleCompletePlan = (confirmedContext?: MissionContext) => {
+    if (confirmedContext) {
+      chat.setMissionContext(confirmedContext);
+    }
     setSidebarTab('decision');
     setLastPlanTime(Date.now());
   };
@@ -88,8 +91,12 @@ export default function FisherPage({
       .catch(() => setBaseLayers([]));
   }, []);
 
-  // 2. Auto-assess trip when context changes
+  // 2. Assess trip when context changes (inhibited while wizard is active to prevent premature network calls)
   useEffect(() => {
+    if (sidebarTab === 'voyage') {
+      return;
+    }
+
     assessTrip({
       origin_harbor: chat.missionContext.origin_harbor,
       craft_profile: chat.missionContext.craft_profile || 'motorized_boat',
@@ -108,6 +115,7 @@ export default function FisherPage({
       language: chat.language,
     });
   }, [
+    sidebarTab,
     chat.missionContext.origin_harbor,
     chat.missionContext.craft_profile,
     chat.missionContext.departure_time,

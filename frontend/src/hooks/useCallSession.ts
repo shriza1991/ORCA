@@ -22,6 +22,10 @@ export interface CallTurn {
 export interface UseCallSessionOptions {
   originHarbor?: string;
   craftProfile?: string;
+  departureTime?: string;
+  returnTime?: string;
+  targetPfz?: string;
+  parentAssessmentId?: string;
   silenceTimeoutMs?: number; // Configurable silence duration before auto-turn completion (~3000ms)
   speechThreshold?: number;  // RMS volume threshold for speech detection (default: 0.032)
   minSpeechDurationMs?: number; // Minimum speech duration before confirming user speech (default: 300ms)
@@ -58,6 +62,10 @@ function generateTurnId(): string {
 export function useCallSession({
   originHarbor = 'Ratnagiri',
   craftProfile = 'motorized_boat',
+  departureTime,
+  returnTime,
+  targetPfz,
+  parentAssessmentId,
   silenceTimeoutMs = 3000,
   speechThreshold = 0.032,
   minSpeechDurationMs = 300,
@@ -196,6 +204,10 @@ export function useCallSession({
         conversation_id: conversationIdRef.current || undefined,
         origin_harbor: originHarbor,
         craft_profile: craftProfile,
+        departure_time: departureTime,
+        return_time: returnTime,
+        target_pfz: targetPfz,
+        parent_assessment_id: parentAssessmentId,
         language_preference: 'auto',
       });
 

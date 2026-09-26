@@ -9,6 +9,7 @@ import OceanDetails from '../components/fisher/OceanDetails';
 import PFZDetails from '../components/fisher/PFZDetails';
 import type { useChat } from '../hooks/useChat';
 import type { MapLayer } from '../types/contracts';
+import type { MissionContext } from '../types/mission';
 import { getHarborCoordinates, fetchAndFormatBaseLayers } from '../utils/geo';
 import { mergeFisherLayers, formatFishermanPopup } from '../utils/fisher-map';
 import { useTripAssessment } from '../hooks/useTripAssessment';
@@ -68,6 +69,13 @@ export default function FisherPage({
     else startTracking();
   };
 
+  const handleCompletePlan = (confirmedContext?: MissionContext) => {
+    if (confirmedContext) {
+      chat.setMissionContext(confirmedContext);
+    }
+    setSidebarTab('decision');
+  };
+
   // 1. Fetch base geofences & boundaries
   useEffect(() => {
     fetchAndFormatBaseLayers()
@@ -75,8 +83,10 @@ export default function FisherPage({
       .catch(() => setBaseLayers([]));
   }, []);
 
-  // 2. Auto-assess trip when context changes
+  // 2. Assess trip when context changes (inhibited while wizard is active to prevent premature network calls)
   useEffect(() => {
+    if (sidebarTab === 'voyage') return;
+
     assessTrip({
       origin_harbor: chat.missionContext.origin_harbor,
       craft_profile: chat.missionContext.craft_profile || 'motorized_boat',
@@ -94,6 +104,7 @@ export default function FisherPage({
       language: chat.language,
     });
   }, [
+    sidebarTab,
     chat.missionContext.origin_harbor,
     chat.missionContext.craft_profile,
     chat.missionContext.departure_time,
@@ -131,8 +142,7 @@ export default function FisherPage({
             <GuidedTripSetup
               context={chat.missionContext}
               language={chat.language}
-              onContextChange={chat.setMissionContext}
-              onComplete={() => setSidebarTab('decision')}
+              onComplete={handleCompletePlan}
               onCancel={() => setSidebarTab('decision')}
             />
           </div>

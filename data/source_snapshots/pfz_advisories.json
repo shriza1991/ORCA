@@ -5,9 +5,9 @@
     "source_name": "pfz_advisories",
     "captured_at": "2026-09-24T04:51:07.105227+00:00",
     "valid_from": "2026-09-24T04:51:07.105227+00:00",
-    "valid_to": "2026-09-24T23:59:59Z",
+    "valid_to": "2030-01-01T00:00:00+00:00",
     "schema_version": "1.0",
-    "checksum": "7ae7deeec8991d637d117aada3e1bd67e6f95536b8af593e76eee4d0a9d75ccc",
+    "checksum": "d16ff9c003a142ffa2e1f027a14062f1afaa94a436b669a2f993fce1ff5a496f",
     "status": "SIMULATED"
   },
   "payload": {

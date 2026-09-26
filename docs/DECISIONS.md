@@ -731,6 +731,30 @@ Status: ACCEPTED
 - Affected areas: `backend/app/contracts/mission.py`, `backend/app/contracts/assessment.py`, `backend/app/contracts/chat.py`, `backend/app/agents/state.py`, `backend/app/agents/graph.py`, `backend/app/services/agent_run_service.py`, `backend/app/services/assessment_service.py`, `backend/app/services/alert_service.py`, `backend/app/services/state_mapper.py`, `backend/app/api/v1/routes.py`, `frontend/src/types/mission.ts`, `frontend/src/types/assessment.ts`, `frontend/src/types/contracts.ts`, `frontend/src/hooks/useTripAssessment.ts`, `frontend/src/hooks/useChat.ts`, `frontend/src/pages/FisherPage.tsx`, `frontend/src/api/client.ts`, `frontend/src/utils/offline-cache.ts`, `tests/integration/test_m1_1_mission_state.py`, `frontend/src/utils/offline-cache.test.ts`.
 - Tests/verification: 4/4 acceptance tests passing in `test_m1_1_mission_state.py`, 8/8 contract tests passing in `test_mission_contracts.py` & `test_contracts.py`, 246/246 frontend tests passing in Vitest, 0 errors in TypeScript `tsc --noEmit`.
 
+## D045 — Mission Setup Hardening & Pre-Assessment Isolation (M1.1.5)
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior Staff Systems Engineer (M1.1.5)
+- Task/context: Implement Mission Setup Hardening based on completed audit to guarantee complete, validated MissionState before any assessment, voice, chat, alert, or What-If interaction.
+- Decision:
+  1. **Deterministic 7-Step Wizard Flow**: Refactored `GuidedTripSetup` into a deterministic 7-step wizard: Harbor, Vessel, Departure DateTime, Return DateTime, Optional PFZ Target, Mission Review, and Confirm & Assess.
+  2. **ISO-8601 Temporal Precision**: Eliminated informal strings (`"today"`, `"tomorrow"`) across all frontend and backend contracts. Default timestamps and presets compute explicit ISO-8601 strings. Added native `<input type="datetime-local">` controls.
+  3. **Local Wizard State Isolation**: Isolated all wizard adjustments locally inside `GuidedTripSetup` until explicit user confirmation at Step 7 (`Confirm & Assess`). Step transitions (0 to 5) do not mutate global `MissionState` or invoke `onComplete`.
+  4. **Pre-Assessment Network Call Suppression**: In `FisherPage`, guarded the assessment effect with `if (sidebarTab === 'voyage') return;` to completely prevent premature network assessment requests while the wizard is active. Exactly one assessment fires upon explicit confirmation.
+  5. **Bidirectional Temporal Window Validation**:
+     - Frontend: Prevents moving forward or completing if departure is in the past or return is not strictly after departure (`return > departure`).
+     - Backend: Added `@model_validator(mode="after")` to `TripAssessmentRequest` strictly enforcing valid ISO-8601 timestamps and `return_time > departure_time`, returning HTTP 422 Unprocessable Entity on violations.
+  6. **Voice Pipeline Continuity**: Passed `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id` through `CallModal` → `useCallSession` → `sendVoiceChat` to guarantee full mission continuity in spoken voice sessions.
+  7. **What-If Simulation Preservation**: Guaranteed `WhatIfSimulator.handleApply` preserves `departure_time` (adjusted with duration preserved if offset is specified), `return_time`, `target_pfz`, and `parent_assessment_id`.
+  8. **Dual-Client Parity**: Synchronized both `frontend/` (Vite) and `nextjs/` implementations for `GuidedTripSetup`, `FisherPage`, and `types/mission.ts`.
+- Why:
+  Eliminates partial-state assessments, prevents network floods during mission planning, enforces authoritative safety bounds before any processing, and guarantees seamless context across multimodal interactions.
+- Affected areas:
+  `backend/app/contracts/assessment.py`, `frontend/src/components/fisher/GuidedTripSetup.tsx`, `frontend/src/pages/FisherPage.tsx`, `frontend/src/types/mission.ts`, `frontend/src/components/mission/WhatIfSimulator.tsx`, `frontend/src/components/call/CallModal.tsx`, `frontend/src/hooks/useCallSession.ts`, `frontend/src/App.tsx`, `nextjs/components/fisher/GuidedTripSetup.tsx`, `nextjs/views/FisherPage.tsx`, `nextjs/types/mission.ts`, `tests/integration/test_m1_1_mission_state.py`, `frontend/src/components/fisher/guided-trip-setup.test.ts`, `frontend/src/components/mission/what-if.test.ts`, `frontend/src/hooks/call.test.ts`.
+- Tests/verification:
+  Backend pytest 7/7 passing in `test_m1_1_mission_state.py`, frontend vitest 253/253 passing across 19 suites, frontend TypeScript typecheck passing with 0 errors.
+
 ## Decision template
 
 ### D0XX — <title>
@@ -741,4 +765,5 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
 

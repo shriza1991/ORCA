@@ -8,8 +8,16 @@
 
 - Current version: `v0.2.2-features-main-integrated`
 - Active branch: `main`
-- Current milestone: **M1.1 Canonical MissionState Context Preservation** (Assessment → Chat → Voice → What-If → Alerts)
-  - **Status**: **COMPLETE & VERIFIED** (Backend pytest: 4/4 acceptance tests passing in `tests/integration/test_m1_1_mission_state.py`, 8/8 contract tests passing in `tests/contract/`; Frontend: 246/246 passing in Vitest across 18 suites, TypeScript check: 0 errors).
+- Current milestone: **M1.1 Canonical MissionState Context Preservation & M1.1.5 Mission Setup Hardening** (Assessment → Chat → Voice → What-If → Alerts)
+  - **Status**: **COMPLETE & VERIFIED** (Backend pytest: 7/7 acceptance tests passing in `tests/integration/test_m1_1_mission_state.py`, 8/8 contract tests passing in `tests/contract/`; Frontend: 253/253 passing in Vitest across 19 suites, TypeScript check: 0 errors).
+  - **M1.1.5 Mission Setup Hardening**:
+    - **Deterministic 7-Step Setup Wizard**: Refactored `GuidedTripSetup` into 7 distinct sequential steps: Harbor → Vessel → Departure DateTime → Return DateTime → Optional PFZ Target → Mission Review → Confirm & Assess.
+    - **ISO-8601 Temporal Precision**: Eliminated informal strings (`"today"`, `"tomorrow"`) across all frontend and backend contracts. Default timestamps and presets compute explicit ISO-8601 strings. Added native `<input type="datetime-local">` controls.
+    - **Local State Isolation & Zero Premature Assessments**: Stored all wizard draft values in local state; global `MissionState` is not mutated during steps 0–5. Guarded `FisherPage` assessment generation with `if (sidebarTab === 'voyage') return;`, guaranteeing zero network assessment requests during wizard completion and exactly one upon confirmation.
+    - **Bidirectional Temporal Window Validation**: Frontend prevents submission if departure is in past or return <= departure; backend `TripAssessmentRequest` enforces valid ISO-8601 timestamps and strictly `return_time > departure_time`, returning HTTP 422 Unprocessable Entity.
+    - **Voice Continuity**: `CallModal` → `useCallSession` → `sendVoiceChat` forward `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id`.
+    - **What-If Simulation Preservation**: Guaranteed `WhatIfSimulator.handleApply` preserves `departure_time` (adjusted with duration preserved if offset is specified), `return_time`, `target_pfz`, and `parent_assessment_id`.
+    - **Dual-Client Parity**: Synchronized both `frontend/` (Vite) and `nextjs/` implementations for `GuidedTripSetup`, `FisherPage`, and `types/mission.ts`.
   - **Additive Architectural Integration**: Canonical `MissionState` contract bridged across all active pipelines without removing legacy `UserContext`, `TripAssessmentRequest`, `ChatRequest`, or `SavedTripRequest` fields.
   - **Operational Pipelines Bound**:
     - **Assessment Pipeline**: `TripAssessmentRequest` and `TripAssessmentResponse` accept and return `mission_state`; `AssessmentService` uses `MissionState` as the authoritative single source of truth while keeping legacy fields working.

@@ -81,9 +81,30 @@ export default function WhatIfSimulator({
   };
 
   const handleApply = () => {
+    let updatedDeparture = currentContext.departure_time;
+    let updatedReturn = currentContext.return_time;
+
+    if (timeOffset > 0 && currentContext.departure_time) {
+      const depParsed = Date.parse(currentContext.departure_time);
+      if (!isNaN(depParsed)) {
+        updatedDeparture = new Date(depParsed + timeOffset * 60 * 60 * 1000).toISOString();
+      }
+    }
+    if (timeOffset > 0 && currentContext.return_time) {
+      const retParsed = Date.parse(currentContext.return_time);
+      if (!isNaN(retParsed)) {
+        updatedReturn = new Date(retParsed + timeOffset * 60 * 60 * 1000).toISOString();
+      }
+    }
+
     onApplyContext({
+      ...currentContext,
       origin_harbor: currentContext.origin_harbor,
       craft_profile: craftOverride,
+      departure_time: updatedDeparture,
+      return_time: updatedReturn,
+      target_pfz: currentContext.target_pfz,
+      parent_assessment_id: currentContext.parent_assessment_id,
     });
     setApplied(true);
   };

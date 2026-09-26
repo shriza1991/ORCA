@@ -178,3 +178,52 @@ def test_m1_1_acceptance_test_4_alert_service_mission_state():
     assert saved.mission_state.vessel.type == "motorized_boat"
     assert saved.mission_state.timing.departure == "2026-09-27T04:00:00Z"
     assert saved.mission_state.timing.return_deadline == "2026-09-27T18:00:00Z"
+
+
+def test_m1_1_5_validation_rejects_malformed_timestamp_with_422():
+    """M1.1.5: TripAssessmentRequest must reject malformed timestamps with HTTP 422."""
+    res = client.post(
+        "/api/v1/trip-assessments",
+        json={
+            "origin_harbor": "Ratnagiri",
+            "craft_profile": "motorized_boat",
+            "departure_time": "tomorrow morning",
+            "return_time": "2026-09-27T18:00:00Z",
+        },
+    )
+    assert res.status_code == 422
+    data = res.json()
+    assert "detail" in data
+
+
+def test_m1_1_5_validation_rejects_return_before_departure_with_422():
+    """M1.1.5: TripAssessmentRequest must reject return <= departure with HTTP 422."""
+    res = client.post(
+        "/api/v1/trip-assessments",
+        json={
+            "origin_harbor": "Ratnagiri",
+            "craft_profile": "motorized_boat",
+            "departure_time": "2026-09-27T18:00:00Z",
+            "return_time": "2026-09-27T04:00:00Z",
+        },
+    )
+    assert res.status_code == 422
+    data = res.json()
+    assert "detail" in data
+    assert any("must be after departure_time" in str(err) for err in data.get("detail", []))
+
+
+def test_m1_1_5_validation_rejects_return_equal_departure_with_422():
+    """M1.1.5: TripAssessmentRequest must reject return == departure with HTTP 422."""
+    same_time = "2026-09-27T08:00:00Z"
+    res = client.post(
+        "/api/v1/trip-assessments",
+        json={
+            "origin_harbor": "Ratnagiri",
+            "craft_profile": "motorized_boat",
+            "departure_time": same_time,
+            "return_time": same_time,
+        },
+    )
+    assert res.status_code == 422
+

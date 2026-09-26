@@ -148,5 +148,39 @@ describe('Call Mode Pipeline, VAD & Translations', () => {
       const audioBlob = new Blob(['mock-audio'], { type: 'audio/webm' });
       await expect(sendVoiceChat(audioBlob)).rejects.toThrow(ApiError);
     });
+
+    it('M1.1.5: sends mission timing, target_pfz, and parent_assessment_id in voice chat payload', async () => {
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          conversation_id: 'call-sess-123',
+          transcript: 'test',
+          answer: 'ok',
+          language: 'en',
+        }),
+      });
+
+      const audioBlob = new Blob(['mock-audio'], { type: 'audio/webm' });
+      await sendVoiceChat(audioBlob, {
+        conversation_id: 'call-sess-123',
+        origin_harbor: 'Ratnagiri',
+        craft_profile: 'motorized_boat',
+        departure_time: '2026-09-27T04:00:00Z',
+        return_time: '2026-09-27T18:00:00Z',
+        target_pfz: 'pfz-zone-9',
+        parent_assessment_id: 'assmnt-voice-123',
+      });
+
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+      const callArgs = (globalThis.fetch as any).mock.calls[0];
+      expect(callArgs[0]).toContain('/voice/chat');
+      const sentFormData: FormData = callArgs[1].body;
+      expect(sentFormData.get('origin_harbor')).toBe('Ratnagiri');
+      expect(sentFormData.get('craft_profile')).toBe('motorized_boat');
+      expect(sentFormData.get('departure_time')).toBe('2026-09-27T04:00:00Z');
+      expect(sentFormData.get('return_time')).toBe('2026-09-27T18:00:00Z');
+      expect(sentFormData.get('target_pfz')).toBe('pfz-zone-9');
+      expect(sentFormData.get('parent_assessment_id')).toBe('assmnt-voice-123');
+    });
   });
 });
