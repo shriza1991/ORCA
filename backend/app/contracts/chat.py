@@ -181,6 +181,15 @@ class EvidenceItem(BaseModel):
         default_factory=list,
         description="Quality badges: 'official_source', 'fresh', 'snapshot_fallback'",
     )
+    coverage: Optional[str] = Field(
+        None, description="Geographical coverage or location associated with the evidence"
+    )
+    data_mode: Optional[str] = Field(
+        None, description="Operational data mode (e.g., 'LIVE', 'SNAPSHOT', 'HYBRID', 'SYNTHETIC')"
+    )
+    lineage_id: Optional[str] = Field(
+        None, description="Traceable reference to the raw API response ID or fixture file"
+    )
 
 
 class MapLayer(BaseModel):
