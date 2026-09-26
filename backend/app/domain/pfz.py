@@ -62,7 +62,7 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
         self,
         context: ToolInvocationContext,
         raw_features: List[Dict[str, Any]],
-        max_search_radius_nm: float = 60.0,
+        max_search_radius_nm: float = 1000.0,
     ) -> PFZRankingPayload:
         """Parses raw PFZ feature points, validates geometry, calculates geodesic distance/bearing,
         and ranks candidates deterministically.
@@ -89,10 +89,10 @@ class DeterministicPFZRankingEngine(PFZRankingEngine):
                 props = feat.get("properties", {})
             elif "lat" in feat and "lon" in feat:
                 lat, lon = float(feat["lat"]), float(feat["lon"])
-                props = feat
+                props = feat.get("properties", feat)
             elif "latitude" in feat and "longitude" in feat:
                 lat, lon = float(feat["latitude"]), float(feat["longitude"])
-                props = feat
+                props = feat.get("properties", feat)
 
             if lat is None or lon is None:
                 continue

@@ -150,8 +150,9 @@ class SnapshotConnector:
     """Offline snapshot connector — reads versioned JSON files from disk."""
 
     def __init__(self, snapshots_path: str | None = None, fixtures_path: str | None = None) -> None:
-        self._snapshots_dir = Path(snapshots_path or "data/source_snapshots")
-        self._fixtures_dir = Path(fixtures_path or "data/fixtures/synthetic/incois")
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        self._snapshots_dir = Path(snapshots_path) if snapshots_path else project_root / "data" / "source_snapshots"
+        self._fixtures_dir = Path(fixtures_path) if fixtures_path else project_root / "data" / "fixtures" / "synthetic" / "incois"
         self._custom_snapshots_path = snapshots_path is not None
         self._osf_cache: list[dict[str, Any]] | None = None
 

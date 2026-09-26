@@ -412,7 +412,12 @@ def generate_eo_grid_cells() -> List[Dict[str, Any]]:
 
 
 def generate_pfz_candidates() -> List[Dict[str, Any]]:
-    """12 PFZ candidates matching INCOIS PFZ vector feature advisory structure."""
+    """12 PFZ candidates + loaded candidates from json."""
+    import json
+    from pathlib import Path
+    
+    candidates = []
+    seen_ids = set()
     candidates_def = [
         ("pfz-01", 16.92, 73.15, REFERENCE_TIME - timedelta(hours=4), REFERENCE_TIME + timedelta(hours=20), "HIGH", 0.9, 1.6, 28.0, 245.0, 15.2, "VALID"),
         ("pfz-02", 17.05, 73.05, REFERENCE_TIME - timedelta(hours=6), REFERENCE_TIME + timedelta(hours=18), "HIGH", 1.1, 1.8, 35.0, 290.0, 25.8, "VALID"),
@@ -427,8 +432,10 @@ def generate_pfz_candidates() -> List[Dict[str, Any]]:
         ("pfz-11", 16.40, 72.60, REFERENCE_TIME - timedelta(hours=7), REFERENCE_TIME + timedelta(hours=17), "MEDIUM", 0.75, 1.3, 75.0, 220.0, 95.0, "VALID"),
         ("pfz-12", 17.50, 71.50, REFERENCE_TIME - timedelta(hours=60), REFERENCE_TIME - timedelta(hours=24), "MEDIUM", 0.8, 1.4, 150.0, 315.0, 198.0, "EXPIRED"),
     ]
-    return [
-        {
+    
+    for pid, lat, lon, det, val, conf, grad, chl, depth, bear, dist, qc in candidates_def:
+        seen_ids.add(pid)
+        candidates.append({
             "public_id": pid,
             "latitude": lat,
             "longitude": lon,
@@ -449,9 +456,48 @@ def generate_pfz_candidates() -> List[Dict[str, Any]]:
             },
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
-        }
-        for pid, lat, lon, det, val, conf, grad, chl, depth, bear, dist, qc in candidates_def
-    ]
+        })
+        
+    json_path = Path("C:/Users/vikram/OneDrive/Desktop/SAMUDRA/data/source_snapshots/pfz_advisories.json")
+    if json_path.exists():
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            features = data.get('payload', {}).get('features', [])
+            for feat in features:
+                if str(feat.get('id', '')).startswith('GJ-PFZ'):
+                    pid = str(feat.get('id'))
+                    if pid in seen_ids:
+                        continue
+                    seen_ids.add(pid)
+                    props = feat.get('properties', {})
+                    coords = feat.get('geometry', {}).get('coordinates', [0, 0])
+                    candidates.append({
+                        "public_id": pid,
+                        "latitude": float(coords[1]),
+                        "longitude": float(coords[0]),
+                        "detected_at": REFERENCE_TIME - timedelta(hours=4),
+                        "valid_to": REFERENCE_TIME + timedelta(hours=20),
+                        "confidence": "HIGH",
+                        "sst_gradient": 1.0,
+                        "chlorophyll_value": float(props.get('chlorophyll', 0.8)),
+                        "depth_m": float(props.get('depth_m', 50.0)),
+                        "bearing_deg": float(props.get('bearing_degrees', 0.0)),
+                        "distance_km": float(props.get('distance_km', 50.0)),
+                        "qc_status": "VALID",
+                        "provenance_json": {
+                            **PROVENANCE_BASE,
+                            "intended_provider": "INCOIS",
+                            "source_product": "INCOIS Potential Fishing Zone (PFZ) Integrated Advisory",
+                            "official_documentation": "https://incois.gov.in/portal/pfz",
+                        },
+                        "namespace": SYNTHETIC_NAMESPACE,
+                        "created_at": REFERENCE_TIME,
+                    })
+        except Exception:
+            pass
+            
+    return candidates
 
 
 def generate_geofences() -> List[Dict[str, Any]]:

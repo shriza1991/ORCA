@@ -430,12 +430,25 @@ export default function OceanWatchGIS({ theme = 'light', language = 'en' }: Ocea
                 '#1e3a8a',
               ],
               'line-width': [
-                'case',
-                ['==', ['get', 'depth_m'], 50],
-                ['interpolate', ['linear'], ['zoom'], 4, 0.8, 8, 1.2, 12, 2.0],
-                ['==', ['get', 'depth_m'], 100],
-                ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 1.8, 12, 2.8],
-                ['interpolate', ['linear'], ['zoom'], 4, 1.6, 8, 2.5, 12, 3.8],
+                'interpolate', ['linear'], ['zoom'],
+                4, [
+                  'case',
+                  ['==', ['get', 'depth_m'], 50], 0.8,
+                  ['==', ['get', 'depth_m'], 100], 1.2,
+                  1.6
+                ],
+                8, [
+                  'case',
+                  ['==', ['get', 'depth_m'], 50], 1.2,
+                  ['==', ['get', 'depth_m'], 100], 1.8,
+                  2.5
+                ],
+                12, [
+                  'case',
+                  ['==', ['get', 'depth_m'], 50], 2.0,
+                  ['==', ['get', 'depth_m'], 100], 2.8,
+                  3.8
+                ]
               ],
             },
           });

@@ -87,3 +87,6 @@ temp/
 scratch/
 .system_generated/
 brag-output/
+
+# sample data for pfz from incois
+data-sample/

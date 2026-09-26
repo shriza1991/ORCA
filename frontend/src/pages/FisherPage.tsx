@@ -43,7 +43,8 @@ export default function FisherPage({
   const harborCoords = useMemo(() => getHarborCoordinates(originHarbor), [originHarbor]);
   
   const [baseLayers, setBaseLayers] = useState<MapLayer[]>([]);
-  const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage' | 'chat'>('decision');
+  const [sidebarTab, setSidebarTab] = useState<'decision' | 'voyage' | 'chat'>('voyage');
+  const [lastPlanTime, setLastPlanTime] = useState<number>(0);
 
   const { data: assessment, isLoading, error, isOffline, isExpired, assessTrip } = useTripAssessment();
   const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
@@ -63,6 +64,11 @@ export default function FisherPage({
     setSidebarTab('voyage');
   };
 
+  const handleCompletePlan = () => {
+    setSidebarTab('decision');
+    setLastPlanTime(Date.now());
+  };
+
   // 1. Fetch base geofences & boundaries
   useEffect(() => {
     fetchAndFormatBaseLayers()
@@ -77,6 +83,7 @@ export default function FisherPage({
       craft_profile: chat.missionContext.craft_profile || 'motorized_boat',
       departure_time: chat.missionContext.departure_time,
       return_time: chat.missionContext.return_time,
+      destination_id: chat.missionContext.target_pfz,
       language_preference: chat.language,
       data_mode: 'HYBRID',
     });
@@ -93,6 +100,7 @@ export default function FisherPage({
     chat.missionContext.craft_profile,
     chat.missionContext.departure_time,
     chat.missionContext.return_time,
+    chat.missionContext.target_pfz,
     chat.language,
     assessTrip,
     registerTrip,
@@ -153,12 +161,12 @@ export default function FisherPage({
       harborCoords,
       originHarbor,
       status: assessment?.decision?.status || 'UNKNOWN',
-      baselineRoutes: routeLayers,
-      baselinePFZ: pfzLayers,
+      baselineRoutes: sidebarTab === 'voyage' ? [] : routeLayers,
+      baselinePFZ: sidebarTab === 'voyage' ? [] : pfzLayers,
       baselineHazards: [],
       chatLayers: chatLayers,
     });
-  }, [baseLayers, harborCoords, originHarbor, assessment]);
+  }, [baseLayers, harborCoords, originHarbor, assessment, sidebarTab]);
 
   const layerAvailability = {
     pfz: assessment?.pfz_candidates?.length ? 'AVAILABLE' : 'EMPTY',
@@ -175,7 +183,7 @@ export default function FisherPage({
               context={chat.missionContext}
               language={chat.language}
               onContextChange={chat.setMissionContext}
-              onComplete={() => setSidebarTab('decision')}
+              onComplete={handleCompletePlan}
               onCancel={() => setSidebarTab('decision')}
             />
           </div>
@@ -272,6 +280,7 @@ export default function FisherPage({
           theme={theme}
           center={harborCoords}
           zoom={9.5}
+          resetViewTrigger={lastPlanTime > 0 ? lastPlanTime : undefined}
           language={chat.language}
           customPopupRenderer={formatFishermanPopup}
           layerAvailability={layerAvailability}

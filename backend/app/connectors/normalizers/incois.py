@@ -147,7 +147,7 @@ class IncoisPFZNormalizer:
                 "id": feat.get("id", feat.get("feature_id", f"PFZ-F{idx+1:02d}")),
                 "lat": float(lat) if lat is not None else 16.92,
                 "lon": float(lon) if lon is not None else 73.15,
-                "sst_grad": feat.get("sst_gradient_c", feat.get("sst_grad", 0.8)),
+                "sst_grad": feat.get("sst_gradient_c", feat.get("sst_grad", feat.get("sst", 0.8))),
                 "chlorophyll": feat.get("chl_indicator", feat.get("chlorophyll", 1.4)),
                 "confidence": feat.get("confidence", "HIGH"),
                 "depth_m": feat.get("depth_m", 30.0),

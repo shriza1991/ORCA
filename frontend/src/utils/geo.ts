@@ -7,12 +7,22 @@ import { getBaseLayers } from '../api/client';
  * Aligned with backend/app/connectors/harbors.py and data/reference/landing_centres.json
  */
 export const HARBOR_COORDINATES: Record<string, [number, number]> = {
-  Ratnagiri: [73.28, 16.99],
-  Malvan: [73.47, 16.06],
-  Panaji: [73.83, 15.49],
-  Mumbai: [72.87, 18.92],
+  Ratnagiri: [73.275, 16.994],
+  Malvan: [73.46, 16.05],
+  Panaji: [73.82, 15.50],
+  Mumbai: [72.83, 18.92],
   Veraval: [70.37, 20.90],
-  Porbandar: [69.60, 21.64],
+  Porbandar: [69.595, 21.635],
+  Goa: [73.80, 15.41],
+  Mangalore: [74.815, 12.925],
+  Kochi: [76.26, 9.96],
+  Chennai: [80.295, 13.09],
+  Visakhapatnam: [83.285, 17.695],
+  Kolkata: [88.32, 22.54],
+  Puri: [85.825, 19.795],
+  Tuticorin: [78.165, 8.75],
+  Malpe: [74.695, 13.35],
+  Paradip: [86.675, 20.265],
 };
 
 export function getHarborCoordinates(harborName?: string): [number, number] {
@@ -416,9 +426,7 @@ export function createHazardAssociationLayers(
 export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
   try {
     const fc = await getBaseLayers();
-    if (!fc || !Array.isArray(fc.features)) return [];
-
-    return fc.features.map((f: any, idx: number) => {
+    const geofenceLayers = (fc?.features || []).map((f: any, idx: number) => {
       const props = f.properties || {};
       const level = props.restriction_level || 'INFORMATIONAL';
       const polyType = (props.polygon_type || '').toUpperCase();
@@ -452,6 +460,33 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
         geojson: f,
       };
     });
+
+    const portsLayer: MapLayer = {
+      layer_id: 'layer_all_harbors',
+      name: 'Indian Coastal Harbors',
+      layer_type: 'geojson',
+      visible: true,
+      style: {
+        color: '#10b981',
+        circle_radius: 6,
+        opacity: 0.9,
+        layer_category: 'navigation_terminal',
+      },
+      geojson: {
+        type: 'FeatureCollection',
+        features: Object.entries(HARBOR_COORDINATES).map(([name, coords]) => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: coords },
+          properties: {
+            harbor: name,
+            type: 'Departure Harbor Station',
+            status: 'AVAILABLE'
+          }
+        }))
+      }
+    };
+
+    return [...geofenceLayers, portsLayer];
   } catch {
     return [];
   }

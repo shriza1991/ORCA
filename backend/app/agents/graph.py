@@ -137,8 +137,15 @@ def _enforce_dependency_order(capabilities: List[str]) -> List[str]:
     return sorted(capabilities, key=lambda c: order_rank.get(c, 100))
 
 
-# Auto-register stub tools upon graph module import
-register_m1_stub_tools()
+import logging
+logger = logging.getLogger(__name__)
+
+_data_mode = settings.DATA_MODE.lower()
+if _data_mode == "synthetic":
+    logger.info("DATA_MODE is 'synthetic': Enforcing M1 synthetic stub tools.")
+    register_m1_stub_tools()
+else:
+    logger.info(f"DATA_MODE is '{_data_mode}': Real connectors enabled, bypassing global stubs.")
 
 
 # =============================================================================

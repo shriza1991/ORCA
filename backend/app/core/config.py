@@ -8,9 +8,14 @@ Owned by Dev 2 (Backend Platform).
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+import os
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(PROJECT_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

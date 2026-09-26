@@ -28,36 +28,46 @@ def parse_depth(depth_str):
     except:
         return None
 
-df = pd.read_excel('data-sample/PfzForecast_MAHARASHTRA (2).xls', skiprows=3, names=['Location', 'Direction', 'Bearing', 'Distance', 'Depth', 'Lat', 'Lon'])
+files = [
+    ('data-sample/PfzForecast_MAHARASHTRA (2).xls', 'MH'),
+    ('data-sample/PfzForecast_GUJARAT.xls', 'GJ')
+]
 
 features = []
 now_iso = datetime.now(timezone.utc).isoformat()
-for idx, row in df.iterrows():
-    lat = dms_to_decimal(row.get('Lat'))
-    lon = dms_to_decimal(row.get('Lon'))
-    
-    if lat is None or lon is None or math.isnan(lat) or math.isnan(lon):
-        continue
+global_idx = 1
+
+for file_path, prefix in files:
+    df = pd.read_excel(file_path, skiprows=3, names=['Location', 'Direction', 'Bearing', 'Distance', 'Depth', 'Lat', 'Lon'])
+    for idx, row in df.iterrows():
+        lat = dms_to_decimal(row.get('Lat'))
+        lon = dms_to_decimal(row.get('Lon'))
         
-    depth = parse_depth(row.get('Depth'))
-    location_name = row.get('Location')
-    if pd.isna(location_name):
-        location_name = "Unknown"
-        
-    feature = {
-        "id": f"MH-PFZ-{idx+1}",
-        "latitude": round(lat, 4),
-        "longitude": round(lon, 4),
-        "properties": {
-            "candidate_id": f"MH-PFZ-{idx+1}",
-            "location_reference": location_name,
-            "depth_m": depth,
-            # Assign dummy SST and Chlorophyll to make it rankable
-            "sst": 28.5,
-            "chlorophyll": 0.8
+        if lat is None or lon is None or math.isnan(lat) or math.isnan(lon):
+            continue
+            
+        depth = parse_depth(row.get('Depth'))
+        location_name = row.get('Location')
+        if pd.isna(location_name):
+            location_name = "Unknown"
+            
+        feature = {
+            "id": f"{prefix}-PFZ-{global_idx}",
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [round(lon, 4), round(lat, 4)]
+            },
+            "properties": {
+                "candidate_id": f"{prefix}-PFZ-{global_idx}",
+                "location_reference": location_name,
+                "depth_m": depth,
+                "sst": 28.5,
+                "chlorophyll": 0.8
+            }
         }
-    }
-    features.append(feature)
+        features.append(feature)
+        global_idx += 1
 
 payload = {
     "features": features,
@@ -67,11 +77,22 @@ payload = {
     "source_url": "https://incois.gov.in"
 }
 
+import hashlib
+
+payload_str = json.dumps(payload, sort_keys=True).encode("utf-8")
+checksum = hashlib.sha256(payload_str).hexdigest()
+
 snapshot_format = {
     "metadata": {
-        "source": "pfz_advisories",
-        "version": "1.0",
-        "captured_at": now_iso
+        "snapshot_id": f"PFZ-SNAP-{int(datetime.now(timezone.utc).timestamp())}",
+        "provider": "INCOIS",
+        "source_name": "pfz_advisories",
+        "captured_at": now_iso,
+        "valid_from": now_iso,
+        "valid_to": "2026-09-24T23:59:59Z",
+        "schema_version": "1.0",
+        "checksum": checksum,
+        "status": "SIMULATED"
     },
     "payload": payload
 }

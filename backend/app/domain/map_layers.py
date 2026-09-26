@@ -34,7 +34,7 @@ def _get_harbor_lon_lat(harbor_name: Optional[str]) -> List[float]:
         "ratnagiri": [73.28, 16.99],
         "veraval": [70.365, 20.905],
         "porbandar": [69.609, 21.642],
-        "mumbai": [72.877, 19.076],
+        "mumbai": [72.87, 18.92],
         "goa": [73.911, 15.299],
         "panaji": [73.83, 15.49],
         "malpe": [74.70, 13.35],
