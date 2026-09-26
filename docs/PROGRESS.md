@@ -455,6 +455,12 @@ None
   - Full backend suite: 676 passed, 51 skipped, 0 failures.
   - Full frontend suite: 241 passed across 16 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build (`vite build`).
 
+### P0-27 — Map Rendering Reliability & Harbour Precision Alignment
+- Fixed MapLibre interpolation crashes by extracting zoom interpolators to the root level of layer expressions.
+- Bypassed MapLibre text-font dependency for emoji glyph rendering by injecting dynamic Canvas `ImageData` directly into the map style registry.
+- Precision-aligned all 15 Indian coastal harbour coordinates in `geo.ts` directly to their true shoreline positions, resolving inland plotting artifacts.
+- Fixed backend snapshot resolution by using absolute environment paths, guaranteeing robust local file loads independent of Uvicorn cwd.
+
 ---
 
 ## P0 Marine Data Providers Status Board
