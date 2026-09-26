@@ -50,6 +50,9 @@ class MarineConditionsPayload(BaseModel):
             "coverage_status (OK | GEOGRAPHIC_FALLBACK | WINDOW_UNAVAILABLE | SYNTHETIC_TIMESTAMPS)."
         ),
     )
+    resolved_conflicts: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Records of resolved conflicts from other sources (source, value, reason)."
+    )
 
 
 class WeatherConditionsPayload(BaseModel):
@@ -64,6 +67,9 @@ class WeatherConditionsPayload(BaseModel):
     valid_to: Optional[str] = Field(None, description="Advisory expiration (ISO-8601 UTC)")
     source_name: str = Field("IMD Coastal Weather Bulletin", description="Official issuing authority")
     source_url: Optional[str] = Field(None, description="Direct URL to official bulletin")
+    resolved_conflicts: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Records of resolved conflicts from other sources (source, value, reason)."
+    )
 
 
 class HazardBulletinPayload(BaseModel):

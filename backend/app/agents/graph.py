@@ -2824,10 +2824,10 @@ def run_orca_graph(
         from backend.app.connectors.snapshot import SnapshotConnector
 
         snapshot_connector = SnapshotConnector()
-        marine_live = IncoisOceanStateConnector()
-        weather_live = ImdWeatherConnector()
-        hazard_live = ImdHazardConnector()
-        pfz_live = marine_live
+        marine_live = [IncoisOceanStateConnector()]
+        weather_live = [ImdWeatherConnector()]
+        hazard_live = [ImdHazardConnector()]
+        pfz_live = [IncoisOceanStateConnector()]
 
         manager = ConnectorManager(
             None,

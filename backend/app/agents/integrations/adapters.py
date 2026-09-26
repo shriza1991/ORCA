@@ -101,6 +101,7 @@ class ProviderToolAdapter:
                     coverage=coverage_val,
                     data_mode=data_mode_val,
                     lineage_id=lineage_val,
+                    resolved_conflicts=getattr(payload, "resolved_conflicts", None) or [],
                 )
             ]
 
@@ -186,6 +187,7 @@ class ProviderToolAdapter:
                     coverage=coverage_val,
                     data_mode=data_mode_val,
                     lineage_id=lineage_val,
+                    resolved_conflicts=getattr(payload, "resolved_conflicts", None) or [],
                 )
             ]
 

@@ -190,6 +190,9 @@ class EvidenceItem(BaseModel):
     lineage_id: Optional[str] = Field(
         None, description="Traceable reference to the raw API response ID or fixture file"
     )
+    resolved_conflicts: Optional[List[Dict[str, Any]]] = Field(
+        default_factory=list, description="List of conflicts resolved for this evidence (source, value, reason)."
+    )
 
 
 class MapLayer(BaseModel):
