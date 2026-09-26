@@ -13,12 +13,19 @@ from backend.app.contracts.assessment import (
     TripAssessmentResponse,
     AssessmentSourceStatus,
     MissionBriefPayload,
+    DecisionStabilityPayload,
+    SafeMissionWindow,
 )
 from backend.app.contracts.observation import ObservationBundle
 from backend.app.contracts.chat import UserContext, RecommendationStatus
 from backend.app.contracts.mission import MissionState, mission_from_user_context
 from backend.app.services.data_service import DataService
-from backend.app.domain.risk_engine import DeterministicRiskEngine
+from backend.app.domain.risk_engine import (
+    DeterministicRiskEngine,
+    compute_decision_boundaries,
+    compute_decision_stability,
+    compute_safe_window,
+)
 from backend.app.agents.integrations.contracts import ToolInvocationContext
 
 # Optionally import DB dependencies
@@ -134,6 +141,8 @@ class AssessmentService:
         # 4. Evaluate Risk
         # Ensure hard-stop precedence and incomplete evidence handling
         brief = None
+        stability = None
+        safe_window = None
         if not marine or not weather or not hazard:
             decision = RecommendationStatus.UNKNOWN
             evidence = [{"issue": "Incomplete data", "details": "Critical components failed to load."}]
@@ -145,6 +154,16 @@ class AssessmentService:
                 negative_factors=["Critical telemetry components failed to load."],
                 confidence="LOW",
                 confidence_reasons=["Sensor telemetry validity window expired or data feed missing"],
+            )
+            stability = DecisionStabilityPayload(
+                level="LOW",
+                headline="Low Decision Stability — Incomplete Data",
+                reason="Sensor, forecast, or hazard bulletin data are incomplete or unavailable.",
+                sensitivity_ranking=["Incomplete sensor telemetry"],
+            )
+            safe_window = SafeMissionWindow(
+                is_current_safe=False,
+                window_summary="Safe mission window cannot be determined due to missing telemetry.",
             )
         else:
             try:
@@ -179,6 +198,37 @@ class AssessmentService:
                     confidence=conf_val,
                     confidence_reasons=list(risk_payload.confidence_reasons),
                 )
+
+                # M1.4 Stability and Nearest Boundary Assessment
+                boundaries = compute_decision_boundaries(
+                    risk_payload.threshold_comparisons,
+                    effective_craft_profile,
+                )
+                bulletins_active = bool(hazard and (hazard.cyclone_warning_active or hazard.squall_alert))
+                stability = compute_decision_stability(
+                    boundaries,
+                    risk_payload.threshold_comparisons,
+                    bulletins_active=bulletins_active,
+                )
+
+                # M1.4 Safe Mission Window Assessment
+                trip_dur = 4
+                if effective_departure_time and effective_return_time:
+                    try:
+                        d_dt = datetime.fromisoformat(effective_departure_time.replace("Z", "+00:00"))
+                        r_dt = datetime.fromisoformat(effective_return_time.replace("Z", "+00:00"))
+                        diff = int((r_dt - d_dt).total_seconds() // 3600)
+                        if diff > 0:
+                            trip_dur = diff
+                    except Exception:
+                        pass
+
+                safe_window = compute_safe_window(
+                    craft_profile=effective_craft_profile,
+                    reference_time=ref_time,
+                    trip_duration_hours=trip_dur,
+                    current_status=risk_payload.status,
+                )
             except Exception as e:
                 logger.error(f"Risk evaluation failed: {e}")
                 decision = RecommendationStatus.UNKNOWN
@@ -191,6 +241,16 @@ class AssessmentService:
                     negative_factors=[f"Evaluation error: {str(e)}"],
                     confidence="LOW",
                     confidence_reasons=["Risk engine evaluation encountered unexpected exception"],
+                )
+                stability = DecisionStabilityPayload(
+                    level="LOW",
+                    headline="Low Decision Stability — Evaluation Error",
+                    reason=f"Risk engine evaluation encountered error: {str(e)}",
+                    sensitivity_ranking=[f"Error: {str(e)}"],
+                )
+                safe_window = SafeMissionWindow(
+                    is_current_safe=False,
+                    window_summary="Safe mission window evaluation aborted due to internal error.",
                 )
 
         # PFZ Evaluation
@@ -397,6 +457,8 @@ class AssessmentService:
             mission_state=mission_state,
             brief=brief,
             agent_collaboration=agent_collaboration,
+            stability=stability,
+            safe_window=safe_window,
         )
 
     @staticmethod
@@ -414,6 +476,16 @@ class AssessmentService:
             negative_factors=[error_msg],
             confidence="LOW",
             confidence_reasons=["Missing mandatory mission context"],
+        )
+        error_stability = DecisionStabilityPayload(
+            level="LOW",
+            headline="Low Decision Stability — Missing Context",
+            reason=error_msg,
+            sensitivity_ranking=[error_msg],
+        )
+        error_safe_window = SafeMissionWindow(
+            is_current_safe=False,
+            window_summary="Cannot determine safe departure window without valid trip origin.",
         )
         return TripAssessmentResponse(
             assessment_id=assessment_id,
@@ -439,4 +511,6 @@ class AssessmentService:
             is_durable=False,
             mission_state=mission_state,
             brief=error_brief,
+            stability=error_stability,
+            safe_window=error_safe_window,
         )

@@ -44,7 +44,7 @@ function pickBestVoice(
 export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const synth = window.speechSynthesis;
+  const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
 
   // Keep track of the currently speaking utterance so we can cancel it
   const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);

@@ -774,5 +774,37 @@ None
   - Frontend test suite: 21 test files, 266/266 passed (`vitest run`).
   - Frontend TypeScript validation: 0 errors (`tsc --noEmit`).
 
+## 2026-09-26 — M1.4 Decision Delta & Counterfactual Intelligence Implementation (§D048)
+- Status: **COMPLETE & VERIFIED**
+- **1. Backend Additive Contracts**:
+  - Defined canonical models `DecisionBoundaryItem`, `DecisionStabilityPayload`, `SafeMissionWindow`, and `CounterfactualFlipExplanation` in `backend/app/contracts/assessment.py`.
+  - Extended `TripAssessmentResponse` with `stability: Optional[DecisionStabilityPayload] = None` and `safe_window: Optional[SafeMissionWindow] = None` without modifying existing fields.
+- **2. Decision Boundary Analysis**:
+  - Implemented pure deterministic helper `compute_decision_boundaries(...)` in `backend/app/domain/risk_engine.py` evaluating upper/lower bound margins, margin percentages, and identifying `nearest_boundary` as the smallest positive safe margin.
+- **3. Recommendation Stability Assessment**:
+  - Implemented pure deterministic helper `compute_decision_stability(...)` classifying stability into `LOW` (active breached metric or nearest margin < 10%), `MEDIUM` (nearest margin between 10% and 25%), or `HIGH` (all margins > 25% with no active hazard bulletins), populated with deterministic reason and headline.
+- **4. Minimal Safe Adjustment**:
+  - Implemented deterministic calculation of `minimal_safe_adjustment` indicating the exact minimal delta required on the primary breached metric to reach the `GO` threshold.
+- **5. Deterministic Sensitivity Ranking**:
+  - Implemented pure ranking ordering Tier 1 (severe hazards: cyclones, squalls, geofences), Tier 2 (breached metrics ordered by relative breach severity descending), and Tier 3 (safe metrics ordered by relative margin ascending).
+- **6. Counterfactual Flip Attribution**:
+  - Implemented `attribute_counterfactual_flip(...)` and frontend `deriveCounterfactualFlip(...)` determining exact primary cause metric, observed shift, crossed threshold, and deterministic revert adjustment when a scenario flips states (e.g. `GO` → `CAUTION`/`NO_GO`).
+- **7. Earliest Safe Mission Window**:
+  - Implemented `compute_safe_window(...)` evaluating future hourly forecast slots for contiguous `GO` intervals meeting voyage duration.
+- **8. Assessment Service & Frontend Surface Integration**:
+  - Populated `stability` and `safe_window` directly in `AssessmentService.assess_trip` from existing in-memory evaluations with zero extra API calls.
+  - Implemented `DecisionStabilityCard.tsx` (rendered under confidence section in `MissionBriefPanel.tsx`).
+  - Implemented `DecisionDeltaPanel.tsx` (rendered in `WhatIfSimulator.tsx` whenever a diff exists).
+  - Enhanced `ThresholdTable.tsx` with `Margin` and `Margin %` columns.
+  - Enhanced `EvidenceDrawer.tsx` with `Decision Boundaries` and `Sensitivity Ranking` tabs.
+  - Enhanced `FisherDecisionSurface.tsx` with Safe Window Summary badge and stability card.
+- **9. Deterministic Safety & Zero-Network Invariant**:
+  - 100% deterministic Python and TypeScript logic. Zero LLMs, zero ML models, zero invented probabilities, zero external API additions, and zero new frontend network requests.
+- **Verification**:
+  - Backend integration tests: 7/7 passed (`pytest tests/integration/test_m1_4_decision_delta.py`).
+  - Backend M1.3 tests: 3/3 passed (`pytest tests/integration/test_m1_3_explainability.py`).
+  - Frontend test suite: 22 test files, 272/272 passed (`npm test` in Vitest).
+  - Frontend TypeScript validation: 0 errors (`npm run typecheck`).
+
 
 

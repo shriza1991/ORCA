@@ -809,6 +809,38 @@ Status: ACCEPTED
   - Frontend test suite: 21 test files, 266/266 tests passing in Vitest (`npm run test`).
   - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
 
+## D048 — Decision Delta & Counterfactual Intelligence (M1.4)
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior AI/Backend Systems Engineer (M1.4)
+- Task/context: Implement ORCA M1.4 Decision Delta & Counterfactual Intelligence across backend and frontend.
+- Decision:
+  1. **Additive Backend Contracts**: Extended `backend/app/contracts/assessment.py` with `DecisionBoundaryItem`, `DecisionStabilityPayload`, `SafeMissionWindow`, and `CounterfactualFlipExplanation`. Extended `TripAssessmentResponse` with `stability: Optional[DecisionStabilityPayload] = None` and `safe_window: Optional[SafeMissionWindow] = None` while preserving all existing schema fields.
+  2. **Decision Boundary Analysis**: Implemented pure deterministic helper `compute_decision_boundaries(...)` in `backend/app/domain/risk_engine.py` evaluating upper/lower bound margins, margin percentages, and identifying `nearest_boundary` as the smallest positive safe margin.
+  3. **Deterministic Recommendation Stability Assessment**: Implemented pure helper `compute_decision_stability(...)` classifying stability into `LOW` (active breached metric or nearest margin < 10%), `MEDIUM` (nearest margin between 10% and 25%), or `HIGH` (all margins > 25% with no active hazard bulletins), populated with deterministic reason and headline.
+  4. **Minimal Safe Adjustment**: Implemented deterministic calculation of `minimal_safe_adjustment` indicating the exact minimal delta required on the primary breached metric to reach the `GO` threshold.
+  5. **Deterministic Sensitivity Ranking**: Implemented pure ranking ordering Tier 1 (severe hazards: cyclones, squalls, geofences), Tier 2 (breached metrics ordered by relative breach severity descending), and Tier 3 (safe metrics ordered by relative margin ascending).
+  6. **Counterfactual Flip Attribution**: Implemented `attribute_counterfactual_flip(...)` and frontend `deriveCounterfactualFlip(...)` determining exact primary cause metric, observed shift, crossed threshold, and deterministic revert adjustment when a scenario flips states (e.g. `GO` → `CAUTION`/`NO_GO`).
+  7. **Earliest Safe Mission Window**: Implemented `compute_safe_window(...)` evaluating future hourly forecast slots for contiguous `GO` intervals meeting voyage duration.
+  8. **Zero-Network In-Memory UI Integration**:
+     - `DecisionStabilityCard.tsx`: Displays stability badge, nearest boundary buffer, minimal safe adjustment, and stability rationale.
+     - `DecisionDeltaPanel.tsx`: Displays baseline vs simulated status flip, primary causal factor, observed value shift, crossed threshold, and revert adjustment.
+     - `ThresholdTable.tsx`: Added `Margin` and `Margin %` columns.
+     - `EvidenceDrawer.tsx`: Added `Decision Boundaries` and `Sensitivity Ranking` tabs.
+     - `FisherDecisionSurface.tsx`: Integrated Safe Window Summary badge and stability card.
+     - `WhatIfSimulator.tsx`: Automatically renders `DecisionDeltaPanel` when active diff exists.
+  9. **Deterministic Safety Invariant**: 100% deterministic Python and TypeScript logic. Zero LLMs, zero ML models, zero invented probabilities, zero external API additions, and zero new frontend network requests.
+- Why:
+  Transforms ORCA from descriptive decision support to causal counterfactual intelligence, answering not just what the recommendation is, but how close it is to changing, what caused it to change, and what minimal adjustment or departure window achieves safety.
+- Affected areas:
+  `backend/app/contracts/assessment.py`, `backend/app/domain/risk_engine.py`, `backend/app/services/assessment_service.py`, `frontend/src/types/assessment.ts`, `frontend/src/types/mission.ts`, `frontend/src/components/fisher/DecisionStabilityCard.tsx`, `frontend/src/components/fisher/DecisionDeltaPanel.tsx`, `frontend/src/utils/counterfactual.ts`, `frontend/src/components/fisher/MissionBriefPanel.tsx`, `frontend/src/components/mission/WhatIfSimulator.tsx`, `frontend/src/components/evidence/ThresholdTable.tsx`, `frontend/src/components/evidence/EvidenceDrawer.tsx`, `frontend/src/components/fisher/FisherDecisionSurface.tsx`, `frontend/src/hooks/useChat.ts`, `tests/integration/test_m1_4_decision_delta.py`, `frontend/src/components/fisher/m1_4_decision_delta.test.ts`.
+- Tests/verification:
+  - Backend integration tests: 7/7 passed (`pytest tests/integration/test_m1_4_decision_delta.py`).
+  - Backend M1.3 tests: 3/3 passed (`pytest tests/integration/test_m1_3_explainability.py`).
+  - Frontend test suite: 22 test files, 272/272 passed (`npm test` in Vitest).
+  - Frontend TypeScript validation: 0 errors (`npm run typecheck`).
+
 ## Decision template
 
 ### D0XX — <title>
@@ -819,6 +851,3 @@ Alternatives:
 Impact:
 Owner:
 Date:
-
-
-

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Check, Clock, Cpu, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import type { DecisionDiff, MissionContext, WhatIfParameters } from '../../types/mission';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import DecisionDeltaPanel from '../fisher/DecisionDeltaPanel';
 
 interface WhatIfSimulatorProps {
   currentContext: MissionContext;
@@ -234,6 +235,9 @@ export default function WhatIfSimulator({
               {activeDiff.summary && (
                 <p className="diff-summary">{translateText(activeDiff.summary, language)}</p>
               )}
+
+              {/* M1.4 Decision Delta Panel */}
+              <DecisionDeltaPanel diff={activeDiff} language={language} />
 
               {craftOverride !== currentContext.craft_profile && (
                 <button

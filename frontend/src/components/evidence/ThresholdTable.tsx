@@ -100,6 +100,8 @@ export default function ThresholdTable({ evidence, className = '' }: ThresholdTa
             <th style={{ padding: '10px 12px' }}>Operator</th>
             <th style={{ padding: '10px 12px' }}>Threshold</th>
             <th style={{ padding: '10px 12px' }}>Unit</th>
+            <th style={{ padding: '10px 12px' }}>Margin</th>
+            <th style={{ padding: '10px 12px' }}>Margin %</th>
             <th style={{ padding: '10px 12px' }}>Impact</th>
             <th style={{ padding: '10px 12px' }}>Status</th>
             <th style={{ padding: '10px 12px' }}>Description</th>
@@ -124,6 +126,24 @@ export default function ThresholdTable({ evidence, className = '' }: ThresholdTa
             const description = row.description || '—';
             const impactStyle = getImpactBadgeStyle(impact);
 
+            // Deterministic Margin Calculation (M1.4)
+            const rowAny = row as any;
+            let marginStr = '—';
+            let marginPctStr = '—';
+            let marginColor = '#64748b';
+            if (typeof rowAny.margin === 'number') {
+              marginStr = (rowAny.margin >= 0 ? '+' : '') + rowAny.margin.toFixed(2);
+              marginPctStr = (rowAny.margin_percent >= 0 ? '+' : '') + (rowAny.margin_percent || 0).toFixed(1) + '%';
+              marginColor = rowAny.margin >= 0 ? '#16a34a' : '#dc2626';
+            } else if (typeof row.observed_value === 'number' && typeof row.threshold_value === 'number') {
+              const isUpper = row.operator !== '<' && row.operator !== '<=';
+              const m = isUpper ? (row.threshold_value - row.observed_value) : (row.observed_value - row.threshold_value);
+              const mp = row.threshold_value !== 0 ? (m / row.threshold_value) * 100 : 0;
+              marginStr = (m >= 0 ? '+' : '') + m.toFixed(2);
+              marginPctStr = (mp >= 0 ? '+' : '') + mp.toFixed(1) + '%';
+              marginColor = m >= 0 ? '#16a34a' : '#dc2626';
+            }
+
             return (
               <tr
                 key={idx}
@@ -147,6 +167,18 @@ export default function ThresholdTable({ evidence, className = '' }: ThresholdTa
                 </td>
                 <td style={{ padding: '10px 12px', color: '#64748b' }}>
                   {unit}
+                </td>
+                <td
+                  data-testid={`threshold-margin-${idx}`}
+                  style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 600, color: marginColor }}
+                >
+                  {marginStr}
+                </td>
+                <td
+                  data-testid={`threshold-margin-pct-${idx}`}
+                  style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 600, color: marginColor }}
+                >
+                  {marginPctStr}
                 </td>
                 <td style={{ padding: '10px 12px' }}>
                   <span

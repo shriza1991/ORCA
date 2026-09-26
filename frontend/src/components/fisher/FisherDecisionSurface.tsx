@@ -15,6 +15,7 @@ import {
   VolumeX,
   Map as MapIcon,
   FileText,
+  Clock,
 } from 'lucide-react';
 import type { TripAssessmentResponse } from '../../types/assessment';
 import type { DecisionDiff, MissionContext } from '../../types/mission';
@@ -380,6 +381,29 @@ export default function FisherDecisionSurface({
             </div>
           </div>
         )}
+
+        {/* M1.4 Safe Mission Window Summary */}
+        {assessment?.safe_window && (
+          <div
+            data-testid="safe-window-summary"
+            style={{
+              marginTop: '12px',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              backgroundColor: assessment.safe_window.is_current_safe ? '#f0fdf4' : '#fffbeb',
+              border: `1px solid ${assessment.safe_window.is_current_safe ? '#bbf7d0' : '#fde68a'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '0.875rem',
+              color: assessment.safe_window.is_current_safe ? '#166534' : '#92400e',
+              fontWeight: 600,
+            }}
+          >
+            <Clock size={16} />
+            <span>{translateText(assessment.safe_window.window_summary, language)}</span>
+          </div>
+        )}
       </div>
 
       {/* 2. Mission Brief */}
@@ -387,6 +411,7 @@ export default function FisherDecisionSurface({
         brief={assessment?.brief}
         delta={collab?.delta}
         activeDiff={activeDiff}
+        stability={assessment?.stability}
         language={language}
       />
 
@@ -425,6 +450,7 @@ export default function FisherDecisionSurface({
         evidence={assessment?.evidence}
         sourceStatus={assessment?.source_status}
         brief={assessment?.brief}
+        stability={assessment?.stability}
         language={language}
       />
 

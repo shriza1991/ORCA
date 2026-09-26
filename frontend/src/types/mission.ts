@@ -1,4 +1,5 @@
 import type { UserContext } from './contracts';
+import type { CounterfactualFlipExplanation } from './assessment';
 
 /** UI-only presentation mode. It deliberately does not grant server permissions. */
 export type OperationalRole = 'fisher' | 'authority';
@@ -41,6 +42,7 @@ export interface DecisionDiff {
   timeOffsetHours: number;
   craftProfile: MissionContext['craft_profile'];
   timestamp: string;
+  flip_explanation?: CounterfactualFlipExplanation | null;
 }
 
 /** Operational corridor modes for multi-route evaluation */

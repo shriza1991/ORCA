@@ -1,6 +1,7 @@
-import type { MissionBriefPayload } from '../../types/assessment';
+import type { MissionBriefPayload, DecisionStabilityPayload } from '../../types/assessment';
 import type { DecisionDelta, DecisionDiff } from '../../types/mission';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import DecisionStabilityCard from './DecisionStabilityCard';
 import {
   HelpCircle,
   ArrowRightCircle,
@@ -15,6 +16,7 @@ export interface MissionBriefPanelProps {
   brief?: MissionBriefPayload | null;
   delta?: DecisionDelta | null;
   activeDiff?: DecisionDiff | null;
+  stability?: DecisionStabilityPayload | null;
   language?: SupportedLanguage;
 }
 
@@ -22,6 +24,7 @@ export default function MissionBriefPanel({
   brief,
   delta,
   activeDiff,
+  stability,
   language = 'en',
 }: MissionBriefPanelProps) {
   if (!brief) {
@@ -228,6 +231,11 @@ export default function MissionBriefPanel({
           </ul>
         )}
       </div>
+
+      {/* 5b. Decision Stability (M1.4) */}
+      {stability && (
+        <DecisionStabilityCard stability={stability} language={language} />
+      )}
 
       {/* 6. What Changed? (What-If Delta Section) */}
       {hasChangedFactors && (

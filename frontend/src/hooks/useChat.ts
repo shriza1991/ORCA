@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { ChatRequest, ChatResponse } from '../types/contracts';
 import { sendMessage, ApiError } from '../api/client';
 import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type MissionState, type WhatIfParameters } from '../types/mission';
+import { deriveCounterfactualFlip } from '../utils/counterfactual';
 
 export interface ChatMessage {
   id: string;
@@ -183,7 +184,16 @@ export function useChat() {
       setMessages(prev => prev.map(m => (m.id === loadingMsg.id ? assistantMsg : m)));
       setActiveResponse(response);
 
-      // Construct Decision Diff
+      // Construct Decision Diff with Deterministic Flip Attribution (M1.4)
+      const bComps = activeResponse?.recommendation?.threshold_comparisons || [];
+      const sComps = response?.recommendation?.threshold_comparisons || [];
+      const flipExplanation = deriveCounterfactualFlip(
+        baselineStatus,
+        response.recommendation.status,
+        bComps,
+        sComps
+      );
+
       setActiveDiff({
         baselineStatus,
         simulatedStatus: response.recommendation.status,
@@ -191,6 +201,7 @@ export function useChat() {
         timeOffsetHours: params.timeOffsetHours,
         craftProfile: effectiveContext.craft_profile,
         timestamp: new Date().toISOString(),
+        flip_explanation: flipExplanation,
       });
     } catch (err) {
       let errorMsg = 'Failed to run simulation. Please check server connectivity.';
