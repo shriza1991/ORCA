@@ -5,6 +5,8 @@
  * Owned by Dev 1 (Frontend Lead) & Dev 2 (Backend Platform).
  */
 
+import type { MissionState } from './mission';
+
 export type RecommendationStatus = 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN' | 'INFORMATIONAL';
 
 export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
@@ -26,6 +28,7 @@ export interface ChatRequest {
   conversation_id?: string;
   message: string;
   user_context?: UserContext;
+  mission_state?: MissionState;
 }
 
 export interface ThresholdComparison {
@@ -130,6 +133,7 @@ export interface ChatResponse {
   agent_collaboration?: AgentCollaborationPayload;
   decision_object?: any;
   decision_delta?: any;
+  mission_state?: MissionState;
 }
 
 export type DataQualityRating = 'Verified' | 'Partial' | 'Snapshot Fallback' | 'Limited';

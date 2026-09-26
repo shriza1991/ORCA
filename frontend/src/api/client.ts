@@ -62,6 +62,10 @@ export interface VoiceChatParams {
   origin_harbor?: string;
   craft_profile?: string;
   language_preference?: string;
+  departure_time?: string;
+  return_time?: string;
+  target_pfz?: string;
+  parent_assessment_id?: string;
 }
 
 export async function sendVoiceChat(
@@ -83,6 +87,18 @@ export async function sendVoiceChat(
   }
   if (params?.language_preference) {
     formData.append('language_preference', params.language_preference);
+  }
+  if (params?.departure_time) {
+    formData.append('departure_time', params.departure_time);
+  }
+  if (params?.return_time) {
+    formData.append('return_time', params.return_time);
+  }
+  if (params?.target_pfz) {
+    formData.append('target_pfz', params.target_pfz);
+  }
+  if (params?.parent_assessment_id) {
+    formData.append('parent_assessment_id', params.parent_assessment_id);
   }
 
   const res = await fetch(`${API_BASE}/voice/chat`, {

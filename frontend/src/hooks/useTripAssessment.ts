@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { TripAssessmentRequest, TripAssessmentResponse } from '../types/assessment';
+import type { MissionState } from '../types/mission';
 import { saveOfflineAssessment, loadOfflineAssessment } from '../utils/offline-cache';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
@@ -7,6 +8,7 @@ const CACHE_EXPIRY_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 export function useTripAssessment() {
   const [data, setData] = useState<TripAssessmentResponse | null>(null);
+  const [missionState, setMissionState] = useState<MissionState | null>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,13 +33,19 @@ export function useTripAssessment() {
     // Note: Do not clear previous data immediately to prevent flashing empty state,
     // but the UI must ensure "Initial/loading/error states must not appear favourable" (Req 3).
 
+    // Attach canonical mission_state with every assessment request (M1.1)
+    const effectiveRequest: TripAssessmentRequest = {
+      ...request,
+      mission_state: request.mission_state || missionState || undefined,
+    };
+
     try {
       const res = await fetch(`${API_BASE_URL}/trip-assessments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify(effectiveRequest),
         signal: controller.signal,
       });
 
@@ -50,17 +58,32 @@ export function useTripAssessment() {
       // Update state only if request wasn't aborted
       if (!controller.signal.aborted) {
         setData(result);
+        if (result.mission_state) {
+          setMissionState(result.mission_state);
+        }
         setIsLoading(false);
-        // Save to offline cache
-        await saveOfflineAssessment(request.origin_harbor || 'Ratnagiri', result);
+        // Save to offline cache with craft and departure discrimination
+        await saveOfflineAssessment(
+          request.origin_harbor || 'Ratnagiri',
+          result,
+          request.craft_profile || 'motorized_boat',
+          request.departure_time || 'default',
+        );
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         setIsOffline(true);
-        // Try to load from offline cache
-        const cached = await loadOfflineAssessment(request.origin_harbor || 'Ratnagiri');
+        // Try to load from offline cache with discriminatory key
+        const cached = await loadOfflineAssessment(
+          request.origin_harbor || 'Ratnagiri',
+          request.craft_profile || 'motorized_boat',
+          request.departure_time || 'default',
+        );
         
         if (cached) {
+          if (cached.data.mission_state) {
+            setMissionState(cached.data.mission_state);
+          }
           const ageMs = Date.now() - cached.timestamp;
           if (ageMs > CACHE_EXPIRY_MS) {
             setIsExpired(true);
@@ -68,10 +91,11 @@ export function useTripAssessment() {
             const expiredData: TripAssessmentResponse = {
               ...cached.data,
               decision: {
-                ...cached.data.decision,
+                ...(typeof cached.data.decision === 'object' ? cached.data.decision : { status: cached.data.decision }),
                 status: 'UNKNOWN',
                 summary: 'Offline mode: Cached assessment has expired. Safety status is unknown.',
                 next_action: 'Please reconnect to the internet to fetch fresh assessments.',
+                decisive_factors: ['Cached evidence exceeded 6-hour limit.'],
               }
             };
             setData(expiredData);
@@ -87,7 +111,7 @@ export function useTripAssessment() {
         setData(null);
       }
     }
-  }, []);
+  }, [missionState]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -100,6 +124,8 @@ export function useTripAssessment() {
 
   return {
     data,
+    missionState,
+    setMissionState,
     isLoading,
     error,
     isOffline,

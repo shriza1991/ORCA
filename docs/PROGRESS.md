@@ -6,9 +6,35 @@
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
-- Current version: `v0.2.2-features-main-integrated`
+- Current version: `v0.2.3-m1.2-mission-brief`
 - Active branch: `main`
-- Current milestone: **India MarineWatch & Autonomous Marine Intelligence (BarentsWatch India Architecture)**
+- Current milestone: **M1.2 Mission Brief / Why Panel (Deterministic Presentation & Explainability)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Backend Pytest: 3/3 acceptance tests passing in `tests/integration/test_m1_2_mission_brief.py`, 18/18 passing across full assessment suite (`test_assessments.py`, `test_mission_contracts.py`, `test_m1_1_mission_state.py`, `test_m1_2_mission_brief.py`).
+    - Frontend Vitest: 259/259 passing across 20 test suites (`npm run test`).
+    - Frontend TypeScript: 0 errors (`npm run typecheck`).
+    - Next.js Client: 0 errors in `npm run typecheck`, production build passing (`npm run build`).
+  - **M1.2 Mission Brief Deliverables**:
+    - **Additive Backend Contract**: Defined canonical `MissionBriefPayload` (summary, recommended_action, positive_factors, negative_factors, confidence, confidence_reasons) and added `brief: Optional[MissionBriefPayload] = None` to `TripAssessmentResponse`.
+    - **Deterministic Risk Engine Projection**: Populated `brief` in `AssessmentService.assess_trip` directly from existing `RiskAssessmentPayload` fields with zero LLM calls and zero synthetic modifications:
+      - `summary` ← `risk_payload.summary`
+      - `recommended_action` ← `risk_payload.recommended_action`
+      - `positive_factors` ← `risk_payload.decisive_factors + non_decisive_factors` (on `GO`) / `non_decisive_factors` (on `CAUTION`/`NO_GO`)
+      - `negative_factors` ← `[]` (on `GO`) / `risk_payload.decisive_factors` (on `CAUTION`/`NO_GO`)
+      - `confidence` ← `risk_payload.confidence_level`
+      - `confidence_reasons` ← `risk_payload.confidence_reasons`
+    - **MissionBriefPanel Component & Surface Integration**: Rendered `<MissionBriefPanel brief={assessment?.brief} delta={collab?.delta} activeDiff={activeDiff} language={language} />` directly beneath the recommendation banner in `FisherDecisionSurface.tsx` with zero extra network requests or polling.
+    - **What-If Scenario Delta Support**: Dynamically renders "What Changed?" section displaying `delta.changed_factors` or `activeDiff.summary` when counterfactual diffs are present, hiding cleanly otherwise.
+    - **Dual-Client Parity**: Full parity implemented across React (`frontend/`) and Next.js (`nextjs/`).
+- Prior Milestone: **M1.1 Canonical MissionState Context Preservation & M1.1.5 Mission Setup Hardening** (Assessment → Chat → Voice → What-If → Alerts)
+  - **Status**: **COMPLETE & VERIFIED** (Backend pytest: 7/7 acceptance tests passing in `tests/integration/test_m1_1_mission_state.py`, 8/8 contract tests passing in `tests/contract/`; Frontend: 253/253 passing in Vitest across 19 suites, TypeScript check: 0 errors).
+  - **Operational Pipelines Bound**:
+    - **Assessment Pipeline**: `TripAssessmentRequest` and `TripAssessmentResponse` accept and return `mission_state`; `AssessmentService` uses `MissionState` as the authoritative single source of truth while keeping legacy fields working.
+    - **Chat Pipeline**: `ChatRequest` and `ChatResponse` carry `mission_state`; `ORCAState` passes `mission_state` unmodified through supervisor, specialist tools, risk evaluation, and response composer nodes. `_build_user_context()` preserves departure/return times, target PFZ, and parent assessment ID.
+    - **Voice Pipeline**: `/voice/chat` endpoint accepts `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id`, constructing canonical `MissionState` before agent execution.
+    - **Frontend State & Cache Isolation**: `useTripAssessment` and `useChat` maintain persistent `MissionState` references; `offline-cache.ts` isolates keys using `samudra_trip_assessment_${originHarbor}_${craftProfile}_${departureTime}`, preventing collisions across different departure hours.
+    - **Decision Type Normalization**: Updated frontend `decision` contract to `RecommendationStatus | Recommendation` to eliminate runtime crashes between backend string statuses and rich recommendation objects.
+    - **Alert Service Attachment**: In-memory attachment of `MissionState` to monitored trip registrations.
 - Client Architecture Migration: **IN PROGRESS (Next.js Multi-Agent Reasoning Port & Full Route Support)**
   - Dual interface model locked: React Native + Expo (field mobile) & Next.js + React (web platform & demo).
   - Migration principle: `REUSE → ADAPT → EXTRACT → REWRITE`.
@@ -735,5 +761,33 @@ None
   - Frontend typecheck (`tsc --noEmit`): 0 errors.
   - Frontend test suite (`npx vitest run`): 17/17 test files passed, 244/244 tests passed.
   - Backend test suite (`pytest`): 118/118 focused connectors & M3 decision object tests passed, 586/590 full backend suite passed (4 Open-Meteo contract regressions resolved).
+
+## 2026-09-26 — M1.3 Explainability & Evidence View Implementation
+- Status: **COMPLETE & VERIFIED**
+- **1. Assessment-Level Agent Collaboration**:
+  - Added additive `agent_collaboration: Optional[AgentCollaborationPayload] = None` to `TripAssessmentResponse` in `backend/app/contracts/assessment.py`.
+  - In `AssessmentService.assess_trip()`, invoked `AgentCollaborationEngine.derive_collaboration(...)` directly from deterministic risk evaluation outputs, observations, and trace items.
+  - Exposes Marine, Weather, Geospatial, and Safety agent stances, arbitration results, and causal reasoning timeline immediately after assessment without requiring a chat flow or LLM generation.
+- **2. Deterministic Threshold Comparison Matrix**:
+  - Implemented `ThresholdTable.tsx` in `frontend/src/components/evidence/ThresholdTable.tsx`.
+  - Renders all `ThresholdComparison` records from `assessment.evidence` across 8 canonical columns: `Metric`, `Observed`, `Operator`, `Threshold`, `Unit`, `Impact`, `Status`, `Description`.
+  - Status badges strictly color-coded by impact enum (`SAFE`, `CAUTION_TRIGGER`, `NO_GO_TRIGGER`, `UNKNOWN_TRIGGER`) without inferring additional meaning.
+- **3. Assessment-Mode Evidence Drawer**:
+  - Upgraded `EvidenceDrawer.tsx` to support in-memory inspection of `assessment.evidence`, `assessment.source_status`, `assessment.brief`, and trace.
+  - Wired "Inspect Evidence & Data Feeds" button in `FisherDecisionSurface.tsx` operating on in-memory data with zero network calls, zero polling, and zero websocket subscriptions.
+- **4. PFZ Explainability & Multi-Candidate Rationale**:
+  - Upgraded `PFZDetails.tsx` to display top 3 ranked PFZ candidates with complete metrics (`Rank`, `Distance nm`, `Bearing`, `Depth`, `SST`, `Chlorophyll`).
+  - Added deterministic selection rationale explaining distance advantage over Candidate #2 (e.g. `Selected because it is the nearest viable PFZ. Distance advantage: 8.2nm closer than Candidate #2.`) using existing candidate metrics only.
+- **5. Route Comparison View**:
+  - Upgraded `TripPlanDetails.tsx` with complete evaluated routes table displaying `Route`, `Distance`, `Wave Height`, `ETA`, `Fuel`, `Exposure Score`, `Risk Rating`, `Feasible`, and `infeasibility_reasons` for infeasible corridors.
+  - Visually indicates the recommended route using Dev 4 backend exposure values without recalculation.
+- **6. Fisher Decision Surface Integration**:
+  - Organized canonical decision flow in `FisherDecisionSurface.tsx`:
+    Decision Banner $\rightarrow$ Mission Brief $\rightarrow$ Inspect Evidence $\rightarrow$ Agent Collaboration $\rightarrow$ Ocean Conditions $\rightarrow$ PFZ Explainability $\rightarrow$ Route Comparison.
+- **Verification**:
+  - Backend integration tests: 3/3 passed (`pytest tests/integration/test_m1_3_explainability.py`).
+  - Frontend test suite: 21 test files, 266/266 passed (`vitest run`).
+  - Frontend TypeScript validation: 0 errors (`tsc --noEmit`).
+
 
 

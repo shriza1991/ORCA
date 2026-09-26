@@ -8,13 +8,20 @@ export type OperationalRole = 'fisher' | 'authority';
  * ChatRequest.user_context shape. Route/time fields are intentionally absent
  * until their API contract is available.
  */
-export type MissionContext = Pick<UserContext, 'origin_harbor' | 'craft_profile' | 'departure_time' | 'return_time'>;
+export type MissionContext = Pick<UserContext, 'origin_harbor' | 'craft_profile' | 'departure_time' | 'return_time'> & {
+  target_pfz?: string;
+  parent_assessment_id?: string;
+};
+
+const _now = new Date();
+const _defaultDep = new Date(_now.getTime() + 3600 * 1000).toISOString();
+const _defaultRet = new Date(_now.getTime() + 13 * 3600 * 1000).toISOString();
 
 export const DEFAULT_MISSION_CONTEXT: MissionContext = {
   origin_harbor: 'Ratnagiri',
   craft_profile: 'motorized_boat',
-  departure_time: 'today',
-  return_time: 'tomorrow',
+  departure_time: _defaultDep,
+  return_time: _defaultRet,
 };
 
 /** Counterfactual simulation parameters for Mission Twin */
@@ -161,3 +168,4 @@ export interface DecisionDeltaContract {
   summary: string;
 }
 
+export type DecisionDelta = DecisionDeltaContract;

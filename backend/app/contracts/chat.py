@@ -64,6 +64,9 @@ class ChatRequest(BaseModel):
     user_context: Optional[UserContext] = Field(
         default_factory=UserContext, description="Optional spatial or operational context"
     )
+    mission_state: Optional[Any] = Field(
+        None, description="Canonical M1.1 MissionState context"
+    )
 
 
 class ThresholdComparison(BaseModel):
@@ -249,6 +252,10 @@ class ChatResponse(BaseModel):
     decision_delta: Optional[Any] = Field(
         None,
         description="Structured M3 DecisionDelta comparing counterfactual/current to baseline",
+    )
+    mission_state: Optional[Any] = Field(
+        None,
+        description="Canonical M1.1 MissionState context",
     )
 
 

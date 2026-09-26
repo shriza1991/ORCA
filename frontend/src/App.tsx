@@ -152,6 +152,10 @@ export default function App() {
         language={chat.language}
         originHarbor={chat.missionContext.origin_harbor}
         craftProfile={chat.missionContext.craft_profile}
+        departureTime={chat.missionContext.departure_time}
+        returnTime={chat.missionContext.return_time}
+        targetPfz={chat.missionContext.target_pfz}
+        parentAssessmentId={chat.missionContext.parent_assessment_id || chat.missionState?.parent_assessment_id || undefined}
       />
     </div>
   );

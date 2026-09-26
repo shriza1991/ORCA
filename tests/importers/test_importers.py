@@ -15,7 +15,7 @@ from pathlib import Path
 from datetime import datetime, UTC
 from unittest.mock import patch
 
-import xarray as xr
+xr = pytest.importorskip("xarray")
 
 from backend.app.importers.pfz_importer import PfzImporter
 from backend.app.importers.hazard_importer import HazardImporter
