@@ -868,3 +868,11 @@ None
   - Backend persistence test suite: 19/19 passed in 18s (tests/domain/test_f04_persistence.py, tests/domain/test_f05_offline_persistence.py).
   - Next.js TypeScript compilation: clean with 0 errors (npx tsc --noEmit).
   - Core test baseline: 773 passing / 52 skipped.
+
+ # #   2 0 2 6 - 0 9 - 2 7   -   F i x e d   I n f i n i t e   L o o p   i n   R e a s s e s s m e n t   a n d   D u r a t i o n   B u g 
+ -   S t a t u s :   * * C O M P L E T E   &   V E R I F I E D * * 
+ -   F i x e d   a n   i s s u e   i n   b a c k e n d   b a c k g r o u n d   t a s k   w h e r e   t h e   s y s t e m   g o t   s t u c k   i n   a   r a p i d   i t e r a t i o n   l o o p   t h r o u g h   t h o u s a n d s   o f   i n v a l i d   t r i p   r o w s   b y   d e a c t i v a t i n g   i n v a l i d   t r i p s   ( w h e r e   r e t u r n _ t i m e   w a s   b e f o r e   o r   e q u a l   t o   d e p a r t u r e _ t i m e ) . 
+ -   A d d e d   f i x   i n   a l e r t   A P I   \  e g i s t e r _ t r i p _ m o n i t o r i n g \   t o   c o r r e c t   U I   t i m e s t a m p   g a p s   c a u s i n g   d e p a r t u r e _ t i m e   = =   r e t u r n _ t i m e . 
+ -   V e r i f i e d   b a c k g r o u n d   w o r k e r   p r o c e s s   c o m p l e t e s   a   s i n g l e   b a t c h   r e a s s e s s m e n t   s u c c e s s f u l l y   p e r   6 0 s   c y c l e   w i t h o u t   r e p e a t i n g   g e o g r a p h i c   f a l l b a c k   l o g s   i n d e f i n i t e l y . 
+  
+ 
