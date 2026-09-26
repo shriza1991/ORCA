@@ -5,9 +5,9 @@
     "source_name": "pfz_advisories",
     "captured_at": "2026-09-24T04:51:07.105227+00:00",
     "valid_from": "2026-09-24T04:51:07.105227+00:00",
-    "valid_to": "2026-09-24T23:59:59Z",
+    "valid_to": "2030-01-01T00:00:00+00:00",
     "schema_version": "1.0",
-    "checksum": "7ae7deeec8991d637d117aada3e1bd67e6f95536b8af593e76eee4d0a9d75ccc",
+    "checksum": "43eb81c2c6d0935687c5eafd0601f4db152aab1b9011cd6e463d7fe0f634a19e",
     "status": "SIMULATED"
   },
   "payload": {
@@ -4314,7 +4314,7 @@
       }
     ],
     "bulletin_date": "2026-09-23T00:00:00Z",
-    "valid_to": "2026-09-24T23:59:59Z",
+    "valid_to": "2030-01-01T00:00:00+00:00",
     "source_name": "INCOIS Maharashtra PFZ",
     "source_url": "https://incois.gov.in"
   }

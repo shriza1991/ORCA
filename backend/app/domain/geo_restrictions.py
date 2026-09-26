@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -183,3 +184,106 @@ class DeterministicGeospatialEngine(GeospatialHazardEngine):
             hard_stop=False,
             restricted=is_near,
         )
+
+    def check_projected_trajectory_hazards(
+        self,
+        context: ToolInvocationContext,
+        current_coordinates: List[float],
+        speed_knots: float,
+        heading_degrees: float,
+        lookahead_hours: float = 2.0,
+    ) -> GeospatialHazardPayload:
+        """Projects vessel course forward by lookahead_hours and checks if it intercepts any restricted boundary."""
+        if not current_coordinates:
+            try:
+                lat, lon = resolve_coordinates(context)
+                current_coordinates = [lon, lat]
+            except Exception:
+                current_coordinates = [73.28, 16.99]
+
+        lon1, lat1 = float(current_coordinates[0]), float(current_coordinates[1])
+        start_pt = Point(lon1, lat1)
+
+        # Distance projected along heading
+        dist_km = max(0.1, speed_knots * 1.852 * lookahead_hours)
+
+        # Geodesic direct forward projection
+        # Heading: 0=N, 90=E, 180=S, 270=W
+        theta = math.radians(heading_degrees)
+        d_sigma = dist_km / 6371.0  # angular distance in radians
+        lat1_rad = math.radians(lat1)
+        lon1_rad = math.radians(lon1)
+
+        lat2_rad = math.asin(
+            math.sin(lat1_rad) * math.cos(d_sigma)
+            + math.cos(lat1_rad) * math.sin(d_sigma) * math.cos(theta)
+        )
+        lon2_rad = lon1_rad + math.atan2(
+            math.sin(theta) * math.sin(d_sigma) * math.cos(lat1_rad),
+            math.cos(d_sigma) - math.sin(lat1_rad) * math.sin(lat2_rad),
+        )
+
+        lon2 = math.degrees(lon2_rad)
+        lat2 = math.degrees(lat2_rad)
+
+        proj_line = LineString([(lon1, lat1), (lon2, lat2)])
+        now_utc = datetime.now(UTC)
+
+        closest_poly = None
+        closest_ttc_hours = None
+        closest_dist_km = None
+
+        for poly_item in self._polygons:
+            vt_str = poly_item.get("valid_to")
+            if vt_str:
+                try:
+                    vt = datetime.fromisoformat(vt_str.replace("Z", "+00:00"))
+                    if vt < now_utc:
+                        continue
+                except Exception:
+                    pass
+
+            poly_geom = poly_item["geometry"]
+            if poly_geom.intersects(proj_line):
+                # Calculate distance from origin to intersection
+                intersection = proj_line.intersection(poly_geom)
+                if intersection.is_empty:
+                    continue
+
+                if poly_geom.contains(start_pt):
+                    d_entry_km = 0.0
+                    ttc = 0.0
+                else:
+                    boundary_intersect = poly_geom.boundary.intersection(proj_line)
+                    if hasattr(boundary_intersect, "geoms") and len(boundary_intersect.geoms) > 0:
+                        pt_closest = min(boundary_intersect.geoms, key=lambda p: start_pt.distance(p))
+                    elif hasattr(boundary_intersect, "x"):
+                        pt_closest = boundary_intersect
+                    else:
+                        pt_closest = start_pt
+
+                    deg_dist = math.hypot(pt_closest.x - lon1, pt_closest.y - lat1)
+                    d_entry_km = deg_dist * KM_PER_DEG_LAT
+                    speed_kmh = max(0.5, speed_knots * 1.852)
+                    ttc = d_entry_km / speed_kmh
+
+                if closest_ttc_hours is None or ttc < closest_ttc_hours:
+                    closest_ttc_hours = ttc
+                    closest_dist_km = d_entry_km
+                    closest_poly = poly_item
+
+        if closest_poly is not None and closest_ttc_hours is not None and closest_ttc_hours <= lookahead_hours:
+            is_hard = closest_poly["is_hard_restriction"]
+            return GeospatialHazardPayload(
+                intersected=True,
+                restriction_name=closest_poly["name"],
+                restriction_type=closest_poly["type"],
+                distance_to_boundary_km=round(closest_dist_km, 1),
+                hard_stop=is_hard,
+                restricted=True,
+                time_to_cross_hours=round(closest_ttc_hours, 2),
+                projected_intersection=True,
+            )
+
+        # No projected intersection within lookahead; return static check
+        return self.check_geofence_hazards(context=context, coordinates=current_coordinates)

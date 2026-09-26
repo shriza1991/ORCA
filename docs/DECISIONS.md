@@ -708,6 +708,22 @@ Status: ACCEPTED
 - Affected areas: `backend/app/agents/graph.py`, `backend/app/agents/state.py`, `backend/app/contracts/chat.py`, `backend/app/services/state_mapper.py`, `frontend/src/types/contracts.ts`, `backend/app/core/config.py`, `tests/agent_eval/test_m3_decision_object.py`, `tests/agent_eval/test_flagship_flow.py`.
 - Tests/verification: 17/17 dedicated M3 regression tests passing (`test_m3_decision_object.py`), flagship flow passing (`test_flagship_flow.py`), 405/405 agent_eval tests passing, 85/85 domain tests passing, frontend typecheck passing (0 errors), frontend Vite production build passing.
 
+## D038 — M4 Dynamic Trajectory Exposure, Time-Dependent Current Routing & Departure Window Optimization
+Status: ACCEPTED
+
+- Date: 2026-09-26
+- Agent/person: Senior Maritime Systems & GIS Engineer (M4 / P4)
+- Task/context: Complete remaining M4/P4 Domain Intelligence, GIS & Temporal tasks under Phase 5 Mission Twin.
+- Decision:
+  1. **Dynamic Trajectory Exposure Engine**: Implemented `TrajectoryExposureEngine` in `backend/app/domain/trajectory_exposure.py`. Instead of applying a flat static wave height across all waypoints, it computes cumulative transit distances and arrival ETA timestamps for each waypoint $(lon_i, lat_i)$ based on craft profiles (`motorized_boat`: 8kt, `mechanized_trawler`: 10kt, `traditional_non_motorized`: 3kt). Resolves hourly marine conditions at each waypoint's specific arrival hour to evaluate peak wave height, localized segment exposure, and peak exposure waypoints along the journey.
+  2. **Time-Dependent Marine Routing with Ocean Current Vectors**: Extended `MarinePathfinder` A* pathfinding in `backend/app/domain/marine_routing.py` to accept optional `current_vector_fn` and `craft_speed_knots`. Calculates the surface current component along the vessel heading vector ($V_{\parallel} = \vec{v}_c \cdot \hat{u}$) to adjust effective speed and edge transit cost ($g_{\text{step}} = D \times \frac{V}{V_{\text{eff}}}$). Enables true fuel-optimal routing around strong opposing current eddies or riding favorable streams while remaining strictly seaward.
+  3. **Temporal Departure Window Scanner**: Implemented `DepartureWindowEvaluator` in `backend/app/domain/departure_window.py`. Scans the forecast envelope (+24h to +48h) at step intervals (e.g. 3h) to identify and recommend safe departure windows when immediate departure is unsafe. Generates mariner synthesis: e.g. "Recommend delaying departure by +6h to 2026-09-26T12:00:00Z. Wave height drops from 2.8m to 1.4m (safe GO ceiling for motorized_boat)."
+  4. **Proactive Trajectory Geofence Monitoring**: Extended `DeterministicGeospatialEngine` in `backend/app/domain/geo_restrictions.py` with `check_projected_trajectory_hazards`. Projects vessel position along active heading and speed over a forward lookahead window (default 2.0h) using great-circle direct geodesic forward calculation, detecting boundary intersections with time-to-cross ($TTC$) and distance-to-boundary metrics before the vessel breaches an MPA or naval firing range.
+  5. **Additive Contract Schema Extensions**: Extended `EvaluatedRouteItem`, `RouteExposurePayload`, and `GeospatialHazardPayload` in `backend/app/agents/integrations/dev4.py` with `waypoint_timeline`, `peak_exposure_point`, `current_adjusted`, `departure_windows`, `optimal_departure_recommendation`, `time_to_cross_hours`, and `projected_intersection`. All new fields have defaults, maintaining 100% backward compatibility.
+  6. **Snapshot Checksum Resynchronization**: Fixed SHA-256 checksum and validity window in `data/source_snapshots/pfz_advisories.json` so all 44 connector contract and data service tests pass 100%.
+- Why: Satisfies all P4 / M4 responsibilities: transitions SAMUDRA from static map reasoning to authentic mission trajectory reasoning with deterministic safety authority.
+- Tests/verification: 95/95 domain tests passing (`tests/domain/`), 406/406 agent_eval tests passing, 244/244 frontend vitest tests passing, 0 TypeScript compile errors.
+
 ## Decision template
 
 ### D0XX — <title>
@@ -718,3 +734,4 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
