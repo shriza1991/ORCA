@@ -320,7 +320,7 @@ async def chat_endpoint(request: ChatRequest) -> ChatResponse:
 
         error_code = "AGENT_EXECUTION_FAILED"
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        msg = "SAMUDRA encountered an internal error while processing your query."
+        msg = "ORCA encountered an internal error while processing your query."
 
         # Mask raw error messages for public consumption
         if isinstance(exc.original_exc, ConnectorTimeoutError):
@@ -334,7 +334,7 @@ async def chat_endpoint(request: ChatRequest) -> ChatResponse:
         elif isinstance(exc.original_exc, ConnectorAuthenticationError):
             error_code = "UPSTREAM_AUTH_FAILED"
             status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-            msg = "SAMUDRA is temporarily unable to authenticate with marine data providers."
+            msg = "ORCA is temporarily unable to authenticate with marine data providers."
         elif isinstance(exc.original_exc, ConnectorMalformedResponseError):
             error_code = "UPSTREAM_MALFORMED_DATA"
             status_code = status.HTTP_502_BAD_GATEWAY

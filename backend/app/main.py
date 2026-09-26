@@ -39,8 +39,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         title=settings.APP_NAME,
         description=(
+            "ORCA — Marine EcOsystem Reasoning with Collaborative Agents\n"
             "Smart Autonomous Marine Understanding, Decision & Risk Assistant (SAMUDRA)\n"
-            "SIH 2026 Problem Statement PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents"
+            "SIH 2026 Problem Statement PS 26176"
         ),
         version="0.1.0",
         docs_url="/docs" if settings.DEBUG else None,

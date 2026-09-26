@@ -2417,7 +2417,7 @@ def terminal_node(state: ORCAState) -> Dict[str, Any]:
         evidence_ids=evidence_ids,
     )
 
-    harbor = state.get("origin_harbor") or state.get("location", {}).get("harbor", "Ratnagiri")
+    harbor = state.get("origin_harbor") or (state.get("location") or {}).get("harbor", "Ratnagiri")
     collaboration = None
     try:
         from backend.app.domain.agent_collaboration import AgentCollaborationEngine
