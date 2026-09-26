@@ -51,6 +51,19 @@ class ProviderToolAdapter:
     """Utility class providing normalization adapters for Dev 2 and Dev 4 providers."""
 
     @staticmethod
+    def _resolve_data_mode(is_mock: bool, source_name: str) -> str:
+        if is_mock:
+            return "MOCK"
+        source_upper = (source_name or "").upper()
+        if "UNAVAILABLE" in source_upper or "DEGRADED" in source_upper:
+            return "UNAVAILABLE"
+        if "SNAPSHOT" in source_upper or "HISTORICAL" in source_upper:
+            return "HISTORICAL"
+        if "HYBRID" in source_upper or "CACHED" in source_upper:
+            return "CACHED_REAL"
+        return "LIVE"
+
+    @staticmethod
     def adapt_marine_conditions(
         provider_fn: Callable[[ToolInvocationContext], MarineConditionsPayload],
         context: ToolInvocationContext,
@@ -70,6 +83,10 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
+            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            coverage_val = payload.harbor or context.origin_harbor
+
             evidence = [
                 EvidenceItem(
                     source_name=payload.source_name,
@@ -81,6 +98,10 @@ class ProviderToolAdapter:
                     metric_value=payload.significant_wave_height_m,
                     metric_unit="meters",
                     quality_flags=quality_flags,
+                    coverage=coverage_val,
+                    data_mode=data_mode_val,
+                    lineage_id=lineage_val,
+                    resolved_conflicts=getattr(payload, "resolved_conflicts", None) or [],
                 )
             ]
 
@@ -96,6 +117,9 @@ class ProviderToolAdapter:
                         metric_value=payload.swell_period_sec,
                         metric_unit="seconds",
                         quality_flags=quality_flags,
+                        coverage=coverage_val,
+                        data_mode=data_mode_val,
+                        lineage_id=lineage_val,
                     )
                 )
 
@@ -145,6 +169,10 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
+            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            coverage_val = payload.harbor or context.origin_harbor
+
             evidence = [
                 EvidenceItem(
                     source_name=payload.source_name,
@@ -156,6 +184,10 @@ class ProviderToolAdapter:
                     metric_value=payload.wind_speed_knots,
                     metric_unit="knots",
                     quality_flags=quality_flags,
+                    coverage=coverage_val,
+                    data_mode=data_mode_val,
+                    lineage_id=lineage_val,
+                    resolved_conflicts=getattr(payload, "resolved_conflicts", None) or [],
                 )
             ]
 
@@ -205,6 +237,10 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
+            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            coverage_val = payload.harbor or context.origin_harbor
+
             evidence = [
                 EvidenceItem(
                     source_name=payload.source_name,
@@ -215,6 +251,9 @@ class ProviderToolAdapter:
                     metric_name="cyclone_warning_active",
                     metric_value=payload.cyclone_warning_active,
                     quality_flags=quality_flags,
+                    coverage=coverage_val,
+                    data_mode=data_mode_val,
+                    lineage_id=lineage_val,
                 )
             ]
 
@@ -264,6 +303,10 @@ class ProviderToolAdapter:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
 
+            data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
+            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            coverage_val = payload.harbor or context.origin_harbor
+
             evidence = [
                 EvidenceItem(
                     source_name=payload.source_name,
@@ -274,6 +317,9 @@ class ProviderToolAdapter:
                     metric_name="svas_safety_index",
                     metric_value=payload.safety_index if payload.safety_index is not None else 0.0,
                     quality_flags=quality_flags,
+                    coverage=coverage_val,
+                    data_mode=data_mode_val,
+                    lineage_id=lineage_val,
                 )
             ]
 
@@ -325,7 +371,16 @@ class ProviderToolAdapter:
                 if hazard is None:
                     hazard = bundle.hazard
 
-            payload = engine_fn(context, marine=marine, weather=weather, hazard=hazard, bundle=bundle)
+            data_mode_val = "MOCK" if is_mock else "LIVE"
+            
+            payload = engine_fn(
+                context, 
+                marine=marine, 
+                weather=weather, 
+                hazard=hazard, 
+                bundle=bundle,
+                data_mode=data_mode_val
+            )
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "DETERMINISTIC_EVAL"]
 
             rec = Recommendation(
@@ -345,6 +400,10 @@ class ProviderToolAdapter:
             )
             rec.confidence = confidence
 
+            data_mode_val = "MOCK" if is_mock else "LIVE"
+            lineage_val = "risk_engine_eval"
+            coverage_val = context.origin_harbor or "Global"
+
             evidence = [
                 EvidenceItem(
                     evidence_id="EV-RISK-STATUS-01",
@@ -353,6 +412,9 @@ class ProviderToolAdapter:
                     metric_name="risk_status",
                     metric_value=payload.status.value,
                     quality_flags=quality_flags,
+                    coverage=coverage_val,
+                    data_mode=data_mode_val,
+                    lineage_id=lineage_val,
                 )
             ]
 
@@ -388,6 +450,10 @@ class ProviderToolAdapter:
             payload = engine_fn(context, raw_features)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "GEOSPATIAL_EVAL"]
 
+            data_mode_val = "MOCK" if is_mock else "LIVE"
+            lineage_val = "pfz_ranking_eval"
+            coverage_val = context.origin_harbor or "Coastal"
+
             evidence: List[EvidenceItem] = []
             if payload.ranked_candidates:
                 top_cand = payload.ranked_candidates[0]
@@ -399,6 +465,9 @@ class ProviderToolAdapter:
                         metric_value=top_cand.distance_nautical_miles,
                         metric_unit="nautical_miles",
                         quality_flags=quality_flags,
+                        coverage=coverage_val,
+                        data_mode=data_mode_val,
+                        lineage_id=lineage_val,
                     )
                 )
 
@@ -431,6 +500,10 @@ class ProviderToolAdapter:
             payload = engine_fn(context, marine, destination)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "ROUTE_EVAL"]
 
+            data_mode_val = "MOCK" if is_mock else "LIVE"
+            lineage_val = "route_exposure_eval"
+            coverage_val = f"{context.origin_harbor} to {destination}"
+
             evidence = [
                 EvidenceItem(
                     source_name="Route Exposure Engine (Dev 4)",
@@ -438,6 +511,9 @@ class ProviderToolAdapter:
                     metric_name="recommended_route_id",
                     metric_value=payload.recommended_route_id,
                     quality_flags=quality_flags,
+                    coverage=coverage_val,
+                    data_mode=data_mode_val,
+                    lineage_id=lineage_val,
                 )
             ]
 
@@ -470,6 +546,10 @@ class ProviderToolAdapter:
             payload = engine_fn(context, coords)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "GEOSPATIAL_EVAL"]
 
+            data_mode_val = "MOCK" if is_mock else "LIVE"
+            lineage_val = "geospatial_hazard_eval"
+            coverage_val = f"Coords: {coords}" if coords else (context.origin_harbor or "Unknown")
+
             evidence = [
                 EvidenceItem(
                     source_name="Geospatial Hazard Engine (Dev 4)",
@@ -477,6 +557,9 @@ class ProviderToolAdapter:
                     metric_name="geofence_intersection",
                     metric_value=str(payload.intersected),
                     quality_flags=quality_flags,
+                    coverage=coverage_val,
+                    data_mode=data_mode_val,
+                    lineage_id=lineage_val,
                 )
             ]
             if payload.distance_to_boundary_km is not None:
@@ -488,6 +571,9 @@ class ProviderToolAdapter:
                         metric_value=payload.distance_to_boundary_km,
                         metric_unit="km",
                         quality_flags=quality_flags,
+                        coverage=coverage_val,
+                        data_mode=data_mode_val,
+                        lineage_id=lineage_val,
                     )
                 )
 

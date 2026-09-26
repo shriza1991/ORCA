@@ -91,7 +91,7 @@ class DataProvenance(BaseModel):
     observed_time: Optional[str] = Field(None, description="Observation / telemetry timestamp (ISO-8601 UTC)")
     valid_from: Optional[str] = Field(None, description="Validity start timestamp (ISO-8601 UTC)")
     valid_to: Optional[str] = Field(None, description="Validity expiration timestamp (ISO-8601 UTC)")
-    data_mode: Optional[str] = Field("SNAPSHOT", description="Data resolution mode: 'LIVE', 'HYBRID', 'SNAPSHOT', 'M2_CONTRACT_MOCK'")
+    data_mode: Optional[str] = Field("HISTORICAL", description="Data resolution mode: LIVE | CACHED_REAL | HISTORICAL | MOCK | UNAVAILABLE")
     is_stale: bool = Field(False, description="True if observation time or valid_to window indicates stale data")
     quality_flags: List[str] = Field(default_factory=list, description="Quality and verification badges")
 
@@ -180,6 +180,18 @@ class EvidenceItem(BaseModel):
     quality_flags: List[str] = Field(
         default_factory=list,
         description="Quality badges: 'official_source', 'fresh', 'snapshot_fallback'",
+    )
+    coverage: Optional[str] = Field(
+        None, description="Geographical coverage or location associated with the evidence"
+    )
+    data_mode: Optional[str] = Field(
+        None, description="Operational data mode: LIVE | CACHED_REAL | HISTORICAL | MOCK | UNAVAILABLE"
+    )
+    lineage_id: Optional[str] = Field(
+        None, description="Traceable reference to the raw API response ID or fixture file"
+    )
+    resolved_conflicts: Optional[List[Dict[str, Any]]] = Field(
+        default_factory=list, description="List of conflicts resolved for this evidence (source, value, reason)."
     )
 
 

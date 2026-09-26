@@ -113,8 +113,8 @@ def create_app() -> FastAPI:
     hazard_live = ImdHazardConnector()
     sachet_live = SachetConnector()
     
-    marine_live = open_meteo_live
-    weather_live = open_meteo_live
+    marine_live = [incois_live, open_meteo_live]
+    weather_live = [incois_live, open_meteo_live]
     pfz_live = incois_live
     svas_live = incois_live
 

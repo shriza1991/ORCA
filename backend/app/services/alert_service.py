@@ -45,13 +45,28 @@ class AlertService:
                 message=f"Monitored trip for {request.origin_harbor}",
             )
 
+        # Fix UI bug where return_time might equal departure_time
+        departure_time_val = request.departure_time
+        return_time_val = request.return_time
+        
+        if departure_time_val and return_time_val:
+            try:
+                from datetime import datetime, timedelta
+                dep_dt = datetime.fromisoformat(departure_time_val.replace("Z", "+00:00"))
+                ret_dt = datetime.fromisoformat(return_time_val.replace("Z", "+00:00"))
+                if ret_dt <= dep_dt:
+                    ret_dt = dep_dt + timedelta(hours=12)
+                    return_time_val = ret_dt.isoformat()
+            except Exception:
+                pass
+
         try:
             with SessionLocal() as session:
                 sub = SavedTripSubscription(
                     origin_harbor=request.origin_harbor,
                     craft_profile=request.craft_profile,
-                    departure_time=request.departure_time,
-                    return_time=request.return_time,
+                    departure_time=departure_time_val,
+                    return_time=return_time_val,
                     language=request.language,
                     is_active=True
                 )
@@ -152,6 +167,13 @@ class AlertService:
 
             for sub in active_subs:
                 try:
+                    # Catch the return_time validation error early and deactivate the bad trip
+                    if sub.departure_time and sub.return_time and sub.return_time <= sub.departure_time:
+                        logger.warning(f"Deactivating invalid trip {sub.public_id}: return_time ({sub.return_time}) is not after departure_time ({sub.departure_time})")
+                        sub.is_active = False
+                        session.commit()
+                        continue
+                        
                     req = TripAssessmentRequest(
                         origin_harbor=sub.origin_harbor,
                         craft_profile=sub.craft_profile,
@@ -164,7 +186,23 @@ class AlertService:
                     assessment = AssessmentService.assess_trip(req)
 
                     for alert in assessment.alerts:
-                        identity_str = f"{sub.id}_{alert.get('title', '')}_{alert.get('severity', '')}"
+                        # The risk engine currently yields {"message": "..."} dicts for warnings
+                        # We must ensure no None values are passed to the DB to prevent NotNullViolations
+                        raw_msg = alert.get("message", "") if isinstance(alert, dict) else ""
+                        
+                        title = alert.get("title") if isinstance(alert, dict) else getattr(alert, "title", None)
+                        severity = alert.get("severity") if isinstance(alert, dict) else getattr(alert, "severity", None)
+                        description = alert.get("description") if isinstance(alert, dict) else getattr(alert, "description", None)
+                        action = alert.get("action") if isinstance(alert, dict) else getattr(alert, "action", None)
+                        if not action and isinstance(alert, dict):
+                            action = alert.get("recommended_action")
+                        
+                        title = title or "Insufficient Evidence"
+                        severity = severity or "medium"
+                        description = description or raw_msg or "Assessment returned incomplete data for this timeframe."
+                        action = action or "Verify real-time data sources before departure."
+                        
+                        identity_str = f"{sub.id}_{title}_{severity}"
                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
 
                         existing = session.query(ActionableAlert).filter(ActionableAlert.identity_hash == identity_hash).first()
@@ -173,10 +211,10 @@ class AlertService:
                                 subscription_id=sub.id,
                                 assessment_id=assessment.assessment_id,
                                 alert_type="ASSESSMENT_ALERT",
-                                severity=alert.get("severity", "medium"),
-                                title=alert.get("title", "Alert"),
-                                description=alert.get("description", ""),
-                                recommended_action=alert.get("action") or alert.get("recommended_action", ""),
+                                severity=severity,
+                                title=title,
+                                description=description,
+                                recommended_action=action,
                                 status="ACTIVE",
                                 is_acknowledged=False,
                                 identity_hash=identity_hash,
@@ -215,6 +253,7 @@ class AlertService:
                             session.add(new_alert)
 
                     session.commit()
+                    logger.info(f"Successfully reassessed trip {sub.public_id}.")
                 except Exception as e:
                     logger.error(f"Error reassessing trip {sub.public_id}: {e}")
                     session.rollback()

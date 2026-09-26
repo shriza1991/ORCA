@@ -5,6 +5,7 @@ import { translateText, type SupportedLanguage } from '../../i18n/translations';
 interface TripPlanDetailsProps {
   assessment: TripAssessmentResponse | null;
   language: SupportedLanguage;
+  mainStatus?: string;
 }
 
 export function getRiskBadgeStyle(risk: string): { backgroundColor: string; color: string; borderColor: string } {
@@ -20,7 +21,7 @@ export function getRiskBadgeStyle(risk: string): { backgroundColor: string; colo
   }
 }
 
-export default function TripPlanDetails({ assessment, language }: TripPlanDetailsProps) {
+export default function TripPlanDetails({ assessment, language, mainStatus }: TripPlanDetailsProps) {
   const title = translateText('Trip Plan & Evaluated Routes', language);
 
   if (!assessment || !assessment.route_candidates || assessment.route_candidates.length === 0) {
@@ -46,7 +47,10 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
   const distance = primaryRoute.distance_km || 0;
   const etaHours = primaryRoute.eta_hours || 0;
   const fuel = primaryRoute.fuel_estimate_liters || 0;
-  const risk = primaryRoute.risk_rating || 'UNKNOWN';
+  let risk = primaryRoute.risk_rating || 'UNKNOWN';
+  if (mainStatus === 'UNKNOWN') {
+    risk = 'UNKNOWN';
+  }
   const waves = primaryRoute.max_wave_height_m || 0;
 
   // Format time
@@ -71,9 +75,10 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
     day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'
   });
 
-  // Summary message for recommended route
   let summaryStr = '';
-  if (risk === 'LOW') {
+  if (risk === 'UNKNOWN') {
+    summaryStr = `Insufficient data to evaluate route safety.`;
+  } else if (risk === 'LOW') {
     summaryStr = `Recommended route is safe. Expect waves up to ${waves}m. You will need approximately ${fuel}L of fuel.`;
   } else if (risk === 'MODERATE') {
     summaryStr = `Recommended route requires caution. Expect waves up to ${waves}m. You will need approximately ${fuel}L of fuel.`;
@@ -108,8 +113,8 @@ export default function TripPlanDetails({ assessment, language }: TripPlanDetail
           style={{
             margin: 0,
             fontSize: '0.9375rem',
-            color: risk === 'LOW' ? '#166534' : risk === 'MODERATE' ? '#854d0e' : '#991b1b',
-            background: risk === 'LOW' ? '#dcfce7' : risk === 'MODERATE' ? '#fef08a' : '#fee2e2',
+            color: risk === 'UNKNOWN' ? '#475569' : risk === 'LOW' ? '#166534' : risk === 'MODERATE' ? '#854d0e' : '#991b1b',
+            background: risk === 'UNKNOWN' ? '#f1f5f9' : risk === 'LOW' ? '#dcfce7' : risk === 'MODERATE' ? '#fef08a' : '#fee2e2',
             padding: '12px',
             borderRadius: '8px',
             display: 'flex',

@@ -83,6 +83,13 @@ class ToolDefinition(BaseModel):
         default=True,
         description="True if output is mathematically/programmatically deterministic",
     )
+    authority: Optional[str] = Field(default="Unknown", description="Issuing authority")
+    coverage: Optional[str] = Field(default="Global", description="Geographic coverage")
+    resolution: Optional[str] = Field(default="Unknown", description="Spatial/temporal resolution")
+    freshness: Optional[str] = Field(default="Unknown", description="Data freshness")
+    access: Optional[str] = Field(default="API", description="Access method")
+    data_mode: Optional[str] = Field(default="LIVE", description="Data mode (LIVE, CACHED, etc.)")
+    supported_intents: List[str] = Field(default_factory=list, description="Intents this source supports")
 
 
 class ToolExecutionRecord(BaseModel):

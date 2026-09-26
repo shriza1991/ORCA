@@ -48,10 +48,10 @@ class IncoisOSFNormalizer:
             except (ValueError, TypeError):
                 return None
 
-        swh = clean_val(source_record.get("swh", source_record.get("significant_wave_height_m")))
-        swell_height = clean_val(source_record.get("swell_height", source_record.get("swell_height_m")))
-        swell_period = clean_val(source_record.get("swell_period", source_record.get("swell_period_sec")))
-        current_speed = clean_val(source_record.get("current_speed", source_record.get("surface_current_knots")))
+        swh = clean_val(source_record.get("swh", source_record.get("significant_wave_height_m", source_record.get("wave_height_m"))))
+        swell_height = clean_val(source_record.get("swell_height", source_record.get("swell_height_m", source_record.get("wave_height_m"))))
+        swell_period = clean_val(source_record.get("swell_period", source_record.get("swell_period_sec", source_record.get("wave_period_sec"))))
+        current_speed = clean_val(source_record.get("current_speed", source_record.get("surface_current_knots", source_record.get("current_speed_knots"))))
         sst = clean_val(source_record.get("sst", source_record.get("sea_surface_temp_c")))
 
         obs_time = (
@@ -68,8 +68,8 @@ class IncoisOSFNormalizer:
         if isinstance(valid_to, datetime):
             valid_to = valid_to.isoformat()
         # Derive a sensible valid_to when absent or degenerate (≤ obs_time).
-        # INCOIS OSF publishes hourly bulletins; each hour's data is valid for 6 h.
-        # Use obs_time + 6h — computed from the record's own timestamp, not from now_utc.
+        # INCOIS OSF publishes hourly bulletins; each hour's data is valid for 72 h in SAMUDRA simulation.
+        # Use obs_time + 72h — computed from the record's own timestamp, not from now_utc.
         _derive_valid_to = False
         if not valid_to:
             _derive_valid_to = True
@@ -90,7 +90,7 @@ class IncoisOSFNormalizer:
         if _derive_valid_to:
             try:
                 dt = datetime.fromisoformat(obs_time.replace("Z", "+00:00"))
-                valid_to = (dt + timedelta(hours=6)).isoformat()
+                valid_to = (dt + timedelta(hours=72)).isoformat()
             except Exception:
                 valid_to = "2030-01-01T00:00:00Z"
 

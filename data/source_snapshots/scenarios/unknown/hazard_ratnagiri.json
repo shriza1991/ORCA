@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "snapshot_id": "SNAP-HAZARD_RATNAGIRI-UNKNOWN",
+    "provider": "FIXTURE",
+    "source_name": "IMD Hazard Snapshot Fixture",
+    "captured_at": "2026-09-26T16:37:36.074853Z",
+    "valid_from": "2026-09-26T16:37:36.074853Z",
+    "valid_to": "2026-09-25T16:37:36.074853Z",
+    "schema_version": "1.0.0",
+    "checksum": "12fc2713554c5e0238a05b58068ec1f9a812a701e3ac9590351c6e09551fd789",
+    "status": "SIMULATED"
+  },
+  "payload": {
+    "harbor": "Ratnagiri",
+    "cyclone_warning_active": false,
+    "squall_alert": false,
+    "severity": "NORMAL",
+    "headline": "No active hazards",
+    "valid_from": "2026-09-26T16:37:36.074853Z",
+    "valid_to": "2026-09-25T16:37:36.074853Z",
+    "source_name": "IMD Hazard Snapshot Fixture",
+    "source_url": "https://mausam.imd.gov.in/"
+  }
+}

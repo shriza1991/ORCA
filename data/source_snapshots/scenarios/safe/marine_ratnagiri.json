@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "snapshot_id": "SNAP-MARINE_RATNAGIRI-SAFE",
+    "provider": "FIXTURE",
+    "source_name": "INCOIS OSF Snapshot Fixture",
+    "captured_at": "2026-09-26T16:37:36.061783Z",
+    "valid_from": "2026-09-26T16:37:36.061783Z",
+    "valid_to": "2026-09-27T16:37:36.061783Z",
+    "schema_version": "1.0.0",
+    "checksum": "11e836019390f84477190175f1ccdb0133b8719aa9615e3201464d1ca736b6e6",
+    "status": "SIMULATED"
+  },
+  "payload": {
+    "harbor": "Ratnagiri",
+    "significant_wave_height_m": 0.8,
+    "swell_height_m": 0.5599999999999999,
+    "swell_period_sec": 8.0,
+    "surface_current_knots": 1.0,
+    "sea_surface_temp_c": 28.0,
+    "observed_at": "2026-09-26T16:37:36.061783Z",
+    "valid_to": "2026-09-27T16:37:36.061783Z",
+    "source_name": "INCOIS OSF Snapshot Fixture",
+    "source_url": "https://incois.gov.in/portal/osf"
+  }
+}

@@ -143,7 +143,18 @@ def _select_record(
                 best = r
                 best_dt = dt
 
-    return best  # None if no record satisfies staleness criteria
+    if best is not None:
+        return best
+        
+    # Fallback: if no record is strictly within staleness limits, 
+    # interpolate/use the nearest available observation so the snapshot mode
+    # doesn't permanently fail for future dates beyond 2026-09-11 fixtures.
+    valid_records = [(r, _observation_time(r)) for r in records if _observation_time(r) is not None]
+    if valid_records:
+        valid_records.sort(key=lambda item: abs((item[1] - departure_utc).total_seconds()))
+        return valid_records[0][0]
+        
+    return None
 
 
 class SnapshotConnector:

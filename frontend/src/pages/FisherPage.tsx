@@ -120,8 +120,7 @@ export default function FisherPage({
     chat.missionContext.return_time,
     chat.missionContext.target_pfz,
     chat.language,
-    assessTrip,
-    registerTrip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ]);
 
   // Synchronize canonical mission_state across assessment -> chat (M1.1)

@@ -733,69 +733,27 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         has_route = any(k in msg_lower for k in ["route", "along my route", "on my route", "passage", "channel", "waypoint", "रास्ता", "मार्ग"]) or bool(destination)
 
         required_capabilities: List[str] = []
-        if intent_val == IntentCategory.SAFETY.value:
-            if tool_mode == "contract_mock" or not tool_registry.is_capability_available("trip_assessment"):
-                required_capabilities = ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]
-            else:
-                required_capabilities = ["trip_assessment"]
-        elif intent_val == IntentCategory.PFZ.value:
-            required_capabilities = ["marine_conditions", "pfz_search"]
-        elif intent_val == IntentCategory.CONDITIONS.value:
-            required_capabilities = ["marine_conditions"]
-        elif intent_val == IntentCategory.ROUTE.value:
-            # M7: Full route comparison plan.
-            # Satisfies all declared dependency chains in CAPABILITIES_CATALOG:
-            #   route_analysis  → [marine_conditions, hazard_search]
-            #   risk_evaluation → [marine_conditions, weather_conditions, hazard_search]
-            #   geospatial_hazard → [] (needed for restricted-zone route exposure)
-            required_capabilities = [
-                "marine_conditions",
-                "weather_conditions",
-                "hazard_search",
-                "geospatial_hazard",
-                "route_analysis",
-                "risk_evaluation",
-            ]
-        elif intent_val == IntentCategory.HAZARDS.value:
-            # M6: Keyword-driven hazard plan (restored from M6).
-            # has_route: HAZARDS query that also includes route context ("on my route from X to Y").
-            # This differs from pure ROUTE intent — here the user asks about cyclone/geofence
-            # hazards along a route; route_analysis is added when route context exists.
-            if has_route:
-                required_capabilities = ["marine_conditions", "route_analysis"]
-                if has_geofence:
-                    required_capabilities.append("geospatial_hazard")
-                if has_weather_hazard or not has_geofence:
-                    required_capabilities.append("hazard_search")
-            elif has_geofence and not has_weather_hazard:
-                required_capabilities = ["geospatial_hazard"]
-            elif has_geofence and has_weather_hazard:
-                required_capabilities = ["hazard_search", "geospatial_hazard"]
-            else:
-                required_capabilities = ["hazard_search"]
-        elif intent_val in (IntentCategory.ANALYTICAL_EXPLANATION.value, IntentCategory.WHAT_CHANGED.value):
-            if has_geofence:
-                required_capabilities = [
-                    "marine_conditions",
-                    "weather_conditions",
-                    "hazard_search",
-                    "geospatial_hazard",
-                    "risk_evaluation",
-                ]
-            else:
-                required_capabilities = [
-                    "marine_conditions",
-                    "weather_conditions",
-                    "hazard_search",
-                    "risk_evaluation",
-                ]
-        elif intent_val in (IntentCategory.WHAT_IF.value, IntentCategory.ALTERNATIVE.value):
-            required_capabilities = [
-                "marine_conditions",
-                "weather_conditions",
-                "hazard_search",
-                "risk_evaluation",
-            ]
+        for tool in tool_registry.list_tools():
+            if intent_val in tool.supported_intents:
+                # Dynamic conditional filtering based on user input
+                if tool.name == "geospatial_hazard" and not has_geofence and intent_val != IntentCategory.ROUTE.value:
+                    continue
+                if tool.name == "route_analysis" and not has_route and intent_val != IntentCategory.ROUTE.value:
+                    continue
+                if tool.name == "hazard_search" and has_geofence and not has_weather_hazard and intent_val == IntentCategory.HAZARDS.value:
+                    continue
+                
+                # Trip assessment optimization for SAFETY intent
+                if intent_val == IntentCategory.SAFETY.value:
+                    if tool_mode != "contract_mock" and tool_registry.is_capability_available("trip_assessment"):
+                        if tool.name in ["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]:
+                            continue
+                    else:
+                        if tool.name == "trip_assessment":
+                            continue
+
+                if tool.capability and tool.capability not in required_capabilities:
+                    required_capabilities.append(tool.capability)
 
         # 2. Capability availability check
         unavailable = tool_registry.get_unavailable_capabilities(required_capabilities)
@@ -2866,10 +2824,10 @@ def run_orca_graph(
         from backend.app.connectors.snapshot import SnapshotConnector
 
         snapshot_connector = SnapshotConnector()
-        marine_live = IncoisOceanStateConnector()
-        weather_live = ImdWeatherConnector()
-        hazard_live = ImdHazardConnector()
-        pfz_live = marine_live
+        marine_live = [IncoisOceanStateConnector()]
+        weather_live = [ImdWeatherConnector()]
+        hazard_live = [ImdHazardConnector()]
+        pfz_live = [IncoisOceanStateConnector()]
 
         manager = ConnectorManager(
             None,
