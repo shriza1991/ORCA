@@ -87,16 +87,19 @@ export function useTripAssessment() {
           const ageMs = Date.now() - cached.timestamp;
           if (ageMs > CACHE_EXPIRY_MS) {
             setIsExpired(true);
-            // Requirement: Do not issue a new favourable decision from expired evidence
+            // Requirement: Do not issue a new favourable decision from expired evidence.
+            // decision must remain a plain RecommendationStatus string — it is NEVER an object.
             const expiredData: TripAssessmentResponse = {
               ...cached.data,
-              decision: {
-                ...(typeof cached.data.decision === 'object' ? cached.data.decision : { status: cached.data.decision }),
-                status: 'UNKNOWN',
+              decision: 'UNKNOWN' as const,
+              brief: {
                 summary: 'Offline mode: Cached assessment has expired. Safety status is unknown.',
-                next_action: 'Please reconnect to the internet to fetch fresh assessments.',
-                decisive_factors: ['Cached evidence exceeded 6-hour limit.'],
-              }
+                recommended_action: 'Please reconnect to the internet to fetch fresh assessments.',
+                positive_factors: [],
+                negative_factors: ['Cached evidence exceeded the 6-hour validity window.'],
+                confidence: 'LOW',
+                confidence_reasons: ['Evidence expired — reassessment required before departing.'],
+              },
             };
             setData(expiredData);
           } else {

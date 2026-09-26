@@ -948,3 +948,22 @@ Alternatives:
 Impact:
 Owner:
 Date:
+
+## D052 - Canonical Decision Snapshot for Map Telemetry
+Status: ACCEPTED
+Decision: MapView accepts a canonicalConditions prop. When ssessment?.conditions is provided and time offset is 0, the map telemetry card is seeded from the canonical assessment bundle (same data source as Brief and Agent Panel) instead of issuing a separate executeSpatialQuery fetch. Future time steps and point inspection clicks still trigger spatial queries.
+Reason: The map telemetry card and Brief/Agent Panel were independently fetching marine conditions from two different API paths at different times, producing visibly contradictory wave/wind values (e.g. 0.78m on map vs 1.4m in Brief). The canonical assessment bundle from AssessmentService is the single authority for safety decisions, so all UI projections must read from it.
+Alternatives: Refactor all components to share a global state store (rejected as over-engineering for this milestone); drop the spatial query entirely (rejected because it enables future time-offset forecast scrubbing and point inspection).
+Impact: Map telemetry card always matches Brief at t=0. Future time offset scrubbing continues working via spatial query.
+Owner: ORCA engineering
+Date: 2026-09-26
+
+## D053 - Alert Worker DB Guard and Decision Enum Access
+Status: ACCEPTED
+Decision: Wrap the outer SessionLocal() acquire in eassess_saved_trips with try/except that returns early on failure. Correct ssessment.decision.status attribute accesses to use the enum value directly.
+Reason: ssessment.decision is RecommendationStatus (a string enum), not an object. The .status/.summary/.next_action attribute accesses raised AttributeError at runtime. The unguarded outer session acquire crashed the worker thread on every 60-second tick when PostgreSQL was unavailable.
+Alternatives: Add exponential backoff (deferred — not needed if the guard exits early, and the 60s loop provides natural backoff).
+Impact: Alert worker no longer floods logs or crashes on DB downtime. Decision alerts correctly identify NO_GO/CAUTION from the enum value.
+Owner: ORCA engineering
+Date: 2026-09-26
+

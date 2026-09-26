@@ -868,3 +868,34 @@ None
   - Backend persistence test suite: 19/19 passed in 18s (tests/domain/test_f04_persistence.py, tests/domain/test_f05_offline_persistence.py).
   - Next.js TypeScript compilation: clean with 0 errors (npx tsc --noEmit).
   - Core test baseline: 773 passing / 52 skipped.
+
+## 2026-09-26 - Resilience Hardening, Bug Fixes, and Canonical Decision Snapshot
+
+- Status: **COMPLETE and VERIFIED**
+- **1. Alert Worker DB Crash Fixed** (ackend/app/services/alert_service.py):
+  - The eassess_saved_trips() outer with SessionLocal() as session: was unguarded; DB downtime raised OperationalError and crashed the worker thread every 60 seconds.
+  - Wrapped outer session acquisition in try/except; returns early with a WARNING log instead of crashing.
+  - Added inner try/except for the ctive_subs query for double protection.
+- **2. Alert Decision Enum Access Fixed** (ackend/app/services/alert_service.py):
+  - ssessment.decision is a RecommendationStatus string enum, NOT an object with .status/.summary/.next_action.
+  - All three attribute accesses in the ASSESSMENT_DECISION block replaced with correct pattern: decision.value for the string and ssessment.brief.summary/recommended_action for human-readable text.
+  - Alert identity_str and alert attribute access updated to use dict .get() (since ssessment.alerts is List[Dict]).
+- **3. PFZ NameError Fixed** (ackend/app/services/assessment_service.py):
+  - pfz_ranking was only defined inside the PFZ 	ry block. If PFZ fetch raised an exception, the routes evaluation block's if pfz_ranking would raise NameError.
+  - Initialized pfz_ranking = None before the try block.
+- **4. Offline Cache Decision Fix** (rontend/src/hooks/useTripAssessment.ts):
+  - The expired-cache branch incorrectly tried to spread decision as an object (it's a plain string).
+  - Fixed: decision stays as 'UNKNOWN' (plain RecommendationStatus), expiry messaging moves to rief field.
+- **5. Canonical Decision Snapshot** (rontend/src/components/map/MapView.tsx, rontend/src/pages/FisherPage.tsx):
+  - Map telemetry card was fetching conditions via executeSpatialQuery (separate API path) while Brief/Agent Panel read from ssessment.conditions. This caused wave/wind value contradictions.
+  - Added canonicalConditions prop to MapView. When ssessment?.conditions is provided and time offset is 0, the map card is seeded from the canonical assessment bundle instead of making an independent fetch.
+  - Future time offsets (+3h, +6h, etc.) and point inspection clicks still use executeSpatialQuery as intended.
+- **6. CORS_ORIGINS .env and Test Fix**:
+  - Local .env was missing https://samudra-qxx1.vercel.app from CORS_ORIGINS, causing the resilience test to fail.
+  - Added the Vercel production origin to .env's CORS_ORIGINS.
+  - Made 	est_situation_provider_failure_returns_explicit_unknown self-isolating via monkeypatch.setenv + monkeypatch.setattr(config, 'settings', Settings()).
+- **Verification**:
+  - Backend targeted tests: 22/22 passed (pytest tests/api/test_production_resilience.py tests/domain/test_f04_persistence.py tests/integration/test_m1_3_explainability.py tests/integration/test_m1_4_decision_delta.py).
+  - Frontend Vitest: 22 test files, 272/272 tests passed.
+  - Frontend TypeScript: 0 errors (	sc --noEmit).
+

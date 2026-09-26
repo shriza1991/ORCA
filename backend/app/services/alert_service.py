@@ -136,8 +136,20 @@ class AlertService:
     def reassess_saved_trips():
         """Worker function to reassess all active trips and generate alerts."""
         logger.info("Running saved trips reassessment...")
-        with SessionLocal() as session:
-            active_subs = session.query(SavedTripSubscription).filter(SavedTripSubscription.is_active == True).all()
+        # Guard: if DB is unavailable (no PostgreSQL), skip silently instead of crashing the worker.
+        try:
+            session_ctx = SessionLocal()
+        except Exception as e:
+            logger.warning(f"Database unavailable for reassess_saved_trips (skipping): {e}")
+            return
+
+        with session_ctx as session:
+            try:
+                active_subs = session.query(SavedTripSubscription).filter(SavedTripSubscription.is_active == True).all()
+            except Exception as e:
+                logger.warning(f"Database query unavailable for reassess_saved_trips (skipping): {e}")
+                return
+
             for sub in active_subs:
                 try:
                     req = TripAssessmentRequest(
@@ -152,7 +164,7 @@ class AlertService:
                     assessment = AssessmentService.assess_trip(req)
 
                     for alert in assessment.alerts:
-                        identity_str = f"{sub.id}_{alert.title}_{alert.severity}"
+                        identity_str = f"{sub.id}_{alert.get('title', '')}_{alert.get('severity', '')}"
                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
 
                         existing = session.query(ActionableAlert).filter(ActionableAlert.identity_hash == identity_hash).first()
@@ -161,30 +173,40 @@ class AlertService:
                                 subscription_id=sub.id,
                                 assessment_id=assessment.assessment_id,
                                 alert_type="ASSESSMENT_ALERT",
-                                severity=alert.severity,
-                                title=alert.title,
-                                description=alert.description,
-                                recommended_action=alert.action,
+                                severity=alert.get("severity", "medium"),
+                                title=alert.get("title", "Alert"),
+                                description=alert.get("description", ""),
+                                recommended_action=alert.get("action") or alert.get("recommended_action", ""),
                                 status="ACTIVE",
                                 is_acknowledged=False,
                                 identity_hash=identity_hash,
                                 valid_from=utcnow(),
                             )
                             session.add(new_alert)
-                    
-                    if assessment.decision.status in ["NO_GO", "CAUTION"]:
-                        identity_str = f"{sub.id}_DECISION_{assessment.decision.status}"
+
+                    # assessment.decision is a RecommendationStatus string-enum ("NO_GO", "CAUTION", etc.)
+                    # NOT an object with .status/.summary/.next_action attributes.
+                    decision_value = assessment.decision.value if hasattr(assessment.decision, "value") else str(assessment.decision)
+                    if decision_value in ("NO_GO", "CAUTION"):
+                        identity_str = f"{sub.id}_DECISION_{decision_value}"
                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
                         existing = session.query(ActionableAlert).filter(ActionableAlert.identity_hash == identity_hash).first()
                         if not existing:
+                            # Derive human-readable text from brief/alerts rather than the bare enum.
+                            decision_summary = (
+                                assessment.brief.summary if assessment.brief else f"Trip decision: {decision_value}"
+                            )
+                            decision_action = (
+                                assessment.brief.recommended_action if assessment.brief else "Consult harbor authority before departure."
+                            )
                             new_alert = ActionableAlert(
                                 subscription_id=sub.id,
                                 assessment_id=assessment.assessment_id,
                                 alert_type="ASSESSMENT_DECISION",
-                                severity="high" if assessment.decision.status == "NO_GO" else "medium",
-                                title=f"Trip Decision: {assessment.decision.status}",
-                                description=assessment.decision.summary,
-                                recommended_action=assessment.decision.next_action,
+                                severity="high" if decision_value == "NO_GO" else "medium",
+                                title=f"Trip Decision: {decision_value}",
+                                description=decision_summary,
+                                recommended_action=decision_action,
                                 status="ACTIVE",
                                 is_acknowledged=False,
                                 identity_hash=identity_hash,

@@ -9,6 +9,14 @@ def test_situation_provider_failure_returns_explicit_unknown(monkeypatch):
         raise RuntimeError("provider credentials must not be exposed")
 
     monkeypatch.setattr(situation, "evaluate_sector_situation", fail_situation)
+    # Ensure the Vercel origin is allowed regardless of local .env configuration.
+    monkeypatch.setenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,https://samudra-qxx1.vercel.app",
+    )
+    # Re-instantiate Settings to pick up the monkeypatched env var.
+    from backend.app.core import config as core_config
+    monkeypatch.setattr(core_config, "settings", core_config.Settings())
     app = create_app()
 
     with TestClient(app) as client:

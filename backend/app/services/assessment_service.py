@@ -255,6 +255,7 @@ class AssessmentService:
 
         # PFZ Evaluation
         pfz_candidates = []
+        pfz_ranking = None  # Initialize before try so routes evaluation can safely check it
         if effective_destination_id or True: # Evaluate if we can
             try:
                 pfz_raw = data_service.get_pfz_raw_advisories(ctx)

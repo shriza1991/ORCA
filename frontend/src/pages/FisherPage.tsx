@@ -319,6 +319,7 @@ export default function FisherPage({
           craftProfile={chat.missionContext.craft_profile || 'motorized_boat'}
           timeOffsetHours={mapTimeOffset}
           onTimeOffsetChange={handleTimeOffsetChange}
+          canonicalConditions={assessment?.conditions}
         />
       </div>
     </main>

@@ -52,6 +52,13 @@ interface MapViewProps {
   craftProfile?: string;
   timeOffsetHours?: number;
   onTimeOffsetChange?: (hours: number) => void;
+  /**
+   * Canonical assessment conditions bundle from AssessmentService.
+   * When provided and time offset is 0 ("Now"), the telemetry card uses
+   * these values instead of a separate executeSpatialQuery fetch, ensuring
+   * the Map and Brief/Agent Panel always display the same observation data.
+   */
+  canonicalConditions?: any;
 }
 
 export default function MapView({
@@ -72,6 +79,7 @@ export default function MapView({
   craftProfile = 'motorized_boat',
   timeOffsetHours,
   onTimeOffsetChange,
+  canonicalConditions,
 }: MapViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,10 +124,55 @@ export default function MapView({
   } | null>(null);
   const [showBookmarks, setShowBookmarks] = useState(false);
 
+  // Canonical Decision Snapshot: seed telemetry card from assessment conditions when at t=0.
+  // This ensures the Map always shows the same wave/wind values as the Brief and Agent Panel,
+  // which also read from the same assessment bundle. The spatial query still runs for time offsets
+  // (future forecast scrubbing) and for point inspection clicks.
+  useEffect(() => {
+    if (!canonicalConditions || selectedTimeStep !== 0) return;
+    const marine = canonicalConditions.marine;
+    const weather = canonicalConditions.weather;
+    if (!marine && !weather) return;
+
+    const waveM: number = marine?.significant_wave_height_m ?? 0;
+    const windKn: number = weather?.wind_speed_knots ?? marine?.wind_speed_knots ?? 0;
+    const windDir: number = weather?.wind_direction_deg ?? marine?.wind_direction_deg ?? 0;
+    const swellM: number = marine?.swell_wave_height_m ?? marine?.swell_height_m ?? 0;
+    const swellP: number = marine?.swell_period_seconds ?? marine?.wave_period_seconds ?? 0;
+    const sstC: number = marine?.sea_surface_temperature_c ?? 0;
+
+    const craftUpper = (craftProfile || 'motorized_boat').toUpperCase();
+    let limit = 2.2;
+    if (craftUpper.includes('NON_MOTORIZED') || craftUpper.includes('CANOE')) limit = 1.4;
+    else if (craftUpper.includes('MECHANIZED') || craftUpper.includes('TRAWLER')) limit = 3.5;
+    let canonStatus: 'GO' | 'CAUTION' | 'NO_GO' = 'GO';
+    if (waveM > limit) canonStatus = 'NO_GO';
+    else if (waveM > limit * 0.8) canonStatus = 'CAUTION';
+
+    setMapForecast({
+      loading: false,
+      wave_height_m: waveM,
+      wind_speed_kn: windKn,
+      wind_direction_deg: windDir,
+      swell_height_m: swellM,
+      swell_period_s: swellP,
+      sst_c: sstC,
+      tide_height_m: 0,
+      tide_phase: '—',
+      status: canonStatus,
+    });
+  }, [canonicalConditions, selectedTimeStep, craftProfile]);
+
   useEffect(() => {
     let isCancelled = false;
     const targetLat = inspectedPoint ? inspectedPoint.lat : (center ? center[1] : 16.99);
     const targetLon = inspectedPoint ? inspectedPoint.lon : (center ? center[0] : 73.28);
+
+    // Skip the spatial query for "Now" (offset=0) if canonical conditions are already seeded.
+    // Still run it if the user has scrolled to a future time step or clicked an inspection point.
+    if (selectedTimeStep === 0 && canonicalConditions && !inspectedPoint) {
+      return;
+    }
 
     setMapForecast((prev) => (prev ? { ...prev, loading: true } : null));
 
@@ -163,7 +216,7 @@ export default function MapView({
     return () => {
       isCancelled = true;
     };
-  }, [selectedTimeStep, center?.[0], center?.[1], craftProfile]);
+  }, [selectedTimeStep, center?.[0], center?.[1], craftProfile, canonicalConditions]);
 
   const activeStyle = theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
   const currentStyleRef = useRef(activeStyle);
