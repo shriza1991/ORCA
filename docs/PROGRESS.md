@@ -4,6 +4,27 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-27 Fisher Trip Plan Visibility & Route Guidance
+
+- **IMPLEMENTED**: moved the created trip-plan summary directly below the mission brief in both Fisher dashboard clients so it is visible immediately after the assessment explanation.
+- **IMPLEMENTED**: localized generated route safety explanations for Hindi and Marathi, including route status, wave height, and fuel guidance.
+- **IMPLEMENTED**: synchronized evaluated route layers into the Next.js Fisher map and tightened route auto-fit behavior in both map clients for a closer path-following view.
+- **VERIFIED**: frontend Vitest suite and TypeScript checks passed for both `frontend/` and `nextjs/`.
+
+### 2026-09-27 Coastal Harbor Map Coordinate Alignment
+
+- **IMPLEMENTED**: selected Fisher harbor markers now use detailed landing-harbor/jetty coordinates rather than broad city-area centers; corrected coordinate tables in both Vite and Next.js and aligned backend harbor lookup/reference records.
+- **VERIFIED**: frontend geospatial utility tests `6 passed`; backend harbor connector tests `10 passed`, including Mumbai/Sassoon Dock resolution.
+- **LIMITATION**: coordinate quality is bounded by the repository's supplied landing-centre references; these points do not replace charted berth or approach coordinates.
+
+### 2026-09-27 Deterministic Route Validation Hardening
+
+- **IMPLEMENTED**: route geofence evaluation now submits the complete ordered route geometry, so restricted zones crossed between waypoints are detected by the existing line-string geospatial engine.
+- **IMPLEMENTED**: direct pathfinder shortcuts now honor the requested land-clearance buffer instead of checking only whether the unbuffered land polygon intersects the direct segment.
+- **IMPLEMENTED**: duplicate pathfinder results fall back to distinct corridor candidates; fallback-generated routes are marked `is_synthetic` and still pass through deterministic land and geofence checks.
+- **VERIFIED**: focused route, route-alternative API, and ocean-current pathfinder tests: 18 passed.
+- **LIMITATION**: route path optimization does not yet adjust paths for ocean currents. The current marine payload supplies current speed without current direction, so a directional vector must not be inferred or fabricated.
+
 ### 2026-09-26 Production Root-Cause Hardening (feature branch)
 
 - **IMPLEMENTED**: expected marine provider failures now produce a schema-compatible degraded `ChatResponse` with `UNKNOWN` decision and explicit hold-departure action instead of surfacing a generic 502/500 to mission clients.
@@ -101,6 +122,7 @@
   - `AquaWatch`, `MarineHazards`, `PortWatch`, `DataCatalogue`.
 
 ### Milestone Feature: Multi-Agent Reasoning Visibility & Decision Authority (§D033)
+
 - **Status**: **COMPLETE & VERIFIED** (Backend: 100% passing tests in `tests/domain/test_agent_collaboration.py`; Frontend: 17 passed / 242 passed vitest tests; Vite production bundle built cleanly).
 - **Core Architecture & Experience Transformation**:
   - Transformed end-user experience from a black box final answer (`User → Final Answer`) into an observable multi-agent reasoning pipeline: `User → Agent Collaboration → Evidence Gathering → Risk Assessment → Arbitration → Final Answer`.
@@ -117,6 +139,7 @@
     - Adaptive stakeholder views for Fisherman, Authority, and Researcher.
 
 ### Milestone Feature: Operational Integration of India MarineWatch & Dashboard Consolidation (§D037)
+
 - **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Vite production build: succeeded cleanly; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`).
 - **Core Architecture & Experience Transformation**:
   - Eliminated standalone `/marinewatch` dashboard and removed its 4th portal card to unify all ocean intelligence under the 3 authoritative operational personas: **Fisher Console (`/fisher`)**, **Authority Command Deck (`/authority`)**, and **Researcher Lab (`/researcher`)**.
@@ -132,6 +155,7 @@
   - **Dual-Client Synchronization**: Updated both `frontend/` (Vite) and `nextjs/` (Next.js) codebases to maintain 100% design and behavioral parity.
 
 ### Milestone Feature: Granular Dissolution of MarineWatch GIS into Fisher & Authority Dashboards (§D038)
+
 - **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Vite production build: succeeded cleanly in 11.4s; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`).
 - **Core Architecture & Experience Transformation**:
   - Removed GIS Explorer map tab (`OceanWatchGIS`) entirely from `ResearcherPage.tsx` and `nextjs/views/ResearcherPage.tsx`. Researcher Lab is now exclusively focused on its 5 core scientific/analytical tools:
@@ -153,6 +177,7 @@
   - Maintained 100% architectural parity across `frontend/src/` and `nextjs/`.
 
 ### Milestone Feature: Authority Deck Layout & Semantic Styling Refactor (§D039)
+
 - **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 242/242 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; visual verification complete via Chrome DevTools MCP across light & dark themes).
 - **Core Visual & Architectural Polish**:
   - **Command Bar Responsive Overflow**: Fixed horizontal clipping of right-hand telemetry chips (`VERDICT`, `FLEET`, `HAZARDS`, `EVIDENCE`) by applying horizontal scroll containment (`overflow-x: auto; scrollbar-width: none`), flexible gap constraints, and responsive chip padding.
@@ -166,6 +191,7 @@
   - **100% Dual-Client Parity**: Synchronized all component refactors and CSS definitions to `nextjs/` (`components/authority/`, `components/map/`, `views/`, and `styles/components.css`).
 
 ### Milestone Feature: Fisher Console Clutter Pruning & Interactive DOM Icon Markers (§D040)
+
 - **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 244/244 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 23/23 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; visual verification complete via Chrome DevTools MCP across light & dark themes).
 - **Core Visual & Operational Refactor**:
   - **Pruning Excessive Macro-Areas & Nationwide Polygons**:
@@ -191,6 +217,7 @@
     - Synchronized all filtering utilities (`fisher-map.ts`, `geo.ts`), marker rendering (`MapView.tsx`), and CSS tokens (`marinewatch.css`) across Vite (`frontend/`) and Next.js (`nextjs/`).
 
 ### Milestone Feature: Dynamic Live Hourly Marine Forecasts & Scrubber Integration (§D041)
+
 - **Status**: **COMPLETE & VERIFIED** (Frontend vitest: 244/244 passing across 17 suites; TypeScript check: 0 errors; Backend pytest: 25/25 passing in `test_marinewatch_endpoints.py` and `test_agent_collaboration.py`; dual-client parity confirmed).
 - **Core Architecture & Experience Transformation**:
   - **Eliminated Hardcoded Constants**: Removed static coastal heuristic approximations (`base_wave = 1.2`, static wind, static SST) from `marinewatch_service.py`.
@@ -206,68 +233,78 @@
 
 ### Verified Status of Master Context §30 Items (Audited on 2026-09-21)
 
-| ID | Issue | Severity | Audited Status | Findings |
-|---|---|---|---|---|
-| R-1 | `MarineConditionsPayload` validation regression (missing fields) | P0 | **RESOLVED & VERIFIED** | Tested in `tests/domain/test_partial_marine_payload.py` (7/7 passing). Optional fields instantiate safely without fabrication. |
-| R-2 | Observation bundle lineage collapse to UNKNOWN | P0 | **RESOLVED & VERIFIED** | Tested in `tests/domain/test_observation_bundle.py` (7/7 passing). Direct value lineage to risk engine verified. |
-| R-3 | Valid fallback evidence → automatic UNKNOWN | P0 | **RESOLVED & VERIFIED** | Implemented in `graph.py:1099-1121`. Fallbacks derive explicit `ConfidenceLevel.MEDIUM` with reason. |
-| R-4 | `explanation_context` tool missing/unregistered | P1 | **RESOLVED & VERIFIED** | Unified under canonical tool scheduling (`marine_conditions`, `weather_conditions`, `hazard_search`, `risk_evaluation`) in `graph.py` with 5-step causal sequence. |
-| R-5 | Temporal what-if reuses stale forecast instead of recomputing | P1 | **RESOLVED & VERIFIED** | Full temporal re-computation integrated across `WHAT_IF` intent turns in `graph.py`. |
-| R-6 | What-changed / Decision Delta not fully supported in backend | P1 | **RESOLVED & VERIFIED** | Implemented `[DECISION DELTA]` comparison against baseline in `graph.py` backed by `ThreadContext.metadata`. |
+| ID  | Issue                                                            | Severity | Audited Status          | Findings                                                                                                                                                           |
+| --- | ---------------------------------------------------------------- | -------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R-1 | `MarineConditionsPayload` validation regression (missing fields) | P0       | **RESOLVED & VERIFIED** | Tested in `tests/domain/test_partial_marine_payload.py` (7/7 passing). Optional fields instantiate safely without fabrication.                                     |
+| R-2 | Observation bundle lineage collapse to UNKNOWN                   | P0       | **RESOLVED & VERIFIED** | Tested in `tests/domain/test_observation_bundle.py` (7/7 passing). Direct value lineage to risk engine verified.                                                   |
+| R-3 | Valid fallback evidence → automatic UNKNOWN                      | P0       | **RESOLVED & VERIFIED** | Implemented in `graph.py:1099-1121`. Fallbacks derive explicit `ConfidenceLevel.MEDIUM` with reason.                                                               |
+| R-4 | `explanation_context` tool missing/unregistered                  | P1       | **RESOLVED & VERIFIED** | Unified under canonical tool scheduling (`marine_conditions`, `weather_conditions`, `hazard_search`, `risk_evaluation`) in `graph.py` with 5-step causal sequence. |
+| R-5 | Temporal what-if reuses stale forecast instead of recomputing    | P1       | **RESOLVED & VERIFIED** | Full temporal re-computation integrated across `WHAT_IF` intent turns in `graph.py`.                                                                               |
+| R-6 | What-changed / Decision Delta not fully supported in backend     | P1       | **RESOLVED & VERIFIED** | Implemented `[DECISION DELTA]` comparison against baseline in `graph.py` backed by `ThreadContext.metadata`.                                                       |
 
 > **Conclusion**: All P0 and P1 conversational intelligence and data foundation requirements have been implemented and verified. Full test suite passing: 466 passed in agent_eval, 19 passed in marinewatch API, 18 passed in domain, 235 passed in frontend vitest, and frontend production build succeeded.
 
 ### Strategic Gaps (new capabilities required by master context)
 
-| ID | Capability | Priority | Status |
-|---|---|---|---|
-| G-1 | Canonical `MissionState` schema | P0 | IN_PROGRESS (backed by ThreadContext & ObservationBundle) |
-| G-2 | `Source Registry` (machine-readable source capabilities) | P1 | COMPLETE (`CAPABILITIES_CATALOG` + ToolRegistry) |
-| G-3 | `ExplanationEngine` (FACT→INFERENCE→CONSTRAINT→DECISION) | P1 | **RESOLVED & VERIFIED** |
-| G-4 | `Decision Delta` backend computation | P1 | **RESOLVED & VERIFIED** |
-| G-5 | Source conflict resolution policy | P1 | COMPLETE (`D010` authoritative hierarchy + fallback confidence) |
-| G-6 | Hard constraint ordering (safety→legal→vessel→operational) | P0 | **RESOLVED & VERIFIED** |
-| G-7 | ORCA Field Intelligence Network (Community Observations) | P1 | PLANNED (Architectural Spec §31, D034-D036) |
+| ID  | Capability                                                 | Priority | Status                                                          |
+| --- | ---------------------------------------------------------- | -------- | --------------------------------------------------------------- |
+| G-1 | Canonical `MissionState` schema                            | P0       | IN_PROGRESS (backed by ThreadContext & ObservationBundle)       |
+| G-2 | `Source Registry` (machine-readable source capabilities)   | P1       | COMPLETE (`CAPABILITIES_CATALOG` + ToolRegistry)                |
+| G-3 | `ExplanationEngine` (FACT→INFERENCE→CONSTRAINT→DECISION)   | P1       | **RESOLVED & VERIFIED**                                         |
+| G-4 | `Decision Delta` backend computation                       | P1       | **RESOLVED & VERIFIED**                                         |
+| G-5 | Source conflict resolution policy                          | P1       | COMPLETE (`D010` authoritative hierarchy + fallback confidence) |
+| G-6 | Hard constraint ordering (safety→legal→vessel→operational) | P0       | **RESOLVED & VERIFIED**                                         |
+| G-7 | ORCA Field Intelligence Network (Community Observations)   | P1       | PLANNED (Architectural Spec §31, D034-D036)                     |
 
 #### P0-11 — Chat Context State Integrity (Fisher What-If Controls)
+
 - Fixed conversational logic to parse relative timestamps into absolute ISO references and compute true scenario offsets without overriding operational rules.
 - Chat API preserves active context explicitly rather than merging partial deltas incorrectly into system intent templates.
 - Enforced strict prompt boundaries mapping relative expressions ("leave two hours later") mathematically instead of relying on open-ended LLM arithmetic.
 
 ### P0-9 — Final Integration Validation & Defect Fixes
+
 - **Frontend Defect Fixes**: Fixed `FisherDecisionSurface.tsx` to handle `TripAssessmentResponse.decision` correctly when strictly serialized as an Enum string from the backend, avoiding UI states permanently stuck in `UNKNOWN` and missing explanations.
 - **Backend Safety Invariants Validated**: Validated through codebase scans and test suite execution that no LLM prompt overrides deterministic "NO GO" or "CAUTION" outputs. Re-verified `TripAssessmentResponse` API faithfully passes `UNKNOWN` and refuses "GO" predictions if any critical telemetry data (`marine`, `weather`, `hazard`) is expired or unreachable.
 - **Offline / Credential Security Check**: Verified through codebase scans that no valid API keys are hardcoded. Tests involving missing/stubbed infrastructure explicitly flag themselves gracefully without crashing the UI.
 - **Completed**: All 14 test journeys evaluated. Mocks have been isolated to fixture fallbacks as per the DATA_MODE contract.
 
 ### P0-7 — Authority chat sector context
+
 - Authority chat now sends the active canonical sector `public_id` per request.
 - The chat API validates the sector and derives canonical harbor and coordinates before graph execution.
 - Explicit Authority context takes precedence over remembered conversation context; history remains retained and prior-sector responses are not shown as the current sector's active response.
 
 ### P0-8A — Authority sector hazards on map
+
 - Canonical active hazard applicability is resolved by sector public ID and shared with P0-6 situation counts.
 - The Authority map fetches and renders only the selected sector's canonical GeoJSON hazard layers, clearing them immediately on a sector change or unavailable response.
 
 ### P0-8B — Authority vessel-hazard associations
+
 - Authority map highlights only vessels whose latest canonical replay position is inside a selected sector's active canonical hazard geometry.
 
 ### P0-8C — Authority operational hazard alerts
+
 - Current, stable operational alerts are derived from P0-8B associations and displayed separately from historical broadcast notifications.
 
 ### P0-8D — Authority alert inspection
+
 - Selecting a current operational alert reuses the canonical vessel replay focus and highlights the matching canonical hazard and association geometry. Inspection state is local to the active sector and is cleared on sector switch, unavailable data, or alert reconciliation.
 
 ### P0-8E — Authority evidence and audit flow
+
 - Alert inspection opens the existing Audit view with direct canonical containment facts, separately labeled sector-situation evidence, and an explicit unavailable trace when no alert-to-run linkage exists.
 
 ### P0-8G — Authority route alternatives & balanced candidate
+
 - Extended canonical RouteExposureEngine to return three truthful, evaluated route candidates: Safety-oriented (`ROUTE-A-INSHORE`), Balanced (`ROUTE-C-BALANCED`), and Direct (`ROUTE-B-DIRECT`).
 - Route C follows an intermediate path through the canonical synthetic route graph (`node-01` -> `node-03` -> `node-06` -> `node-10` -> `node-14` -> `node-16`), offering a genuine trade-off (23.4 km, 1.7m max wave, 3.4 exposure) between distance and exposure.
 - Exposed route alternatives via `/api/v1/demo/routes/alternatives` and `/api/v1/demo/sectors/{sector_id}/route-alternatives`.
 - MissionMapBrief and MapView dynamic layer rendering updated with candidate switching, real metric display, and honest empty/unavailable handling without hardcoded operational route geometry.
 
 ### P0-8H — Simultaneous route alternatives visualization without clutter
+
 - Established verifiable data ingest pipelines (`importers/`) covering INCOIS PFZ, IMD Hazards, and native NetCDF satellite handling (`xarray`).
 - Integrated offline reference fallbacks safely bypassing unconfigured API endpoints without brittle scraping.
 - Created Unified Trip Assessment Pipeline (`POST /api/v1/trip-assessments`), aligning Fisher dashboard and conversational interface decision logic (using `AssessmentService`).
@@ -276,6 +313,7 @@
 - Stabilized map camera bounds to prevent abrupt jumping/refitting during Safest / Balanced / Direct corridor switching.
 
 ### P0-8J — Region-specific map layer filtering on Fisher & Authority views
+
 - Integrated `filterLayersByRegion` and `filterLayersBySectorPolygon` in `geo.ts` to geographically scope base boundaries and response layers.
 - Scoped Fisher page map layers to the active departure harbor region, preventing out-of-region geofences, routes, and hazards from cluttering the local view.
 - Scoped Authority page map layers to the active surveillance sector polygon, preventing cross-sector geofence and route leakage.
@@ -283,6 +321,7 @@
 - Resolved in-memory offline store re-entrancy deadlock (`RLock`).
 
 ### P0-8K — Authentic Indian EEZ & Island Maritime Boundaries (Mainland, Andaman & Nicobar, Lakshadweep)
+
 - Integrated authentic UNCLOS maritime boundaries from Flanders Marine Institute (VLIZ Marine Regions v12):
   - Mainland & Peninsular EEZ (`POLY-EEZ-IND-MAIN`, 1,659,500 km², MRGID 8480) spanning Arabian Sea and Bay of Bengal down to 8° Channel Maldives treaty line.
   - Andaman & Nicobar Archipelago EEZ (`POLY-EEZ-IND-ANDAMAN`, 664,448 km², MRGID 8333) with full high-resolution boundary arc and international treaty borders (Indonesia, Thailand, Myanmar).
@@ -293,6 +332,7 @@
 - Added multilingual translation mappings for national water boundary layers in Hindi and Marathi.
 
 ### P0-8M — Production 3D Maps for Authority and Researcher Dashboards
+
 - Established unified WebGL2 Deck.gl 3D map foundation (`DeckGLMapFoundation.tsx`) with Tactical 3D (52° pitch), High Orbit (20° pitch), and 2D Flat camera presets, high-performance GPU memoization, and zero 60-FPS React state loop overhead.
 - Authority Dashboard: Integrated `AuthorityDeckGLMap.tsx` as the primary operational command visualization with rotated vessel craft markers, illuminated tactical beacon for selected vessel, distinct historical tracks (`#06b6d4`), projected trajectories (`#facc15`), and recommended routes (`#10b981`), decluttered translucent hazards, and deterministic ETA telemetry (with explicit "ETA unavailable" fallback).
 - Researcher Dashboard: Upgraded `PFZSpatialMap.tsx` (3D chlorophyll column encoding), `HazardSpatialMap.tsx` (3D severity-extruded translucent polygons), `EOGridSpatialMap.tsx` (5×5 satellite grid points with continuous metric coloring), and `QueryWorkbench.tsx` (spatial vector layer responses).
@@ -300,6 +340,7 @@
 - Verified zero TypeScript errors (`tsc --noEmit`), full test pass (227 tests in 15 suites), and clean production bundle (`vite build`).
 
 ### P0-8O — Authority & Researcher 3D Map Regression Fixes
+
 - **Indian Landmass & Coastlines Restored**: Integrated synchronized MapLibre CartoDB dark-matter basemap under DeckGL in `DeckGLMapFoundation.tsx`, bringing authentic coastal geography, state borders, and bathymetry into view at 60 FPS.
 - **Authority Fleet Surveillance Vessel Rendering**: Fixed data flow by fetching canonical vessel positions via `getDemoVesselReplay` in `AuthorityDeckGLMap.tsx`. Rendered verified vessels with heading-oriented nautical craft chevrons, speed labels, and illuminated beacons while strictly excluding missing/invalid coordinates without defaulting to sector center.
 - **Auto-Zoom & Dynamic Viewport Calculation**: Implemented bounding box camera focusing for selected vessels (encompassing vessel coordinate + track + trajectory) and selected hazard bulletins with sensible operational padding.
@@ -309,6 +350,7 @@
 - **Testing & Verification**: 230 tests passing across 15 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build.
 
 ### P0-8P — Authority 3D Live Vessel Tracking, FlyTo Sector Transitions & Hazard Decluttering
+
 - **Backend Fallback Fix**: Fixed `get_demo_vessels` and `get_demo_vessel_replay` in `backend/app/api/v1/routes.py` to correctly fall back to synthetic fixtures when the database is connected but unseeded (`if items: return [...]`), restoring the monitored vessels list and live replay playback.
 - **Cinematic FlyTo Sector Transitions**: Added `FlyToInterpolator` with 1400ms duration to `AuthorityDeckGLMap.tsx` so switching surveillance sectors/regions automatically zooms out smoothly from the previous region and swoops into the selected region.
 - **Rich 3D Live Vessel Tracking**: Ported the complete 3D vessel tracking system to Authority Dashboard:
@@ -322,14 +364,17 @@
   - Only the specific hazard area where the vessel is actively located (or the selected operational alert) significantly blinks and pulses with a vivid glowing gold warning fill and bold border.
 
 ### P0-8Q — Researcher Hazard Selection Blinking & Compact Vessel Craft Icons
+
 - **Researcher Hazard Selection Pulsing & Blinking**: Integrated 60-FPS sinusoidal pulsing ticker (`pulseTick`) and `FlyToInterpolator` in `HazardSpatialMap.tsx`. When a hazard is clicked in the list, its 3D polygon significantly blinks with dynamic glowing gold fill (`[250, 204, 21, alpha]`) and a bold 4.5px border while all other hazard polygons remain fully intact with their respective severity color tiers.
 - **Sleek & Compact Nautical Vessel Craft Icons**: Replaced oversized circular scatterplot markers with precision-designed vector AIS vessel craft SVG icons (`IconLayer` in `AuthorityDeckGLMap.tsx` and `DeckGLMarineMap.tsx`) rotated along the vessel's actual navigation heading, with scaled down (12–24px) craft dimensions and refined beacon beam.
 
 ### P0-8R — Ocean-Strict 5×5 EO Grid Positioning & Dropdown Metric Selection
+
 - **Strictly Oceanic EO Grid Coordinates**: Updated 5×5 satellite Earth Observation grid coordinate generator in `backend/app/domain/synthetic/generator.py` (`lons = [71.70, 71.95, 72.20, 72.45, 72.70]`) and exported updated fixtures so that 100% of the 25 grid cells are strictly located in the open Arabian Sea with ~35–80 km offshore clearance from the Konkan coastline, completely eliminating any grid cell overlap on land.
 - **Dropdown Observation Metric Selector**: Replaced header metric tabs in `EOGridSpatialMap.tsx` with a custom-styled dropdown select menu (`SST (°C)`, `Chlorophyll-a (mg/m³)`, `Cloud Cover (%)`). Selecting any metric instantly updates point values, dynamic continuous color ramps (thermal SST, oceanic chlorophyll, cloud fraction), summary statistics (Min, Mean, Max), cell inspect drawers, and bottom overlay legend.
 
 ### P0-8L — Fleet Surveillance Accurate Route Corridors with Start & Destination Terminals
+
 - Parameterized route alternatives endpoint (`/api/v1/demo/routes/alternatives`) with `vessel_id` to contextualize navigation corridors directly to the active fleet craft.
 - Updated `MockRouteExposureEngine` to connect authentic multi-waypoint navigation corridors (Safest Inshore, Balanced, Direct) from the vessel's specific home harbor/departure coordinates to its specific trip destination/fishing bank.
 - Dynamically generates start point marker (`layer_route_start_marker`, emerald `#10b981`) and end point marker (`layer_route_end_marker`, amber `#f59e0b`) in `MapView.tsx`.
@@ -338,6 +383,7 @@
 - Strictly verified and enforced that passage routes never cross inland onto dry land; all alternative corridors (Safest Inshore, Balanced, Direct) across all 14 vessels and general sectors follow authentic, verified in-water channels and clamp coordinates seaward into the Arabian Sea.
 
 ### P0-8M — Fleet Surveillance Trajectory Replay Continuous Autoplay & Lifecycle Controls
+
 - Configured GPS trajectory replay to autoplay automatically upon vessel selection and sector load, starting from departure (`currentIndex = 0`, `isPlaying = true`).
 - Enhanced ticker animation to continuously trace coastal voyages point-by-point (1s intervals), hold for 2s at the voyage destination to display arrival telemetry, and smoothly loop back to departure.
 - Guarded operational alert audits: clicking a vessel hazard alert pauses playback and anchors the camera and vessel marker at the evaluated containment position (`pos.length - 1`).
@@ -345,18 +391,21 @@
 - Added clean timestamp formatter (`formatTimestamp`) normalizing ISO timestamps into readable `HH:mm` format across UI labels and MapLayer popups.
 
 ### P0-8N — Fleet Surveillance Predicted Path Dynamic Yellow Dotted Line
+
 - Configured vessel predicted path (`layer_fleet_estimated_trajectory`) in yellow dotted line (`color: '#facc15'`, `line_width: 3`, `line_dasharray: [0, 2]`) using round line-cap geometry.
 - Dynamically generates the predicted path directly ahead of the vessel craft on every step of autoplay and manual scrubbing, projecting both the remaining planned voyage route to destination and the 30-minute dead-reckoning trajectory based on instantaneous speed and heading.
 - Updated `MapView.tsx` to compile `line-dasharray` directly into initial line layer paint definitions as well as runtime updates.
 - Synchronized layer lifecycle: clearing predicted path on empty vessel telemetry or sector switch, while maintaining active layer on replay autoplay.
 
 ### P0-9 — Authoritative Marine Observation Single Source of Truth
+
 - Eliminated architectural source-of-truth split between legacy static `marine_dataset.py` and deterministic synthetic OSF time-series fixture (`data/fixtures/synthetic/incois/osf_hourly_observations.json`).
 - Updated `SnapshotConnector` to directly load `osf_hourly_observations.json` and normalize records through `IncoisOSFNormalizer.normalize()`.
 - Refactored `DataService` in SNAPSHOT and SYNTHETIC modes to route through `SnapshotConnector`, eliminating hardcoded dummy payloads and silent dataset fallbacks.
 - Verified single source-of-truth consistency across fixture -> INCOIS adapter -> ObservationBundle -> Risk Engine -> Situation Assessment -> Researcher Demo API with dedicated test suite (`test_marine_source_of_truth.py`).
 
 ### P0-10 — PFZ (Potential Fishing Zone) Data Semantics Fix
+
 - Corrected semantic mapping in Researcher Lab where PFZ thermal gradient (`sst_gradient`) was being converted to a fabricated absolute sea surface temperature (`sst_celsius: 28.0 + p.sst_gradient`) and rendered with `°C`.
 - Updated `PFZCandidate` interface, mock fixture, and mapper in `frontend/src/api/researcher-client.ts` to preserve `sst_gradient: number | null` explicitly without fabricating temperature.
 - Updated `frontend/src/components/researcher/OceanDataExplorer.tsx` to display `SST Gradient: <value>` without `°C` and preserved `depth_m`, `bearing_deg`, `distance_km`, `chlorophyll_a_mg_m3`, and validity fields.
@@ -364,6 +413,7 @@
 - Added end-to-end semantic validation tests (`tests/domain/test_pfz_data_semantics.py` and `researcher.test.ts`).
 
 ### P0-11 — Removed Fabricated/Random ScenarioLab Fallback Results
+
 - Eliminated all `Math.random()` and mock scenario execution fallbacks in `frontend/src/api/researcher-client.ts`.
 - Structured `runScenario` to return genuine results produced by the deterministic `ScenarioRunner` on success, and explicit unavailable/error state (`status: 'error'`, `is_error: true`, `evidence_count: 0`, `trace_steps: 0`, `confidence_level: 'UNKNOWN'`) on network/HTTP failure or timeout.
 - Enhanced `ScenarioLab.tsx` with dedicated error cards for unavailable backend scenarios and detailed verdict badges (`PASS`/`FAIL`), executed tools tags, and decisive factors on successful runs.
@@ -371,12 +421,14 @@
 - Added regression tests verifying zero fake metrics or random calls upon execution failure.
 
 ### P0-12 — Persistent DATA MODE Indicator for Researcher Lab
+
 - Added persistent, clearly visible `DATA MODE: SYNTHETIC DEMO / SNAPSHOT` indicator in the shared top-level command bar of `ResearcherPage.tsx`.
 - Centralized the source-of-truth constants `CANONICAL_DATA_MODE_LABEL` and `CANONICAL_DATA_MODE_TOOLTIP` in `frontend/src/api/researcher-client.ts`.
 - Ensured the indicator persists seamlessly across all 4 Researcher decks (Ocean Data, Data Sources, Scenario Lab, Query Workbench) without layout clipping or tab disruption.
 - Verified absence of conflicting/misleading `LIVE` operational labels.
 
 ### P0-13 — 48-Hour Marine Observation Time-Series Visualization in Researcher Lab
+
 - Implemented lightweight, pure-SVG 3-panel synchronized temporal visualization in `OceanTimeSeriesChart.tsx` integrated into `OceanDataExplorer.tsx`.
 - Exposes temporal behavior across 48 hourly observations for Significant Wave Height (SWH, meters), Sea Surface Temperature (SST, °C), and Wind Speed (knots) with individual calibrated y-scales and caution threshold references.
 - Real timestamps rendered on x-axis (e.g. `Sep 11 06:00 UTC`, `Sep 12 18:00 UTC`), strictly sorted chronologically before rendering and latest-card computation.
@@ -388,6 +440,7 @@
 - Verified with 18 automated frontend tests in `researcher.test.ts`, full vitest suite (112 tests passing), and clean `tsc && vite build`.
 
 ### P0-14 — PFZ (Potential Fishing Zone) Spatial Map Visualization in Researcher Lab
+
 - Implemented `PFZSpatialMap.tsx` reusing existing project MapLibre GL conventions with CartoDB dark matter basemap for spatial exploration of PFZ advisory candidates.
 - Plotted genuine candidate coordinates (`latitude`, `longitude`) returned by `GET /api/v1/demo/pfz-candidates?valid_only=true` with rank badges (`#1`, `#2`) and confidence visual indicators.
 - Embedded interactive MapLibre popups and bidirectional selection linking between the spatial map and PFZ candidate cards (highlighting and camera focus).
@@ -400,18 +453,21 @@
 ## Phase 2: Data Grounding & Provider Alignment (Current)
 
 ### Completed
+
 - Contract alignment for `MarineConditionsPayload`: Added `wave_direction_deg` and `freshness_flags`.
 - Refactored `OpenMeteoConnector`: Fixed trip-window alignment, km/h to knots conversion, added precise forecast hour extraction.
-- Refactored `SnapshotConnector` and `DataService`: Removed clock-invented timestamps. 
+- Refactored `SnapshotConnector` and `DataService`: Removed clock-invented timestamps.
 - Synced test baselines in `SYNTHETIC` and `SNAPSHOT` data modes to deterministic scenario anchor times (`2026-09-12T06:00:00+00:00`) rather than fabricating time from `now_utc`.
 - Repaired corrupted provider tests (`test_imd.py`, `test_incois.py`) and updated `test_open_meteo.py` mocks.
 - `IncoisOSFNormalizer` updated to correctly derive a 6-hour `valid_to` window deterministically from `observation_time` instead of from the current clock.
 - **Verification:** 100% pass on regression suite (148 tests).
 
 ### Blockers
+
 None
 
 ### P0-15 — Hazard Spatial Polygon Visualization in Researcher Lab
+
 - Implemented `HazardSpatialMap.tsx` reusing MapLibre GL conventions and dark basemap styling for spatial exploration of observed/advisory hazard polygons.
 - Converted actual backend hazard polygon geometries (`geometry_geojson` Polygon/MultiPolygon) into GeoJSON FeatureCollections, preserving exact polygon vertices.
 - Handled coordinate normalizations (numeric pairs and space-separated string pairs `"lon lat"`) with strict validation (filtering out invalid geometries safely without inventing coordinates).
@@ -427,6 +483,7 @@ None
 - Validated with 8 automated unit & feature transformation tests (128 total frontend tests passing), full TypeScript typecheck, and clean `tsc && vite build`.
 
 ### P0-16 — Earth Observation 14-Day Temporal Analysis in Researcher Lab
+
 - Resolved temporal truncation by preserving all 350 multi-day satellite grid cell observations (14 daily time slices × 25 spatial cells) in `fetchEOGridCells()`, while preserving `getLatestEOGridCells()` for the latest spatial snapshot table.
 - Implemented `EOTemporalAnalysisChart.tsx` featuring pure-SVG 14-day temporal trend line chart with metric switcher:
   - **SST (°C)**: absolute Sea Surface Temperature from INSAT-3D/Oceansat thermal sensors (never confounded with PFZ `sst_gradient`).
@@ -444,6 +501,7 @@ None
 - Validated with 13 automated unit & feature transformation tests (141 total frontend tests passing), full TypeScript typecheck, and clean `tsc && vite build`.
 
 ### P0-17 — Unified Data Quality & Provenance UX in Researcher Lab
+
 - Implemented a lightweight, reusable data quality and provenance presentation layer across all existing synthetic datasets in the Researcher Lab:
   - Created `DataProvenancePanel.tsx`: compact expandable panel with top-bar summary (provider badge, dataset name, synthetic snapshot mode badge, snapshot period, valid-count pill, and drawer toggle) and detailed trust breakdown (source product lineage, QC classification breakdown, pixel uncertainty, semantics disclosure, and documentation link).
   - Created `src/utils/provenance.ts`: deterministic metadata derivation helpers for all 4 analytical datasets:
@@ -458,6 +516,7 @@ None
 - Validated with comprehensive automated test suite (55 researcher tests, 149 total frontend tests passing across 11 test suites), 31 backend contract/domain tests passing, and clean `npm run build` production bundle.
 
 ### P0-18 — Tide Temporal Analysis in Researcher Lab
+
 - Implemented dedicated, lightweight pure-SVG 48-hour tide temporal visualization (`TideTimeSeriesChart.tsx`) integrated into `OceanDataExplorer.tsx` beneath the existing P0-13 3-panel marine chart.
 - Preserved existing `OceanTimeSeriesChart.tsx` (3-panel SWH, SST, Wind Speed) completely intact without modification or clutter.
 - **Primary Metric**: Tide Level in meters above Chart Datum (`LAT` - Lowest Astronomical Tide), directly sourced from the synthetic INCOIS OSF dataset (`tide_level_m`, `units_json.tide_level`).
@@ -473,6 +532,7 @@ None
 - **Validation**: 62 researcher tests (156 total frontend tests passing across 11 suites), 31 backend contract/domain tests passing, and clean `tsc && vite build` bundle.
 
 ### P0-19 — Earth Observation Spatial Grid Visualization in Researcher Lab
+
 - Implemented `EOGridSpatialMap.tsx` reusing project MapLibre GL conventions with CartoDB dark matter basemap for spatial exploration of the 5×5 Earth Observation satellite grid across the Konkan coast.
 - **14-Date Snapshot Selector**:
   - Dynamically extracts available observation dates (`Aug 30, 2026` → `Sep 12, 2026`) chronologically.
@@ -488,7 +548,7 @@ None
   - `DEGRADED_QC_WARNING` / `SUSPECT` cells render with amber warning color (`#f59e0b`).
   - `NO_DATA` / null values render as dark slate (`#334155`) — never converted to zero.
 - **Spatial Statistics & Inspection**:
-  - 4-card KPI strip displaying Coverage (`X / 25 cells`, cloud-obscured count), Spatial Minimum, Spatial Mean (*strictly across valid cells only*), and Spatial Maximum.
+  - 4-card KPI strip displaying Coverage (`X / 25 cells`, cloud-obscured count), Spatial Minimum, Spatial Mean (_strictly across valid cells only_), and Spatial Maximum.
   - Interactive MapLibre hover tooltips and click selection opening an in-depth cell inspector panel (coordinates, pass time, all metrics, uncertainty, and satellite source).
 - **Provenance & Trust Integration**:
   - Added `deriveEOSpatialTrustMetadata` in `src/utils/provenance.ts` integrating the reusable `DataProvenancePanel.tsx`.
@@ -496,6 +556,7 @@ None
 - **Validation**: 71 researcher tests (165 total frontend tests passing across 11 suites), 31 backend contract/domain tests passing, and clean `tsc && vite build` production bundle.
 
 ### P0-20 — Scenario Comparison in Researcher Lab
+
 - Implemented `ScenarioComparisonView.tsx` enabling side-by-side analytical comparison of multiple (2–4) synthetic scenario executions over the real `/api/v1/scenarios/{id}/run` ORCA execution pipeline.
 - **Multi-Scenario Selection & Limiting**:
   - Scenario list cards support multi-select checkboxes with a strict 4-scenario ceiling to prevent UI clutter and unreadable comparison matrices.
@@ -517,6 +578,7 @@ None
 - **Validation**: 78 researcher tests (172 total frontend tests passing across 11 suites), 31 backend domain/contract tests passing, and clean `tsc && vite build` production bundle.
 
 ### P0-21 — Query Workbench Analytical Upgrade in Researcher Lab
+
 - Upgraded `QueryWorkbench.tsx` into a credible, interactive analytical research workspace over the real `/api/v1/chat` backend without modifying ORCA reasoning or deterministic risk logic.
 - **In-Memory Conversation Session**:
   - Maintains chronological user queries and assistant reasoning responses with localized client-side interaction timestamps.
@@ -540,7 +602,8 @@ None
 - **Validation**: 85 researcher tests (179 total frontend tests passing across 11 suites), 31 backend domain/contract tests passing, and clean `tsc && vite build` production bundle.
 
 ### P0-22 — Fisherman Decision Surface
-- Upgraded the Fisherman Dashboard from a pure chat experience into a focused decision-support surface answering immediately: *"Can I go right now, and why?"*
+
+- Upgraded the Fisherman Dashboard from a pure chat experience into a focused decision-support surface answering immediately: _"Can I go right now, and why?"_
 - **Primary Decision Section**:
   - Prominent status card supporting four normalized states: `SAFE TO GO` (mapped from backend `GO`), `CAUTION` (mapped from `CAUTION`), `DO NOT GO` (mapped from `NO_GO`), and `UNKNOWN` (mapped from `UNKNOWN`/initial/error).
   - Explicit initial state before a valid backend response is strictly **`UNKNOWN`** with neutral slate styling, eliminating previous GO default.
@@ -556,7 +619,8 @@ None
 - **Validation**: 16 dedicated unit/integration tests in `fisher-decision.test.ts` (202 total frontend tests passing across 12 suites), 101 backend domain/contract tests passing, and clean `tsc && vite build` bundle.
 
 ### P0-23 — Fisherman Interactive Decision Map
-- Upgraded the Fisherman Dashboard map from a passive viewport into a simple, interactive operational decision map answering: *"Where am I, what areas should I be aware of, what route/area is recommended, and what hazards should I avoid?"*
+
+- Upgraded the Fisherman Dashboard map from a passive viewport into a simple, interactive operational decision map answering: _"Where am I, what areas should I be aware of, what route/area is recommended, and what hazards should I avoid?"_
 - **Architecture & Shared MapView Integrity**:
   - Maintained generic `MapView.tsx` backward compatibility across Fisherman, Authority, and Researcher dashboards without hardcoded persona-specific popups or logic.
   - Added extensible `customPopupRenderer`, `onResetView`, `resetViewTrigger`, and `layerAvailability` props.
@@ -576,6 +640,7 @@ None
 - **Validation**: 5 dedicated tests in `fisher-map.test.ts` (207 total frontend tests passing across 13 suites), 101 backend domain/contract tests passing, and clean `tsc && vite build` bundle.
 
 ### P0-24 — deck.gl Visual Experiment & Spatial Analytics
+
 - Added isolated experimental deck.gl component (`DeckGLMarineMap.tsx`) and evaluation command view (`DeckGLExperimentView.tsx`) to visually benchmark WebGL2-accelerated geospatial rendering against production MapLibre.
 - Rendered authentic SAMUDRA data layers without fabricating coordinates:
   - **Marine/Hazard Polygons**: GeoJSON layer with severity-coded translucent styling and optional 3D extrusion (2500m / 1800m / 1200m prisms).
@@ -592,6 +657,7 @@ None
 - Added 11 dedicated automated tests in `spatial-analytics.test.ts` and `deckgl-experiment.test.ts` (218 total frontend tests passing across 15 suites), full typecheck (`tsc --noEmit`), and clean production build.
 
 ### P0-25 — Real LLM Provider Integration (Groq LLaMA 3.3 70B & Multi-turn Natural Language)
+
 - Integrated real Groq LLM provider (`GroqLLMProvider`) using `llama-3.3-70b-versatile` with structured JSON mode and text generation capabilities.
 - Wired runtime `POST /api/v1/chat` to resolve active LLM provider under `LLM_MODE="auto"` while retaining 100% deterministic fallback when `GROQ_API_KEY` is omitted or API calls encounter timeouts/errors.
 - Propagated raw user query safely through sandboxed prompt context (`<user_query>`) into intent extraction (`intent_locale_node`) and grounded response synthesis (`response_composer_node`).
@@ -606,6 +672,7 @@ None
 - Real Groq smoke test verified: Model authentication, HTTP communication, structured intent extraction, and response composition verified against live Groq endpoint with `qwen/qwen3.8-27b`.
 
 ### P0-26 — India MarineWatch Nationwide Real Institutional Data Platform (BarentsWatch India Architecture)
+
 - **Nationwide Coverage Across All Coastal States & UTs**:
   - Expanded from limited West Coast pilot to full national coverage across Gujarat, Maharashtra, Goa, Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Odisha, West Bengal, Andaman & Nicobar Islands, and Lakshadweep.
 - **DGLL Coastal Lighthouses & Navigational Aids**:
@@ -638,6 +705,7 @@ None
   - Full frontend suite: 241 passed across 16 test files, zero TypeScript errors (`tsc --noEmit`), and clean production build (`vite build`).
 
 ### P0-28 — Repository Governance, Audit, Unification & Multi-AI Protocol
+
 - Established canonical strategic truth: Created and synchronized `docs/ORCA_AI_MASTER_CONTEXT.md` defining the inviolable cognitive flow (`ASK → PLAN → DISCOVER → REASON → DECIDE → EXPLAIN → SIMULATE → ADAPT`) and core architectural invariants.
 - Streamlined `AGENTS.md` at repository root into a high-leverage entrypoint enforcing mandatory preflight reading, deterministic safety authority, epistemic data honesty (missing evidence != zero risk, unknown != safe, mock != live), and automatic documentation maintenance.
 - Documented key architectural decisions in `docs/DECISIONS.md`:
@@ -649,6 +717,7 @@ None
 - Verified test suite: `pytest tests/agent_eval/` (387 passed, 1 skipped), frontend Vitest (224 passed across 16 test suites, zero TypeScript errors).
 
 ### P0-27 — Map Rendering Reliability & Harbour Precision Alignment
+
 - Fixed MapLibre interpolation crashes by extracting zoom interpolators to the root level of layer expressions.
 - Bypassed MapLibre text-font dependency for emoji glyph rendering by injecting dynamic Canvas `ImageData` directly into the map style registry.
 - Precision-aligned all 15 Indian coastal harbour coordinates in `geo.ts` directly to their true shoreline positions, resolving inland plotting artifacts.
@@ -656,20 +725,18 @@ None
 
 ---
 
-
 ## P0 Marine Data Providers Status Board
 
-
-| Provider / Feed | Protocol / Implementation | Data Mode | Status | Tests | Live Verification State | Blocker / Notes |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **INCOIS OSF** | `MarineConditionsProvider` (`IncoisOceanStateConnector`) | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_incois.py`, `test_connector_contracts.py` | Requires external `INCOIS_API_KEY`. Normalizes live or falls back to Open-Meteo. | None (Graceful Open-Meteo fallback verified) |
-| **INCOIS PFZ** | `PFZSourceDataProvider` (`IncoisOceanStateConnector`, `DeterministicPFZRankingEngine`) | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_incois.py`, `test_connector_contracts.py` | Authoritative vectors parsed; Haversine & compass bearing calculated deterministically. | None (Deterministic ranking complete) |
-| **INCOIS SVAS** | `SVASAdvisoryProvider` (`IncoisOceanStateConnector`, `SnapshotConnector`) | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_incois.py`, `test_registration.py` | In HYBRID without API key returns `CACHED_REAL` / `LIMITED`. | Live government SVAS portal requires clearance |
-| **IMD Coastal Weather** | `WeatherConditionsProvider` (`ImdWeatherConnector`) | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_imd.py`, `test_connector_contracts.py` | Normalizes live IMD bulletin; fallback to Open-Meteo on failure. | None (Fallback verified) |
-| **IMD Cyclone / Hazard** | `HazardBulletinsProvider` (`ImdHazardConnector`) | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_imd.py`, `test_connector_contracts.py` | Severe hazard / squall warning triggers NO_GO/CAUTION in risk engine. Conservative NORMAL default when live unavailable. | None (Hard-stop compatibility verified) |
-| **Pilot GIS Restrictions** | `GeospatialHazardEngine` (`DeterministicGeospatialEngine`) | `CACHED_REAL` | `OFFLINE_VERIFIED` | `test_geospatial.py` | Shapely point-in-polygon and route intersection over Malvan MPA, Goa Naval Range, and Gujarat IMBL buffer. | None (Pure Python Shapely offline) |
-| **Open-Meteo Fallback** | `MarineConditionsProvider` & `WeatherConditionsProvider` (`OpenMeteoConnector`) | `LIVE` | `LIVE_VERIFIED` | `test_open_meteo.py` | Public endpoint tested with connection pooling, retries, and bounded timeout. | None (Public access active) |
-| **Reference Catalogs** | `load_landing_centres`, `load_vessel_profiles` (`harbors.py`) | Canonical Files | `OFFLINE_VERIFIED` | `test_harbors.py` | Typed Pydantic validation, deterministic name/ID indexing, missing record safety. | None |
+| Provider / Feed            | Protocol / Implementation                                                              | Data Mode                      | Status             | Tests                                           | Live Verification State                                                                                                  | Blocker / Notes                                |
+| :------------------------- | :------------------------------------------------------------------------------------- | :----------------------------- | :----------------- | :---------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------- |
+| **INCOIS OSF**             | `MarineConditionsProvider` (`IncoisOceanStateConnector`)                               | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_incois.py`, `test_connector_contracts.py` | Requires external `INCOIS_API_KEY`. Normalizes live or falls back to Open-Meteo.                                         | None (Graceful Open-Meteo fallback verified)   |
+| **INCOIS PFZ**             | `PFZSourceDataProvider` (`IncoisOceanStateConnector`, `DeterministicPFZRankingEngine`) | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_incois.py`, `test_connector_contracts.py` | Authoritative vectors parsed; Haversine & compass bearing calculated deterministically.                                  | None (Deterministic ranking complete)          |
+| **INCOIS SVAS**            | `SVASAdvisoryProvider` (`IncoisOceanStateConnector`, `SnapshotConnector`)              | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_incois.py`, `test_registration.py`        | In HYBRID without API key returns `CACHED_REAL` / `LIMITED`.                                                             | Live government SVAS portal requires clearance |
+| **IMD Coastal Weather**    | `WeatherConditionsProvider` (`ImdWeatherConnector`)                                    | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_imd.py`, `test_connector_contracts.py`    | Normalizes live IMD bulletin; fallback to Open-Meteo on failure.                                                         | None (Fallback verified)                       |
+| **IMD Cyclone / Hazard**   | `HazardBulletinsProvider` (`ImdHazardConnector`)                                       | `LIVE` / `HYBRID` / `SNAPSHOT` | `OFFLINE_VERIFIED` | `test_imd.py`, `test_connector_contracts.py`    | Severe hazard / squall warning triggers NO_GO/CAUTION in risk engine. Conservative NORMAL default when live unavailable. | None (Hard-stop compatibility verified)        |
+| **Pilot GIS Restrictions** | `GeospatialHazardEngine` (`DeterministicGeospatialEngine`)                             | `CACHED_REAL`                  | `OFFLINE_VERIFIED` | `test_geospatial.py`                            | Shapely point-in-polygon and route intersection over Malvan MPA, Goa Naval Range, and Gujarat IMBL buffer.               | None (Pure Python Shapely offline)             |
+| **Open-Meteo Fallback**    | `MarineConditionsProvider` & `WeatherConditionsProvider` (`OpenMeteoConnector`)        | `LIVE`                         | `LIVE_VERIFIED`    | `test_open_meteo.py`                            | Public endpoint tested with connection pooling, retries, and bounded timeout.                                            | None (Public access active)                    |
+| **Reference Catalogs**     | `load_landing_centres`, `load_vessel_profiles` (`harbors.py`)                          | Canonical Files                | `OFFLINE_VERIFIED` | `test_harbors.py`                               | Typed Pydantic validation, deterministic name/ID indexing, missing record safety.                                        | None                                           |
 
 ---
 
@@ -683,6 +750,7 @@ None
 ---
 
 ### M3 — Canonical DecisionObject, Structured DecisionDelta, Alternatives & Route Exposure
+
 - Status: **COMPLETE & VERIFIED** (P0 & P1 MVP features fully implemented, tested, and backward-compatible).
 - **GAP-1: Canonical DecisionObject Emitted by Runtime**:
   - Implemented deterministic `DecisionObject` creation in `response_composer_node` within `backend/app/agents/graph.py`.
@@ -713,6 +781,7 @@ None
 ---
 
 ### M2 — Backend Platform, Durable PostGIS Persistence, SACHET CAP Feed, Rate Limiting & Observability
+
 - Status: **COMPLETE & VERIFIED** (Database runtime container execution marked BLOCKED due to offline Windows Docker engine daemon; schema, migrations, spatial repos, and offline tests 100% verified).
 - **Durable PostGIS Persistence**:
   - Implemented Alembic migration `e1a2b3c4d5e6_trip_assessments_and_alerts.py` to version `saved_trip_subscriptions`, `actionable_alerts`, and `trip_assessments`.
@@ -741,19 +810,20 @@ None
 ---
 
 ## Phase Status Summary
+
 - [x] **Phase 0: Baseline Audit & Data Cleansing** (Canonical layout established, duplicate fixtures pruned)
 - [x] **Phase 1: Reference Data Loaders** (`harbors.py` typed loaders & indexing verified)
 - [x] **Phase 2: P0 Connectors & Fallback Foundation** (INCOIS OSF/PFZ/SVAS, IMD, Pilot GIS, Open-Meteo)
 - [x] **Phase 3: Real Database / PostGIS Integration & SACHET CAP Feed** (Alembic migrations, spatial repos, SACHET CAP, rate limiting, observability)
 - [x] **Phase 4: M3 Decision/Risk/Reasoning MVP** (Canonical DecisionObject, structured DecisionDelta, ALTERNATIVE branch, WHAT_IF reasoning, route exposure)
-- [x] **Phase 5: Mission Twin Simulation Engine** (P1 — Dynamic Trajectory Exposure, Current Vector A* Routing, Temporal Departure Windows, Proactive Geofencing)
+- [x] **Phase 5: Mission Twin Simulation Engine** (P1 — Dynamic Trajectory Exposure, Current Vector A\* Routing, Temporal Departure Windows, Proactive Geofencing)
 - [ ] **Phase 6: Vernacular Voice & Audio Pipelines** (P1 — Whisper / Sarvam AI integration)
 
 ## 2026-09-26 - M4 Mission Twin, Dynamic Trajectory Exposure & Departure Windows
 
 - Status: IMPLEMENTED & VERIFIED.
 - **Dynamic Trajectory Exposure Engine**: Implemented `TrajectoryExposureEngine` in `backend/app/domain/trajectory_exposure.py`. Computes waypoint ETA arrival times along evaluated passages based on craft speed (`motorized_boat`: 8kt, `mechanized_trawler`: 10kt, `traditional_non_motorized`: 3kt). Evaluates time-indexed marine weather at each waypoint to identify peak wave exposure along the trajectory.
-- **Time-Dependent Marine Routing with Ocean Current Vectors**: Extended `MarinePathfinder` in `backend/app/domain/marine_routing.py` with surface current vector field integration ($V_{\parallel} = \vec{v}_c \cdot \hat{u}$). Adjusts effective speed and edge cost in A* to optimize paths for fuel and time efficiency against currents.
+- **Time-Dependent Marine Routing with Ocean Current Vectors**: Extended `MarinePathfinder` in `backend/app/domain/marine_routing.py` with surface current vector field integration ($V_{\parallel} = \vec{v}_c \cdot \hat{u}$). Adjusts effective speed and edge cost in A\* to optimize paths for fuel and time efficiency against currents.
 - **Temporal Departure Window Scanner**: Implemented `DepartureWindowEvaluator` in `backend/app/domain/departure_window.py`. Evaluates candidate departure windows across the +48h forecast envelope at step intervals, recommending safe delay windows (e.g. "Recommend delaying departure by +6h to 2026-09-26T12:00:00Z. Wave height drops from 2.8m to 1.4m").
 - **Proactive Trajectory Geofence Monitoring**: Extended `DeterministicGeospatialEngine` in `backend/app/domain/geo_restrictions.py` with `check_projected_trajectory_hazards`. Projects vessel heading forward over a 2.0h lookahead window using spherical geodesics, computing time-to-cross ($TTC$) and distance-to-boundary before restricted zones are breached.
 - **Data Snapshot Checksum Resynchronization**: Updated SHA-256 checksum and validity window in `data/source_snapshots/pfz_advisories.json`, resolving 6 snapshot test regressions.
@@ -799,6 +869,7 @@ None
   - Backend test suite (`pytest`): 118/118 focused connectors & M3 decision object tests passed, 586/590 full backend suite passed (4 Open-Meteo contract regressions resolved).
 
 ## 2026-09-26 — M1.3 Explainability & Evidence View Implementation
+
 - Status: **COMPLETE & VERIFIED**
 - **1. Assessment-Level Agent Collaboration**:
   - Added additive `agent_collaboration: Optional[AgentCollaborationPayload] = None` to `TripAssessmentResponse` in `backend/app/contracts/assessment.py`.
@@ -826,6 +897,7 @@ None
   - Frontend TypeScript validation: 0 errors (`tsc --noEmit`).
 
 ## 2026-09-26 — M1.4 Decision Delta & Counterfactual Intelligence Implementation (§D048)
+
 - Status: **COMPLETE & VERIFIED**
 - **1. Backend Additive Contracts**:
   - Defined canonical models `DecisionBoundaryItem`, `DecisionStabilityPayload`, `SafeMissionWindow`, and `CounterfactualFlipExplanation` in `backend/app/contracts/assessment.py`.
@@ -871,18 +943,21 @@ None
 
  # #   2 0 2 6 - 0 9 - 2 7   -   F i x e d   I n f i n i t e   L o o p   i n   R e a s s e s s m e n t   a n d   D u r a t i o n   B u g 
  -   S t a t u s :   * * C O M P L E T E   &   V E R I F I E D * * 
- -   F i x e d   a n   i s s u e   i n   b a c k e n d   b a c k g r o u n d   t a s k   w h e r e   t h e   s y s t e m   g o t   s t u c k   i n   a   r a p i d   i t e r a t i o n   l o o p   t h r o u g h   t h o u s a n d s   o f   i n v a l i d   t r i p   r o w s   b y   d e a c t i v a t i n g   i n v a l i d   t r i p s   ( w h e r e   r e t u r n _ t i m e   w a s   b e f o r e   o r   e q u a l   t o   d e p a r t u r e _ t i m e ) . 
- -   A d d e d   f i x   i n   a l e r t   A P I   \  e g i s t e r _ t r i p _ m o n i t o r i n g \   t o   c o r r e c t   U I   t i m e s t a m p   g a p s   c a u s i n g   d e p a r t u r e _ t i m e   = =   r e t u r n _ t i m e . 
+ -   F i x e d   a n   i s s u e   i n   b a c k e n d   b a c k g r o u n d   t a s k   w h e r e   t h e   s y s t e m   g o t   s t u c k   i n   a   r a p i d   i t e r a t i o n   l o o p   t h r o u g h   t h o u s a n d s   o f   i n v a l i d   t r i p   r o w s   b y   d e a c t i v a t i n g   i n v a l i d   t r i p s   ( w h e r e   r e t u r n * t i m e   w a s   b e f o r e   o r   e q u a l   t o   d e p a r t u r e * t i m e ) . 
+ -   A d d e d   f i x   i n   a l e r t   A P I   \ 
+ e g i s t e r * t r i p * m o n i t o r i n g \   t o   c o r r e c t   U I   t i m e s t a m p   g a p s   c a u s i n g   d e p a r t u r e * t i m e   = =   r e t u r n * t i m e . 
  -   V e r i f i e d   b a c k g r o u n d   w o r k e r   p r o c e s s   c o m p l e t e s   a   s i n g l e   b a t c h   r e a s s e s s m e n t   s u c c e s s f u l l y   p e r   6 0 s   c y c l e   w i t h o u t   r e p e a t i n g   g e o g r a p h i c   f a l l b a c k   l o g s   i n d e f i n i t e l y . 
-  
+ 
+ 
  
  # #   2 0 2 6 - 0 9 - 2 7   -   M 2   S n a p s h o t   E v i d e n c e   &   U I   C o n s i s t e n c y   U p d a t e s 
  -   S t a t u s :   * * C O M P L E T E   &   V E R I F I E D * * 
- -   * * 1 .   C o n t r a d i c t o r y   G O   B a n n e r   F i x : * *   U p d a t e d   \ F i s h e r D e c i s i o n S u r f a c e . t s x \   a n d   \ T r i p P l a n D e t a i l s . t s x \   t o   r e s p e c t   t h e   t o p - l e v e l   a s s e s s m e n t   s t a t u s .   W h e n   t h e   s t a t u s   i s   \ U N K N O W N \   o r   \ D E G R A D E D _ D A T A \ ,   t h e   b o t t o m   c o n d i t i o n s   b a r   d i s p l a y s   ' I N S U F F I C I E N T   D A T A '   i n   g r a y   r a t h e r   t h a n   a   g r e e n   ' G O '   b a n n e r ,   e n s u r i n g   a   u n i f i e d   U I   s t a t e . 
- -   * * 2 .   F i x t u r e   H o r i z o n   E x t e n s i o n : * *   M o d i f i e d   \  a c k e n d / a p p / d o m a i n / s y n t h e t i c / g e n e r a t o r . p y \   t o   g e n e r a t e   7 2   h o u r s   o f   h o u r l y   m a r i n e   o b s e r v a t i o n s   i n s t e a d   o f   2 4 .   S h i f t e d   \ R E F E R E N C E _ T I M E \   t o   2 0 2 6 - 0 9 - 2 6   t o   m a t c h   a c t i v e   d e m o   t r i p s   a n d   t e s t s . 
- -   * * 3 .   N o r m a l i z e r   &   D B   F i x e s : * *   F i x e d   \ I n c o i s O S F N o r m a l i z e r \   t o   s e t   a   r e a l i s t i c   7 2 - h o u r   \  a l i d _ t o \   t i m e s t a m p   i n s t e a d   o f   6   h o u r s ,   w h i c h   p r e v i o u s l y   c a u s e d   t y p i c a l   t r i p s   ( e . g . ,   1 2   h o u r s )   t o   f a i l   w i t h   \ T R I P _ W I N D O W _ E X C E E D S _ F O R E C A S T \ .   F i x e d   D B   m a p p i n g   t o   r e a d   f r o m   \ w a v e _ h e i g h t _ m \   ( p r e v e n t i n g   \ N o n e \   e v a l u a t i o n   a n d   \ D E G R A D E D _ D A T A \   w a r n i n g s ) . 
+ -   * * 1 .   C o n t r a d i c t o r y   G O   B a n n e r   F i x : * *   U p d a t e d   \ F i s h e r D e c i s i o n S u r f a c e . t s x \   a n d   \ T r i p P l a n D e t a i l s . t s x \   t o   r e s p e c t   t h e   t o p - l e v e l   a s s e s s m e n t   s t a t u s .   W h e n   t h e   s t a t u s   i s   \ U N K N O W N \   o r   \ D E G R A D E D * D A T A \ ,   t h e   b o t t o m   c o n d i t i o n s   b a r   d i s p l a y s   ' I N S U F F I C I E N T   D A T A '   i n   g r a y   r a t h e r   t h a n   a   g r e e n   ' G O '   b a n n e r ,   e n s u r i n g   a   u n i f i e d   U I   s t a t e . 
+ -   * * 2 .   F i x t u r e   H o r i z o n   E x t e n s i o n : * *   M o d i f i e d   \  a c k e n d / a p p / d o m a i n / s y n t h e t i c / g e n e r a t o r . p y \   t o   g e n e r a t e   7 2   h o u r s   o f   h o u r l y   m a r i n e   o b s e r v a t i o n s   i n s t e a d   o f   2 4 .   S h i f t e d   \ R E F E R E N C E * T I M E \   t o   2 0 2 6 - 0 9 - 2 6   t o   m a t c h   a c t i v e   d e m o   t r i p s   a n d   t e s t s . 
+ -   * * 3 .   N o r m a l i z e r   &   D B   F i x e s : * *   F i x e d   \ I n c o i s O S F N o r m a l i z e r \   t o   s e t   a   r e a l i s t i c   7 2 - h o u r   \  a l i d * t o \   t i m e s t a m p   i n s t e a d   o f   6   h o u r s ,   w h i c h   p r e v i o u s l y   c a u s e d   t y p i c a l   t r i p s   ( e . g . ,   1 2   h o u r s )   t o   f a i l   w i t h   \ T R I P * W I N D O W * E X C E E D S * F O R E C A S T \ .   F i x e d   D B   m a p p i n g   t o   r e a d   f r o m   \ w a v e * h e i g h t * m \   ( p r e v e n t i n g   \ N o n e \   e v a l u a t i o n   a n d   \ D E G R A D E D * D A T A \   w a r n i n g s ) . 
  -   * * V e r i f i c a t i o n : * * 
-     -   E v a l u a t e d   t r i p   \ 2 0 2 6 - 0 9 - 2 7   0 2 : 3 0  1 4 : 3 0 \   n o w   c o r r e c t l y   r e t u r n s   \ R e c o m m e n d a t i o n S t a t u s . G O \   w i t h   n o   \ T R I P _ W I N D O W _ E X C E E D S _ F O R E C A S T \   a l e r t s . 
+     -   E v a l u a t e d   t r i p   \ 2 0 2 6 - 0 9 - 2 7   0 2 : 3 0  1 4 : 3 0 \   n o w   c o r r e c t l y   r e t u r n s   \ R e c o m m e n d a t i o n S t a t u s . G O \   w i t h   n o   \ T R I P * W I N D O W * E X C E E D S * F O R E C A S T \   a l e r t s . 
      -   S u c c e s s f u l l y   s e e d e d   1 9 4   m a r i n e   o b s e r v a t i o n   r e c o r d s   m a t c h i n g   t h e   e x t e n d e d   t i m e l i n e . 
-  
+ 
+ 
  
