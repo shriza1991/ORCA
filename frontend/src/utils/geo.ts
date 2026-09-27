@@ -1,33 +1,37 @@
-import type { MapLayer } from '../types/contracts';
-import type { EvaluatedRouteItem, SectorHazard, VesselHazardAssociation } from '../api/client';
-import { getBaseLayers } from '../api/client';
+import type { MapLayer } from "../types/contracts";
+import type {
+  EvaluatedRouteItem,
+  SectorHazard,
+  VesselHazardAssociation,
+} from "../api/client";
+import { getBaseLayers } from "../api/client";
 import {
   fetchAllLighthouses,
   fetchPFZAdvisories,
   fetchHazardsGeoJson,
   fetchMaritimeBoundaries,
-} from '../api/marinewatch-client';
+} from "../api/marinewatch-client";
 
 /**
  * Authoritative Indian Coastal Harbor Coordinates [longitude, latitude] (EPSG:4326)
  * Aligned with backend/app/connectors/harbors.py and data/reference/landing_centres.json
  */
 export const HARBOR_COORDINATES: Record<string, [number, number]> = {
-  Ratnagiri: [73.28, 16.99],
-  Malvan: [73.47, 16.06],
-  Panaji: [73.83, 15.49],
-  Goa: [73.83, 15.49],
-  Mumbai: [72.87, 18.92],
-  Veraval: [70.37, 20.90],
-  Porbandar: [69.60, 21.64],
-  Cochin: [76.24, 9.97],
-  Kochi: [76.24, 9.97],
-  Chennai: [80.30, 13.08],
-  Visakhapatnam: [83.22, 17.69],
-  Paradip: [86.61, 20.26],
-  Tuticorin: [78.16, 8.75],
-  Mangalore: [74.82, 12.92],
-  Malpe: [74.695, 13.35],
+  Ratnagiri: [73.2847, 16.9942],
+  Malvan: [73.4658, 16.0583],
+  Panaji: [73.8056, 15.4125],
+  Goa: [73.8056, 15.4125],
+  Mumbai: [72.8258, 18.9158],
+  Veraval: [70.3689, 20.9022],
+  Porbandar: [69.6, 21.64],
+  Cochin: [76.2611, 9.9417],
+  Kochi: [76.2611, 9.9417],
+  Chennai: [80.2989, 13.1258],
+  Visakhapatnam: [83.3011, 17.6978],
+  Paradip: [86.6711, 20.3189],
+  Tuticorin: [78.1611, 8.8011],
+  Mangalore: [74.8344, 12.8589],
+  Malpe: [74.7011, 13.3522],
   Kandla: [70.22, 23.01],
   Kolkata: [88.32, 22.54],
   Puri: [85.825, 19.795],
@@ -43,25 +47,116 @@ export interface CoastalBookmark {
 }
 
 export const NATIONAL_COASTAL_BOOKMARKS: CoastalBookmark[] = [
-  { name: 'Ratnagiri (MH)', lat: 16.9942, lon: 73.2847, zoom: 10, harbor: 'Ratnagiri', state: 'Maharashtra' },
-  { name: 'Angria Bank Atoll', lat: 16.5000, lon: 72.1000, zoom: 9, harbor: 'Malvan', state: 'Maharashtra' },
-  { name: 'Mumbai (MH)', lat: 18.9158, lon: 72.8258, zoom: 10, harbor: 'Mumbai', state: 'Maharashtra' },
-  { name: 'Goa / Mormugao', lat: 15.4125, lon: 73.8056, zoom: 10, harbor: 'Panaji', state: 'Goa' },
-  { name: 'Kochi (Kerala)', lat: 9.9667, lon: 76.2400, zoom: 10, harbor: 'Cochin', state: 'Kerala' },
-  { name: 'Gulf of Mannar (TN)', lat: 9.1500, lon: 79.1000, zoom: 9, harbor: 'Tuticorin', state: 'Tamil Nadu' },
-  { name: 'Chennai (TN)', lat: 13.0827, lon: 80.2989, zoom: 10, harbor: 'Chennai', state: 'Tamil Nadu' },
-  { name: 'Visakhapatnam (AP)', lat: 17.6868, lon: 83.2185, zoom: 10, harbor: 'Visakhapatnam', state: 'Andhra Pradesh' },
-  { name: 'Gahirmatha / Paradip (OD)', lat: 20.4500, lon: 86.8500, zoom: 9, harbor: 'Paradip', state: 'Odisha' },
-  { name: 'Sundarbans (WB)', lat: 21.6500, lon: 88.0500, zoom: 9, harbor: 'Sagar Island', state: 'West Bengal' },
-  { name: 'Port Blair (A&N)', lat: 11.6667, lon: 92.7333, zoom: 9, harbor: 'Port Blair', state: 'Andaman & Nicobar' },
-  { name: 'Lakshadweep / Minicoy', lat: 8.2717, lon: 73.0539, zoom: 10, harbor: 'Minicoy', state: 'Lakshadweep' },
-  { name: 'Dwarka / Kutch (GJ)', lat: 22.2389, lon: 68.9556, zoom: 10, harbor: 'Veraval', state: 'Gujarat' },
+  {
+    name: "Ratnagiri (MH)",
+    lat: 16.9942,
+    lon: 73.2847,
+    zoom: 10,
+    harbor: "Ratnagiri",
+    state: "Maharashtra",
+  },
+  {
+    name: "Angria Bank Atoll",
+    lat: 16.5,
+    lon: 72.1,
+    zoom: 9,
+    harbor: "Malvan",
+    state: "Maharashtra",
+  },
+  {
+    name: "Mumbai (MH)",
+    lat: 18.9158,
+    lon: 72.8258,
+    zoom: 10,
+    harbor: "Mumbai",
+    state: "Maharashtra",
+  },
+  {
+    name: "Goa / Mormugao",
+    lat: 15.4125,
+    lon: 73.8056,
+    zoom: 10,
+    harbor: "Panaji",
+    state: "Goa",
+  },
+  {
+    name: "Kochi (Kerala)",
+    lat: 9.9667,
+    lon: 76.24,
+    zoom: 10,
+    harbor: "Cochin",
+    state: "Kerala",
+  },
+  {
+    name: "Gulf of Mannar (TN)",
+    lat: 9.15,
+    lon: 79.1,
+    zoom: 9,
+    harbor: "Tuticorin",
+    state: "Tamil Nadu",
+  },
+  {
+    name: "Chennai (TN)",
+    lat: 13.0827,
+    lon: 80.2989,
+    zoom: 10,
+    harbor: "Chennai",
+    state: "Tamil Nadu",
+  },
+  {
+    name: "Visakhapatnam (AP)",
+    lat: 17.6868,
+    lon: 83.2185,
+    zoom: 10,
+    harbor: "Visakhapatnam",
+    state: "Andhra Pradesh",
+  },
+  {
+    name: "Gahirmatha / Paradip (OD)",
+    lat: 20.45,
+    lon: 86.85,
+    zoom: 9,
+    harbor: "Paradip",
+    state: "Odisha",
+  },
+  {
+    name: "Sundarbans (WB)",
+    lat: 21.65,
+    lon: 88.05,
+    zoom: 9,
+    harbor: "Sagar Island",
+    state: "West Bengal",
+  },
+  {
+    name: "Port Blair (A&N)",
+    lat: 11.6667,
+    lon: 92.7333,
+    zoom: 9,
+    harbor: "Port Blair",
+    state: "Andaman & Nicobar",
+  },
+  {
+    name: "Lakshadweep / Minicoy",
+    lat: 8.2717,
+    lon: 73.0539,
+    zoom: 10,
+    harbor: "Minicoy",
+    state: "Lakshadweep",
+  },
+  {
+    name: "Dwarka / Kutch (GJ)",
+    lat: 22.2389,
+    lon: 68.9556,
+    zoom: 10,
+    harbor: "Veraval",
+    state: "Gujarat",
+  },
 ];
 
 export function getHarborCoordinates(harborName?: string): [number, number] {
   if (!harborName) return HARBOR_COORDINATES.Ratnagiri;
   const match = Object.keys(HARBOR_COORDINATES).find(
-    (k) => k.toLowerCase() === harborName.trim().toLowerCase()
+    (k) => k.toLowerCase() === harborName.trim().toLowerCase(),
   );
   return match ? HARBOR_COORDINATES[match] : HARBOR_COORDINATES.Ratnagiri;
 }
@@ -69,26 +164,35 @@ export function getHarborCoordinates(harborName?: string): [number, number] {
 /**
  * Creates a baseline GeoJSON MapLayer representing the selected Departure Harbor.
  */
-export function createHarborLayer(harborName: string, status: string = 'UNKNOWN'): MapLayer {
+export function createHarborLayer(
+  harborName: string,
+  status: string = "UNKNOWN",
+): MapLayer {
   const [lon, lat] = getHarborCoordinates(harborName);
   const color =
-    status === 'NO_GO' ? '#ef4444' : status === 'CAUTION' ? '#eab308' : status === 'GO' ? '#0ea5e9' : '#64748b';
+    status === "NO_GO"
+      ? "#ef4444"
+      : status === "CAUTION"
+        ? "#eab308"
+        : status === "GO"
+          ? "#0ea5e9"
+          : "#64748b";
 
   return {
-    layer_id: `layer_harbor_${harborName.toLowerCase().replace(/\s+/g, '_')}`,
+    layer_id: `layer_harbor_${harborName.toLowerCase().replace(/\s+/g, "_")}`,
     name: `Departure Station: ${harborName}`,
-    layer_type: 'geojson',
+    layer_type: "geojson",
     visible: true,
     style: {
       color,
       opacity: 1.0,
       circle_radius: 10,
-      layer_category: 'navigation',
+      layer_category: "navigation",
     },
     geojson: {
-      type: 'Feature',
+      type: "Feature",
       geometry: {
-        type: 'Point',
+        type: "Point",
         coordinates: [lon, lat],
       },
       properties: {
@@ -96,13 +200,13 @@ export function createHarborLayer(harborName: string, status: string = 'UNKNOWN'
         label: `${harborName} Departure Station`,
         coordinates: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E`,
         operational_status: status,
-        type: 'Departure Harbor Station',
+        type: "Departure Harbor Station",
       },
     },
   };
 }
 
-import type { DemoSector } from '../api/client';
+import type { DemoSector } from "../api/client";
 
 export interface SectorDefinition {
   center: [number, number];
@@ -121,52 +225,52 @@ export interface SectorDefinition {
  */
 export const FALLBACK_DEMO_SECTORS: DemoSector[] = [
   {
-    public_id: 'sector-ratnagiri',
-    name: 'Ratnagiri Sector (MH-03)',
-    code: 'MH-03',
-    station_name: 'Ratnagiri Coast Guard & Fisheries Post',
-    harbor_id: 'harbor-ratnagiri',
+    public_id: "sector-ratnagiri",
+    name: "Ratnagiri Sector (MH-03)",
+    code: "MH-03",
+    station_name: "Ratnagiri Coast Guard & Fisheries Post",
+    harbor_id: "harbor-ratnagiri",
     center: [73.28, 16.99],
     zoom: 8.8,
     polygon: [
-      [72.50, 16.45],
-      [73.35, 16.50],
-      [73.34, 16.70],
-      [73.30, 16.88],
-      [73.30, 17.05],
+      [72.5, 16.45],
+      [73.35, 16.5],
+      [73.34, 16.7],
+      [73.3, 16.88],
+      [73.3, 17.05],
       [73.24, 17.32],
       [73.18, 17.55],
       [72.55, 17.55],
-      [72.45, 17.00],
-      [72.50, 16.45],
+      [72.45, 17.0],
+      [72.5, 16.45],
     ],
   },
   {
-    public_id: 'sector-malvan',
-    name: 'Malvan Marine Zone (MH-04)',
-    code: 'MH-04',
-    station_name: 'Malvan Marine Surveillance Unit',
-    harbor_id: 'harbor-malvan',
+    public_id: "sector-malvan",
+    name: "Malvan Marine Zone (MH-04)",
+    code: "MH-04",
+    station_name: "Malvan Marine Surveillance Unit",
+    harbor_id: "harbor-malvan",
     center: [73.47, 16.06],
     zoom: 9.5,
     polygon: [
-      [73.25, 15.90],
-      [73.55, 15.90],
-      [73.52, 16.00],
+      [73.25, 15.9],
+      [73.55, 15.9],
+      [73.52, 16.0],
       [73.49, 16.07],
       [73.48, 16.16],
       [73.42, 16.25],
-      [73.20, 16.25],
-      [73.20, 16.05],
-      [73.25, 15.90],
+      [73.2, 16.25],
+      [73.2, 16.05],
+      [73.25, 15.9],
     ],
   },
   {
-    public_id: 'sector-goa',
-    name: 'Goa Naval Corridor (GA-01)',
-    code: 'GA-01',
-    station_name: 'Goa Port & Naval Traffic Center',
-    harbor_id: 'harbor-panaji',
+    public_id: "sector-goa",
+    name: "Goa Naval Corridor (GA-01)",
+    code: "GA-01",
+    station_name: "Goa Port & Naval Traffic Center",
+    harbor_id: "harbor-panaji",
     center: [73.83, 15.49],
     zoom: 9.0,
     polygon: [
@@ -178,67 +282,71 @@ export const FALLBACK_DEMO_SECTORS: DemoSector[] = [
       [73.74, 15.72],
       [73.68, 15.82],
       [73.38, 15.82],
-      [73.30, 15.45],
+      [73.3, 15.45],
       [73.35, 15.05],
     ],
   },
   {
-    public_id: 'sector-mumbai',
-    name: 'Mumbai Offshore (MH-01)',
-    code: 'MH-01',
-    station_name: 'Mumbai Maritime Rescue Coordination Centre',
-    harbor_id: 'harbor-mumbai',
+    public_id: "sector-mumbai",
+    name: "Mumbai Offshore (MH-01)",
+    code: "MH-01",
+    station_name: "Mumbai Maritime Rescue Coordination Centre",
+    harbor_id: "harbor-mumbai",
     center: [72.87, 18.92],
     zoom: 8.8,
     polygon: [
-      [72.10, 18.45],
+      [72.1, 18.45],
       [72.95, 18.45],
-      [72.90, 18.70],
+      [72.9, 18.7],
       [72.85, 18.95],
       [72.84, 19.18],
-      [72.80, 19.38],
+      [72.8, 19.38],
       [72.15, 19.38],
       [72.05, 18.95],
-      [72.10, 18.45],
+      [72.1, 18.45],
     ],
   },
   {
-    public_id: 'sector-veraval',
-    name: 'Veraval Coastal Zone (GJ-02)',
-    code: 'GJ-02',
-    station_name: 'Veraval Coastal Police & Fisheries Command',
-    harbor_id: 'harbor-veraval',
-    center: [70.37, 20.90],
+    public_id: "sector-veraval",
+    name: "Veraval Coastal Zone (GJ-02)",
+    code: "GJ-02",
+    station_name: "Veraval Coastal Police & Fisheries Command",
+    harbor_id: "harbor-veraval",
+    center: [70.37, 20.9],
     zoom: 8.5,
     polygon: [
-      [69.75, 20.60],
+      [69.75, 20.6],
       [70.92, 20.35],
       [70.95, 20.72],
-      [70.75, 20.80],
-      [70.40, 20.92],
+      [70.75, 20.8],
+      [70.4, 20.92],
       [70.12, 21.15],
       [69.75, 21.32],
       [69.65, 20.95],
-      [69.75, 20.60],
+      [69.75, 20.6],
     ],
   },
 ];
 
-export const SECTOR_SURVEILLANCE_CONFIGS: Record<string, SectorDefinition> = Object.fromEntries(
-  FALLBACK_DEMO_SECTORS.map((s) => [
-    s.name,
-    {
-      center: s.center,
-      zoom: s.zoom,
-      label: s.name,
-      stationName: s.station_name,
-      polygon: s.polygon,
-    },
-  ])
-);
+export const SECTOR_SURVEILLANCE_CONFIGS: Record<string, SectorDefinition> =
+  Object.fromEntries(
+    FALLBACK_DEMO_SECTORS.map((s) => [
+      s.name,
+      {
+        center: s.center,
+        zoom: s.zoom,
+        label: s.name,
+        stationName: s.station_name,
+        polygon: s.polygon,
+      },
+    ]),
+  );
 
 export function getSectorConfig(sectorName: string): SectorDefinition {
-  return SECTOR_SURVEILLANCE_CONFIGS[sectorName] || SECTOR_SURVEILLANCE_CONFIGS['Ratnagiri Sector (MH-03)'];
+  return (
+    SECTOR_SURVEILLANCE_CONFIGS[sectorName] ||
+    SECTOR_SURVEILLANCE_CONFIGS["Ratnagiri Sector (MH-03)"]
+  );
 }
 
 /**
@@ -251,45 +359,51 @@ export function createSectorLayers(
   _allSectors?: DemoSector[],
 ): MapLayer[] {
   let activeSector: DemoSector;
-  if (typeof sectorInput === 'string') {
-    activeSector = FALLBACK_DEMO_SECTORS.find((s) => s.name === sectorInput || s.public_id === sectorInput) || FALLBACK_DEMO_SECTORS[0];
+  if (typeof sectorInput === "string") {
+    activeSector =
+      FALLBACK_DEMO_SECTORS.find(
+        (s) => s.name === sectorInput || s.public_id === sectorInput,
+      ) || FALLBACK_DEMO_SECTORS[0];
   } else {
     activeSector = sectorInput;
   }
 
-  const activeSectorId = activeSector.public_id || activeSector.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const activeSectorId =
+    activeSector.public_id ||
+    activeSector.name.toLowerCase().replace(/[^a-z0-9]/g, "_");
   const layers: MapLayer[] = [];
 
   // 1. Inactive sector boundaries as subtle background context (faint outline only, no active colored operational fill)
   if (_allSectors && _allSectors.length > 0) {
     for (const sec of _allSectors) {
-      const secId = sec.public_id || sec.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const secId =
+        sec.public_id || sec.name.toLowerCase().replace(/[^a-z0-9]/g, "_");
       if (secId === activeSectorId) continue;
 
       layers.push({
         layer_id: `sector_boundary_inactive_${secId}`,
         name: `${sec.name} (Boundary)`,
-        layer_type: 'geojson',
+        layer_type: "geojson",
         visible: true,
         style: {
-          color: '#64748b',
+          color: "#64748b",
           opacity: 0.02,
           line_width: 1,
           line_dasharray: [4, 4],
-          layer_category: 'background',
+          layer_category: "background",
         },
         geojson: {
-          type: 'FeatureCollection',
+          type: "FeatureCollection",
           features: [
             {
-              type: 'Feature',
+              type: "Feature",
               geometry: {
-                type: 'Polygon',
+                type: "Polygon",
                 coordinates: [sec.polygon],
               },
               properties: {
                 sector: sec.name,
-                status: 'INACTIVE_SECTOR_BOUNDARY',
+                status: "INACTIVE_SECTOR_BOUNDARY",
                 is_active_sector: false,
               },
             },
@@ -303,27 +417,27 @@ export function createSectorLayers(
   const sectorPolygonLayer: MapLayer = {
     layer_id: `sector_polygon_${activeSectorId}`,
     name: activeSector.name,
-    layer_type: 'geojson',
+    layer_type: "geojson",
     visible: true,
     style: {
-      color: '#a855f7',
+      color: "#a855f7",
       opacity: 0.25,
       line_width: 2.5,
-      layer_category: 'surveillance',
+      layer_category: "surveillance",
     },
     geojson: {
-      type: 'FeatureCollection',
+      type: "FeatureCollection",
       features: [
         {
-          type: 'Feature',
+          type: "Feature",
           geometry: {
-            type: 'Polygon',
+            type: "Polygon",
             coordinates: [activeSector.polygon],
           },
           properties: {
             sector: activeSector.name,
-            type: 'Active Maritime Surveillance Sector',
-            authority: 'Coastal Security & Fisheries Enforcement',
+            type: "Active Maritime Surveillance Sector",
+            authority: "Coastal Security & Fisheries Enforcement",
             is_active_sector: true,
           },
         },
@@ -334,25 +448,25 @@ export function createSectorLayers(
   const sectorStationLayer: MapLayer = {
     layer_id: `sector_station_${activeSectorId}`,
     name: activeSector.station_name,
-    layer_type: 'geojson',
+    layer_type: "geojson",
     visible: true,
     style: {
-      color: '#c084fc',
+      color: "#c084fc",
       opacity: 1.0,
       circle_radius: 10,
-      layer_category: 'surveillance',
+      layer_category: "surveillance",
     },
     geojson: {
-      type: 'Feature',
+      type: "Feature",
       geometry: {
-        type: 'Point',
+        type: "Point",
         coordinates: activeSector.center,
       },
       properties: {
         station: activeSector.station_name,
         sector: activeSector.name,
-        type: 'Maritime Command & Radar Station',
-        status: 'ACTIVE_SURVEILLANCE',
+        type: "Maritime Command & Radar Station",
+        status: "ACTIVE_SURVEILLANCE",
         is_active_sector: true,
       },
     },
@@ -369,25 +483,26 @@ export function createAuthorityHazardLayers(
 ): MapLayer[] {
   return hazards.map((hazard) => {
     const isSelected = hazard.hazard_id === selectedHazardId;
-    const isActive = hazard.status !== 'INACTIVE' && hazard.status !== 'EXPIRED';
+    const isActive =
+      hazard.status !== "INACTIVE" && hazard.status !== "EXPIRED";
     const color = isSelected
-      ? '#facc15'
-      : hazard.severity === 'WARNING'
-      ? '#ef4444'
-      : hazard.severity === 'ALERT'
-      ? '#f97316'
-      : '#eab308';
+      ? "#facc15"
+      : hazard.severity === "WARNING"
+        ? "#ef4444"
+        : hazard.severity === "ALERT"
+          ? "#f97316"
+          : "#eab308";
 
     return {
       layer_id: `authority_hazard_${hazard.hazard_id}`,
       name: hazard.headline,
-      layer_type: 'geojson',
+      layer_type: "geojson",
       visible: true,
       style: {
         color,
         opacity: isSelected ? 0.58 : 0.32,
         line_width: isSelected ? 4.5 : 2.5,
-        layer_category: 'authority_hazard',
+        layer_category: "authority_hazard",
       },
       properties: {
         hazard_id: hazard.hazard_id,
@@ -400,7 +515,7 @@ export function createAuthorityHazardLayers(
         selected_for_alert_inspection: isSelected,
       },
       geojson: {
-        type: 'Feature',
+        type: "Feature",
         geometry: hazard.geometry,
         properties: {
           hazard_id: hazard.hazard_id,
@@ -420,42 +535,51 @@ export function createAuthorityHazardLayers(
 /** Highlight current canonical vessel positions already inside an active hazard area. */
 export function createHazardAssociationLayers(
   associations: VesselHazardAssociation[],
-  selectedAssociation?: Pick<VesselHazardAssociation, 'vessel_id' | 'hazard_id'> | null,
+  selectedAssociation?: Pick<
+    VesselHazardAssociation,
+    "vessel_id" | "hazard_id"
+  > | null,
 ): MapLayer[] {
   return associations.map((association) => {
-    const isSelected = association.vessel_id === selectedAssociation?.vessel_id
-      && association.hazard_id === selectedAssociation.hazard_id;
+    const isSelected =
+      association.vessel_id === selectedAssociation?.vessel_id &&
+      association.hazard_id === selectedAssociation.hazard_id;
     return {
-    layer_id: `hazard_association_${association.vessel_id}_${association.hazard_id}`,
-    name: `Hazard association: ${association.vessel_id}`,
-    layer_type: 'geojson',
-    visible: true,
-    style: {
-      color: isSelected ? '#facc15' : '#ef4444',
-      opacity: 1,
-      circle_radius: isSelected ? 16 : 12,
-      line_width: isSelected ? 3 : undefined,
-      layer_category: 'hazard_association',
-    },
-    geojson: {
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: association.vessel_position },
-      properties: {
-        vessel_id: association.vessel_id,
-        hazard_id: association.hazard_id,
-        association_type: association.association_type,
-        evaluated_at: association.evaluated_at,
-        selected_for_alert_inspection: isSelected,
+      layer_id: `hazard_association_${association.vessel_id}_${association.hazard_id}`,
+      name: `Hazard association: ${association.vessel_id}`,
+      layer_type: "geojson",
+      visible: true,
+      style: {
+        color: isSelected ? "#facc15" : "#ef4444",
+        opacity: 1,
+        circle_radius: isSelected ? 16 : 12,
+        line_width: isSelected ? 3 : undefined,
+        layer_category: "hazard_association",
       },
-    },
-  };
+      geojson: {
+        type: "Feature",
+        geometry: { type: "Point", coordinates: association.vessel_position },
+        properties: {
+          vessel_id: association.vessel_id,
+          hazard_id: association.hazard_id,
+          association_type: association.association_type,
+          evaluated_at: association.evaluated_at,
+          selected_for_alert_inspection: isSelected,
+        },
+      },
+    };
   });
 }
 
 /**
  * Helper to generate smooth circular geodesic polygons for PFZ advisory thermal fronts.
  */
-export function generateCirclePolygon(centerLon: number, centerLat: number, radiusKm: number, points = 24): number[][] {
+export function generateCirclePolygon(
+  centerLon: number,
+  centerLat: number,
+  radiusKm: number,
+  points = 24,
+): number[][] {
   const coords: number[][] = [];
   const distanceX = radiusKm / (111.32 * Math.cos((centerLat * Math.PI) / 180));
   const distanceY = radiusKm / 110.574;
@@ -464,7 +588,10 @@ export function generateCirclePolygon(centerLon: number, centerLat: number, radi
     const theta = (i / points) * (2 * Math.PI);
     const x = distanceX * Math.cos(theta);
     const y = distanceY * Math.sin(theta);
-    coords.push([parseFloat((centerLon + x).toFixed(5)), parseFloat((centerLat + y).toFixed(5))]);
+    coords.push([
+      parseFloat((centerLon + x).toFixed(5)),
+      parseFloat((centerLat + y).toFixed(5)),
+    ]);
   }
   return coords;
 }
@@ -477,53 +604,67 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
   const layers: MapLayer[] = [];
 
   try {
-    const [baseRes, lhRes, pfzRes, hazRes, boundRes] = await Promise.allSettled([
-      getBaseLayers(),
-      fetchAllLighthouses(),
-      fetchPFZAdvisories('All'),
-      fetchHazardsGeoJson(),
-      fetchMaritimeBoundaries(),
-    ]);
+    const [baseRes, lhRes, pfzRes, hazRes, boundRes] = await Promise.allSettled(
+      [
+        getBaseLayers(),
+        fetchAllLighthouses(),
+        fetchPFZAdvisories("All"),
+        fetchHazardsGeoJson(),
+        fetchMaritimeBoundaries(),
+      ],
+    );
 
     // 1. Official Base Boundaries
     let boundaryFeatures: any[] = [];
-    if (baseRes.status === 'fulfilled' && baseRes.value && Array.isArray(baseRes.value.features)) {
+    if (
+      baseRes.status === "fulfilled" &&
+      baseRes.value &&
+      Array.isArray(baseRes.value.features)
+    ) {
       boundaryFeatures = baseRes.value.features;
-    } else if (boundRes.status === 'fulfilled' && boundRes.value && Array.isArray(boundRes.value.features)) {
+    } else if (
+      boundRes.status === "fulfilled" &&
+      boundRes.value &&
+      Array.isArray(boundRes.value.features)
+    ) {
       boundaryFeatures = boundRes.value.features;
     }
 
     if (boundaryFeatures.length > 0) {
       const boundaryLayers = boundaryFeatures.map((f: any, idx: number) => {
         const props = f.properties || {};
-        const level = props.restriction_level || 'INFORMATIONAL';
-        const polyType = (props.polygon_type || '').toUpperCase();
-        const isEEZ = polyType === 'EEZ_BOUNDARY' || (props.name && String(props.name).includes('EEZ'));
-        const isTerritorial = polyType === 'TERRITORIAL_WATERS' || (props.name && String(props.name).includes('Territorial'));
+        const level = props.restriction_level || "INFORMATIONAL";
+        const polyType = (props.polygon_type || "").toUpperCase();
+        const isEEZ =
+          polyType === "EEZ_BOUNDARY" ||
+          (props.name && String(props.name).includes("EEZ"));
+        const isTerritorial =
+          polyType === "TERRITORIAL_WATERS" ||
+          (props.name && String(props.name).includes("Territorial"));
         const isNational = isEEZ || isTerritorial;
         const color =
-          level === 'NO_GO'
-            ? '#ef4444'
-            : level === 'NO_GO_TRAWLING'
-            ? '#f97316'
-            : level === 'ADVISORY_ALERT'
-            ? '#eab308'
-            : isTerritorial
-            ? '#0ea5e9'
-            : isEEZ
-            ? '#38bdf8'
-            : '#38bdf8';
+          level === "NO_GO"
+            ? "#ef4444"
+            : level === "NO_GO_TRAWLING"
+              ? "#f97316"
+              : level === "ADVISORY_ALERT"
+                ? "#eab308"
+                : isTerritorial
+                  ? "#0ea5e9"
+                  : isEEZ
+                    ? "#38bdf8"
+                    : "#38bdf8";
 
         return {
           layer_id: `base_${props.polygon_id || idx}`,
           name: props.name || `Operational Zone ${idx + 1}`,
-          layer_type: 'geojson' as const,
+          layer_type: "geojson" as const,
           visible: true,
           style: {
             color,
             opacity: isTerritorial ? 0.08 : isEEZ ? 0.04 : 0.22,
             line_width: isTerritorial ? 2 : isEEZ ? 1.5 : 2,
-            layer_category: isNational ? 'national_boundary' : 'base_geofence',
+            layer_category: isNational ? "national_boundary" : "base_geofence",
           },
           geojson: f,
         };
@@ -532,11 +673,15 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
     }
 
     // 2. DGLL Navigational Landfall Lighthouses (15 Lighthouses across India)
-    if (lhRes.status === 'fulfilled' && lhRes.value && Array.isArray(lhRes.value.lighthouses)) {
+    if (
+      lhRes.status === "fulfilled" &&
+      lhRes.value &&
+      Array.isArray(lhRes.value.lighthouses)
+    ) {
       const lhFeatures = lhRes.value.lighthouses.map((lh) => ({
-        type: 'Feature' as const,
+        type: "Feature" as const,
         geometry: {
-          type: 'Point' as const,
+          type: "Point" as const,
           coordinates: [lh.longitude, lh.latitude], // [lon, lat]
         },
         properties: {
@@ -547,31 +692,35 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
           optical_range_nm: lh.range_nm,
           character: lh.light_character,
           vhf_channel: 16,
-          type: 'DGLL Navigational Lighthouse',
-          aid_type: 'Landfall Light',
+          type: "DGLL Navigational Lighthouse",
+          aid_type: "Landfall Light",
         },
       }));
 
       layers.push({
-        layer_id: 'layer_navigational_lighthouses',
-        name: 'Navigational Lighthouses (DGLL)',
-        layer_type: 'geojson',
+        layer_id: "layer_navigational_lighthouses",
+        name: "Navigational Lighthouses (DGLL)",
+        layer_type: "geojson",
         visible: true,
         style: {
-          color: '#f59e0b',
+          color: "#f59e0b",
           opacity: 1.0,
           circle_radius: 8,
-          layer_category: 'navigation_aid',
+          layer_category: "navigation_aid",
         },
         geojson: {
-          type: 'FeatureCollection',
+          type: "FeatureCollection",
           features: lhFeatures,
         },
       });
     }
 
     // 3. PFZ Advisory Geodesic Thermal Fronts
-    if (pfzRes.status === 'fulfilled' && pfzRes.value && Array.isArray(pfzRes.value.advisories)) {
+    if (
+      pfzRes.status === "fulfilled" &&
+      pfzRes.value &&
+      Array.isArray(pfzRes.value.advisories)
+    ) {
       const frontFeatures: any[] = [];
       pfzRes.value.advisories.forEach((advisory, i) => {
         const centerLon = advisory.longitude;
@@ -579,41 +728,41 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
         const circleCoords = generateCirclePolygon(centerLon, centerLat, 8.0);
 
         frontFeatures.push({
-          type: 'Feature',
+          type: "Feature",
           geometry: {
-            type: 'Polygon',
+            type: "Polygon",
             coordinates: [circleCoords],
           },
           properties: {
             pfz_id: advisory.advisory_id || `pfz-${i + 1}`,
-            name: `PFZ Front: ${advisory.target_species.slice(0, 2).join(', ')}`,
-            target_species: advisory.target_species.join(', '),
-            recommended_gear: (advisory.gear_recommended || []).join(', '),
+            name: `PFZ Front: ${advisory.target_species.slice(0, 2).join(", ")}`,
+            target_species: advisory.target_species.join(", "),
+            recommended_gear: (advisory.gear_recommended || []).join(", "),
             sst_celsius: advisory.sst_celsius,
             chlorophyll_a: advisory.chlorophyll_mg_m3,
             distance_km: advisory.distance_km,
             bearing_deg: advisory.bearing_deg,
             sector: advisory.sector,
             valid_to: advisory.valid_to,
-            type: 'Potential Fishing Zone Thermal Front',
+            type: "Potential Fishing Zone Thermal Front",
           },
         });
       });
 
       if (frontFeatures.length > 0) {
         layers.push({
-          layer_id: 'layer_pfz_thermal_fronts',
-          name: 'PFZ Thermal Front Advisories',
-          layer_type: 'geojson',
+          layer_id: "layer_pfz_thermal_fronts",
+          name: "PFZ Thermal Front Advisories",
+          layer_type: "geojson",
           visible: true,
           style: {
-            color: '#10b981',
+            color: "#10b981",
             opacity: 0.16,
             line_width: 2,
-            layer_category: 'pfz',
+            layer_category: "pfz",
           },
           geojson: {
-            type: 'FeatureCollection',
+            type: "FeatureCollection",
             features: frontFeatures,
           },
         });
@@ -621,17 +770,21 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
     }
 
     // 4. Active IMD/INCOIS Hazard Corridors
-    if (hazRes.status === 'fulfilled' && hazRes.value && Array.isArray(hazRes.value.features)) {
+    if (
+      hazRes.status === "fulfilled" &&
+      hazRes.value &&
+      Array.isArray(hazRes.value.features)
+    ) {
       layers.push({
-        layer_id: 'layer_active_hazards_geojson',
-        name: 'Active Marine Hazards',
-        layer_type: 'geojson',
+        layer_id: "layer_active_hazards_geojson",
+        name: "Active Marine Hazards",
+        layer_type: "geojson",
         visible: true,
         style: {
-          color: '#ef4444',
+          color: "#ef4444",
           opacity: 0.28,
           line_width: 2.5,
-          layer_category: 'hazard',
+          layer_category: "hazard",
         },
         geojson: hazRes.value,
       });
@@ -639,32 +792,32 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
 
     // 5. Indian Coastal Harbors
     const portsLayer: MapLayer = {
-      layer_id: 'layer_all_harbors',
-      name: 'Indian Coastal Harbors',
-      layer_type: 'geojson',
+      layer_id: "layer_all_harbors",
+      name: "Indian Coastal Harbors",
+      layer_type: "geojson",
       visible: true,
       style: {
-        color: '#10b981',
+        color: "#10b981",
         circle_radius: 6,
         opacity: 0.9,
-        layer_category: 'navigation_terminal',
+        layer_category: "navigation_terminal",
       },
       geojson: {
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features: Object.entries(HARBOR_COORDINATES).map(([name, coords]) => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: coords },
+          type: "Feature",
+          geometry: { type: "Point", coordinates: coords },
           properties: {
             harbor: name,
-            type: 'Departure Harbor Station',
-            status: 'AVAILABLE'
-          }
-        }))
-      }
+            type: "Departure Harbor Station",
+            status: "AVAILABLE",
+          },
+        })),
+      },
     };
     layers.push(portsLayer);
   } catch (err) {
-    console.error('Error fetching base and marine watch layers:', err);
+    console.error("Error fetching base and marine watch layers:", err);
     return [];
   }
 
@@ -676,46 +829,50 @@ export async function fetchAndFormatBaseLayers(): Promise<MapLayer[]> {
  * which should remain visible nationwide and not be culled by local harbor/sector bounds.
  */
 function isNationalMaritimeBoundary(layer: MapLayer): boolean {
-  const id = (layer.layer_id || '').toLowerCase();
-  const name = (layer.name || '').toLowerCase();
-  const category = (layer.style?.layer_category || '').toLowerCase();
-  const polyType = (layer.geojson?.properties?.polygon_type || '').toLowerCase();
+  const id = (layer.layer_id || "").toLowerCase();
+  const name = (layer.name || "").toLowerCase();
+  const category = (layer.style?.layer_category || "").toLowerCase();
+  const polyType = (
+    layer.geojson?.properties?.polygon_type || ""
+  ).toLowerCase();
 
   return (
-    id.includes('eez') ||
-    id.includes('territorial') ||
-    id.includes('boundary') ||
-    id.includes('lighthouse') ||
-    id.includes('hazard') ||
-    id.includes('pfz') ||
-    name.includes('exclusive economic zone') ||
-    name.includes('eez') ||
-    name.includes('territorial') ||
-    name.includes('water boundary') ||
-    name.includes('lighthouse') ||
-    category === 'national_boundary' ||
-    category === 'national_eez' ||
-    category === 'navigation_aid' ||
-    category === 'hazard' ||
-    polyType === 'eez_boundary' ||
-    polyType === 'territorial_waters' ||
-    polyType === 'island_water_boundary'
+    id.includes("eez") ||
+    id.includes("territorial") ||
+    id.includes("boundary") ||
+    id.includes("lighthouse") ||
+    id.includes("hazard") ||
+    id.includes("pfz") ||
+    name.includes("exclusive economic zone") ||
+    name.includes("eez") ||
+    name.includes("territorial") ||
+    name.includes("water boundary") ||
+    name.includes("lighthouse") ||
+    category === "national_boundary" ||
+    category === "national_eez" ||
+    category === "navigation_aid" ||
+    category === "hazard" ||
+    polyType === "eez_boundary" ||
+    polyType === "territorial_waters" ||
+    polyType === "island_water_boundary"
   );
 }
 
 /**
  * Extracts a bounding box from a GeoJSON Feature or FeatureCollection.
  */
-export function extractGeojsonBBox(geojson: any): [number, number, number, number] | null {
+export function extractGeojsonBBox(
+  geojson: any,
+): [number, number, number, number] | null {
   if (!geojson) return null;
 
   const coords: [number, number][] = [];
 
   function collectCoords(obj: any): void {
     if (!obj) return;
-    if (obj.type === 'FeatureCollection' && Array.isArray(obj.features)) {
+    if (obj.type === "FeatureCollection" && Array.isArray(obj.features)) {
       obj.features.forEach(collectCoords);
-    } else if (obj.type === 'Feature') {
+    } else if (obj.type === "Feature") {
       collectCoords(obj.geometry);
     } else if (obj.coordinates) {
       flattenCoords(obj.coordinates);
@@ -723,7 +880,7 @@ export function extractGeojsonBBox(geojson: any): [number, number, number, numbe
   }
 
   function flattenCoords(c: any): void {
-    if (typeof c[0] === 'number' && typeof c[1] === 'number') {
+    if (typeof c[0] === "number" && typeof c[1] === "number") {
       coords.push([c[0], c[1]]);
     } else if (Array.isArray(c)) {
       c.forEach(flattenCoords);
@@ -733,8 +890,10 @@ export function extractGeojsonBBox(geojson: any): [number, number, number, numbe
   collectCoords(geojson);
   if (coords.length === 0) return null;
 
-  let minLng = coords[0][0], maxLng = coords[0][0];
-  let minLat = coords[0][1], maxLat = coords[0][1];
+  let minLng = coords[0][0],
+    maxLng = coords[0][0];
+  let minLat = coords[0][1],
+    maxLat = coords[0][1];
   for (const [lng, lat] of coords) {
     if (lng < minLng) minLng = lng;
     if (lng > maxLng) maxLng = lng;
@@ -781,7 +940,12 @@ export function filterLayersByRegion(
     const layerBBox = extractGeojsonBBox(layer.geojson);
     if (!layerBBox) return true;
     const [lMinLng, lMinLat, lMaxLng, lMaxLat] = layerBBox;
-    return lMinLng <= bbox[2] && lMaxLng >= bbox[0] && lMinLat <= bbox[3] && lMaxLat >= bbox[1];
+    return (
+      lMinLng <= bbox[2] &&
+      lMaxLng >= bbox[0] &&
+      lMinLat <= bbox[3] &&
+      lMaxLat >= bbox[1]
+    );
   });
 }
 
@@ -799,8 +963,10 @@ export function filterLayersBySectorPolygon(
   if (!polygon || polygon.length < 3) return layers;
 
   // Compute bbox from sector polygon with padding
-  let minLng = polygon[0][0], maxLng = polygon[0][0];
-  let minLat = polygon[0][1], maxLat = polygon[0][1];
+  let minLng = polygon[0][0],
+    maxLng = polygon[0][0];
+  let minLat = polygon[0][1],
+    maxLat = polygon[0][1];
   for (const [lng, lat] of polygon) {
     if (lng < minLng) minLng = lng;
     if (lng > maxLng) maxLng = lng;
@@ -821,7 +987,12 @@ export function filterLayersBySectorPolygon(
     const layerBBox = extractGeojsonBBox(layer.geojson);
     if (!layerBBox) return true;
     const [lMinLng, lMinLat, lMaxLng, lMaxLat] = layerBBox;
-    return lMinLng <= bbox[2] && lMaxLng >= bbox[0] && lMinLat <= bbox[3] && lMaxLat >= bbox[1];
+    return (
+      lMinLng <= bbox[2] &&
+      lMaxLng >= bbox[0] &&
+      lMinLat <= bbox[3] &&
+      lMaxLat >= bbox[1]
+    );
   });
 }
 
@@ -836,31 +1007,32 @@ export function createAuthorityRouteLayers(
 ): MapLayer[] {
   if (!routes || routes.length === 0) return [];
   const recId = recommendedRouteId || routes[0]?.route_id;
-  const recommendedRoute = routes.find((r) => r.route_id === recId) || routes[0];
+  const recommendedRoute =
+    routes.find((r) => r.route_id === recId) || routes[0];
   const candidateRoutes = routes.filter((r) => r !== recommendedRoute);
 
   const layers: MapLayer[] = [];
 
   if (candidateRoutes.length > 0) {
     layers.push({
-      layer_id: 'layer_candidate_routes',
-      name: 'Candidate Passage Routes',
-      layer_type: 'geojson',
+      layer_id: "layer_candidate_routes",
+      name: "Candidate Passage Routes",
+      layer_type: "geojson",
       visible: true,
       style: {
-        color: '#38bdf8',
+        color: "#38bdf8",
         opacity: 0.5,
         line_width: 2.5,
         line_dasharray: [3, 3],
-        layer_category: 'navigation',
+        layer_category: "navigation",
       },
       geojson: {
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features: candidateRoutes.map((r) => ({
-          type: 'Feature',
+          type: "Feature",
           id: r.route_id,
           geometry: {
-            type: 'LineString',
+            type: "LineString",
             coordinates: r.waypoints,
           },
           properties: {
@@ -881,21 +1053,21 @@ export function createAuthorityRouteLayers(
 
   if (recommendedRoute) {
     layers.push({
-      layer_id: 'layer_recommended_route',
+      layer_id: "layer_recommended_route",
       name: `Recommended Route (${recommendedRoute.name})`,
-      layer_type: 'geojson',
+      layer_type: "geojson",
       visible: true,
       style: {
-        color: '#06b6d4',
+        color: "#06b6d4",
         opacity: 0.95,
         line_width: 4,
-        layer_category: 'navigation',
+        layer_category: "navigation",
       },
       geojson: {
-        type: 'Feature',
+        type: "Feature",
         id: recommendedRoute.route_id,
         geometry: {
-          type: 'LineString',
+          type: "LineString",
           coordinates: recommendedRoute.waypoints,
         },
         properties: {

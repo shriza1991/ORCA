@@ -3,8 +3,8 @@
     "id": "HARB-RAT-01",
     "name": "Ratnagiri",
     "state": "Maharashtra",
-    "latitude": 16.99,
-    "longitude": 73.28,
+    "latitude": 16.9942,
+    "longitude": 73.2847,
     "source": "Department of Fisheries, Government of Maharashtra",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -12,8 +12,8 @@
     "id": "HARB-VER-02",
     "name": "Veraval",
     "state": "Gujarat",
-    "latitude": 20.90,
-    "longitude": 70.37,
+    "latitude": 20.9022,
+    "longitude": 70.3689,
     "source": "Gujarat Maritime Board",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -22,7 +22,7 @@
     "name": "Porbandar",
     "state": "Gujarat",
     "latitude": 21.64,
-    "longitude": 69.60,
+    "longitude": 69.6,
     "source": "Gujarat Maritime Board",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -30,8 +30,8 @@
     "id": "HARB-MUM-04",
     "name": "Mumbai",
     "state": "Maharashtra",
-    "latitude": 18.92,
-    "longitude": 72.87,
+    "latitude": 18.9158,
+    "longitude": 72.8258,
     "source": "Mumbai Port Authority",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -39,8 +39,8 @@
     "id": "HARB-PAN-05",
     "name": "Panaji",
     "state": "Goa",
-    "latitude": 15.49,
-    "longitude": 73.83,
+    "latitude": 15.4125,
+    "longitude": 73.8056,
     "source": "Captain of Ports, Goa",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -48,8 +48,8 @@
     "id": "HARB-MLP-06",
     "name": "Malpe",
     "state": "Karnataka",
-    "latitude": 13.35,
-    "longitude": 74.70,
+    "latitude": 13.3522,
+    "longitude": 74.7011,
     "source": "Karnataka Fisheries Department",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -57,8 +57,8 @@
     "id": "HARB-KOC-07",
     "name": "Kochi",
     "state": "Kerala",
-    "latitude": 9.93,
-    "longitude": 76.27,
+    "latitude": 9.9417,
+    "longitude": 76.2611,
     "source": "Cochin Port Authority",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -66,8 +66,8 @@
     "id": "HARB-CHE-08",
     "name": "Chennai",
     "state": "Tamil Nadu",
-    "latitude": 13.08,
-    "longitude": 80.27,
+    "latitude": 13.1258,
+    "longitude": 80.2989,
     "source": "Chennai Port Authority",
     "updated_at": "2026-09-01T00:00:00Z"
   },
@@ -75,8 +75,8 @@
     "id": "HARB-PAR-09",
     "name": "Paradip",
     "state": "Odisha",
-    "latitude": 20.32,
-    "longitude": 86.67,
+    "latitude": 20.3189,
+    "longitude": 86.6711,
     "source": "Paradip Port Authority",
     "updated_at": "2026-09-01T00:00:00Z"
   }

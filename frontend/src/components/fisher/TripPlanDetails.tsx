@@ -135,7 +135,29 @@ export default function TripPlanDetails({
   const routes = assessment.route_candidates;
   const recommendedIndex = routes.findIndex((r) => r.is_recommended);
   const primaryRoute =
-    recommendedIndex >= 0 ? routes[recommendedIndex] : routes[0];
+    recommendedIndex >= 0 && routes[recommendedIndex].is_feasible !== false
+      ? routes[recommendedIndex]
+      : routes.find((route) => route.is_feasible !== false);
+
+  if (!primaryRoute) {
+    return (
+      <div
+        className="trip-plan-details-panel"
+        data-testid="trip-plan-details"
+        style={{
+          marginTop: "16px",
+          padding: "16px",
+          background: "#fff7ed",
+          border: "1px solid #fed7aa",
+          borderRadius: "12px",
+          color: "#9a3412",
+        }}
+      >
+        No safe water route is available for this trip. Do not follow a route
+        until a feasible passage is provided.
+      </div>
+    );
+  }
 
   const distance = primaryRoute.distance_km || 0;
   const etaHours = primaryRoute.eta_hours || 0;

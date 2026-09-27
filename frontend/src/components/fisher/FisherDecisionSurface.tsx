@@ -69,6 +69,12 @@ export function getFisherDecisionStatus(
   if (error || !assessment || !assessment.decision) {
     return "UNKNOWN";
   }
+  if (
+    assessment.route_candidates?.length > 0 &&
+    !assessment.route_candidates.some((route) => route.is_feasible !== false)
+  ) {
+    return "UNKNOWN";
+  }
   const rawStatus =
     typeof assessment.decision === "string"
       ? (assessment.decision as string).toUpperCase()
@@ -384,7 +390,16 @@ export default function FisherDecisionSurface({
 
       const routes = assessment?.route_candidates || [];
       const recommendedRoute =
-        routes.find((route: any) => route.is_recommended) || routes[0];
+        routes.find(
+          (route: any) => route.is_recommended && route.is_feasible !== false,
+        ) || routes.find((route: any) => route.is_feasible !== false);
+      const planLabel =
+        language === "hi"
+          ? "यात्रा योजना"
+          : language === "mr"
+            ? "प्रवास योजना"
+            : "Trip plan";
+      textToSpeak += ` ${planLabel}.`;
       if (recommendedRoute) {
         const routeRisk =
           status === "UNKNOWN"
@@ -398,12 +413,6 @@ export default function FisherDecisionSurface({
         );
         const distance = recommendedRoute.distance_km;
         const fuel = recommendedRoute.fuel_estimate_liters;
-        const planLabel =
-          language === "hi"
-            ? "यात्रा योजना"
-            : language === "mr"
-              ? "प्रवास योजना"
-              : "Trip plan";
         const distanceLabel =
           language === "hi" ? "दूरी" : language === "mr" ? "अंतर" : "Distance";
         const fuelLabel =
@@ -417,6 +426,14 @@ export default function FisherDecisionSurface({
           textToSpeak += ` ${distanceLabel}: ${distance} kilometers.`;
         if (typeof fuel === "number")
           textToSpeak += ` ${fuelLabel}: ${fuel} liters.`;
+      } else {
+        const noRouteMessage =
+          language === "hi"
+            ? "इस यात्रा के लिए कोई सुरक्षित जल मार्ग उपलब्ध नहीं है।"
+            : language === "mr"
+              ? "या प्रवासासाठी सुरक्षित जलमार्ग उपलब्ध नाही."
+              : "No feasible water route is available for this trip. Do not depart until a safe passage is provided.";
+        textToSpeak += ` ${noRouteMessage}`;
       }
 
       const safeWindow = assessment?.safe_window;
@@ -470,6 +487,34 @@ export default function FisherDecisionSurface({
       aria-label="Primary Mission Decision and Conditions"
       data-testid="fisher-decision-surface"
     >
+      <button
+        onClick={onOpenVoyageSettings}
+        className="fisher-large-action-btn"
+        style={{
+          padding: "20px",
+          fontSize: "1.25rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "12px",
+          background: "#f1f5f9",
+          color: "#0f172a",
+          borderRadius: "12px",
+          border: "1px solid #cbd5e1",
+          width: "100%",
+          marginBottom: "16px",
+        }}
+      >
+        <SlidersHorizontal size={28} />
+        {TRANSLATIONS[language].planMyTrip}
+      </button>
+
+      <TripPlanDetails
+        assessment={assessment}
+        language={language}
+        mainStatus={status}
+      />
+
       {/* 1. Decision Banner */}
       <div
         className={`fisher-decision-card ${currentCfg.bgClass}`}
@@ -644,12 +689,6 @@ export default function FisherDecisionSurface({
         activeDiff={activeDiff}
         stability={assessment?.stability}
         language={language}
-      />
-
-      <TripPlanDetails
-        assessment={assessment}
-        language={language}
-        mainStatus={status}
       />
 
       {/* 3. Inspect Evidence & Data Feeds Button */}
@@ -1027,26 +1066,6 @@ export default function FisherDecisionSurface({
           {isPlaying
             ? TRANSLATIONS[language].stopAudioBtn
             : TRANSLATIONS[language].hearTheUpdate}
-        </button>
-
-        <button
-          onClick={onOpenVoyageSettings}
-          className="fisher-large-action-btn"
-          style={{
-            padding: "20px",
-            fontSize: "1.25rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px",
-            background: "#f1f5f9",
-            color: "#0f172a",
-            borderRadius: "12px",
-            border: "1px solid #cbd5e1",
-          }}
-        >
-          <SlidersHorizontal size={28} />
-          {TRANSLATIONS[language].planMyTrip}
         </button>
 
         <button
