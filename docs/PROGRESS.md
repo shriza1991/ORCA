@@ -4,6 +4,16 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-27 Multilingual Guided Voyage & Assessment Voice/Text Vernacular Localization
+
+- **IMPLEMENTED**: Corrected BCP-47 speech synthesis fallback chains in `frontend/src/hooks/useSpokenGuidance.ts` (`mr` -> `['mr-IN', 'mr', 'hi-IN', 'hi']`) so speech synthesis properly selects Hindi/Marathi Devanagari voice engines on client OS.
+- **IMPLEMENTED**: Removed hardcoded spoken strings from `frontend/src/components/fisher/GuidedTripSetup.tsx` (step 5 review: `Port`, `Craft`, `Duration`, `hours`, and step 6 confirmation), wiring them cleanly into `translateText`.
+- **IMPLEMENTED**: Extended `CANONICAL_TRANSLATION_MAP` and `DYNAMIC_PATTERNS` in `frontend/src/i18n/translations.ts` to provide complete vernacular translations for:
+  - Guided Voyage wizard steps (`When will you depart?`, `From which port?`, `Boat vessel size type?`, presets, durations).
+  - Deterministic trip assessment results (`Conditions are calm and safe...`, `Remain moored in port...`, `Hold departure...`, `Operate with caution...`).
+  - Dynamic risk factors (wave heights, sustained winds, wind gusts, squall alerts).
+- **VERIFIED**: Vitest frontend suite: 273/273 tests passing across 22 suites (`npm test -- --run`), including dedicated unit test coverage in `src/i18n/translations.test.ts`.
+
 ### 2026-09-26 Production Root-Cause Hardening (feature branch)
 
 - **IMPLEMENTED**: expected marine provider failures now produce a schema-compatible degraded `ChatResponse` with `UNKNOWN` decision and explicit hold-departure action instead of surfacing a generic 502/500 to mission clients.

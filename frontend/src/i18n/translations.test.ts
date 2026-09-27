@@ -159,4 +159,35 @@ describe('Multilingual i18n Dictionary', () => {
     expect(translateText('Enter Researcher Lab', 'hi')).toContain('शोधकर्ता प्रयोगशाला');
     expect(translateText('Enter Researcher Lab', 'mr')).toContain('संशोधक प्रयोगशाळेत');
   });
+
+  it('translates guided voyage wizard questions and assessment results into Hindi and Marathi', () => {
+    // Guided Voyage Wizard Steps
+    expect(translateText('When will you depart?', 'hi')).toBe('आप कब प्रस्थान करेंगे?');
+    expect(translateText('When will you depart?', 'mr')).toBe('तुम्ही कधी निघणार आहात?');
+    expect(translateText('From which port?', 'hi')).toBe('किस बंदरगाह से प्रस्थान करेंगे?');
+    expect(translateText('From which port?', 'mr')).toBe('कोणत्या बंदरावरून प्रवास सुरू करणार?');
+    expect(translateText('Boat vessel size type?', 'hi')).toBe('नाव/पोत का प्रकार क्या है?');
+    expect(translateText('Boat vessel size type?', 'mr')).toBe('बोटीचा प्रकार काय आहे?');
+    expect(translateText('When will you return?', 'hi')).toBe('आप कब वापस लौटेंगे?');
+    expect(translateText('When will you return?', 'mr')).toBe('तुम्ही परत कधी येणार आहात?');
+    expect(translateText('Confirm & Assess Voyage', 'hi')).toBe('यात्रा की पुष्टि करें और सुरक्षा जांचें');
+    expect(translateText('Confirm & Assess Voyage', 'mr')).toBe('प्रवासाची पुष्टी करा आणि सुरक्षितता तपासा');
+    expect(translateText('Confirm your voyage plan to assess safety.', 'hi')).toBe('सुरक्षा का मूल्यांकन करने के लिए अपनी यात्रा योजना की पुष्टि करें।');
+    expect(translateText('Confirm your voyage plan to assess safety.', 'mr')).toBe('सुरक्षिततेचे मूल्यांकन करण्यासाठी आपल्या प्रवास योजनेची पुष्टी करा.');
+
+    // Assessment Results
+    expect(translateText('Conditions are calm and safe for coastal voyage departure.', 'hi')).toBe('तटीय यात्रा प्रस्थान के लिए स्थितियां शांत और पूरी तरह सुरक्षित हैं।');
+    expect(translateText('Conditions are calm and safe for coastal voyage departure.', 'mr')).toBe('किनारपट्टीवरील प्रवासासाठी परिस्थिती शांत आणि पूर्णपणे सुरक्षित आहे.');
+    expect(translateText('Proceed with planned voyage under standard safety protocols.', 'hi')).toBe('मानक सुरक्षा प्रोटोकॉल के तहत नियोजित यात्रा जारी रखें।');
+    expect(translateText('Proceed with planned voyage under standard safety protocols.', 'mr')).toBe('मानक सुरक्षा नियमांनुसार नियोजित प्रवास सुरू ठेवा.');
+
+    // Dynamic Assessment Patterns
+    const severeDynamic = 'Severe marine conditions or hazards detected exceeding motorized_boat safety ceiling.';
+    expect(translateText(severeDynamic, 'hi')).toContain('सुरक्षा सीमा से अधिक');
+    expect(translateText(severeDynamic, 'mr')).toContain('सुरक्षा मर्यादेपेक्षा जास्त');
+
+    const moderateDynamic = 'Moderate marine conditions require operational caution for motorized_boat.';
+    expect(translateText(moderateDynamic, 'hi')).toContain('परिचालन सावधानी आवश्यक');
+    expect(translateText(moderateDynamic, 'mr')).toContain('कार्यशील सावधगिरी');
+  });
 });

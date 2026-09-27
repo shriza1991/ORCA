@@ -143,13 +143,18 @@ export default function GuidedTripSetup({
         CRAFT_PROFILES.find((c) => c.value === localContext.craft_profile)?.label || 'Motorized boat',
         language
       );
-      speak(`${steps[step].title}. Port: ${harbor}. Craft: ${boat}. Duration: ${durationHours.toFixed(0)} hours.`);
+      const portLabel = translateText('Port', language);
+      const craftLabel = translateText('Craft', language);
+      const durationLabel = translateText('Duration', language);
+      const hoursLabel = translateText('hours', language);
+      speak(`${steps[step].title}. ${portLabel}: ${harbor}. ${craftLabel}: ${boat}. ${durationLabel}: ${durationHours.toFixed(0)} ${hoursLabel}.`);
     } else if (step === 6) {
-      speak(`${steps[step].title}. Confirm your voyage plan to assess safety.`);
+      const confirmNotice = translateText('Confirm your voyage plan to assess safety.', language);
+      speak(`${steps[step].title}. ${confirmNotice}`);
     } else {
       speak(steps[step].title);
     }
-  }, [step]);
+  }, [step, language]);
 
   const handleNext = () => {
     if (step < steps.length - 1) setStep((s) => s + 1);

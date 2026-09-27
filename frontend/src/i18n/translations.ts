@@ -547,6 +547,323 @@ export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
     hi: 'वर्तमान साक्ष्य से सुरक्षा अनुशंसा उपलब्ध नहीं है।',
     mr: 'सध्याच्या पुराव्यावरून सुरक्षिततेची शिफारस उपलब्ध नाही.',
   },
+  // --- Guided Voyage Wizard ---
+  {
+    en: 'When will you depart?',
+    hi: 'आप कब प्रस्थान करेंगे?',
+    mr: 'तुम्ही कधी निघणार आहात?',
+  },
+  {
+    en: 'From which port?',
+    hi: 'किस बंदरगाह से प्रस्थान करेंगे?',
+    mr: 'कोणत्या बंदरावरून प्रवास सुरू करणार?',
+  },
+  {
+    en: 'Boat vessel size type?',
+    hi: 'नाव/पोत का प्रकार क्या है?',
+    mr: 'बोटीचा प्रकार काय आहे?',
+  },
+  {
+    en: 'When will you return?',
+    hi: 'आप कब वापस लौटेंगे?',
+    mr: 'तुम्ही परत कधी येणार आहात?',
+  },
+  {
+    en: 'Select PFZ',
+    hi: 'मत्स्य क्षेत्र (PFZ) चुनें',
+    mr: 'मासेमारी क्षेत्र (PFZ) निवडा',
+  },
+  {
+    en: 'Review your voyage plan',
+    hi: 'अपनी यात्रा योजना की समीक्षा करें',
+    mr: 'आपल्या प्रवास योजनेचे पुनरावलोकन करा',
+  },
+  {
+    en: 'Confirm & Assess Voyage',
+    hi: 'यात्रा की पुष्टि करें और सुरक्षा जांचें',
+    mr: 'प्रवासाची पुष्टी करा आणि सुरक्षितता तपासा',
+  },
+  {
+    en: 'Confirm your voyage plan to assess safety.',
+    hi: 'सुरक्षा का मूल्यांकन करने के लिए अपनी यात्रा योजना की पुष्टि करें।',
+    mr: 'सुरक्षिततेचे मूल्यांकन करण्यासाठी आपल्या प्रवास योजनेची पुष्टी करा.',
+  },
+  {
+    en: 'Select a departure time preset or enter your scheduled departure:',
+    hi: 'प्रस्थान समय प्रीसेट चुनें या निर्धारित समय दर्ज करें:',
+    mr: 'प्रस्थानाची वेळ निवडा किंवा निश्चित वेळ प्रविष्ट करा:',
+  },
+  {
+    en: 'In 1 Hour',
+    hi: '1 घंटे में',
+    mr: '1 तासात',
+  },
+  {
+    en: 'Tomorrow 04:00 AM',
+    hi: 'कल सुबह 04:00 बजे',
+    mr: 'उद्या सकाळी 04:00 वाजता',
+  },
+  {
+    en: 'Tomorrow 06:00 AM',
+    hi: 'कल सुबह 06:00 बजे',
+    mr: 'उद्या सकाळी 06:00 वाजता',
+  },
+  {
+    en: 'Tomorrow 08:00 AM',
+    hi: 'कल सुबह 08:00 बजे',
+    mr: 'उद्या सकाळी 08:00 वाजता',
+  },
+  {
+    en: 'Custom Departure Date & Time (ISO-8601):',
+    hi: 'कस्टम प्रस्थान तिथि और समय:',
+    mr: 'सानुकूल प्रस्थान दिनांक आणि वेळ:',
+  },
+  {
+    en: 'Departure time cannot be in the past.',
+    hi: 'प्रस्थान का समय पिछले समय में नहीं हो सकता।',
+    mr: 'प्रस्थानाची वेळ भूतकाळातील असू शकत नाही.',
+  },
+  {
+    en: 'Next: Return Time →',
+    hi: 'अगला: वापसी का समय →',
+    mr: 'पुढे: परतीची वेळ →',
+  },
+  {
+    en: 'Select planned voyage duration or custom return time:',
+    hi: 'यात्रा की अवधि चुनें या वापसी का समय दर्ज करें:',
+    mr: 'प्रवासाचा कालावधी निवडा किंवा परतीची वेळ नोंदवा:',
+  },
+  {
+    en: '+4h (Short Run)',
+    hi: '+4 घंटे (छोटी यात्रा)',
+    mr: '+4 तास (लहान प्रवास)',
+  },
+  {
+    en: '+8h (Standard Shift)',
+    hi: '+8 घंटे (मानक पाली)',
+    mr: '+8 तास (मानक शिफ्ट)',
+  },
+  {
+    en: '+12h (Half-Day Cruise)',
+    hi: '+12 घंटे (आधा दिन)',
+    mr: '+12 तास (अर्धा दिवस)',
+  },
+  {
+    en: '+24h (Overnight)',
+    hi: '+24 घंटे (रात भर)',
+    mr: '+24 तास (रात्रभर)',
+  },
+  {
+    en: 'Custom Return Date & Time (ISO-8601):',
+    hi: 'कस्टम वापसी तिथि और समय:',
+    mr: 'सानुकूल परतीची तारीख आणि वेळ:',
+  },
+  {
+    en: 'Return time must be after departure time.',
+    hi: 'वापसी का समय प्रस्थान के समय के बाद होना चाहिए।',
+    mr: 'परतीची वेळ प्रस्थान वेळेनंतरची असणे आवश्यक आहे.',
+  },
+  {
+    en: 'Next: Select PFZ →',
+    hi: 'अगला: PFZ चयन →',
+    mr: 'पुढे: PFZ निवडा →',
+  },
+  {
+    en: 'Select Target Fishing Ground (PFZ):',
+    hi: 'लक्षित संभावित मत्स्य क्षेत्र (PFZ) चुनें:',
+    mr: 'लक्ष्यित संभाव्य मासेमारी क्षेत्र (PFZ) निवडा:',
+  },
+  {
+    en: 'Automatically select highest-confidence PFZ',
+    hi: 'सर्वोच्च विश्वसनीयता वाला PFZ स्वचालित रूप से चुनें',
+    mr: 'सर्वाधिक विश्वासाचे PFZ आपोआप निवडा',
+  },
+  {
+    en: 'Next: Review Plan →',
+    hi: 'अगला: योजना की समीक्षा करें →',
+    mr: 'पुढे: योजनेचे पुनरावलोकन करा →',
+  },
+  {
+    en: 'Voyage Plan Summary',
+    hi: 'यात्रा योजना सारांश',
+    mr: 'प्रवास योजना सारांश',
+  },
+  {
+    en: 'Departure Port',
+    hi: 'प्रस्थान बंदरगाह',
+    mr: 'प्रस्थान बंदर',
+  },
+  {
+    en: 'Vessel Type',
+    hi: 'नाव/पोत का प्रकार',
+    mr: 'बोटीचा प्रकार',
+  },
+  {
+    en: 'Departure',
+    hi: 'प्रस्थान',
+    mr: 'प्रस्थान',
+  },
+  {
+    en: 'Return',
+    hi: 'वापसी',
+    mr: 'परतीचा प्रवास',
+  },
+  {
+    en: 'Duration',
+    hi: 'अवधि',
+    mr: 'कालावधी',
+  },
+  {
+    en: 'hours',
+    hi: 'घंटे',
+    mr: 'तास',
+  },
+  {
+    en: 'Port',
+    hi: 'बंदरगाह',
+    mr: 'बंदर',
+  },
+  {
+    en: 'Craft',
+    hi: 'नाव',
+    mr: 'बोट',
+  },
+  {
+    en: 'Target PFZ',
+    hi: 'लक्षित PFZ',
+    mr: 'लक्ष्यित PFZ',
+  },
+  {
+    en: 'Next: Confirm & Assess →',
+    hi: 'अगला: पुष्टि और मूल्यांकन →',
+    mr: 'पुढे: पुष्टी आणि मूल्यांकन →',
+  },
+  {
+    en: 'Ready to Assess Voyage Safety',
+    hi: 'यात्रा सुरक्षा मूल्यांकन के लिए तैयार',
+    mr: 'प्रवास सुरक्षिततेचे मूल्यांकन करण्यास तयार',
+  },
+  {
+    en: 'Your voyage plan will be evaluated against live ocean conditions, weather forecasts, and active marine warnings.',
+    hi: 'आपकी यात्रा योजना का मूल्यांकन वर्तमान समुद्री परिस्थितियों, मौसम पूर्वानुमान और सक्रिय चेतावनियों के आधार पर किया जाएगा।',
+    mr: 'आपल्या प्रवास योजनेचे थेट सागरी परिस्थिती, हवामान अंदाज आणि सक्रिय सागरी सूचनांच्या आधारे मूल्यांकन केले जाईल.',
+  },
+  {
+    en: 'Assess Voyage Safety Now',
+    hi: 'अब यात्रा सुरक्षा का मूल्यांकन करें',
+    mr: 'आता प्रवास सुरक्षिततेचे मूल्यांकन करा',
+  },
+  // --- Trip Assessment Results & Deterministic Risk Synthesis ---
+  {
+    en: 'Conditions are calm and safe for coastal voyage departure.',
+    hi: 'तटीय यात्रा प्रस्थान के लिए स्थितियां शांत और पूरी तरह सुरक्षित हैं।',
+    mr: 'किनारपट्टीवरील प्रवासासाठी परिस्थिती शांत आणि पूर्णपणे सुरक्षित आहे.',
+  },
+  {
+    en: 'Proceed with planned voyage under standard safety protocols.',
+    hi: 'मानक सुरक्षा प्रोटोकॉल के तहत नियोजित यात्रा जारी रखें।',
+    mr: 'मानक सुरक्षा नियमांनुसार नियोजित प्रवास सुरू ठेवा.',
+  },
+  {
+    en: 'Remain moored in port. Do not navigate under any circumstances.',
+    hi: 'बंदरगाह पर ही लंगर डाले रहें। किसी भी परिस्थिति में समुद्र में न जाएं।',
+    mr: 'बंदरातच नांगर टाकून राहा. कोणत्याही परिस्थितीत समुद्रात जाऊ नका.',
+  },
+  {
+    en: 'Hold departure. Verify with port authorities before navigating.',
+    hi: 'प्रस्थान रोकें। समुद्र में जाने से पहले पत्तन अधिकारियों से पुष्टि करें।',
+    mr: 'प्रस्थान थांबवा. प्रवासापूर्वी बंदर अधिकाऱ्यांकडून खात्री करा.',
+  },
+  {
+    en: 'Operate with caution within 5 nm of coastline. Maintain continuous VHF watch.',
+    hi: 'तटरेखा से 5 समुद्री मील के भीतर सावधानी से चलें। निरंतर वीएचएफ वॉच बनाए रखें।',
+    mr: 'किनारपट्टीपासून 5 सागरी मैलांच्या आत सावधगिरीने बोट चालवा. सतत व्हीएचएफ रेडिओ सुरू ठेवा.',
+  },
+  {
+    en: 'Sensor, forecast, or hazard bulletin data are expired, degraded, or incomplete. Safe departure evaluation cannot be completed.',
+    hi: 'सेंसर, पूर्वानुमान या बुलेटिन डेटा पुराना, ख़राब या अधूरा है। सुरक्षित प्रस्थान मूल्यांकन पूरा नहीं किया जा सकता।',
+    mr: 'सेन्सर, अंदाज किंवा सूचना डेटा कालबाह्य, खराब किंवा अपूर्ण आहे. सुरक्षित प्रस्थान मूल्यांकन पूर्ण केले जाऊ शकत नाही.',
+  },
+  {
+    en: 'Sensor, forecast, or hazard bulletin data are incomplete or unavailable.',
+    hi: 'सेंसर, पूर्वानुमान या खतरे के बुलेटिन का डेटा अधूरा या अनुपलब्ध है।',
+    mr: 'सेन्सर, हवामान अंदाज किंवा धोक्याच्या सूचनांचा डेटा अपूर्ण किंवा अनुपलब्ध आहे.',
+  },
+  {
+    en: 'All environmental parameters strictly within safe operating envelope',
+    hi: 'सभी पर्यावरणीय पैरामीटर सुरक्षित परिचालन सीमा के भीतर हैं',
+    mr: 'सर्व पर्यावरणीय मापदंड सुरक्षित कार्य मर्यादेत आहेत',
+  },
+  {
+    en: 'No active severe weather bulletins.',
+    hi: 'कोई सक्रिय ख़राब मौसम बुलेटिन नहीं है।',
+    mr: 'कोणतीही तीव्र हवामानाची सक्रिय सूचना नाही.',
+  },
+  {
+    en: 'Safe mission window cannot be determined due to missing telemetry.',
+    hi: 'टेलीमेट्री डेटा के अभाव के कारण सुरक्षित यात्रा विंडो निर्धारित नहीं की जा सकती।',
+    mr: 'डेटा उपलब्ध नसल्यामुळे सुरक्षित प्रवास कालावधी ठरवता येत नाही.',
+  },
+  {
+    en: 'Low Decision Stability — Incomplete Data',
+    hi: 'कम निर्णय स्थिरता — अपूर्ण डेटा',
+    mr: 'कमी निर्णय स्थिरता — अपूर्ण डेटा',
+  },
+  {
+    en: 'Critical telemetry components failed to load.',
+    hi: 'महत्वपूर्ण टेलीमेट्री घटक लोड करने में विफल रहे।',
+    mr: 'महत्त्वाचे टेलिमेट्री घटक लोड करण्यात अयशस्वी.',
+  },
+  {
+    en: 'Sensor telemetry validity window expired or data feed missing',
+    hi: 'सेंसर डेटा की वैधता समाप्त हो गई है या डेटा फ़ीड अनुपलब्ध है',
+    mr: 'सेन्सर डेटाची मुदत संपली आहे किंवा डेटा फीड उपलब्ध नाही',
+  },
+  {
+    en: 'Deterministic safety ceiling exceeded by official observations',
+    hi: 'आधिकारिक अवलोकनों के अनुसार सुरक्षा सीमा पार हो चुकी है',
+    mr: 'अधिकृत निरीक्षणांनुसार सुरक्षितता मर्यादा ओलांडली गेली आहे',
+  },
+  {
+    en: 'Conditions near threshold boundaries — operational caution enforced',
+    hi: 'स्थितियां सीमा के निकट हैं — परिचालन सावधानी लागू की गई है',
+    mr: 'परिस्थिती मर्यादेच्या जवळ आहे — सावधगिरी बाळगणे अनिवार्य',
+  },
+  {
+    en: 'Evaluated using verified fallback marine model observations',
+    hi: 'सत्यापित फॉलबैक समुद्री मॉडल के आधार पर मूल्यांकित',
+    mr: 'पडताळणी केलेल्या फॉलबॅक मॉडेल आधारे मूल्यांकन',
+  },
+  {
+    en: 'Mission Brief & Why Panel',
+    hi: 'यात्रा सुरक्षा विवरण एवं कारण',
+    mr: 'प्रवास सुरक्षा माहिती आणि कारणे',
+  },
+  {
+    en: 'Why ORCA Recommends This',
+    hi: 'ORCA यह सलाह क्यों देता है',
+    mr: 'ORCA ही शिफारस का करते',
+  },
+  {
+    en: 'Recommended Action',
+    hi: 'अनुशंसित कार्रवाई',
+    mr: 'शिफारस केलेली कृती',
+  },
+  {
+    en: 'Top Positive Factors',
+    hi: 'प्रमुख सकारात्मक कारक',
+    mr: 'प्रमुख सकारात्मक घटक',
+  },
+  {
+    en: 'Key Risk Factors',
+    hi: 'प्रमुख जोखिम कारक',
+    mr: 'महत्त्वाचे जोखीम घटक',
+  },
+  {
+    en: 'Confidence',
+    hi: 'विश्वसनीयता',
+    mr: 'विश्वासार्हता',
+  },
   // Sample Prompts
   {
     en: 'Where is the nearest Potential Fishing Zone today from Ratnagiri?',
@@ -1929,6 +2246,72 @@ const DYNAMIC_PATTERNS: PatternMatcher[] = [
     translate: (m, lang) => {
       const stat = m[1];
       return lang === 'hi' ? `आधिकारिक मूल्यांकन स्थिति: ${stat}` : `अधिकृत मूल्यमापन स्थिती: ${stat}`;
+    },
+  },
+  // Severe marine conditions or hazards detected exceeding motorized_boat safety ceiling.
+  {
+    pattern: /severe\s+marine\s+conditions\s+or\s+hazards\s+detected\s+exceeding\s*([a-zA-Z_]+)\s*safety\s+ceiling\.?/i,
+    translate: (m, lang) => {
+      const craft = translateCraft(m[1], lang);
+      return lang === 'hi'
+        ? `${craft} की सुरक्षा सीमा से अधिक गंभीर समुद्री स्थितियां या खतरे पाए गए हैं।`
+        : `${craft} च्या सुरक्षा मर्यादेपेक्षा जास्त तीव्र सागरी परिस्थिती किंवा धोके आढळले आहेत.`;
+    },
+  },
+  // Moderate marine conditions require operational caution for motorized_boat.
+  {
+    pattern: /moderate\s+marine\s+conditions\s+require\s+operational\s+caution\s+for\s*([a-zA-Z_]+)\.?/i,
+    translate: (m, lang) => {
+      const craft = translateCraft(m[1], lang);
+      return lang === 'hi'
+        ? `मध्यम समुद्री स्थितियों के कारण ${craft} के लिए परिचालन सावधानी आवश्यक है।`
+        : `मध्यम सागरी परिस्थितीमुळे ${craft} साठी कार्यशील सावधगिरी बाळगणे आवश्यक आहे.`;
+    },
+  },
+  // Significant wave height 1.2m is calm (< 2.0m).
+  {
+    pattern: /significant\s+wave\s+height\s+([\d.]+m|calm)\s+is\s+calm\s*\(\s*<\s*([\d.]+)\s*m\s*\)\.?/i,
+    translate: (m, lang) => {
+      const wave = m[1] === 'calm' ? (lang === 'hi' ? 'शांत' : 'शांत') : m[1];
+      return lang === 'hi'
+        ? `महत्वपूर्ण लहर ऊंचाई ${wave} शांत है (< ${m[2]} मी)।`
+        : `महत्त्वाची लाट उंची ${wave} शांत आहे (< ${m[2]} मी).`;
+    },
+  },
+  // Sustained wind 12.0 kt is favorable.
+  {
+    pattern: /sustained\s+wind\s+([\d.]+\s*kt|calm)\s+is\s+favorable\.?/i,
+    translate: (m, lang) => {
+      const wind = m[1] === 'calm' ? (lang === 'hi' ? 'शांत' : 'शांत') : m[1];
+      return lang === 'hi'
+        ? `निरंतर हवा की गति (${wind}) अनुकूल है।`
+        : `सतत वाऱ्याचा वेग (${wind}) अनुकूल आहे.`;
+    },
+  },
+  // Wind gusts 18.0 kt within safe gust envelope.
+  {
+    pattern: /wind\s+gusts\s+([\d.]+)\s*kt\s+within\s+safe\s+gust\s+envelope\.?/i,
+    translate: (m, lang) =>
+      lang === 'hi'
+        ? `हवा के झोंके (${m[1]} नॉट्स) सुरक्षित सीमा के भीतर हैं।`
+        : `वाऱ्याचे झोके (${m[1]} नॉट्स) सुरक्षित मर्यादेत आहेत.`,
+  },
+  // Wind gusts 32.0 kt breach maximum safe threshold.
+  {
+    pattern: /wind\s+gusts\s+([\d.]+)\s*kt\s+breach\s+maximum\s+safe\s+threshold\.?/i,
+    translate: (m, lang) =>
+      lang === 'hi'
+        ? `हवा के झोंके (${m[1]} नॉट्स) अधिकतम सुरक्षित सीमा पार कर चुके हैं।`
+        : `वाऱ्याचे झोके (${m[1]} नॉट्स) कमाल सुरक्षित मर्यादा ओलांडतात.`,
+  },
+  // Active IMD squall alert: ...
+  {
+    pattern: /active\s+imd\s+squall\s+alert:?\s*(.*)/i,
+    translate: (m, lang) => {
+      const alert = translateText(m[1], lang);
+      return lang === 'hi'
+        ? `सक्रिय आईएमडी स्क्वॉल चेतावनी: ${alert}`
+        : `सक्रिय आयएमडी वादळी इशारा: ${alert}`;
     },
   },
 ];
