@@ -110,14 +110,20 @@ class DeterministicRouteExposureEngine:
     def _check_geofence(self, waypoints: List[List[float]], geospatial_engine: Any, context: ToolInvocationContext) -> List[str]:
         if not geospatial_engine:
             return []
-            
-        reasons = []
-        for wp in waypoints:
-            res = geospatial_engine.check_geofence_hazards(context=context, coordinates=wp)
-            if getattr(res, "hard_stop", False):
-                reasons.append(f"Intersects restricted NO_GO zone: {getattr(res, 'restriction_name', 'Unknown')}")
-                break
-        return reasons
+
+        if not waypoints:
+            return []
+
+        result = geospatial_engine.check_geofence_hazards(
+            context=context,
+            coordinates=waypoints,
+        )
+        if getattr(result, "hard_stop", False):
+            return [
+                "Intersects restricted NO_GO zone: "
+                f"{getattr(result, 'restriction_name', 'Unknown')}"
+            ]
+        return []
 
     def evaluate_routes(
         self,
@@ -172,7 +178,7 @@ class DeterministicRouteExposureEngine:
             corridors = [w2, w3, w1] 
             names = ["Direct Open-Sea Channel", "Balanced Coastal Passage", "Inshore Sheltered Channel"]
             ids = ["ROUTE-B-DIRECT", "ROUTE-C-BALANCED", "ROUTE-A-INSHORE"]
-            is_synthetic = False
+            is_synthetic = True
         else:
             try:
                 from backend.app.domain.marine_routing import MarinePathfinder
@@ -182,12 +188,20 @@ class DeterministicRouteExposureEngine:
                 inshore = pathfinder.find_path(origin_coords, target_coords, safety_buffer_deg=0.01)
                 balanced = pathfinder.find_path(origin_coords, target_coords, safety_buffer_deg=0.02)
                 
-                corridors = [
-                    direct or self._generate_synthetic_corridors(origin_coords, target_coords)[0],
-                    balanced or self._generate_synthetic_corridors(origin_coords, target_coords)[1],
-                    inshore or self._generate_synthetic_corridors(origin_coords, target_coords)[2]
-                ]
-                is_synthetic = False
+                generated_corridors = self._generate_synthetic_corridors(
+                    origin_coords, target_coords
+                )
+                paths = [direct, balanced, inshore]
+                corridors = [path or generated_corridors[i] for i, path in enumerate(paths)]
+                is_synthetic = any(path is None for path in paths)
+
+                geometries = {
+                    tuple(tuple(point) for point in corridor)
+                    for corridor in corridors
+                }
+                if len(geometries) != len(corridors):
+                    corridors = generated_corridors
+                    is_synthetic = True
             except Exception as e:
                 logger.error(f"A* Pathfinding failed: {e}")
                 corridors = self._generate_synthetic_corridors(origin_coords, target_coords)

@@ -88,23 +88,23 @@ from backend.app.prompts import load_prompt
 
 # Reference coordinates for major Indian coastal landing centers / harbors (EPSG:4326 [lon, lat])
 HARBOR_COORDINATES: Dict[str, List[float]] = {
-    "Ratnagiri": [73.28, 16.99],
-    "Veraval": [70.37, 20.90],
+    "Ratnagiri": [73.2847, 16.9942],
+    "Veraval": [70.3689, 20.9022],
     "Porbandar": [69.60, 21.64],
-    "Mumbai": [72.87, 18.92],
-    "Panaji": [73.83, 15.49],
-    "Goa": [73.83, 15.49],
-    "Malpe": [74.70, 13.35],
-    "Malvan": [73.47, 16.06],
-    "Chennai": [80.27, 13.08],
-    "Tuticorin": [78.13, 8.76],
-    "Kochi": [76.27, 9.93],
-    "Mangalore": [74.85, 12.87],
+    "Mumbai": [72.8258, 18.9158],
+    "Panaji": [73.8378, 15.5033],
+    "Goa": [73.8056, 15.4125],
+    "Malpe": [74.7011, 13.3522],
+    "Malvan": [73.4658, 16.0583],
+    "Chennai": [80.2989, 13.1258],
+    "Tuticorin": [78.1611, 8.8011],
+    "Kochi": [76.2611, 9.9417],
+    "Mangalore": [74.8344, 12.8589],
     "Karwar": [74.13, 14.81],
     "Alibaug": [72.88, 18.64],
-    "Visakhapatnam": [83.30, 17.68],
+    "Visakhapatnam": [83.3011, 17.6978],
     "Kakinada": [82.23, 16.99],
-    "Paradip": [86.67, 20.32],
+    "Paradip": [86.6711, 20.3189],
 }
 
 

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { SupportedLanguage } from '../i18n/translations';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { SupportedLanguage } from "../i18n/translations";
 
 export interface SpokenGuidanceOptions {
   language: SupportedLanguage;
@@ -24,19 +24,19 @@ const LANG_FALLBACK_CHAINS: Record<SupportedLanguage, string[]> = {
  */
 function pickBestVoice(
   voices: SpeechSynthesisVoice[],
-  chain: string[]
+  chain: string[],
 ): SpeechSynthesisVoice | null {
   for (const tag of chain) {
     // Exact locale match (e.g. hi-IN)
     const exact = voices.find(
-      (v) => v.lang.replace('_', '-').toLowerCase() === tag.toLowerCase()
+      (v) => v.lang.replace("_", "-").toLowerCase() === tag.toLowerCase(),
     );
     if (exact) return exact;
 
     // Language-prefix match (e.g. "hi" matches "hi-IN")
-    const prefix = tag.split('-')[0].toLowerCase();
-    const partial = voices.find(
-      (v) => v.lang.replace('_', '-').toLowerCase().startsWith(prefix)
+    const prefix = tag.split("-")[0].toLowerCase();
+    const partial = voices.find((v) =>
+      v.lang.replace("_", "-").toLowerCase().startsWith(prefix),
     );
     if (partial) return partial;
   }
@@ -46,7 +46,8 @@ function pickBestVoice(
 export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
+  const synth =
+    typeof window !== "undefined" ? window.speechSynthesis : undefined;
 
   // Keep track of the currently speaking utterance so we can cancel it
   const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
@@ -58,7 +59,7 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
     if (!synth) return;
     const updateVoices = () => setVoices(synth.getVoices());
     updateVoices();
-    if (typeof synth.onvoiceschanged !== 'undefined') {
+    if (typeof synth.onvoiceschanged !== "undefined") {
       synth.onvoiceschanged = updateVoices;
     }
     return () => {
@@ -108,7 +109,7 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
         utterance.voice = bestVoice;
         utterance.lang = bestVoice.lang; // keep lang consistent with chosen voice
         console.debug(
-          `[TTS] language=${language} → voice="${bestVoice.name}" (${bestVoice.lang})`
+          `[TTS] language=${language} → voice="${bestVoice.name}" (${bestVoice.lang})`,
         );
       } else {
         // At minimum set the lang so the browser can try its internal routing
@@ -119,8 +120,8 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
       utterance.onend = () => setIsPlaying(false);
       utterance.onerror = (e) => {
         // Cancellation is expected when navigation/action changes replace speech.
-        if (e.error === 'interrupted' || e.error === 'canceled') return;
-        console.warn('[TTS] Speech synthesis error:', e.error);
+        if (e.error === "interrupted" || e.error === "canceled") return;
+        console.warn("[TTS] Speech synthesis error:", e.error);
         setIsPlaying(false);
       };
 
@@ -131,7 +132,7 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
         synth.speak(utterance);
       }, 50);
     },
-    [language, synth, voices]
+    [language, synth, voices],
   );
 
   const stop = useCallback(() => {
@@ -149,4 +150,3 @@ export function useSpokenGuidance({ language }: SpokenGuidanceOptions) {
 
   return { speak, stop, isPlaying };
 }
-

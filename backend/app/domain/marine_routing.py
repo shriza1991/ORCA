@@ -45,11 +45,23 @@ class MarinePathfinder:
             return not self.land_polygon.intersects(pt.buffer(buffer_deg))
         return not self.land_polygon.contains(pt)
 
-    def _line_navigable(self, lon1: float, lat1: float, lon2: float, lat2: float) -> bool:
+    def _line_navigable(
+        self,
+        lon1: float,
+        lat1: float,
+        lon2: float,
+        lat2: float,
+        safety_buffer_deg: float = 0.0,
+    ) -> bool:
         if not self.land_polygon:
             return True
         line = LineString([(lon1, lat1), (lon2, lat2)])
-        return not self.land_polygon.intersects(line)
+        navigable_land = (
+            self.land_polygon.buffer(safety_buffer_deg)
+            if safety_buffer_deg > 0
+            else self.land_polygon
+        )
+        return not navigable_land.intersects(line)
 
     def find_path(
         self, 
@@ -68,7 +80,13 @@ class MarinePathfinder:
         end_node = Node(end_coords[0], end_coords[1])
         
         # If direct path is clear and no current vectors to optimize against, return it
-        if current_vector_fn is None and self._line_navigable(start_node.x, start_node.y, end_node.x, end_node.y):
+        if current_vector_fn is None and self._line_navigable(
+            start_node.x,
+            start_node.y,
+            end_node.x,
+            end_node.y,
+            safety_buffer_deg,
+        ):
             return [start_coords, end_coords]
 
         open_set = []

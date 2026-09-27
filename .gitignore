@@ -59,6 +59,8 @@ nextjs/out/
 out/
 .vercel/
 *.tsbuildinfo
+.vite/
+frontend/.vite/
 .npm
 .yarn/
 npm-debug.log*

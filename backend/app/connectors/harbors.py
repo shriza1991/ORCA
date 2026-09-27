@@ -233,21 +233,21 @@ def get_vessel_profile(profile_id: str) -> Optional[VesselProfileRecord]:
 
 # Standard reference coordinates for major Indian coastal harbors (fallback lookup)
 HARBOR_COORDINATES: dict[str, tuple[float, float]] = {
-    "ratnagiri": (16.99, 73.28),
-    "mumbai": (18.92, 72.87),
+    "ratnagiri": (16.9942, 73.2847),
+    "mumbai": (18.9158, 72.8258),
     "goa": (15.299, 73.911),
-    "mangalore": (12.872, 74.842),
-    "kochi": (9.931, 76.267),
-    "chennai": (13.082, 80.270),
-    "visakhapatnam": (17.685, 83.218),
+    "mangalore": (12.8589, 74.8344),
+    "kochi": (9.9417, 76.2611),
+    "chennai": (13.1258, 80.2989),
+    "visakhapatnam": (17.6978, 83.3011),
     "kolkata": (22.572, 88.363),
-    "veraval": (20.905, 70.365),
+    "veraval": (20.9022, 70.3689),
     "puri": (19.810, 85.832),
-    "tuticorin": (8.804, 78.135),
+    "tuticorin": (8.8011, 78.1611),
     "porbandar": (21.64, 69.60),
     "malpe": (13.35, 74.70),
-    "panaji": (15.49, 73.83),
-    "paradip": (20.32, 86.67),
+    "panaji": (15.4125, 73.8056),
+    "paradip": (20.3189, 86.6711),
 }
 
 

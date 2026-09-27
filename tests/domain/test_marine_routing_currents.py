@@ -18,6 +18,16 @@ def test_pathfinder_defaults_to_distance_without_currents():
     assert path[-1] == end
 
 
+def test_direct_path_honors_land_clearance_buffer():
+    land = Polygon([(0.9, 0.02), (1.1, 0.02), (1.1, 0.2), (0.9, 0.2)])
+    pathfinder = MarinePathfinder(land_polygon=land, resolution_deg=0.02)
+    start = [0.0, 0.0]
+    end = [2.0, 0.0]
+
+    assert pathfinder._line_navigable(*start, *end)
+    assert not pathfinder._line_navigable(*start, *end, safety_buffer_deg=0.05)
+
+
 def test_favorable_current_reduces_path_cost():
     """Vessel navigating with a favorable following current experiences lower transit cost than against opposing current."""
     pathfinder = MarinePathfinder(land_polygon=None, resolution_deg=0.02)
