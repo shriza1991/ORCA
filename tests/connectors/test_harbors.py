@@ -38,8 +38,8 @@ def test_valid_load_landing_centres():
 
     rat = get_landing_centre("Ratnagiri")
     assert rat is not None
-    assert rat.latitude == 16.99
-    assert rat.longitude == 73.28
+    assert rat.latitude == 16.9942
+    assert rat.longitude == 73.2847
     assert rat.state == "Maharashtra"
 
 
@@ -147,3 +147,11 @@ def test_resolve_coordinates():
     ctx3 = DummyContext(origin_harbor=None, coordinates=None)
     with pytest.raises(ValueError, match="missing"):
         resolve_coordinates(ctx3)
+
+
+def test_mumbai_resolves_to_fishing_harbour_not_city_area():
+    ctx = DummyContext(origin_harbor="Mumbai")
+
+    lat, lon = resolve_coordinates(ctx)
+
+    assert (lat, lon) == (18.9158, 72.8258)
