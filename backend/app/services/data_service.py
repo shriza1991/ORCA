@@ -88,6 +88,9 @@ class DataService:
         HYBRID   → IncoisOceanStateConnector (falls back internally to Open-Meteo / snapshot)
         """
         harbor = context.origin_harbor or "Ratnagiri"
+        if self.data_mode == "DEMO":
+            from backend.app.scenarios.fisher_demo import marine
+            return marine()
         if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
             logger.debug("DataService: %s mode — marine conditions from fixture.", self.data_mode)
             _ctx = context
@@ -122,6 +125,9 @@ class DataService:
         LIVE/HYBRID → ImdWeatherConnector with Open-Meteo fallback.
         """
         harbor = context.origin_harbor or "Ratnagiri"
+        if self.data_mode == "DEMO":
+            from backend.app.scenarios.fisher_demo import weather
+            return weather()
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.imd import ImdWeatherNormalizer
             # Use the requested departure time if available.
@@ -203,6 +209,9 @@ class DataService:
         falling back to marine_dataset which invents timestamps.
         """
         harbor = context.origin_harbor or "Ratnagiri"
+        if self.data_mode == "DEMO":
+            from backend.app.scenarios.fisher_demo import hazard
+            return hazard()
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.imd import ImdHazardNormalizer
             # Use the requested departure time if available.
@@ -290,6 +299,15 @@ class DataService:
 
     def get_pfz_raw_advisories(self, context: ToolInvocationContext) -> PFZSourceDataPayload:
         """Route to the appropriate PFZ connector based on DATA_MODE."""
+        if self.data_mode == "DEMO":
+            from backend.app.scenarios.fisher_demo import DEMO_DEPARTURE, pfz_features
+            return PFZSourceDataPayload(
+                features=pfz_features(),
+                bulletin_date=DEMO_DEPARTURE.isoformat(),
+                valid_to="2026-10-01T23:30:00+00:00",
+                source_name="INCOIS PFZ (DEMO)",
+                source_url="https://incois.gov.in/pfz_source",
+            )
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.incois import IncoisPFZNormalizer
             raw = {

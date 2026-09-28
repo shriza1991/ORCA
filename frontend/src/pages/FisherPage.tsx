@@ -19,6 +19,7 @@ import { useGeofence } from "../hooks/useGeofence";
 import LocationWarningsOverlay from "../components/map/LocationWarningsOverlay";
 import { RefreshCw, MessageSquare, Navigation } from "lucide-react";
 import { DEFAULT_MISSION_CONTEXT, type MissionContext } from "../types/mission";
+import { translateText } from "../i18n/translations";
 
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
@@ -50,6 +51,9 @@ export default function FisherPage({
   );
   const [lastPlanTime, setLastPlanTime] = useState<number>(0);
   const [mapTimeOffset, setMapTimeOffset] = useState<number>(0);
+  const fisherDataMode = (
+    import.meta.env.VITE_DATA_MODE || "HYBRID"
+  ).toUpperCase();
 
   const handleTimeOffsetChange = (hours: number) => {
     setMapTimeOffset(hours);
@@ -125,7 +129,7 @@ export default function FisherPage({
       return_time: chat.missionContext.return_time,
       destination_id: chat.missionContext.target_pfz,
       language_preference: chat.language,
-      data_mode: "HYBRID",
+      data_mode: fisherDataMode,
     });
 
     registerTrip({
@@ -143,6 +147,7 @@ export default function FisherPage({
     chat.missionContext.return_time,
     chat.missionContext.target_pfz,
     chat.language,
+    fisherDataMode,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ]);
 
@@ -210,7 +215,14 @@ export default function FisherPage({
                     type: "LineString",
                     coordinates: routeCoordinates,
                   },
-                  properties: { ...recommendedRoute, is_recommended: true },
+                  properties: {
+                    ...recommendedRoute,
+                    target_label:
+                      recommendedRoute.destination ||
+                      chat.missionContext.target_pfz ||
+                      "Selected fishing target",
+                    is_recommended: true,
+                  },
                 },
               ],
             },
@@ -331,7 +343,8 @@ export default function FisherPage({
                     color: "#0f172a",
                   }}
                 >
-                  <Navigation size={16} /> Plan
+                  <Navigation size={16} />{" "}
+                  {translateText("Plan", chat.language)}
                 </button>
                 <button
                   onClick={() => setSidebarTab("chat")}
@@ -349,7 +362,8 @@ export default function FisherPage({
                     color: "#0f172a",
                   }}
                 >
-                  <MessageSquare size={16} /> Assistant
+                  <MessageSquare size={16} />{" "}
+                  {translateText("Assistant", chat.language)}
                 </button>
               </div>
               <button
@@ -368,7 +382,7 @@ export default function FisherPage({
                 }}
               >
                 <RefreshCw size={16} />
-                Reset
+                {translateText("Reset", chat.language)}
               </button>
             </div>
 
@@ -472,6 +486,7 @@ export default function FisherPage({
           timeOffsetHours={mapTimeOffset}
           onTimeOffsetChange={handleTimeOffsetChange}
           canonicalDecision={canonicalMapDecision}
+          assessment={assessment}
         />
       </div>
     </main>

@@ -4,6 +4,23 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-28 Deterministic Fisher Recording Scenario
+
+- **IMPLEMENTED**: added opt-in `DEMO` assessment mode for the pinned Ratnagiri harbour to PFZ zone 1 scenario; default `LIVE`/`HYBRID` routing is unchanged.
+- **IMPLEMENTED**: unified hourly marine/weather observations, estimated tide, visibility, provenance mode, and route one-way/round-trip distance and fuel under the canonical assessment response.
+- **IMPLEMENTED**: deterministic mission-window enforcement prevents `GO` when the return window exceeds forecast coverage or the safe wave window.
+- **IMPLEMENTED**: Fisher cards and map telemetry read canonical assessment values; normal-severity bulletins no longer render active hazard boilerplate.
+- **VERIFIED**: backend focused suite `38 passed`; frontend focused Fisher/map suite `36 passed`; frontend TypeScript check passed.
+- **VERIFIED**: pinned 05:00 IST assessment returns `GO`, 11:00 IST What-If returns `CAUTION`, safe window ends at `15:00 IST`, and stable Decision Object fields match across three consecutive runs.
+
+### 2026-09-28 Fisher Console Presentation and Mobile Flow
+
+- **IMPLEMENTED**: replaced raw ISO timestamps and decimal-hour ETAs with localized plain-language times and hour/minute durations.
+- **IMPLEMENTED**: stabilized boundary layout, deduplicated Mission Brief factors, translated Fisher route/PFZ/map labels, removed nautical-mile/knot abbreviations from the presentation, and added status symbols.
+- **IMPLEMENTED**: map route popups now identify the fishing target and route distance; recording typography was increased for route, telemetry, and PFZ surfaces.
+- **IMPLEMENTED**: harbor, vessel, and PFZ wizard selections now require an explicit Next action; unsupported custom PFZ targets are excluded from the demo wizard.
+- **VERIFIED**: Hindi console screenshot captured at [output/fisher-console-hi.png](../output/fisher-console-hi.png); 390px Decision/Map tabs are functional and the verdict begins within the first viewport.
+
 ### 2026-09-27 Fisher Trip Plan Visibility & Route Guidance
 
 - **IMPLEMENTED**: moved the created trip-plan summary directly below the mission brief in both Fisher dashboard clients so it is visible immediately after the assessment explanation.

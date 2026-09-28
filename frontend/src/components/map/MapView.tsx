@@ -5,6 +5,7 @@ import maplibregl from "maplibre-gl";
 import * as Popover from "@radix-ui/react-popover";
 import * as turf from "@turf/turf";
 import type { MapLayer } from "../../types/contracts";
+import type { TripAssessmentResponse } from "../../types/assessment";
 import type { OperationalMode } from "../../types/mission";
 import LayerManager from "./LayerManager";
 import MissionMapBrief from "./MissionMapBrief";
@@ -20,8 +21,12 @@ import {
   X,
   Bookmark,
   RefreshCw,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  HelpCircle,
 } from "lucide-react";
-import type { SupportedLanguage } from "../../i18n/translations";
+import { translateText, type SupportedLanguage } from "../../i18n/translations";
 import {
   executeSpatialQuery,
   type UnifiedSpatialQueryResponse,
@@ -70,6 +75,7 @@ interface MapViewProps {
   timeOffsetHours?: number;
   onTimeOffsetChange?: (hours: number) => void;
   canonicalDecision?: "GO" | "CAUTION" | "NO_GO" | "UNKNOWN";
+  assessment?: TripAssessmentResponse | null;
 }
 
 export default function MapView({
@@ -91,6 +97,7 @@ export default function MapView({
   timeOffsetHours,
   onTimeOffsetChange,
   canonicalDecision = "UNKNOWN",
+  assessment = null,
 }: MapViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,6 +151,46 @@ export default function MapView({
   const [showBookmarks, setShowBookmarks] = useState(false);
 
   useEffect(() => {
+    if (assessment) {
+      const records = assessment.conditions?.hourly_forecast || [];
+      const marine = assessment.conditions?.marine;
+      const weather = assessment.conditions?.weather;
+      const selected =
+        records[
+          Math.min(
+            Math.round(selectedTimeStep / 2),
+            Math.max(records.length - 1, 0),
+          )
+        ] || {};
+      setMapForecast({
+        loading: false,
+        wave_height_m: Number(
+          selected.wave_height_m ??
+            selected.swh ??
+            marine?.significant_wave_height_m ??
+            0,
+        ),
+        wind_speed_kn: Number(
+          selected.wind_speed_knots ?? weather?.wind_speed_knots ?? 0,
+        ),
+        wind_direction_deg: Number(
+          selected.wind_direction_deg ?? weather?.wind_direction_deg ?? 0,
+        ),
+        swell_height_m: Number(marine?.swell_height_m ?? 0),
+        swell_period_s: Number(marine?.swell_period_sec ?? 0),
+        sst_c: Number(
+          selected.sea_surface_temp_c ?? marine?.sea_surface_temp_c ?? 0,
+        ),
+        tide_height_m: Number(
+          selected.sea_level_height_m ?? marine?.sea_level_height_m ?? 0,
+        ),
+        tide_phase: marine?.tide_phase
+          ? `${marine.tide_phase} estimated`
+          : "estimated",
+        status: canonicalDecision,
+      });
+      return;
+    }
     let isCancelled = false;
     const targetLat = inspectedPoint
       ? inspectedPoint.lat
@@ -190,7 +237,13 @@ export default function MapView({
     return () => {
       isCancelled = true;
     };
-  }, [selectedTimeStep, center?.[0], center?.[1], canonicalDecision]);
+  }, [
+    assessment,
+    selectedTimeStep,
+    center?.[0],
+    center?.[1],
+    canonicalDecision,
+  ]);
 
   const activeStyle = theme === "dark" ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
   const currentStyleRef = useRef(activeStyle);
@@ -1466,7 +1519,7 @@ export default function MapView({
                 size={24}
                 fill={isTrackingLocation ? "#2563eb" : "none"}
               />
-              {t("MapView.my_location", "My Location")}
+              {translateText("My Location", language)}
             </button>
           )}
           <button
@@ -1485,7 +1538,7 @@ export default function MapView({
             }}
           >
             <Layers size={24} />
-            {t("MapView.fit_trip", "Fit Trip")}
+            {translateText("Fit Trip", language)}
           </button>
           {layerAvailability?.routes === "AVAILABLE" && (
             <button
@@ -1590,7 +1643,7 @@ export default function MapView({
           aria-label="Toggle coastal landmarks"
         >
           <Bookmark size={14} style={{ color: "#0ea5e9" }} />
-          <span>Coastal Bookmarks</span>
+          <span>{translateText("Coastal Bookmarks", language)}</span>
         </button>
 
         {showBookmarks && (
@@ -1717,9 +1770,25 @@ export default function MapView({
                       : "#991b1b",
               }}
             >
-              {mapForecast.status === "UNKNOWN"
-                ? t("MapView.safety_unavailable", "Safety status unavailable")
-                : mapForecast.status}
+              {mapForecast.status === "GO" ? (
+                <ShieldCheck size={13} aria-label="Safe" />
+              ) : mapForecast.status === "CAUTION" ? (
+                <ShieldAlert size={13} aria-label="Caution" />
+              ) : mapForecast.status === "NO_GO" ? (
+                <ShieldX size={13} aria-label="Do not go" />
+              ) : (
+                <HelpCircle size={13} aria-label="Unknown" />
+              )}
+              {translateText(
+                mapForecast.status === "GO"
+                  ? "GO"
+                  : mapForecast.status === "CAUTION"
+                    ? "CAUTION"
+                    : mapForecast.status === "NO_GO"
+                      ? "DO_NOT_GO"
+                      : "UNKNOWN",
+                language,
+              )}
             </span>
             <span
               style={{
@@ -1736,7 +1805,7 @@ export default function MapView({
                   fontWeight: 400,
                 }}
               >
-                Wave
+                {translateText("Wave", language)}
               </span>
             </span>
             <span
@@ -1747,7 +1816,7 @@ export default function MapView({
                 fontWeight: 600,
               }}
             >
-              💨 {mapForecast.wind_speed_kn}kn{" "}
+              💨 {mapForecast.wind_speed_kn} {translateText("knots", language)}{" "}
               <span
                 style={{
                   color: "var(--muted-foreground, #94a3b8)",
@@ -1772,7 +1841,7 @@ export default function MapView({
                   fontWeight: 400,
                 }}
               >
-                ({mapForecast.tide_phase})
+                ({translateText(mapForecast.tide_phase, language)})
               </span>
             </span>
             <span
@@ -1783,7 +1852,15 @@ export default function MapView({
                 fontWeight: 600,
               }}
             >
-              🌡️ {mapForecast.sst_c}°C
+              🌡️ {mapForecast.sst_c}°C{" "}
+              <span
+                style={{
+                  color: "var(--muted-foreground, #94a3b8)",
+                  fontWeight: 400,
+                }}
+              >
+                {translateText("Sea temperature", language)}
+              </span>
             </span>
           </>
         ) : (
@@ -1828,7 +1905,7 @@ export default function MapView({
           }}
         >
           <Clock size={13} />
-          <span>Forecast:</span>
+          <span>{translateText("Forecast", language)}:</span>
         </span>
         {TIME_STEPS.map((step) => (
           <button
@@ -1854,7 +1931,7 @@ export default function MapView({
               transition: "all 0.15s ease",
             }}
           >
-            {step.label}
+            {translateText(step.label, language)}
           </button>
         ))}
       </div>

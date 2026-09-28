@@ -6,9 +6,15 @@ import {
   CheckCircle2,
   XCircle,
   Award,
+  ShieldCheck,
+  HelpCircle,
 } from "lucide-react";
 import type { TripAssessmentResponse } from "../../types/assessment";
 import { translateText, type SupportedLanguage } from "../../i18n/translations";
+import {
+  formatDurationHours,
+  formatMissionTime,
+} from "../../utils/fisher-format";
 
 interface TripPlanDetailsProps {
   assessment: TripAssessmentResponse | null;
@@ -79,6 +85,34 @@ export function getRouteSummary(
   if (risk === "MODERATE")
     return `Recommended route requires caution. Expect waves up to ${waves}m. You will need approximately ${fuel}L of fuel.`;
   return `Recommended route has elevated exposure. Waves up to ${waves}m. Exercise high vigilance.`;
+}
+
+function routeName(
+  name: string | undefined,
+  language: SupportedLanguage,
+): string {
+  const key = (name || "").toLowerCase();
+  const names: Record<string, string> =
+    language === "hi"
+      ? {
+          "direct open sea": "सीधा खुले समुद्र का मार्ग",
+          "coastal balanced": "संतुलित तटीय मार्ग",
+          "inshore sheltered": "तटीय सुरक्षित मार्ग",
+        }
+      : {
+          "direct open sea": "Direct open sea",
+          "coastal balanced": "Coastal balanced",
+          "inshore sheltered": "Inshore sheltered",
+        };
+  return names[key] || translateText(name || "Route", language);
+}
+
+function riskIcon(risk: string) {
+  if (risk === "LOW") return <ShieldCheck size={14} aria-label="Safe" />;
+  if (risk === "MODERATE")
+    return <ShieldAlert size={14} aria-label="Caution" />;
+  if (risk === "HIGH") return <XCircle size={14} aria-label="Do not go" />;
+  return <HelpCircle size={14} aria-label="Unknown" />;
 }
 
 export default function TripPlanDetails({
@@ -176,10 +210,7 @@ export default function TripPlanDetails({
   const waves = primaryRoute.max_wave_height_m || 0;
 
   // Format time
-  const hours = Math.floor(etaHours);
-  const minutes = Math.round((etaHours - hours) * 60);
-  let timeStr = `${hours}h ${minutes}m`;
-  if (hours === 0) timeStr = `${minutes}m`;
+  const timeStr = formatDurationHours(etaHours);
 
   // Estimate arrival date/time
   let departureTimeMs = Date.now();
@@ -194,13 +225,8 @@ export default function TripPlanDetails({
   }
   const arrivalDate = new Date(departureTimeMs + etaHours * 60 * 60 * 1000);
   const arrivalStr = isNaN(arrivalDate.getTime())
-    ? "Unknown"
-    : arrivalDate.toLocaleString("en-IN", {
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-        minute: "2-digit",
-      });
+    ? "-"
+    : formatMissionTime(arrivalDate.toISOString(), language);
 
   const summaryStr = getRouteSummary(risk, waves, fuel, language);
 
@@ -256,7 +282,7 @@ export default function TripPlanDetails({
             color: "#1d4ed8",
           }}
         >
-          {routes.length} ROUTES EVALUATED
+          {routes.length} {translateText("routes evaluated", language)}
         </span>
       </div>
 
@@ -341,7 +367,7 @@ export default function TripPlanDetails({
                 fontWeight: "bold",
               }}
             >
-              {distance} km
+              {distance.toFixed(1)} km
             </div>
           </div>
 
@@ -382,7 +408,7 @@ export default function TripPlanDetails({
                 marginTop: "4px",
               }}
             >
-              Arriving: {arrivalStr}
+              {translateText("Arriving", language)}: {arrivalStr}
             </div>
           </div>
 
@@ -437,10 +463,13 @@ export default function TripPlanDetails({
                 color: "#0f172a",
               }}
             >
-              Route Evaluation & Exposure Comparison
+              {translateText(
+                "Route Evaluation & Exposure Comparison",
+                language,
+              )}
             </h4>
             <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
-              Deterministic Dev 4 Exposure Model
+              {translateText("Deterministic route exposure", language)}
             </span>
           </div>
 
@@ -475,14 +504,30 @@ export default function TripPlanDetails({
                     fontSize: "0.6875rem",
                   }}
                 >
-                  <th style={{ padding: "10px 12px" }}>Route</th>
-                  <th style={{ padding: "10px 12px" }}>Distance</th>
-                  <th style={{ padding: "10px 12px" }}>Wave Height</th>
-                  <th style={{ padding: "10px 12px" }}>ETA</th>
-                  <th style={{ padding: "10px 12px" }}>Fuel</th>
-                  <th style={{ padding: "10px 12px" }}>Exposure Score</th>
-                  <th style={{ padding: "10px 12px" }}>Risk Rating</th>
-                  <th style={{ padding: "10px 12px" }}>Feasible</th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("Route", language)}
+                  </th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("Distance (one-way / round-trip)", language)}
+                  </th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("Wave height", language)}
+                  </th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("ETA", language)}
+                  </th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("Fuel (one-way / round-trip)", language)}
+                  </th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("Exposure score", language)}
+                  </th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("Risk rating", language)}
+                  </th>
+                  <th style={{ padding: "10px 12px" }}>
+                    {translateText("Feasible", language)}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -527,7 +572,7 @@ export default function TripPlanDetails({
                         >
                           {isRec && <Award size={15} color="#16a34a" />}
                           <span>
-                            {route.name || route.route_id || `Route ${idx + 1}`}
+                            {routeName(route.name || route.route_id, language)}
                           </span>
                           {isRec && (
                             <span
@@ -541,7 +586,7 @@ export default function TripPlanDetails({
                                 color: "#ffffff",
                               }}
                             >
-                              RECOMMENDED
+                              {translateText("RECOMMENDED", language)}
                             </span>
                           )}
                         </div>
@@ -553,7 +598,7 @@ export default function TripPlanDetails({
                         }}
                       >
                         {route.distance_km !== undefined
-                          ? `${route.distance_km} km`
+                          ? `${Number(route.one_way_distance_km ?? route.distance_km).toFixed(1)} / ${Number(route.round_trip_distance_km ?? (route.one_way_distance_km ?? route.distance_km) * 2).toFixed(1)} km`
                           : "—"}
                       </td>
                       <td
@@ -573,7 +618,7 @@ export default function TripPlanDetails({
                         }}
                       >
                         {route.eta_hours !== undefined
-                          ? `${route.eta_hours} h`
+                          ? formatDurationHours(route.eta_hours)
                           : "—"}
                       </td>
                       <td
@@ -583,7 +628,7 @@ export default function TripPlanDetails({
                         }}
                       >
                         {route.fuel_estimate_liters !== undefined
-                          ? `${route.fuel_estimate_liters} L`
+                          ? `${Number(route.one_way_fuel_liters ?? route.fuel_estimate_liters).toFixed(1)} / ${Number(route.round_trip_fuel_liters ?? (route.one_way_fuel_liters ?? route.fuel_estimate_liters) * 2).toFixed(1)} L`
                           : "—"}
                       </td>
                       <td
@@ -609,7 +654,11 @@ export default function TripPlanDetails({
                             color: riskStyle.color,
                           }}
                         >
-                          {route.risk_rating || "UNKNOWN"}
+                          {riskIcon(route.risk_rating || "UNKNOWN")}{" "}
+                          {translateText(
+                            route.risk_rating || "UNKNOWN",
+                            language,
+                          )}
                         </span>
                       </td>
                       <td style={{ padding: "10px 12px" }}>
@@ -623,7 +672,8 @@ export default function TripPlanDetails({
                               fontWeight: 600,
                             }}
                           >
-                            <CheckCircle2 size={14} /> Feasible
+                            <CheckCircle2 size={14} />{" "}
+                            {translateText("Feasible", language)}
                           </span>
                         ) : (
                           <div>
@@ -636,7 +686,8 @@ export default function TripPlanDetails({
                                 fontWeight: 600,
                               }}
                             >
-                              <XCircle size={14} /> Infeasible
+                              <XCircle size={14} />{" "}
+                              {translateText("Infeasible", language)}
                             </span>
                             {infeasibleReasons.length > 0 && (
                               <div

@@ -27,7 +27,7 @@ class TripAssessmentRequest(BaseModel):
     return_time: Optional[str] = Field(None, description="Planned return time (ISO-8601 UTC).")
     destination_id: Optional[str] = Field(None, description="Optional PFZ or target destination ID.")
     language_preference: str = Field("auto", description="Language preference for alerts and summaries.")
-    data_mode: str = Field("HYBRID", description="Data resolution mode (LIVE | HYBRID | SNAPSHOT | SYNTHETIC).")
+    data_mode: str = Field("HYBRID", description="Data resolution mode (LIVE | HYBRID | SNAPSHOT | SYNTHETIC | DEMO).")
     parent_assessment_id: Optional[str] = Field(None, description="ID of a previous assessment for comparison.")
     mission_state: Optional[MissionState] = Field(None, description="Canonical M1.1 MissionState context.")
 

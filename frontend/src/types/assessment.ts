@@ -1,5 +1,12 @@
-import type { UserContext, Recommendation, RecommendationStatus, MapLayer, AgentCollaborationPayload, ThresholdComparison } from './contracts';
-import type { MissionState } from './mission';
+import type {
+  UserContext,
+  Recommendation,
+  RecommendationStatus,
+  MapLayer,
+  AgentCollaborationPayload,
+  ThresholdComparison,
+} from "./contracts";
+import type { MissionState } from "./mission";
 
 export interface TripAssessmentRequest {
   origin_harbor?: string;
@@ -23,12 +30,42 @@ export interface AssessmentSourceStatus {
 export interface ObservationBundle {
   timestamp: string;
   measurements: Record<string, any>;
+  data_mode?: string;
+  source_metadata?: { provenance_mode?: "LIVE" | "SAVED" | "DEMO" | string };
+  captured_at?: string;
+  hourly_forecast?: Array<Record<string, any>>;
+  marine?: {
+    significant_wave_height_m?: number | null;
+    swell_height_m?: number | null;
+    swell_period_sec?: number | null;
+    sea_surface_temp_c?: number | null;
+    sea_level_height_m?: number | null;
+    tide_phase?: string | null;
+    tide_is_estimated?: boolean;
+    hourly_forecast?: Array<Record<string, any>>;
+    source_name?: string;
+    observed_at?: string | null;
+  } | null;
+  weather?: {
+    wind_speed_knots?: number | null;
+    wind_gust_knots?: number | null;
+    wind_direction_deg?: number | null;
+    visibility_km?: number | null;
+    source_name?: string;
+    observed_at?: string | null;
+  } | null;
+  hazard?: {
+    severity?: string;
+    headline?: string | null;
+    cyclone_warning_active?: boolean;
+    squall_alert?: boolean;
+  } | null;
 }
 
 export interface Alert {
   title: string;
   description: string;
-  severity: 'high' | 'medium' | 'low';
+  severity: "high" | "medium" | "low";
   affects_trip: boolean;
   action: string;
 }
@@ -55,7 +92,7 @@ export interface DecisionBoundaryItem {
 }
 
 export interface DecisionStabilityPayload {
-  level: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  level: "HIGH" | "MEDIUM" | "LOW" | string;
   headline: string;
   reason: string;
   nearest_boundary?: DecisionBoundaryItem | null;
@@ -102,4 +139,3 @@ export interface TripAssessmentResponse {
   stability?: DecisionStabilityPayload | null;
   safe_window?: SafeMissionWindow | null;
 }
-

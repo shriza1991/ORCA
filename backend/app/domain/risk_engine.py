@@ -101,6 +101,7 @@ class DeterministicRiskEngine:
         data_mode: str = "SNAPSHOT",
         reference_time: Optional[datetime | str] = None,
         return_time: Optional[datetime | str] = None,
+        hourly_records: Optional[List[Dict[str, Any]]] = None,
     ) -> RiskAssessmentPayload:
         """Computes a deterministic, explainable safety decision from domain observations."""
         if bundle is not None:
@@ -152,6 +153,7 @@ class DeterministicRiskEngine:
         marine_stale = False
         weather_stale = False
         hazard_stale = False
+        forecast_coverage_incomplete = False
 
         if marine is not None:
             if marine.valid_to:
@@ -280,8 +282,9 @@ class DeterministicRiskEngine:
         # ---------------------------------------------------------------------
         # 2. Severe Hazard / Cyclone Bulletin Check
         # ---------------------------------------------------------------------
-        cyclone_active = bool(hazard and hazard.cyclone_warning_active)
-        squall_alert = bool(hazard and hazard.squall_alert)
+        hazard_is_above_normal = bool(hazard and str(hazard.severity).upper() != "NORMAL")
+        cyclone_active = bool(hazard and hazard_is_above_normal and hazard.cyclone_warning_active)
+        squall_alert = bool(hazard and hazard_is_above_normal and hazard.squall_alert)
 
         threshold_checks.append(
             ThresholdComparison(
@@ -407,6 +410,51 @@ class DeterministicRiskEngine:
                 )
             )
 
+        # Evaluate the complete mission window from the same hourly series used
+        # by routes and What-If. A safe departure cannot remain GO when the
+        # fishing or return leg crosses the configured wave limit.
+        if hourly_records and return_time is not None:
+            window_records = []
+            record_times = []
+            for record in hourly_records:
+                timestamp = record.get("observation_time") or record.get("timestamp_utc") or record.get("observed_at")
+                if not timestamp:
+                    continue
+                try:
+                    record_time = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+                    if record_time.tzinfo is None:
+                        record_time = record_time.replace(tzinfo=timezone.utc)
+                except (TypeError, ValueError):
+                    continue
+                if now_utc <= record_time <= window_end_utc:
+                    wave = record.get("wave_height_m", record.get("swh"))
+                    if wave is not None:
+                        window_records.append(float(wave))
+                record_times.append(record_time)
+
+            if record_times and max(record_times) + timedelta(hours=1) < window_end_utc:
+                forecast_coverage_incomplete = True
+                warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Forecast coverage ends before planned return.")
+
+            if window_records:
+                max_window_wave = max(window_records)
+                if max_window_wave > limits["wave_caution_m"]:
+                    threshold_checks.append(
+                        ThresholdComparison(
+                            metric_name="mission_window_wave_height_m",
+                            observed_value=max_window_wave,
+                            threshold_value=limits["wave_caution_m"],
+                            operator=">",
+                            unit="meters",
+                            exceeded=True,
+                            impact="CAUTION_TRIGGER",
+                            description="The planned fishing and return window exceeds the wave limit.",
+                        )
+                    )
+                    decisive_factors.append(
+                        f"Mission window reaches {max_window_wave:.1f}m waves, above the {limits['wave_caution_m']:.1f}m operating limit before return."
+                    )
+
         # ---------------------------------------------------------------------
         # 5. Final Deterministic Status Synthesis & Hard Constraints Hierarchy
         #    Hierarchy: SAFETY (Cyclones/Squall) -> LEGAL (Geofence) -> VESSEL (Wave/Wind) -> DATA INTEGRITY -> OPPORTUNITY
@@ -424,7 +472,7 @@ class DeterministicRiskEngine:
             conf_reasons = ["Deterministic safety ceiling exceeded by official observations"]
             if is_data_degraded:
                 warnings.append("Note: Secondary telemetry is also missing or degraded, but NO_GO prohibition takes precedence.")
-        elif is_data_degraded:
+        elif is_data_degraded or forecast_coverage_incomplete:
             status = RecommendationStatus.UNKNOWN
             summary = "Sensor, forecast, or hazard bulletin data are expired, degraded, or incomplete. Safe departure evaluation cannot be completed."
             action = "Hold departure. Verify with port authorities before navigating."
@@ -481,6 +529,7 @@ def evaluate_deterministic_risk(
     data_mode: str = "SNAPSHOT",
     reference_time: Optional[datetime | str] = None,
     return_time: Optional[datetime | str] = None,
+    hourly_records: Optional[List[Dict[str, Any]]] = None,
 ) -> RiskAssessmentPayload:
     """Convenience helper to evaluate risk through the deterministic engine."""
     return DeterministicRiskEngine.evaluate(
@@ -492,6 +541,7 @@ def evaluate_deterministic_risk(
         data_mode=data_mode,
         reference_time=reference_time,
         return_time=return_time,
+        hourly_records=hourly_records,
     )
 
 
@@ -885,7 +935,7 @@ def compute_safe_window(
 
         if swh > limits["wave_nogo_m"] or wspd > limits["wind_nogo_knots"] or gust >= limits["gust_nogo_knots"]:
             h_status = "NO_GO"
-        elif swh >= limits["wave_caution_m"] or wspd >= limits["wind_caution_knots"]:
+        elif swh > limits["wave_caution_m"] or wspd >= limits["wind_caution_knots"]:
             h_status = "CAUTION"
         else:
             h_status = "GO"
@@ -930,7 +980,7 @@ def compute_safe_window(
         safe_end = first_hour["dt"]
         for h in evaluated_hours:
             if h["status"] == "GO":
-                safe_end = h["dt"] + timedelta(hours=1)
+                safe_end = h["dt"]
             else:
                 break
 

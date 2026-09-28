@@ -1,7 +1,10 @@
-import type { MissionBriefPayload, DecisionStabilityPayload } from '../../types/assessment';
-import type { DecisionDelta, DecisionDiff } from '../../types/mission';
-import { translateText, type SupportedLanguage } from '../../i18n/translations';
-import DecisionStabilityCard from './DecisionStabilityCard';
+import type {
+  MissionBriefPayload,
+  DecisionStabilityPayload,
+} from "../../types/assessment";
+import type { DecisionDelta, DecisionDiff } from "../../types/mission";
+import { translateText, type SupportedLanguage } from "../../i18n/translations";
+import DecisionStabilityCard from "./DecisionStabilityCard";
 import {
   HelpCircle,
   ArrowRightCircle,
@@ -10,7 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
   GitCommit,
-} from 'lucide-react';
+} from "lucide-react";
 
 export interface MissionBriefPanelProps {
   brief?: MissionBriefPayload | null;
@@ -25,7 +28,7 @@ export default function MissionBriefPanel({
   delta,
   activeDiff,
   stability,
-  language = 'en',
+  language = "en",
 }: MissionBriefPanelProps) {
   if (!brief) {
     return null;
@@ -41,18 +44,42 @@ export default function MissionBriefPanel({
   } = brief;
 
   const changedFactors = delta?.changed_factors || [];
+  let hasWindFactor = false;
+  const positiveFactors = Array.from(new Set(positive_factors))
+    .filter((factor) => {
+      if (!/wind/i.test(factor)) return true;
+      if (hasWindFactor) return false;
+      hasWindFactor = true;
+      return true;
+    })
+    .slice(0, 3);
+
+  const displayFactor = (factor: string): string => {
+    const normalized = factor.replace(/\bkt\b/gi, "knots");
+    if (language === "hi") {
+      const wave = normalized.match(
+        /Wave height ([\d.]+)m is within safe operating limits/i,
+      );
+      if (wave) return `लहरों की ऊंचाई ${wave[1]} मीटर सुरक्षित सीमा में है।`;
+      const wind = normalized.match(
+        /Sustained wind ([\d.]+) knots is within calm operating range/i,
+      );
+      if (wind) return `स्थिर हवा ${wind[1]} नॉट शांत संचालन सीमा में है।`;
+    }
+    return translateText(normalized, language);
+  };
   const hasChangedFactors = changedFactors.length > 0 || !!activeDiff?.summary;
 
-  const confUpper = (confidence || 'MEDIUM').toUpperCase();
+  const confUpper = (confidence || "MEDIUM").toUpperCase();
   const getConfidenceBadgeColor = () => {
     switch (confUpper) {
-      case 'HIGH':
-        return { bg: '#ecfdf5', text: '#065f46', border: '#a7f3d0' };
-      case 'LOW':
-        return { bg: '#fef2f2', text: '#991b1b', border: '#fecaca' };
-      case 'MEDIUM':
+      case "HIGH":
+        return { bg: "#ecfdf5", text: "#065f46", border: "#a7f3d0" };
+      case "LOW":
+        return { bg: "#fef2f2", text: "#991b1b", border: "#fecaca" };
+      case "MEDIUM":
       default:
-        return { bg: '#fffbeb', text: '#92400e', border: '#fde68a' };
+        return { bg: "#fffbeb", text: "#92400e", border: "#fde68a" };
     }
   };
 
@@ -63,63 +90,93 @@ export default function MissionBriefPanel({
       className="mission-brief-panel"
       data-testid="mission-brief-panel"
       style={{
-        marginTop: '16px',
-        marginBottom: '16px',
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '12px',
-        padding: '18px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
+        marginTop: "16px",
+        marginBottom: "16px",
+        backgroundColor: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "12px",
+        padding: "18px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.04)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Sparkles size={18} style={{ color: '#0284c7' }} />
-          <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: 700 }}>
-            {translateText('Mission Brief & Why Panel', language)}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: "1px solid #f1f5f9",
+          paddingBottom: "10px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Sparkles size={18} style={{ color: "#0284c7" }} />
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "1.15rem",
+              color: "#0f172a",
+              fontWeight: 700,
+            }}
+          >
+            {translateText("Mission Brief & Why Panel", language)}
           </h3>
         </div>
         <div
           data-testid="confidence-badge"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
             backgroundColor: confBadge.bg,
             color: confBadge.text,
             border: `1px solid ${confBadge.border}`,
-            padding: '3px 10px',
-            borderRadius: '9999px',
-            fontSize: '0.82rem',
+            padding: "3px 10px",
+            borderRadius: "9999px",
+            fontSize: "0.82rem",
             fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
           }}
         >
           <ShieldCheck size={14} />
-          <span>{translateText('Confidence', language)}: {confUpper}</span>
+          <span>
+            {translateText("Confidence", language)}:{" "}
+            {translateText(confUpper, language)}
+          </span>
         </div>
       </div>
 
       {/* 1. Why ORCA Recommends This */}
-      <div data-testid="why-summary-section" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#334155', fontWeight: 700, fontSize: '0.95rem' }}>
-          <HelpCircle size={16} style={{ color: '#0284c7' }} />
-          <span>{translateText('Why ORCA Recommends This', language)}</span>
+      <div
+        data-testid="why-summary-section"
+        style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            color: "#334155",
+            fontWeight: 700,
+            fontSize: "0.95rem",
+          }}
+        >
+          <HelpCircle size={16} style={{ color: "#0284c7" }} />
+          <span>{translateText("Why ORCA Recommends This", language)}</span>
         </div>
         <div
           data-testid="why-summary"
           style={{
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '12px 14px',
-            fontSize: '0.98rem',
-            color: '#1e293b',
+            backgroundColor: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            padding: "12px 14px",
+            fontSize: "0.98rem",
+            color: "#1e293b",
             lineHeight: 1.5,
           }}
         >
@@ -128,20 +185,32 @@ export default function MissionBriefPanel({
       </div>
 
       {/* 2. Recommended Action */}
-      <div data-testid="recommended-action-section" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#166534', fontWeight: 700, fontSize: '0.95rem' }}>
-          <ArrowRightCircle size={16} style={{ color: '#16a34a' }} />
-          <span>{translateText('Recommended Action', language)}</span>
+      <div
+        data-testid="recommended-action-section"
+        style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            color: "#166534",
+            fontWeight: 700,
+            fontSize: "0.95rem",
+          }}
+        >
+          <ArrowRightCircle size={16} style={{ color: "#16a34a" }} />
+          <span>{translateText("Recommended Action", language)}</span>
         </div>
         <div
           data-testid="recommended-action"
           style={{
-            backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            borderRadius: '8px',
-            padding: '12px 14px',
-            fontSize: '0.98rem',
-            color: '#14532d',
+            backgroundColor: "#f0fdf4",
+            border: "1px solid #bbf7d0",
+            borderRadius: "8px",
+            padding: "12px 14px",
+            fontSize: "0.98rem",
+            color: "#14532d",
             fontWeight: 600,
             lineHeight: 1.5,
           }}
@@ -151,27 +220,39 @@ export default function MissionBriefPanel({
       </div>
 
       {/* 3. Positive Factors */}
-      {positive_factors.length > 0 && (
-        <div data-testid="positive-factors-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#15803d', fontWeight: 700, fontSize: '0.92rem' }}>
+      {positiveFactors.length > 0 && (
+        <div
+          data-testid="positive-factors-section"
+          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              color: "#15803d",
+              fontWeight: 700,
+              fontSize: "0.92rem",
+            }}
+          >
             <CheckCircle2 size={16} />
-            <span>{translateText('Top Positive Factors', language)}</span>
+            <span>{translateText("Top Positive Factors", language)}</span>
           </div>
           <ul
             data-testid="positive-factors-list"
             style={{
               margin: 0,
-              paddingLeft: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              fontSize: '0.92rem',
-              color: '#334155',
+              paddingLeft: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              fontSize: "0.92rem",
+              color: "#334155",
             }}
           >
-            {positive_factors.map((factor, idx) => (
+            {positiveFactors.map((factor, idx) => (
               <li key={idx} style={{ lineHeight: 1.45 }}>
-                {translateText(factor, language)}
+                {displayFactor(factor)}
               </li>
             ))}
           </ul>
@@ -180,21 +261,33 @@ export default function MissionBriefPanel({
 
       {/* 4. Negative Factors (Hidden when empty) */}
       {negative_factors.length > 0 && (
-        <div data-testid="negative-factors-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#b91c1c', fontWeight: 700, fontSize: '0.92rem' }}>
+        <div
+          data-testid="negative-factors-section"
+          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              color: "#b91c1c",
+              fontWeight: 700,
+              fontSize: "0.92rem",
+            }}
+          >
             <AlertTriangle size={16} />
-            <span>{translateText('Negative & Risk Factors', language)}</span>
+            <span>{translateText("Negative & Risk Factors", language)}</span>
           </div>
           <ul
             data-testid="negative-factors-list"
             style={{
               margin: 0,
-              paddingLeft: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              fontSize: '0.92rem',
-              color: '#991b1b',
+              paddingLeft: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              fontSize: "0.92rem",
+              color: "#991b1b",
             }}
           >
             {negative_factors.map((factor, idx) => (
@@ -207,22 +300,43 @@ export default function MissionBriefPanel({
       )}
 
       {/* 5. Confidence & Supporting Reasons */}
-      <div data-testid="confidence-section" style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontWeight: 600, fontSize: '0.88rem' }}>
-          <ShieldCheck size={15} style={{ color: '#64748b' }} />
-          <span>{translateText('Confidence Justification', language)} ({confUpper})</span>
+      <div
+        data-testid="confidence-section"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "6px",
+          borderTop: "1px solid #f1f5f9",
+          paddingTop: "10px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            color: "#475569",
+            fontWeight: 600,
+            fontSize: "0.88rem",
+          }}
+        >
+          <ShieldCheck size={15} style={{ color: "#64748b" }} />
+          <span>
+            {translateText("Confidence Justification", language)} (
+            {translateText(confUpper, language)})
+          </span>
         </div>
         {confidence_reasons.length > 0 && (
           <ul
             data-testid="confidence-reasons-list"
             style={{
               margin: 0,
-              paddingLeft: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              fontSize: '0.85rem',
-              color: '#64748b',
+              paddingLeft: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+              fontSize: "0.85rem",
+              color: "#64748b",
             }}
           >
             {confidence_reasons.map((reason, idx) => (
@@ -242,23 +356,35 @@ export default function MissionBriefPanel({
         <div
           data-testid="what-changed-section"
           style={{
-            backgroundColor: '#eff6ff',
-            border: '1px solid #bfdbfe',
-            borderRadius: '10px',
-            padding: '14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
+            backgroundColor: "#eff6ff",
+            border: "1px solid #bfdbfe",
+            borderRadius: "10px",
+            padding: "14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1d4ed8', fontWeight: 700, fontSize: '0.95rem' }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              color: "#1d4ed8",
+              fontWeight: 700,
+              fontSize: "0.95rem",
+            }}
+          >
             <GitCommit size={16} />
-            <span>{translateText('What Changed?', language)}</span>
+            <span>{translateText("What Changed?", language)}</span>
           </div>
 
           {activeDiff && (
-            <div style={{ fontSize: '0.9rem', color: '#1e40af', fontWeight: 600 }}>
-              {activeDiff.baselineStatus} → {activeDiff.simulatedStatus}: {activeDiff.summary}
+            <div
+              style={{ fontSize: "0.9rem", color: "#1e40af", fontWeight: 600 }}
+            >
+              {activeDiff.baselineStatus} → {activeDiff.simulatedStatus}:{" "}
+              {activeDiff.summary}
             </div>
           )}
 
@@ -267,12 +393,12 @@ export default function MissionBriefPanel({
               data-testid="changed-factors-list"
               style={{
                 margin: 0,
-                paddingLeft: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-                fontSize: '0.9rem',
-                color: '#1e3a8a',
+                paddingLeft: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                fontSize: "0.9rem",
+                color: "#1e3a8a",
               }}
             >
               {changedFactors.map((cf: string, idx: number) => (

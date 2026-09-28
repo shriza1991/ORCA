@@ -108,7 +108,8 @@ export default function GuidedTripSetup({
       craft_profile: context.craft_profile || "motorized_boat",
       departure_time: dep,
       return_time: ret,
-      target_pfz: context.target_pfz || "auto",
+      target_pfz:
+        context.target_pfz === "custom" ? "auto" : context.target_pfz || "auto",
       parent_assessment_id: context.parent_assessment_id,
     };
   });
@@ -233,7 +234,6 @@ export default function GuidedTripSetup({
                 key={h}
                 onClick={() => {
                   setLocalContext((prev) => ({ ...prev, origin_harbor: h }));
-                  handleNext();
                 }}
                 style={{
                   padding: "20px",
@@ -254,6 +254,22 @@ export default function GuidedTripSetup({
                 ⚓ {translateText(h, language)}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!localContext.origin_harbor}
+              style={{
+                padding: "18px",
+                fontSize: "1.2rem",
+                borderRadius: "12px",
+                background: localContext.origin_harbor ? "#0284c7" : "#94a3b8",
+                color: "white",
+                border: "none",
+                fontWeight: 700,
+              }}
+            >
+              {translateText("Next: Boat", language)}
+            </button>
           </div>
         );
 
@@ -271,7 +287,6 @@ export default function GuidedTripSetup({
                     ...prev,
                     craft_profile: c.value,
                   }));
-                  handleNext();
                 }}
                 style={{
                   padding: "22px",
@@ -297,6 +312,22 @@ export default function GuidedTripSetup({
                 ⛵ {translateText(c.label, language)}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!localContext.craft_profile}
+              style={{
+                padding: "18px",
+                fontSize: "1.2rem",
+                borderRadius: "12px",
+                background: localContext.craft_profile ? "#0284c7" : "#94a3b8",
+                color: "white",
+                border: "none",
+                fontWeight: 700,
+              }}
+            >
+              {translateText("Next: Departure", language)}
+            </button>
           </div>
         );
 
@@ -644,7 +675,6 @@ export default function GuidedTripSetup({
                     ...prev,
                     target_pfz: opt.value,
                   }));
-                  handleNext();
                 }}
                 style={{
                   padding: "20px",
@@ -678,6 +708,23 @@ export default function GuidedTripSetup({
                 </div>
               </button>
             ))}
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={localContext.target_pfz === "custom"}
+              style={{
+                padding: "18px",
+                fontSize: "1.2rem",
+                borderRadius: "12px",
+                background:
+                  localContext.target_pfz !== "custom" ? "#0284c7" : "#94a3b8",
+                color: "white",
+                border: "none",
+                fontWeight: 700,
+              }}
+            >
+              {translateText("Next: Review", language)}
+            </button>
           </div>
         );
 

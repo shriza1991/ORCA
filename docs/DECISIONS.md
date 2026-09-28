@@ -2,10 +2,26 @@
 
 Only cross-cutting decisions go here.
 
-## D015 — Canonical Decision Object and Safe Degraded Chat Contract
+## D016 — Canonical Assessment Forecast and Opt-In Demo Mode
+
 Status: ACCEPTED
 
 Decision:
+
+1. Fisher weather, tide, map telemetry, Mission Brief, route exposure, and What-If evaluation consume one canonical assessment observation bundle and its merged hourly forecast.
+2. `DEMO` is an explicit offline mode for deterministic screen recording and never changes default `LIVE` or `HYBRID` provider routing.
+3. Provenance is derived from payload source metadata and is displayed as `LIVE`, `SAVED`, or `DEMO`; fallback data must not be labelled live.
+
+Reason:
+
+Separate MarineWatch and assessment reads produced contradictory wind and tide values in the Fisher console. A single response snapshot prevents display divergence while preserving live/hybrid behavior outside the opt-in recording mode.
+
+## D015 — Canonical Decision Object and Safe Degraded Chat Contract
+
+Status: ACCEPTED
+
+Decision:
+
 1. `ChatResponse.decision_object` is the canonical decision payload for mission and map surfaces. The legacy `recommendation` field remains as a compatibility projection.
 2. Expected provider failures return a schema-compatible degraded response with `UNKNOWN` and an explicit hold-departure action. Unsupported `LIVE`/`HYBRID` readiness and unexpected programming failures retain structured non-200 error handling.
 3. UI status and telemetry must not infer a positive clearance from missing, stale, placeholder, or unrelated evidence.
@@ -15,6 +31,7 @@ Reason:
 The production audit showed a contradictory `GO` map HUD while the mission surface reported incomplete evidence and hold departure. It also showed provider 502 responses becoming an opaque chat error. A single deterministic decision contract and explicit degraded state prevent unsafe UI divergence without fabricating live data.
 
 ## D001 — Modular Monolith
+
 Status: ACCEPTED
 
 Keep the initial product as a modular monolith with bounded internal contexts.
@@ -22,6 +39,7 @@ Keep the initial product as a modular monolith with bounded internal contexts.
 Reason: Faster parallel development and simpler deployment.
 
 ## D002 — Deterministic Safety Authority
+
 Status: ACCEPTED
 
 Deterministic domain code owns safety states, constraints, geometry, and threshold calculations.
@@ -29,41 +47,49 @@ Deterministic domain code owns safety states, constraints, geometry, and thresho
 Reason: Safety-critical calculations must be reproducible and auditable.
 
 ## D003 — Evidence-First Provenance
+
 Status: ACCEPTED
 
 Recommendations retain source, time, validity, quality, and authority metadata.
 
 ## D004 — Contract-First Parallel Development
+
 Status: ACCEPTED
 
 Shared interfaces are changed before dependent consumers.
 
 ## D005 — LIVE / HYBRID / SNAPSHOT
+
 Status: ACCEPTED
 
 All external data paths explicitly declare operating mode.
 
 ## D006 — Develop as Integration Branch
+
 Status: ACCEPTED
 
-Members work on team/* branches, merge continuously to develop, then promote verified releases to main.
+Members work on team/\* branches, merge continuously to develop, then promote verified releases to main.
 
 ## D007 — Mission Twin as Core Differentiator
+
 Status: ACCEPTED
 
 Mission-level reasoning, counterfactual simulation, and alternatives are core product capabilities.
 
 ## D008 — Ecosystem-First Positioning
+
 Status: ACCEPTED
 
 ORCA consumes and orchestrates existing authoritative services instead of claiming to replace them.
 
 ## D009 — Pilot Before National Scale
+
 Status: ACCEPTED
 
 Prove one geography deeply before broadening coverage.
 
 ## D010 — Official-Source Precedence Hierarchy
+
 Status: ACCEPTED
 
 Decision:
@@ -76,6 +102,7 @@ Impact:
 Connectors and risk engine always prioritize official bulletins over secondary models.
 
 ## D011 — Provider Status Taxonomy
+
 Status: ACCEPTED
 
 Decision:
@@ -85,6 +112,7 @@ Reason:
 Prevents AI agents and developers from conflating declared endpoints with verified live access.
 
 ## D012 — Snapshot Fallback and Provenance Tagging Policy
+
 Status: ACCEPTED
 
 Decision:
@@ -94,6 +122,7 @@ Reason:
 Ensures zero-crash resilience during operational connectivity drops while maintaining strict transparency.
 
 ## D013 — Pilot Geography Scope (Maharashtra / Konkan Coast)
+
 Status: ACCEPTED
 
 Decision:
@@ -103,9 +132,11 @@ Reason:
 Allows deep, end-to-end multi-source validation across real coastal landing centres before scaling nationally.
 
 ## D014 — Single Source of Truth for Sector Surveillance and Zero Operational Frontend Mock Fallbacks
+
 Status: ACCEPTED
 
 Decision:
+
 1. Authority fleet surveillance sectors are authored and stored canonically in the backend synthetic dataset (`sectors.json` / `GET /api/v1/demo/sectors`). The frontend consumes this dynamically; `frontend/src/utils/geo.ts` retains presentation formatters and offline dropdown names only, never maintaining duplicate authoritative geometries.
 2. The frontend must never fabricate operational telemetry (vessel coordinates, GPS replay tracks, alert counts, or hazards) in offline mode. If the backend is unreachable or a sector contains zero vessels, the UI displays explicit offline/empty state banners rather than synthetic fallback tracks.
 3. All seeded vessels (`vessel-01` to `vessel-08`) have canonical synthetic replay data seeded in `replay_positions.json`, mapping strictly to their home harbors (Ratnagiri: `vessel-01`..`04`; Malvan: `vessel-05`..`08`).
@@ -117,8 +148,10 @@ Impact:
 Guarantees end-to-end data integrity from backend synthetic generator to MapLibre viewport.
 
 ## D015 — Non-Fabricating Handling of Partial Upstream Payloads in Risk Evaluation
+
 Status: ACCEPTED
 Decision:
+
 1. Make `harbor`, `observed_at`, and `valid_to` optional (`Optional[str] = None`) on `MarineConditionsPayload`, `WeatherConditionsPayload`, and `HazardBulletinPayload` rather than required strings.
 2. Under no circumstances may missing values be fabricated (no invented harbor names, no current time substituted for missing observation/validity timestamps, no default zero values).
 3. In `specialist_tools_node`, dictionary tool results are safely extracted by filtering to declared model fields, safely aliasing compatible keys (e.g. `sea_surface_current_knots` -> `surface_current_knots`), and handling unexpected schema errors gracefully without crashing.
@@ -134,6 +167,7 @@ Owner: Dev 2 / Dev 3
 Date: 2026-09-13
 
 ## D016 — Request-Scoped Authority Chat Sector Context
+
 Status: ACCEPTED
 
 Decision:
@@ -149,6 +183,7 @@ Owner: P0-7 integration
 Date: 2026-09-13
 
 ## D017 — Canonical Authority Hazard Applicability
+
 Status: ACCEPTED
 
 Decision:
@@ -164,6 +199,7 @@ Owner: P0-8A integration
 Date: 2026-09-13
 
 ## D018 — Observational Vessel-Hazard Containment
+
 Status: ACCEPTED
 
 Decision:
@@ -175,6 +211,7 @@ Owner: P0-8B integration
 Date: 2026-09-13
 
 ## D019 — Derived Authority Operational Alerts
+
 Status: ACCEPTED
 
 Decision:
@@ -191,9 +228,11 @@ Owner: P0-8C integration
 Date: 2026-09-13
 
 ## D020 — Dedicated Researcher Lab Persona Dashboard & Modular Subdecks
+
 Status: ACCEPTED
 
 Decision:
+
 1. Introduce a third dedicated operational persona in SAMUDRA: `Researcher Lab` (`researcher`), accessible as an independent card from `PortalPage` without altering the existing Fisher or Authority dashboards.
 2. The Researcher dashboard is composed of 4 modular decks:
    - `Ocean Data Explorer`: Interactive multi-source marine observation monitoring (wave height, SST, wind, swell, currents) by harbor with historical observation timeline tables, satellite EO grid rasters (Chl-a, SST, cloud cover), PFZ advisory candidates, and active hazard bulletins.
@@ -211,9 +250,11 @@ Owner: Dev 1 / Dev 4 (Researcher persona)
 Date: 2026-09-13
 
 ## D021 — Vessel-Anchored Surveillance Route Alternatives and Strict Seaward Clamping
+
 Status: ACCEPTED
 
 Decision:
+
 1. Fleet surveillance route alternatives (Safest Inshore, Balanced, Direct Passage) are parameterized by `vessel_id` (`GET /api/v1/demo/routes/alternatives?vessel_id=...`), resolving the vessel's home harbor, voyage start coordinates, and target destination from canonical synthetic seed data.
 2. Route corridors derive waypoints directly from verified maritime track points (`base_waypoints`), extracting authentic in-water courses for Inshore, Balanced (with offshore seaward arc), and Direct paths.
 3. Synthetic fallback waypoints strictly clamp longitudes seaward (west of the harbor mouth into the Arabian Sea) to guarantee zero overland or inland dry ground crossings.
@@ -230,9 +271,11 @@ Owner: Dev 1 / Dev 4
 Date: 2026-09-14
 
 ## D021 — Authoritative Marine Observation Source of Truth (OSF Fixture)
+
 Status: ACCEPTED
 
 Decision:
+
 1. Establish `data/fixtures/synthetic/incois/osf_hourly_observations.json` as the authoritative single source of truth for SNAPSHOT/SYNTHETIC marine observations across SAMUDRA.
 2. `SnapshotConnector` loads `osf_hourly_observations.json` directly and normalizes records via `IncoisOSFNormalizer.normalize()`.
 3. `DataService` in `SNAPSHOT` and `SYNTHETIC` modes routes directly through `SnapshotConnector` without hardcoded dummy dictionaries or silent fallback to legacy static dataset files.
@@ -248,9 +291,11 @@ Owner: Dev 2 / Dev 4 (Integration & Marine Domain)
 Date: 2026-09-14
 
 ## D022 — Real Groq LLM Integration with Sandboxed Invariants and Deterministic Safety Gate
+
 Status: ACCEPTED
 
 Decision:
+
 1. Integrate real Groq LLM provider (`llama-3.3-70b-versatile`) into SAMUDRA runtime (`POST /api/v1/chat`) via `LLM_MODE="auto"`, while maintaining 100% offline fallback when `GROQ_API_KEY` is not provided.
 2. The LLM is restricted to understanding intent/entities and fluent multilingual explanation synthesis; it NEVER evaluates marine conditions, risk categories, route geometry, or hazard alerts.
 3. Strict safety invariance: `RecommendationStatus` (`GO`, `CAUTION`, `NO_GO`, `UNKNOWN`) is computed solely by deterministic domain engines (`DeterministicRiskEngine`, `RouteExposureEngine`, `GeospatialHazardEngine`). Any LLM draft attempting to alter this status is automatically overridden and intercepted.
@@ -267,9 +312,11 @@ Owner: Dev 3 (Agent Orchestration & Explainability)
 Date: 2026-09-18
 
 ## D023 — Groq Model Availability, Analytical Explanation Routing, and ThreadContext Initialization
+
 Status: ACCEPTED
 
 Decision:
+
 1. Configure `qwen/qwen3.8-27b` as the active default/recommended Groq model for SAMUDRA runtime, replacing `llama-3.3-70b-versatile` which returned HTTP 404 `model_not_found` for project keys. Retain full environment override via `LLM_MODEL`.
 2. Correct `ANALYTICAL_EXPLANATION` supervisor capability routing from unregistered `"explanation_context"` to real, existing deterministic capabilities: `["marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation"]` (and `"geospatial_hazard"` if geofence present). The response composer uses deterministic facts and risk assessment as ground truth for LLM analytical narrative.
 3. Fix conversation thread context initialization in `RunRepository.create()` to store `ThreadContext(thread_id=thread_id).model_dump(mode="json")` instead of an empty `{}` dictionary, eliminating Pydantic `thread_id Field required` validation warnings.
@@ -285,12 +332,14 @@ Owner: Dev 3 (Agent Orchestration & Explainability)
 Date: 2026-09-18
 
 ## D024 — Strategic Reconciliation: ORCA_AI_MASTER_CONTEXT.md as Canonical Strategic Source of Truth
+
 Status: ACCEPTED
 
 Decision:
 The new `docs/ORCA_AI_MASTER_CONTEXT.md` supersedes the old `docs/ORCA_MASTER_CONTEXT.md` (now archived as `ORCA_MASTER_CONTEXT_v1_ARCHIVED.md`) as the sole strategic and architectural source of truth for ORCA.
 
 Key changes from this reconciliation:
+
 1. Document authority hierarchy established: Code+Tests → ORCA_AI_MASTER_CONTEXT.md → SAFETY.md → API_CONTRACTS.md → IMPLEMENTATION_PLAN.md → PROGRESS.md → DECISIONS.md
 2. AGENTS.md updated to reference new master context
 3. OWNERSHIP.md updated from 4-member (M1-M4) to 6-role (P1-P6) conceptual model
@@ -302,6 +351,7 @@ Reason:
 Multiple AI sessions were reading different documents and gradually diverging the project's architecture. A single authoritative context prevents architecture drift.
 
 Alternatives:
+
 - Merge old and new contexts into one document (rejected: new context is comprehensive and intentionally supersedes)
 - Keep both as co-equal (rejected: creates exactly the contradiction this reconciliation solves)
 
@@ -313,6 +363,7 @@ Owner: All
 Date: 2026-09-21
 
 ## D025 — Supervisor Capability DAG and Specialist Tool Result Reconciliation
+
 Status: ACCEPTED
 
 - Date: 2026-09-23
@@ -328,6 +379,7 @@ Status: ACCEPTED
 - Tests/verification: `tests/agent_eval/` (387 passed, 1 skipped).
 
 ## D026 — Deterministic Date String Parsing and DB Offline Resilience
+
 Status: ACCEPTED
 
 - Date: 2026-09-23
@@ -342,6 +394,7 @@ Status: ACCEPTED
 - Tests/verification: `test_groq_llm_integration.py`, `tests/agent_eval/`.
 
 ## D027 — Multi-AI Collaborative Governance Protocol and Canonical Documentation Standard
+
 Status: ACCEPTED
 
 - Date: 2026-09-23
@@ -359,6 +412,7 @@ Status: ACCEPTED
 - Tests/verification: Full suite verification.
 
 ## D028 — India MarineWatch Multi-Hub Platform Architecture & Real Data Foundation
+
 Status: ACCEPTED
 
 - Date: 2026-09-23
@@ -374,8 +428,8 @@ Status: ACCEPTED
 - Affected areas: `backend/app/api/v1/marinewatch.py`, `backend/app/services/marinewatch_service.py`, `backend/app/domain/tides.py`, `frontend/src/pages/MarineWatchPage.tsx`, `frontend/src/components/marinewatch/*`.
 - Tests/verification: `tests/api/test_marinewatch_endpoints.py`, `frontend/src/components/marinewatch/marinewatch.test.ts`.
 
-
 ## D029 — P0/P1 Hard Constraint Ordering, Provenance Fallback Confidence, and Flagship Multi-Turn Engine
+
 Status: ACCEPTED
 
 - Date: 2026-09-23
@@ -394,6 +448,7 @@ Status: ACCEPTED
 - Tests/verification: `test_flagship_flow.py` (100% passing), `tests/domain/` (18 passing), `tests/agent_eval/` (466 passing, 1 skipped).
 
 ## D030 — PostGIS Schema Versioning, SACHET CAP Harmonization, In-Memory Rate Limiting, and Telemetry
+
 Status: ACCEPTED
 
 - Date: 2026-09-23
@@ -412,9 +467,11 @@ Status: ACCEPTED
 - Tests/verification: `tests/connectors/test_sachet_connector.py`, `tests/api/test_rate_limiting.py`, `tests/api/test_observability.py`, `tests/domain/test_spatial_db_repository.py`.
 
 ## D031 — Final ORCA Product Definition and Interface Split
+
 Status: ACCEPTED
 
 Decision:
+
 1. ORCA is finalized as the Marine Mission Intelligence platform.
 2. ORCA is not another marine data dashboard; it is the intelligence and reasoning layer above existing marine information systems.
 3. ORCA has two interfaces sharing one intelligence core: a field-first mobile application and a web/institutional platform.
@@ -426,6 +483,7 @@ Reason:
 A single intelligence core with differently scoped interfaces preserves product clarity, avoids duplication, and aligns the system with the final product identity and mission-oriented workflow.
 
 Alternatives:
+
 - Build one interface that tries to do all work (rejected: too heavy, weak for field use, and not aligned with the intended product split)
 - Duplicate reasoning logic across mobile and web (rejected: creates drift and inconsistent decisions)
 
@@ -435,9 +493,11 @@ Owner: Product / Architecture
 Date: 2026-09-24
 
 ## D032 — Final Technology Stack and Distribution Model
+
 Status: ACCEPTED
 
 Decision:
+
 1. Final mobile stack: React Native + Expo + TypeScript.
 2. Final web stack: Next.js + React + TypeScript.
 3. Web remains the primary frictionless demo and judging surface through the existing deployed web URL.
@@ -450,6 +510,7 @@ Reason:
 This preserves the intended product flow: zero-install browser demo first, native mobile field experience second, one shared ORCA core behind both.
 
 Alternatives:
+
 - Treat Expo Web as the primary mobile strategy (rejected: it does not match the final native field-product goal)
 - Move all product interaction into a second web application (rejected: adds friction for judges and weakens mobile-native field positioning)
 
@@ -459,9 +520,11 @@ Owner: Product / Architecture
 Date: 2026-09-24
 
 ## D033 — React to Next.js Incremental Web Migration and Dual-Platform Alignment
+
 Status: ACCEPTED
 
 Decision:
+
 1. Migration Strategy: Adopt an incremental "REUSE → ADAPT → EXTRACT → REWRITE" migration from React 18 / Vite to Next.js (App Router), creating `nextjs/` alongside the existing `frontend/` without deleting `frontend/` until the migration is fully verified.
 2. State Management & API: Do NOT force Zustand or TanStack Query on Day 1. Reuse existing hand-rolled fetch clients (`client.ts`), React hooks (`useChat`, `useTripAssessment`, `useAlerts`), and pure TypeScript domain contracts directly, adapting environment variables (`import.meta.env.VITE_*` → `process.env.NEXT_PUBLIC_*`). Introduce Zustand/TanStack Query later only where justified by real state-management friction.
 3. Page Migration Order: Migrate `/fisher` first as the primary operational demonstration and fisherman workflow, followed by `/authority`, `/researcher`, `/marinewatch`, and `/settings`.
@@ -472,6 +535,7 @@ Reason:
 Minimizes risk and avoids simultaneous rewrites of routing, UI, and state management while proving end-to-end portability of the working Fisher experience.
 
 Alternatives considered:
+
 - Immediate full rewrite with Zustand, TanStack Query, Tailwind, and shadcn component replacements on day one (rejected: excessive simultaneous change without baseline verification).
 - Maintaining separate backends or duplicate decision algorithms for mobile and web (rejected: creates drift, violates canonical safety invariants).
 
@@ -481,9 +545,11 @@ Owner: Lead Engineer / Architecture
 Date: 2026-09-24
 
 ## D034 — Field Intelligence Network & Participatory Marine Observation Architecture
+
 Status: ACCEPTED
 
 Decision:
+
 1. Architectural Framing: Introduce the "ORCA Field Intelligence Network" as a structured, privacy-preserving, trust-graded participatory marine observation layer. Reject framing as a generic social network, follower graph, or public social feed.
 2. Domain Abstraction: Define canonical `CommunityObservation` and `AggregatedCommunitySignal` domain models within the Source Registry under the new `COMMUNITY` source category (`DataMode.USER_GENERATED`).
 3. Core Interaction Loop: Implement the closed intelligence loop: `OBSERVE → REPORT → VERIFY → CORROBORATE → FUSE → REASON → INFORM → LEARN`. Fishermen contribute structured observations in 10-15 seconds and receive aggregated field signals and personal insights in return.
@@ -493,6 +559,7 @@ Reason:
 Empowers mariners to act as distributed ground-truth sensors for localized ocean conditions without turning ORCA into an uncurated social network or exposing commercial fishing secrets.
 
 Alternatives considered:
+
 - Building an open social media feed with likes and followers (rejected: distracts from mission intelligence, introduces toxic engagement incentives, lacks scientific validity).
 - Keeping ORCA as a pure one-way consumer of government satellite/model data (rejected: ignores invaluable hyper-local mariner knowledge and ground-truth validation).
 
@@ -502,9 +569,11 @@ Owner: Product / Architecture
 Date: 2026-09-24
 
 ## D035 — Strict Evidence Hierarchy and Deterministic Official Supremacy over Community Signals
+
 Status: ACCEPTED
 
 Decision:
+
 1. Inviolable Invariant (C-1): Deterministic official safety constraints (IMD cyclone bulletins, prohibited naval/sanctuary geofences, vessel-specific wave height swamping ceilings) possess absolute authority. Community reports can NEVER override or soften an official `NO_GO` or `RESTRICTED` decision.
 2. Invariant C-2 (Epistemic Honesty): The absence of community reports in a sector never implies safety (`Missing community reports != safe`).
 3. Invariant C-3 (Explicit Lineage): All community observations surfaced in conversational reasoning or evidence drawers must be explicitly tagged as `[FIELD SIGNAL]`, displaying corroboration count, freshness window, and agreement status.
@@ -515,6 +584,7 @@ Reason:
 Maritime safety is safety-critical and legally defensible. Crowdsourced observations must inform situational awareness without compromising physical safety or introducing crowd-manipulation attack vectors.
 
 Alternatives considered:
+
 - Allowing crowdsourced reports to vote down an official IMD storm warning (rejected: catastrophic safety and liability risk).
 - Collapsing trust into an opaque single score (rejected: creates false sense of precision and obscures provenance).
 
@@ -524,9 +594,11 @@ Owner: Safety / Architecture
 Date: 2026-09-24
 
 ## D036 — Non-Blocking Phased Integration of Field Signals
+
 Status: ACCEPTED
 
 Decision:
+
 1. Non-Blocking Status: The Field Intelligence Network is classified as a P1 feature stream. It MUST NOT block the ongoing React 18 → Next.js App Router migration (`W0`–`W8`) or the React Native + Expo fisherman MVP (`M0`–`M9`).
 2. P0 Contract Alignment: The only P0 code touchpoint is an optional `source_type` enumeration attribute added to the shared canonical `EvidenceItem` contract (`"OFFICIAL" | "SCIENTIFIC" | "OPERATIONAL" | "COMMUNITY" | "DERIVED"`), with default `"OFFICIAL"` preserving 100% backward compatibility.
 3. Execution Phasing: Full implementation (DB schema, API routes, mobile 3-step reporting, grid aggregation) begins during P1 after the core dual-client architecture is verified.
@@ -535,15 +607,19 @@ Reason:
 Prevents scope creep from delaying the primary judging and demo milestones while guaranteeing clean architectural alignment in advance.
 
 Alternatives considered:
+
 - Forcing full community reporting into the initial P0 mobile MVP (rejected: excessive complexity that risks missing the P0 delivery timeline).
 
 Impact:
 Next.js and Expo P0 roadmaps proceed without impediment; contract schema is prepared for seamless P1 integration.
 Owner: Lead Architect
+
 ## D037 — Integration of India MarineWatch into Operational Dashboards & Standalone Route Retirement
+
 Status: ACCEPTED
 
 Decision:
+
 1. Standalone Route Retirement: Retire the standalone `/marinewatch` route and portal card, eliminating persona bifurcation and redundant map surfaces.
 2. Operational Persona Integration:
    - **Researcher Lab (`/researcher`)**: Unified GIS Explorer (`gis` tab with MapLibre GL nationwide interactive map, click-to-query depth profiles, PAT tides, bookmark presets, and time scrubber) and Data Catalogue (§212) (`catalogue` tab with 30 institutional marine datasets).
@@ -555,14 +631,18 @@ Reason:
 Puts high-value institutional oceanographic intelligence directly at the point of action for each persona, eliminates navigation clutter, and aligns with the 3 core personas (Fisher, Authority, Researcher).
 
 Alternatives considered:
+
 - Retaining a separate 4th portal dashboard (rejected: disjointed UX, redundant GIS layers, split cognitive load).
 
 Impact:
 Portal simplified to 3 core operational cards; `/fisher`, `/authority`, and `/researcher` gain deep nationwide telemetry without regressions.
+
 ## D038 — Granular Dissolution of MarineWatch GIS into Fisher Console & Authority Command Deck
+
 Status: ACCEPTED
 
 Decision:
+
 1. Complete Removal of Map Tab from Researcher Lab: Remove the GIS Explorer map tab (`OceanWatchGIS`) entirely from `ResearcherPage`, refining the Researcher Lab into a pure analytical and scientific workstation (Research Query Workbench, Ocean Data Explorer, Data Source Monitor, Scenario Lab, and Data Catalogue §212).
 2. Granular Distribution of GIS Capabilities into Fisher Console:
    - Floating National Coastal Bookmarks: 13 quick-jump landmarks across all Indian coastal states directly embedded into the Fisher `MapView`.
@@ -578,6 +658,7 @@ Reason:
 Puts specialized navigational, bathymetric, and hazard data into the hands of the operators who make real-time at-sea and harbour management decisions (Fishermen and Coast Guard/Port Authorities), while removing map noise from the analytical Researcher persona.
 
 Alternatives considered:
+
 - Keeping an embedded map tab in Researcher Lab (rejected: user explicitly requested full breakdown and removal of map tab from Researcher Lab).
 - Splitting features into new separate pages (rejected: causes fragmentation; embedding directly into existing map and operational cards provides immediate contextual value).
 
@@ -587,9 +668,11 @@ Owner: Product / Architecture
 Date: 2026-09-25
 
 ## D039 — Authority Command Deck Layout Resilience & Semantic Design Tokens
+
 Status: ACCEPTED
 
 Decision:
+
 1. Responsive Command Bar Containment: Replaced rigid horizontal flex wrapping on `.authority-command-bar` with contained horizontal scrolling (`overflow-x: auto; scrollbar-width: none`), compact gap spacing, and normalized chip heights, ensuring right-aligned telemetry chips (Verdict, Fleet, Hazards, Evidence) remain accessible across all viewport widths.
 2. Complete Semantic CSS Migration for PortWatch & AquaWatch: Deprecated unsupported Tailwind utility classes in `PortWatchRegistry` and `AquaWatchRegistry` (which silently failed in Vite without Tailwind processors), replacing them with dedicated, maintainable semantic CSS classes (`.portwatch-*`, `.aquawatch-*`) in `components.css`.
 3. Map Overlay HUD Viewport Margin Decoupling: In `DeckGLMapFoundation`, offset `deckgl-top-overlay` right margin from `10px` to `showControls ? 116px : 10px`, permanently eliminating visual collision with camera controls (`[Tactical 3D] [High Orbit] [2D Flat]`).
@@ -601,6 +684,7 @@ Reason:
 Resolves severe layout and visual breakdowns on the Authority dashboard that caused registry tables and card grids to collapse into unstyled plain text, command bar telemetry to clip off-screen, and map overlays to collide.
 
 Alternatives considered:
+
 - Introducing Tailwind CLI into the Vite build pipeline (rejected: adds build friction and dependency divergence from the pure vanilla CSS variable architecture).
 - Statically hiding command bar chips on narrow screens (rejected: loss of critical situational awareness telemetry for operators).
 
@@ -610,9 +694,11 @@ Owner: Frontend / Architecture
 Date: 2026-09-26
 
 ## D040 — Fisher Console Clutter Pruning & Interactive DOM Icon Markers
+
 Status: ACCEPTED
 
 Decision:
+
 1. Operational Ocean Scoping: Completely prune 200nm sovereign Exclusive Economic Zone (EEZ) polygon fills, 12nm Territorial Waters fills, and 8km concentric circle PFZ thermal front polygons from the Fisher Console (`/fisher`) map layers.
 2. Macro-Regional Weather Corridor Pruning: Filter active hazard GeoJSON layers so that macro-regional weather corridors spanning > 2.0 degrees (e.g. 700km IMD squall corridors covering 14°N to 21°N) and opposite-coast hazards are excluded from the local mariner map, while local hazards within harbor bounding box (~1.5°) are retained with subtle opacity (0.15 fill, 2.0px stroke).
 3. Local Geofence Containment: Scope base boundaries and marine protected areas to local harbor operational vicinity (< 1.5° bbox), styled with subtle outlines (opacity 0.08, line width 1.5).
@@ -631,6 +717,7 @@ Reason:
 Eliminates extreme visual clutter that overwhelmed the fisherman's operational chart with multiple giant overlapping polygon fills, and replaces generic colored dots with intuitive nautical symbols directly recognizable by coastal fishermen.
 
 Alternatives considered:
+
 - Keeping 200nm EEZ with ultra-low opacity (rejected: fishermen operate within nearshore coastal waters; nationwide polygons still trigger zoom distortion and cognitive overload).
 - Rendering icons on MapLibre canvas via SDF symbol sprites (rejected: requires external image loading and lacks hardware-accelerated CSS hover transitions, drop-shadows, and dynamic zoom tier adaptation).
 
@@ -640,9 +727,11 @@ Owner: Frontend / GIS / Safety
 Date: 2026-09-26
 
 ## D041 — Dynamic Live Hourly Marine Forecasts and Real-Time Scrubber Integration
+
 Status: ACCEPTED
 
 Decision:
+
 1. Eradicate Hardcoded Approximations: Remove all static coastal heuristic constants (such as fixed `base_wave = 1.2`, static wind, static SST) from `backend/app/services/marinewatch_service.py`.
 2. Real-Time Open-Meteo Integration: Route point and route ocean state forecasts to live hourly marine queries (`marine-api.open-meteo.com`) and weather queries (`api.open-meteo.com`), extracting exact values for the targeted timestamp using `_select_hour_index(times, target_dt)`.
 3. Physics-Grounded Fallback Modulation: If external forecast providers time out or are offline, calculate time-variant physics-grounded values (diurnal solar wind cycle, tidal modulation, distance-to-shore scaling) so unit and integration tests dynamically respond to time offsets (`+0h`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) instead of returning flat constants.
@@ -657,6 +746,7 @@ Reason:
 Addresses user feedback ("nothing should be hardcoded. also forecast is not working it is same in fisher map") by connecting live hourly weather and wave APIs and ensuring time scrubber interactions dynamically alter ocean safety, tide elevations, and route recommendations.
 
 Alternatives considered:
+
 - Returning static mock tables with random jitter (rejected: violates epistemic data honesty rule §R05; must use genuine meteorological forecasts and authoritative INCOIS tidal equations).
 
 Impact:
@@ -665,9 +755,11 @@ Owner: Marine Data / Backend / Frontend
 Date: 2026-09-26
 
 ## D042 — Production Demo API and Canonical Geography Hardening
+
 Status: ACCEPTED
 
 Decision:
+
 1. All browser API clients must derive their backend base from `VITE_API_BASE_URL` (or the existing Next.js equivalent), with a relative `/api/v1` fallback only for local development proxies.
 2. Canonical sector resolution is owned by `backend.app.domain.situation`; demo routes reuse that loader rather than maintaining independent fixture paths or display-name maps.
 3. Fixture data remains authoritative when available. The in-memory sector/harbor registry is a geography-only degraded fallback and cannot provide live marine observations or alter deterministic safety decisions.
@@ -683,9 +775,11 @@ Owner: Platform / UX
 Date: 2026-09-26
 
 ## D043 — Production Persistence Boundary
+
 Status: ACCEPTED
 
 Decision:
+
 1. Render production and staging require PostgreSQL/PostGIS during application startup and do not silently downgrade persistence to the in-memory offline store.
 2. `DATABASE_URL` is the managed-service input; `SYNC_DATABASE_URL` is derived as a psycopg2 URL when not explicitly set, preserving local/test overrides.
 3. Schema creation in production is migration-owned (`alembic upgrade head`); development/demo may retain `create_all` for hermetic setup.
@@ -700,6 +794,7 @@ Owner: Platform / Infrastructure
 Date: 2026-09-26
 
 ## D037 — M3 Canonical DecisionObject and Structured DecisionDelta Engine
+
 Status: ACCEPTED
 
 - Date: 2026-09-25
@@ -721,6 +816,7 @@ Status: ACCEPTED
 - Tests/verification: 17/17 dedicated M3 regression tests passing (`test_m3_decision_object.py`), flagship flow passing (`test_flagship_flow.py`), 405/405 agent_eval tests passing, 85/85 domain tests passing, frontend typecheck passing (0 errors), frontend Vite production build passing.
 
 ## D038 — M4 Dynamic Trajectory Exposure, Time-Dependent Current Routing & Departure Window Optimization
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -728,7 +824,7 @@ Status: ACCEPTED
 - Task/context: Complete remaining M4/P4 Domain Intelligence, GIS & Temporal tasks under Phase 5 Mission Twin.
 - Decision:
   1. **Dynamic Trajectory Exposure Engine**: Implemented `TrajectoryExposureEngine` in `backend/app/domain/trajectory_exposure.py`. Instead of applying a flat static wave height across all waypoints, it computes cumulative transit distances and arrival ETA timestamps for each waypoint $(lon_i, lat_i)$ based on craft profiles (`motorized_boat`: 8kt, `mechanized_trawler`: 10kt, `traditional_non_motorized`: 3kt). Resolves hourly marine conditions at each waypoint's specific arrival hour to evaluate peak wave height, localized segment exposure, and peak exposure waypoints along the journey.
-  2. **Time-Dependent Marine Routing with Ocean Current Vectors**: Extended `MarinePathfinder` A* pathfinding in `backend/app/domain/marine_routing.py` to accept optional `current_vector_fn` and `craft_speed_knots`. Calculates the surface current component along the vessel heading vector ($V_{\parallel} = \vec{v}_c \cdot \hat{u}$) to adjust effective speed and edge transit cost ($g_{\text{step}} = D \times \frac{V}{V_{\text{eff}}}$). Enables true fuel-optimal routing around strong opposing current eddies or riding favorable streams while remaining strictly seaward.
+  2. **Time-Dependent Marine Routing with Ocean Current Vectors**: Extended `MarinePathfinder` A\* pathfinding in `backend/app/domain/marine_routing.py` to accept optional `current_vector_fn` and `craft_speed_knots`. Calculates the surface current component along the vessel heading vector ($V_{\parallel} = \vec{v}_c \cdot \hat{u}$) to adjust effective speed and edge transit cost ($g_{\text{step}} = D \times \frac{V}{V_{\text{eff}}}$). Enables true fuel-optimal routing around strong opposing current eddies or riding favorable streams while remaining strictly seaward.
   3. **Temporal Departure Window Scanner**: Implemented `DepartureWindowEvaluator` in `backend/app/domain/departure_window.py`. Scans the forecast envelope (+24h to +48h) at step intervals (e.g. 3h) to identify and recommend safe departure windows when immediate departure is unsafe. Generates mariner synthesis: e.g. "Recommend delaying departure by +6h to 2026-09-26T12:00:00Z. Wave height drops from 2.8m to 1.4m (safe GO ceiling for motorized_boat)."
   4. **Proactive Trajectory Geofence Monitoring**: Extended `DeterministicGeospatialEngine` in `backend/app/domain/geo_restrictions.py` with `check_projected_trajectory_hazards`. Projects vessel position along active heading and speed over a forward lookahead window (default 2.0h) using great-circle direct geodesic forward calculation, detecting boundary intersections with time-to-cross ($TTC$) and distance-to-boundary metrics before the vessel breaches an MPA or naval firing range.
   5. **Additive Contract Schema Extensions**: Extended `EvaluatedRouteItem`, `RouteExposurePayload`, and `GeospatialHazardPayload` in `backend/app/agents/integrations/dev4.py` with `waypoint_timeline`, `peak_exposure_point`, `current_adjusted`, `departure_windows`, `optimal_departure_recommendation`, `time_to_cross_hours`, and `projected_intersection`. All new fields have defaults, maintaining 100% backward compatibility.
@@ -737,6 +833,7 @@ Status: ACCEPTED
 - Tests/verification: 95/95 domain tests passing (`tests/domain/`), 406/406 agent_eval tests passing, 244/244 frontend vitest tests passing, 0 TypeScript compile errors.
 
 ## D044 — Canonical MissionState Context Preservation Across Operational Lifecycles (M1.1)
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -760,6 +857,7 @@ Status: ACCEPTED
 - Tests/verification: 4/4 acceptance tests passing in `test_m1_1_mission_state.py`, 8/8 contract tests passing in `test_mission_contracts.py` & `test_contracts.py`, 246/246 frontend tests passing in Vitest, 0 errors in TypeScript `tsc --noEmit`.
 
 ## D045 — Mission Setup Hardening & Pre-Assessment Isolation (M1.1.5)
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -784,6 +882,7 @@ Status: ACCEPTED
   Backend pytest 7/7 passing in `test_m1_1_mission_state.py`, frontend vitest 253/253 passing across 19 suites, frontend TypeScript typecheck passing with 0 errors.
 
 ## D046 — M1.2 Mission Brief / Why Panel Deterministic Presentation
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -798,7 +897,7 @@ Status: ACCEPTED
      - `negative_factors` ← `[]` (on `GO`) / `risk_payload.decisive_factors` (on `CAUTION`/`NO_GO`)
      - `confidence` ← `risk_payload.confidence_level`
      - `confidence_reasons` ← `risk_payload.confidence_reasons`
-     Zero LLM calls, zero synthetic text generation, 100% deterministic safety projection.
+       Zero LLM calls, zero synthetic text generation, 100% deterministic safety projection.
   3. **Zero Network Overhead UI**: Implemented `MissionBriefPanel.tsx` consuming in-memory assessment data already available in `FisherDecisionSurface`, rendered directly beneath the recommendation banner with zero new network requests or polling.
   4. **What-If Scenario Delta Support**: Extended `MissionBriefPanel` to dynamically render a "What Changed?" section displaying `delta.changed_factors` or `activeDiff.summary` when counterfactual diffs are present, hiding cleanly otherwise.
   5. **Dual-Client Parity**: Synchronized both React (`frontend/src/components/fisher/MissionBriefPanel.tsx`) and Next.js (`nextjs/components/fisher/MissionBriefPanel.tsx`) clients along with respective `FisherDecisionSurface.tsx` integrations and TypeScript contracts.
@@ -814,6 +913,7 @@ Status: ACCEPTED
   - Next.js validation: `tsc --noEmit` and `next build` passing with 0 errors.
 
 ## D047 — M1.3 Explainability & Evidence View Implementation
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -838,6 +938,7 @@ Status: ACCEPTED
   - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
 
 ## D048 — Decision Delta & Counterfactual Intelligence (M1.4)
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -870,6 +971,7 @@ Status: ACCEPTED
   - Frontend TypeScript validation: 0 errors (`npm run typecheck`).
 
 ## D049 — Light Mode Support for Authority Command Deck 3D Deck.gl Map
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -903,6 +1005,7 @@ Status: ACCEPTED
   - In-browser visual verification via Chrome DevTools: verified Carto Positron basemap, 3D extruded vessel beacon, waypoint breadcrumbs, and floating telemetry HUD. Console warnings for Deck.gl outlines and missing characters completely eliminated.
 
 ## D050 — Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle
+
 Status: ACCEPTED
 
 - Date: 2026-09-26
@@ -930,6 +1033,7 @@ Status: ACCEPTED
   - Frontend TypeScript compiler: 0 errors (`npx tsc --noEmit`).
 
 ### D051 — Safe Failure Responses and Explicit Runtime Origin
+
 Status: ACCEPTED
 Decision: Keep `create_app()` returning a FastAPI instance; place safe exception-response middleware inside explicit-origin CORS. Situation-data failures return `UNKNOWN` with null unavailable counts and source mode `UNAVAILABLE`. Render CORS names the deployed Vercel origin rather than using `*`.
 Reason: Production probes showed configuration drift and an unhandled situation 500 surfaced to browsers as a CORS failure. Null values distinguish unavailable data from measured zero; `UNKNOWN` preserves the marine safety abstention invariant.
@@ -941,6 +1045,7 @@ Date: 2026-09-26
 ## Decision template
 
 ### D0XX — <title>
+
 Status: PROPOSED / ACCEPTED / REJECTED
 Decision:
 Reason:
@@ -950,11 +1055,12 @@ Owner:
 Date:
 
  # #   2 0 2 6 - 0 9 - 2 7 :   F i x t u r e   F o r e c a s t   H o r i z o n   a n d   T e l e m e t r y   F i e l d   M a p p i n g s 
- -   * * C o n t e x t * * :   O f f l i n e   t r i p   e v a l u a t i o n s   f o r   t y p i c a l   d u r a t i o n s   ( e . g . ,   1 2   h o u r s )   w e r e   t r i g g e r i n g   \ T R I P _ W I N D O W _ E X C E E D S _ F O R E C A S T \   a l e r t s   b e c a u s e   t h e   f a l l b a c k   s n a p s h o t   d a t a   d e r i v e d   a   6 - h o u r   \  a l i d _ t o \   w i n d o w .   A d d i t i o n a l l y ,   v a l i d   r e c o r d s   w e r e   b e i n g   m a r k e d   a s   \ D E G R A D E D _ D A T A \   b e c a u s e   t h e   d a t a b a s e   m o d e l   m a p p e d   w a v e   h e i g h t   t o   \ w a v e _ h e i g h t _ m \   w h i l e   t h e   n o r m a l i z e r   o n l y   r e a d   \ s w h \   o r   \ s i g n i f i c a n t _ w a v e _ h e i g h t _ m \ . 
+ -   * * C o n t e x t * * :   O f f l i n e   t r i p   e v a l u a t i o n s   f o r   t y p i c a l   d u r a t i o n s   ( e . g . ,   1 2   h o u r s )   w e r e   t r i g g e r i n g   \ T R I P * W I N D O W * E X C E E D S * F O R E C A S T \   a l e r t s   b e c a u s e   t h e   f a l l b a c k   s n a p s h o t   d a t a   d e r i v e d   a   6 - h o u r   \  a l i d * t o \   w i n d o w .   A d d i t i o n a l l y ,   v a l i d   r e c o r d s   w e r e   b e i n g   m a r k e d   a s   \ D E G R A D E D * D A T A \   b e c a u s e   t h e   d a t a b a s e   m o d e l   m a p p e d   w a v e   h e i g h t   t o   \ w a v e * h e i g h t * m \   w h i l e   t h e   n o r m a l i z e r   o n l y   r e a d   \ s w h \   o r   \ s i g n i f i c a n t * w a v e * h e i g h t * m \ . 
  -   * * D e c i s i o n * * :   
      1 .   E x t e n d e d   t h e   d e t e r m i n i s t i c a l l y   g e n e r a t e d   s y n t h e t i c   f i x t u r e   h o r i z o n   f r o m   2 4 h   t o   7 2 h   ( \ g e n e r a t o r . p y \ ) . 
-     2 .   A n c h o r e d   t h e   d e t e r m i n i s t i c   \ R E F E R E N C E _ T I M E \   i n   \ g e n e r a t o r . p y \   t o   t h e   c u r r e n t   e v a l u a t i o n   d a y   ( 2 0 2 6 - 0 9 - 2 6 )   s o   m o c k   d a t a   e n c o m p a s s e s   a c t i v e   t e s t   t r i p s . 
-     3 .   M o d i f i e d   \ I n c o i s O S F N o r m a l i z e r \   t o   d e r i v e   a   7 2 - h o u r   v a l i d   w i n d o w   a n d   c h e c k   \ w a v e _ h e i g h t _ m \   a l o n g s i d e   n a t i v e   I N C O I S   k e y s   t o   m a i n t a i n   c o n s i s t e n c y   a c r o s s   D B   r e c o r d s   a n d   d i r e c t   J S O N   f i l e   l o a d i n g . 
+     2 .   A n c h o r e d   t h e   d e t e r m i n i s t i c   \ R E F E R E N C E * T I M E \   i n   \ g e n e r a t o r . p y \   t o   t h e   c u r r e n t   e v a l u a t i o n   d a y   ( 2 0 2 6 - 0 9 - 2 6 )   s o   m o c k   d a t a   e n c o m p a s s e s   a c t i v e   t e s t   t r i p s . 
+     3 .   M o d i f i e d   \ I n c o i s O S F N o r m a l i z e r \   t o   d e r i v e   a   7 2 - h o u r   v a l i d   w i n d o w   a n d   c h e c k   \ w a v e * h e i g h t _ m \   a l o n g s i d e   n a t i v e   I N C O I S   k e y s   t o   m a i n t a i n   c o n s i s t e n c y   a c r o s s   D B   r e c o r d s   a n d   d i r e c t   J S O N   f i l e   l o a d i n g . 
  -   * * C o n s e q u e n c e * * :   T e s t   t r i p s   o f   1 2 +   h o u r s   n o w   s u c c e s s f u l l y   p a s s   t h e   s n a p s h o t   s t a l e n e s s   e v a l u a t i o n   a n d   r e t u r n   a   d e t e r m i n i s t i c   \ G O \   d e c i s i o n   w i t h o u t   d e g r a d e d   d a t a   w a r n i n g s . 
-  
+ 
+ 
  

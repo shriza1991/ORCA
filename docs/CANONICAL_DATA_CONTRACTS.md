@@ -2,13 +2,13 @@
 
 **Classification**: Architecture Specification & Data Dictionary  
 **Milestone**: M2–M15 Normalization Standard  
-**Problem Statement**: SIH 2026 PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents  
+**Problem Statement**: SIH 2026 PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents
 
 ---
 
 ## 1. Architectural Normalization Pattern
 
-SAMUDRA strictly isolates external data provider schemas (INCOIS, IMD, MOSDAC, Open-Meteo) from the downstream cognitive and rendering layers. 
+SAMUDRA strictly isolates external data provider schemas (INCOIS, IMD, MOSDAC, Open-Meteo) from the downstream cognitive and rendering layers.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -36,6 +36,7 @@ SAMUDRA strictly isolates external data provider schemas (INCOIS, IMD, MOSDAC, O
 ```
 
 ### Core Invariants:
+
 1. **No Provider Leaks into Prompts or Calculations**: Agents and risk engines never parse raw vendor HTML/JSON structures.
 2. **Standard Units**:
    - Waves / Swell / Elevation: **meters ($m$)**
@@ -49,8 +50,19 @@ SAMUDRA strictly isolates external data provider schemas (INCOIS, IMD, MOSDAC, O
 
 ## 2. Domain Data Contracts
 
+### 2.0 Unified assessment forecast
+
+The Fisher assessment response is the single observation snapshot for weather,
+marine, tide, map telemetry, route cards, and deterministic What-If evaluation.
+Open-Meteo marine data may provide `sea_surface_temperature` and
+`sea_level_height_msl`; tide direction is derived from consecutive hourly
+values and is labelled estimated. Open-Meteo weather `visibility` is normalized
+to kilometers. Forecasts used for a mission must cover the complete return
+window; otherwise the deterministic engine cannot return `GO`.
+
 ### 2.1 Marine Conditions (`marine_conditions`)
-*Issuing Authorities*: INCOIS (Ocean State Forecast), Open-Meteo Marine (Fallback)
+
+_Issuing Authorities_: INCOIS (Ocean State Forecast), Open-Meteo Marine (Fallback)
 
 ```python
 class MarineConditionsPayload(BaseModel):
@@ -67,6 +79,7 @@ class MarineConditionsPayload(BaseModel):
 ```
 
 #### Normalized Metric Mapping (`EvidenceItem`):
+
 - `metric_name="significant_wave_height"`, `metric_unit="meters"`
 - `metric_name="swell_period_sec"`, `metric_unit="seconds"`
 - `metric_name="sea_surface_temp_c"`, `metric_unit="celsius"`
@@ -74,7 +87,8 @@ class MarineConditionsPayload(BaseModel):
 ---
 
 ### 2.2 Weather Conditions (`weather_conditions`)
-*Issuing Authorities*: India Meteorological Department (IMD)
+
+_Issuing Authorities_: India Meteorological Department (IMD)
 
 ```python
 class WeatherConditionsPayload(BaseModel):
@@ -90,6 +104,7 @@ class WeatherConditionsPayload(BaseModel):
 ```
 
 #### Normalized Metric Mapping (`EvidenceItem`):
+
 - `metric_name="wind_speed_knots"`, `metric_unit="knots"`
 - `metric_name="wind_gust_knots"`, `metric_unit="knots"`
 - `metric_name="visibility_km"`, `metric_unit="kilometers"`
@@ -97,9 +112,11 @@ class WeatherConditionsPayload(BaseModel):
 ---
 
 ### 2.3 Severe Weather & Hazards (`hazard_search` & `geospatial_hazard`)
-*Issuing Authorities*: IMD Cyclone Warning Division, Naval Maritime Authorities
+
+_Issuing Authorities_: IMD Cyclone Warning Division, Naval Maritime Authorities
 
 #### A. Atmospheric Hazard Bulletin (`HazardBulletinPayload`)
+
 ```python
 class HazardBulletinPayload(BaseModel):
     harbor: str                              # Monitored coastal sector
@@ -115,6 +132,7 @@ class HazardBulletinPayload(BaseModel):
 ```
 
 #### B. Geospatial Boundary & Geofencing (`GeospatialHazardPayload`)
+
 ```python
 class GeospatialHazardPayload(BaseModel):
     intersected: bool                        # True if coordinates intersect restricted polygon
@@ -128,9 +146,11 @@ class GeospatialHazardPayload(BaseModel):
 ---
 
 ### 2.4 Potential Fishing Zones (`pfz_search`)
-*Issuing Authorities*: INCOIS PFZ Mission / ISRO Oceansat
+
+_Issuing Authorities_: INCOIS PFZ Mission / ISRO Oceansat
 
 #### A. Raw Satellite Feature Payload (`PFZSourceDataPayload`)
+
 ```python
 class PFZSourceDataPayload(BaseModel):
     features: List[Dict[str, Any]]           # Raw GeoJSON features with SST gradients & chlorophyll
@@ -141,6 +161,7 @@ class PFZSourceDataPayload(BaseModel):
 ```
 
 #### B. Geodesically Ranked PFZ Payload (`PFZRankingPayload`)
+
 ```python
 class PFZCandidatePayload(BaseModel):
     candidate_id: str                        # "PFZ-RAT-01"
@@ -162,7 +183,8 @@ class PFZRankingPayload(BaseModel):
 ---
 
 ### 2.5 Vessel Safety Advisory Services (`svas_advisory`)
-*Issuing Authorities*: INCOIS SVAS (Small Vessel Advisory Services)
+
+_Issuing Authorities_: INCOIS SVAS (Small Vessel Advisory Services)
 
 ```python
 class SVASAdvisoryPayload(BaseModel):
@@ -181,7 +203,8 @@ class SVASAdvisoryPayload(BaseModel):
 ---
 
 ### 2.6 Disaster Alerts & Emergency Bulletins (`disaster_alert`)
-*Issuing Authorities*: NDMA SACHET / CAP (Common Alerting Protocol), IMD
+
+_Issuing Authorities_: NDMA SACHET / CAP (Common Alerting Protocol), IMD
 
 ```python
 class DisasterAlertPayload(BaseModel):
@@ -203,9 +226,11 @@ class DisasterAlertPayload(BaseModel):
 ---
 
 ### 2.7 Canonical Reference Datasets (`reference_data`)
-*Issuing Authorities*: State Fisheries Departments, CMFRI, MoEFCC, Indian Navy
+
+_Issuing Authorities_: State Fisheries Departments, CMFRI, MoEFCC, Indian Navy
 
 #### A. Landing Centre Reference (`LandingCentreRecord`)
+
 ```python
 class LandingCentreRecord(BaseModel):
     id: str                                  # "HARB-RAT-01"
@@ -218,6 +243,7 @@ class LandingCentreRecord(BaseModel):
 ```
 
 #### B. Vessel Safety Profile Reference (`VesselProfileRecord`)
+
 ```python
 class VesselLimits(BaseModel):
     wave_caution_m: float
@@ -247,12 +273,12 @@ class VesselProfileRecord(BaseModel):
 
 ## 3. Downstream Consumption Contract Matrix
 
-| Consumer Tier | Consumed Models | Guarantees & Constraints |
-| :--- | :--- | :--- |
-| **Deterministic Risk Engine** (`domain/`) | `MarineConditionsPayload`, `WeatherConditionsPayload`, `HazardBulletinPayload` | Mathematical comparisons against vessel ceilings (`motorized_boat`, etc.). **Zero LLM involvement.** |
-| **Agent StateGraph** (`agents/graph.py`) | `ToolResult.data`, `EvidenceItem`, `Recommendation` | Coordinates execution DAG, validates claims against evidence, verifies status invariance. |
-| **API Response Layer** (`api/v1/routes.py`) | `ChatResponse`, `VoiceChatResponse` | Serializes strictly into canonical contract models for HTTP and voice clients. |
-| **Frontend UI** (`frontend/src/`) | `Recommendation`, `EvidenceItem`, `MapLayer`, `AgentTraceItem` | Renders visual badges, evidence drawers, interactive vector maps, and audio playback. |
+| Consumer Tier                               | Consumed Models                                                                | Guarantees & Constraints                                                                             |
+| :------------------------------------------ | :----------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| **Deterministic Risk Engine** (`domain/`)   | `MarineConditionsPayload`, `WeatherConditionsPayload`, `HazardBulletinPayload` | Mathematical comparisons against vessel ceilings (`motorized_boat`, etc.). **Zero LLM involvement.** |
+| **Agent StateGraph** (`agents/graph.py`)    | `ToolResult.data`, `EvidenceItem`, `Recommendation`                            | Coordinates execution DAG, validates claims against evidence, verifies status invariance.            |
+| **API Response Layer** (`api/v1/routes.py`) | `ChatResponse`, `VoiceChatResponse`                                            | Serializes strictly into canonical contract models for HTTP and voice clients.                       |
+| **Frontend UI** (`frontend/src/`)           | `Recommendation`, `EvidenceItem`, `MapLayer`, `AgentTraceItem`                 | Renders visual badges, evidence drawers, interactive vector maps, and audio playback.                |
 
 ---
 

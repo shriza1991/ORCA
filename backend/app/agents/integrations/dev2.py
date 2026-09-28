@@ -37,6 +37,13 @@ class MarineConditionsPayload(BaseModel):
     )
     surface_current_knots: Optional[float] = Field(None, description="Surface current speed in knots")
     sea_surface_temp_c: Optional[float] = Field(None, description="Sea surface temperature in Celsius")
+    sea_level_height_m: Optional[float] = Field(None, description="Sea level height above mean sea level in meters")
+    tide_phase: Optional[str] = Field(None, description="Estimated tide direction: rising | falling | unknown")
+    tide_is_estimated: bool = Field(False, description="True when tide direction/height comes from forecast inference")
+    hourly_forecast: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Canonical hourly marine records used by risk, route, and what-if evaluation",
+    )
     observed_at: Optional[str] = Field(None, description="Sensor or satellite measurement timestamp (ISO-8601 UTC)")
     valid_to: Optional[str] = Field(None, description="Forecast window expiration (ISO-8601 UTC)")
     source_name: str = Field("INCOIS Ocean State Forecast", description="Official issuing authority")
@@ -67,6 +74,11 @@ class WeatherConditionsPayload(BaseModel):
     valid_to: Optional[str] = Field(None, description="Advisory expiration (ISO-8601 UTC)")
     source_name: str = Field("IMD Coastal Weather Bulletin", description="Official issuing authority")
     source_url: Optional[str] = Field(None, description="Direct URL to official bulletin")
+    hourly_forecast: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Canonical hourly weather records, including visibility in kilometers",
+    )
+    freshness_flags: Optional[Dict[str, Any]] = Field(default=None, description="Forecast provenance metadata")
     resolved_conflicts: Optional[List[Dict[str, Any]]] = Field(
         None, description="Records of resolved conflicts from other sources (source, value, reason)."
     )
