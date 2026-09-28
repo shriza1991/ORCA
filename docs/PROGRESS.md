@@ -8,6 +8,17 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-28 Merge m2/data-source-evidence-layer into main
+
+- **IMPLEMENTED**: Reconciled and merged `origin/m2/data-source-evidence-layer` branch into `main`.
+- **RESOLVED**: Resolved conflicts across 5 files:
+  - `frontend/src/App.tsx`: Reconciled mobile segmented tabs condition across role portals and display labels.
+  - `frontend/src/components/map/MapView.tsx`: Harmonized `canonicalConditions` telemetry seeding with typed/normalized `canonicalDecision` status.
+  - `frontend/src/pages/FisherPage.tsx`: Wired both `canonicalConditions` and normalized `canonicalMapDecision` into `MapView`.
+  - `frontend/src/hooks/useTripAssessment.ts`: Retained parenthesized nullish fallback for canonical `mission_state` dispatch.
+  - `frontend/src/styles/components.css`: Integrated Query Workbench, Message List, and Inline Recommendation stylesheet rules cleanly.
+- **VERIFIED**: Vitest frontend suite: 280/280 tests passed across 22 suites; Vite production build (`tsc && vite build`) passed with zero errors.
+
 ### 2026-09-27 Fisher Trip Plan Visibility & Route Guidance
 
 - **IMPLEMENTED**: moved the created trip-plan summary directly below the mission brief in both Fisher dashboard clients so it is visible immediately after the assessment explanation.
