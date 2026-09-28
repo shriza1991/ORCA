@@ -817,5 +817,29 @@ None
   - Frontend test suite: 21 test files, 266/266 passed (`vitest run`).
   - Frontend TypeScript validation: 0 errors (`tsc --noEmit`).
 
+## 2026-09-28 — Researcher Lab Layout Integrity & CSS Polish (§D051)
+- Status: **COMPLETE & VERIFIED**
+- **1. App Container Layout Containment**:
+  - Fixed flex expansion in `.researcher-page`: applied `flex: 1 1 0%; min-height: 0; height: calc(100vh - var(--header-height)); height: calc(100dvh - var(--header-height)); overflow: hidden; background: var(--color-bg-primary);`.
+  - Permanently eliminated double scrollbars and layout clipping inside `.app-container`.
+- **2. Segmented Navigation & Button Chrome Resets**:
+  - Added button resets (`background: transparent; border: none; cursor: pointer; font-family: inherit; outline: none;`) to `.researcher-segment-btn`, `.researcher-run-all-btn`, `.researcher-run-btn`, `.researcher-refresh-btn`, and `.researcher-scenario-card`.
+  - Added crisp borders, dark/light active states, and focus styling to segmented control decks.
+- **3. Deduplication & Consolidation of Query Workbench CSS**:
+  - Removed 350 lines of duplicate legacy Query Workbench CSS rules (lines 7947–8293) that conflicted with the modern analytical upgrade block.
+  - Preserved and enhanced `.researcher-trace-timeline` and `.researcher-trace-step` styles (adding support for `.researcher-trace-agent`, `.researcher-trace-duration`, and status badges) within the active analytical section.
+- **4. Scenario Lab Split-Pane Containment**:
+  - Configured `.researcher-scenario-lab` with `340px 1fr` columns, guaranteeing independent scrolling for the scenario card list and the inspection/comparison panel.
+- **5. Theme Contrast & Mobile View Isolation**:
+  - Updated `.researcher-prototype-info-card` to use `var(--color-accent)` token, ensuring high-contrast rendering across light mode (`#0284c7`) and dark mode (`#38bdf8`).
+  - Added crisp `border-color` to all `.researcher-status-badge` variants (`go`, `caution`, `no-go`, `unknown`).
+  - Updated `App.tsx` so mobile view tabs ("Chat / Map") only render when `portal === 'fisher' || portal === 'authority'`, eliminating phantom mobile navigation on Researcher and experiment views.
+- **6. Dual-Client Parity**:
+  - Synchronized `components.css` identically between `frontend/src/styles/components.css` and `nextjs/styles/components.css`.
+- **Verification**:
+  - Frontend test suite: 21/21 test files passed, 271/271 tests passed (`npm --prefix frontend test -- --run`).
+  - Frontend TypeScript validation: 0 errors (`npx --prefix frontend tsc --project frontend/tsconfig.json --noEmit`).
+
+
 
 

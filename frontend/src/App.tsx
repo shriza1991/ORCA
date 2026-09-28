@@ -74,8 +74,8 @@ export default function App() {
         onOpenSettings={handleOpenSettings}
       />
 
-      {/* Mobile Segmented View Tabs (Visible only on <= 768px viewports when in a role console) */}
-      {portal !== 'selection' && portal !== 'settings' && (
+      {/* Mobile Segmented View Tabs (Visible only on <= 768px viewports when in fisher or authority console) */}
+      {(portal === 'fisher' || portal === 'authority') && (
         <nav className="mobile-view-tabs" role="tablist" aria-label="Mobile viewport selection">
           <button
             className={`mobile-tab-btn ${mobileView === 'chat' ? 'active' : ''}`}

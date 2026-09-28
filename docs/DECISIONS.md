@@ -918,6 +918,41 @@ Status: ACCEPTED
   - 271/271 Vitest frontend tests passing across all 21 test suites.
   - 0 TypeScript errors in `tsc --project frontend/tsconfig.json --noEmit`.
 
+## D051 — Researcher Lab Layout Integrity, Segmented Control Resets, and CSS Polish
+Status: ACCEPTED
+
+Decision:
+1. **App Container Layout Containment**:
+   - Replaced unconstrained `height: 100%` on `.researcher-page` with `flex: 1 1 0%; min-height: 0; height: calc(100vh - var(--header-height)); height: calc(100dvh - var(--header-height)); overflow: hidden; background: var(--color-bg-primary);`.
+   - Prevented flex column expansion inside `.app-container` from pushing the layout beyond the 100vh viewport boundary, permanently eliminating unwanted outer window scrollbars and double-scrollbar thrashing.
+2. **Segmented Navigation & Button Chrome Resets**:
+   - Added explicit CSS resets (`background: transparent; border: none; cursor: pointer; font-family: inherit; outline: none;`) to `.researcher-segment-btn`, `.researcher-run-all-btn`, `.researcher-run-btn`, `.researcher-refresh-btn`, and `.researcher-scenario-card`.
+   - Added subtle boundary borders (`1px solid var(--color-border)`), dark/light active states, and focus outlines to segmented navigation decks.
+3. **Consolidation of Duplicate Query Workbench Styles**:
+   - Removed 350 lines of duplicate legacy Query Workbench CSS rules that conflicted with the active analytical upgrade block.
+   - Preserved and enhanced `.researcher-trace-timeline` and `.researcher-trace-step` styles (adding support for `.researcher-trace-agent`, `.researcher-trace-duration`, and status badges) right within the active analytical section.
+4. **Scenario Lab Split-Pane Containment**:
+   - Updated `.researcher-scenario-lab` to `grid-template-columns: 340px 1fr; flex: 1 1 0%; min-height: 0; height: 100%; overflow: hidden;`.
+   - Guaranteed independent scrolling for the scenario card list (`.researcher-scenario-cards`) and the inspection/comparison panel (`.researcher-scenario-detail-panel`).
+5. **Theme Contrast & Mobile View Isolation**:
+   - Updated `.researcher-prototype-info-card` to use `var(--color-accent)` token, ensuring high-contrast rendering across light mode (`#0284c7`) and dark mode (`#38bdf8`).
+   - Added crisp `border-color` to all `.researcher-status-badge` variants (`go`, `caution`, `no-go`, `unknown`).
+   - Updated `App.tsx` so mobile view tabs ("Chat / Map") only render when `portal === 'fisher' || portal === 'authority'`, eliminating phantom mobile navigation on Researcher and experiment views.
+6. **Dual-Client Parity**:
+   - Synchronized `components.css` identically between `frontend/src/styles/components.css` and `nextjs/styles/components.css`.
+
+Reason:
+Resolves UI styling bugs, browser button chrome artifacts, double-scrollbars, and low contrast across the 5 Researcher Lab subdecks (Ocean Data, Data Sources, Data Catalogue, Scenario Lab, and Query Workbench).
+
+Alternatives considered:
+- Keeping fixed min-heights on the query workbench and scenario lab (rejected: causes scroll clipping on laptops and small screens).
+- Retaining mobile chat/map tabs across all portals (rejected: confusing UX for portals that do not have a chat/map split).
+
+Impact:
+Guarantees clean split-pane scrolling, high contrast in light/dark mode, and consistent styling without regressions across 271 Vitest tests.
+Owner: Frontend / Architecture
+Date: 2026-09-28
+
 ## Decision template
 
 ### D0XX — <title>
