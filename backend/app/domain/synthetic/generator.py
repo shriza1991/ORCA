@@ -1,7 +1,7 @@
 """Deterministic Synthetic Demo Data Generator for SAMUDRA.
 
 Generates the canonical SAMUDRA_DEMO_V1 dataset derived deterministically
-from a fixed reference timestamp (2026-09-12T06:00:00Z).
+from a fixed reference timestamp (2026-09-26T06:00:00Z).
 
 Models official source structures for:
 - INCOIS Ocean State Forecasts (OSF) and PFZ Advisories
@@ -236,7 +236,7 @@ def generate_trips() -> List[Dict[str, Any]]:
 
 
 def generate_marine_observations() -> List[Dict[str, Any]]:
-    """48 hourly observations per harbor (96 total) matching INCOIS OSF and IMD CWB source formats."""
+    """97 hourly slots per harbor across -24h/+72h (194 total), matching OSF/CWB formats."""
     observations = []
     harbors = [("harbor-ratnagiri", "Ratnagiri", 1.2, 12.0), ("harbor-malvan", "Malvan", 1.1, 10.0)]
 

@@ -979,6 +979,7 @@ async def voice_chat_endpoint(
         detected_language=raw_language,
         audio_base64=audio_base64,
         audio_format=audio_format,
+        data_mode=chat_response.data_mode,
     )
 
 

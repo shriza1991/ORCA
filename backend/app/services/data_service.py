@@ -36,6 +36,8 @@ Design decisions:
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Optional
 
 from backend.app.agents.integrations.contracts import ToolInvocationContext
@@ -75,6 +77,53 @@ class DataService:
         self._imd_hazard = ImdHazardConnector()
         self._snapshot = SnapshotConnector()
 
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def _synthetic_osf_records() -> tuple[dict, ...]:
+        """Load the canonical deterministic hourly demo records once per process."""
+        from backend.app.domain.synthetic.generator import generate_marine_observations
+
+        return tuple(generate_marine_observations())
+
+    @classmethod
+    def _synthetic_record_for(cls, context: ToolInvocationContext) -> dict | None:
+        """Select the latest demo observation covering the requested departure."""
+        from backend.app.domain.synthetic.generator import REFERENCE_TIME
+
+        harbor = (context.origin_harbor or "Ratnagiri").strip().lower()
+        aliases = {"mumbai coastal": "mumbai", "mumbai-coastal": "mumbai"}
+        harbor_id = f"harbor-{aliases.get(harbor, harbor)}"
+        target = REFERENCE_TIME
+        if context.departure_time:
+            try:
+                target = datetime.fromisoformat(context.departure_time.replace("Z", "+00:00"))
+                if target.tzinfo is None:
+                    target = target.replace(tzinfo=timezone.utc)
+                else:
+                    target = target.astimezone(timezone.utc)
+            except (TypeError, ValueError):
+                return None
+
+        candidates = []
+        for record in cls._synthetic_osf_records():
+            if record.get("harbor_id") != harbor_id:
+                continue
+            observed = record.get("observation_time")
+            if isinstance(observed, str):
+                observed = datetime.fromisoformat(observed.replace("Z", "+00:00"))
+            if observed is None:
+                continue
+            if observed.tzinfo is None:
+                observed = observed.replace(tzinfo=timezone.utc)
+            valid_to = datetime.fromisoformat(
+                str(record.get("valid_to_utc", "")).replace("Z", "+00:00")
+            )
+            if valid_to.tzinfo is None:
+                valid_to = valid_to.replace(tzinfo=timezone.utc)
+            if observed <= target <= valid_to:
+                candidates.append((observed, record))
+        return max(candidates, key=lambda item: item[0])[1] if candidates else None
+
     # ------------------------------------------------------------------
     # Marine Conditions
     # ------------------------------------------------------------------
@@ -91,12 +140,10 @@ class DataService:
         if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
             logger.debug("DataService: %s mode — marine conditions from fixture.", self.data_mode)
             _ctx = context
-            if self.data_mode in ("SNAPSHOT", "SYNTHETIC") and not getattr(context, "departure_time", None):
-                # In SYNTHETIC/SNAPSHOT mode without an explicit departure_time, pin to the
-                # scenario anchor date so _select_record picks the correct
-                # 2026-09-12 fixture record. Never uses now_utc.
-                _SYNTHETIC_SCENARIO_ANCHOR = "2026-09-12T06:00:00+00:00"
-                _ctx = context.model_copy(update={"departure_time": _SYNTHETIC_SCENARIO_ANCHOR})
+            if self.data_mode == "SYNTHETIC" and not context.departure_time:
+                from backend.app.domain.synthetic.generator import REFERENCE_TIME
+
+                _ctx = context.model_copy(update={"departure_time": REFERENCE_TIME.isoformat()})
             return self._snapshot.get_marine_conditions(_ctx)
 
         try:
@@ -124,21 +171,33 @@ class DataService:
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.imd import ImdWeatherNormalizer
-            # Use the requested departure time if available.
-            # Fall back to the SYNTHETIC scenario's pinned reference time so
-            # deterministic test baselines remain reproducible. Never use now_utc.
-            _SYNTHETIC_SCENARIO_ANCHOR = "2026-09-12T06:00:00+00:00"
-            dep = getattr(context, "departure_time", None) or _SYNTHETIC_SCENARIO_ANCHOR
+            record = self._synthetic_record_for(context)
+            if record is None:
+                return WeatherConditionsPayload(
+                    harbor=harbor,
+                    wind_speed_knots=None,
+                    wind_gust_knots=None,
+                    wind_direction_deg=None,
+                    visibility_km=None,
+                    observed_at=None,
+                    valid_to=None,
+                    source_name="SAMUDRA deterministic demo weather (WINDOW_UNAVAILABLE)",
+                    source_url=None,
+                )
             raw = {
                 "harbor": harbor,
-                "wind_speed_knots": 12.0,
-                "gust_speed_knots": 16.0,
-                "wind_direction_deg": 230.0,
-                "visibility_km": 10.0,
-                "observed_at": dep,
-                "valid_to": None,             # No fabricated expiry
+                "wind_speed_knots": record.get("wind_speed_knots"),
+                "gust_speed_knots": record.get("wind_gust_knots"),
+                "wind_direction_deg": record.get("wind_direction_deg"),
+                "visibility_km": record.get("visibility_km"),
+                "observed_at": record["observation_time"].isoformat(),
+                "valid_to": record["valid_to_utc"],
+                "source_name": "SAMUDRA deterministic demo forecast",
             }
-            return ImdWeatherNormalizer.normalize(raw)
+            payload = ImdWeatherNormalizer.normalize(raw)
+            payload.source_name = "SAMUDRA deterministic demo weather fixture"
+            payload.source_url = None
+            return payload
 
         if self.data_mode == "SNAPSHOT":
             logger.debug("DataService: SNAPSHOT mode — weather conditions from fixture.")
@@ -205,18 +264,27 @@ class DataService:
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.imd import ImdHazardNormalizer
-            # Use the requested departure time if available.
-            # Fall back to the SYNTHETIC scenario's pinned reference time so
-            # deterministic test baselines remain reproducible. Never use now_utc.
-            _SYNTHETIC_SCENARIO_ANCHOR = "2026-09-12T06:00:00+00:00"
-            dep = getattr(context, "departure_time", None) or _SYNTHETIC_SCENARIO_ANCHOR
+            record = self._synthetic_record_for(context)
+            if record is None:
+                return HazardBulletinPayload(
+                    harbor=harbor,
+                    cyclone_warning_active=False,
+                    squall_alert=False,
+                    severity="UNKNOWN",
+                    headline="No hazard fixture covers the requested demo window.",
+                    valid_from=None,
+                    valid_to=None,
+                    source_name="SAMUDRA deterministic demo hazards (WINDOW_UNAVAILABLE)",
+                )
+            observed_at = record["observation_time"].isoformat()
+            valid_to = record["valid_to_utc"]
             raw = {
-                "bulletin_id": "IMD-CWB-SYNTHETIC-01",
+                "bulletin_id": "SAMUDRA-DEMO-NORMAL-01",
                 "severity": "NORMAL",
                 "event_type": "NONE",
-                "headline": "No active marine weather warnings for coastal Maharashtra.",
-                "valid_from": dep,
-                "valid_to": None,      # No fabricated expiry
+                "headline": "No warning is active in the selected deterministic demo scenario.",
+                "valid_from": observed_at,
+                "valid_to": valid_to,
                 "status": "ACTIVE",
                 "geometry": {
                     "type": "Polygon",
@@ -233,7 +301,9 @@ class DataService:
                     ],
                 },
             }
-            return ImdHazardNormalizer.normalize(raw)
+            normalized = ImdHazardNormalizer.normalize(raw)
+            normalized.source_name = "SAMUDRA deterministic demo hazard fixture"
+            return normalized
 
         if self.data_mode == "SNAPSHOT":
             logger.debug("DataService: SNAPSHOT mode — hazard bulletin from fixture.")
@@ -292,15 +362,27 @@ class DataService:
         """Route to the appropriate PFZ connector based on DATA_MODE."""
         if self.data_mode == "SYNTHETIC":
             from backend.app.connectors.normalizers.incois import IncoisPFZNormalizer
+            record = self._synthetic_record_for(context)
+            if record is None:
+                return PFZSourceDataPayload(
+                    features=[],
+                    bulletin_date="2026-09-26T06:00:00Z",
+                    valid_to="2026-09-26T06:00:00Z",
+                    source_name="SAMUDRA deterministic demo PFZ (WINDOW_UNAVAILABLE)",
+                    source_url=None,
+                )
             raw = {
                 "features": [
                     {"id": "PFZ-F01", "lat": 16.85, "lon": 73.10, "sst_grad": 0.35, "chlorophyll": 1.85, "confidence": "HIGH", "distance_km": 16.5},
                     {"id": "PFZ-F02", "lat": 17.10, "lon": 73.05, "sst_grad": 0.40, "chlorophyll": 2.10, "confidence": "HIGH", "distance_km": 24.0},
                 ],
-                "bulletin_date": "2026-09-12T06:00:00Z",
-                "valid_to": "2026-09-13T06:00:00Z",
+                "bulletin_date": record["observation_time"].isoformat(),
+                "valid_to": record["valid_to_utc"],
             }
-            return IncoisPFZNormalizer.normalize(raw)
+            payload = IncoisPFZNormalizer.normalize(raw)
+            payload.source_name = "SAMUDRA deterministic demo PFZ fixture"
+            payload.source_url = None
+            return payload
 
         if self.data_mode == "SNAPSHOT":
             logger.debug("DataService: SNAPSHOT mode — PFZ advisories from fixture.")

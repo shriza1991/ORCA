@@ -163,9 +163,11 @@ def test_manager_hybrid_fallback(snapshot_connector, monkeypatch):
     assert "HYBRID Fallback" in res.source_name
     assert "Transient Error" in res.source_name
     
-    # 2. Permanent error -> No fallback
+    # 2. Authentication failure still degrades to the configured snapshot,
+    # with the failure category preserved in provenance.
     live_auth_fail = MockLiveProvider(should_auth_fail=True)
     manager = ConnectorManager(DataMode.HYBRID, snapshot_connector, marine_live=live_auth_fail)
     
-    with pytest.raises(ConnectorAuthenticationError):
-        manager.get_marine_conditions(context)
+    auth_fallback = manager.get_marine_conditions(context)
+    assert "HYBRID Fallback" in auth_fallback.source_name
+    assert "Authentication Failure" in auth_fallback.source_name

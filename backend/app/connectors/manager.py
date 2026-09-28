@@ -18,6 +18,7 @@ if TYPE_CHECKING:
         WeatherConditionsPayload,
     )
 from backend.app.connectors.errors import (
+    ConnectorAuthenticationError,
     ConnectorRateLimitError,
     ConnectorTimeoutError,
     ConnectorUpstreamUnavailableError,
@@ -191,6 +192,7 @@ class ConnectorManager:
                 return payload
 
             results = []
+            fallback_category = "Transient Error"
             for prov in providers:
                 try:
                     res = getattr(prov, snapshot_method)(context)
@@ -202,6 +204,10 @@ class ConnectorManager:
                 except Exception as exc:
                     self._track_health(snapshot_method, False, str(exc))
                     logger.error("Connector execution error on %s: %s", prov.__class__.__name__, exc)
+                    if isinstance(exc, ConnectorAuthenticationError):
+                        fallback_category = "Authentication Failure"
+                    else:
+                        fallback_category = "Provider Failure"
             
             if results:
                 final_res = self._resolve_conflicts(results)
@@ -211,7 +217,7 @@ class ConnectorManager:
                 
             # Fallback
             payload = getattr(self.snapshot, snapshot_method)(context)
-            payload.source_name += " [HYBRID Fallback - Transient Error]"
+            payload.source_name += f" [HYBRID Fallback - {fallback_category}]"
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             logger.info("Connector execution [%s] mode=HYBRID_FALLBACK duration_ms=%.2f status=DEGRADED", snapshot_method, elapsed_ms)
             return payload

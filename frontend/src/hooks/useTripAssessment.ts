@@ -28,7 +28,7 @@ function missionStateMatchesRequest(
     (!request.return_time ||
       state.timing.return_deadline === request.return_time) &&
     (!request.destination_id ||
-      state.destination.name === request.destination_id)
+      state.destination?.name === request.destination_id)
   );
 }
 
@@ -64,9 +64,9 @@ export function useTripAssessment() {
       const effectiveRequest: TripAssessmentRequest = {
         ...request,
         mission_state:
-          request.mission_state ||
+          request.mission_state ??
           (missionStateMatchesRequest(missionState, request)
-            ? missionState
+            ? missionState ?? undefined
             : undefined),
       };
 

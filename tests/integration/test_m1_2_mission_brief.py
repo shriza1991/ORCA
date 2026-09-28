@@ -9,7 +9,12 @@ Validates:
 
 import pytest
 from backend.app.contracts.assessment import TripAssessmentRequest, TripAssessmentResponse
+from backend.app.domain.synthetic.generator import REFERENCE_TIME
 from backend.app.services.assessment_service import AssessmentService
+
+
+_DEPARTURE = REFERENCE_TIME.replace(hour=7)
+_RETURN = REFERENCE_TIME.replace(hour=11)
 
 
 def test_m1_2_acceptance_test_1_trip_assessment_contains_mission_brief():
@@ -17,8 +22,8 @@ def test_m1_2_acceptance_test_1_trip_assessment_contains_mission_brief():
     req = TripAssessmentRequest(
         origin_harbor="Ratnagiri",
         craft_profile="motorized_boat",
-        departure_time="2026-09-12T07:00:00Z",
-        return_time="2026-09-12T11:00:00Z",
+        departure_time=_DEPARTURE.isoformat(),
+        return_time=_RETURN.isoformat(),
         data_mode="SNAPSHOT",
     )
 
@@ -40,8 +45,8 @@ def test_m1_2_acceptance_test_2_go_decision_brief_factors():
     req = TripAssessmentRequest(
         origin_harbor="Ratnagiri",
         craft_profile="motorized_boat",
-        departure_time="2026-09-12T07:00:00Z",
-        return_time="2026-09-12T11:00:00Z",
+        departure_time=_DEPARTURE.isoformat(),
+        return_time=_RETURN.isoformat(),
         data_mode="SNAPSHOT",
     )
 
@@ -59,8 +64,8 @@ def test_m1_2_acceptance_test_3_caution_or_nogo_shows_breached_threshold_factors
     req = TripAssessmentRequest(
         origin_harbor="Ratnagiri",
         craft_profile="traditional_non_motorized",
-        departure_time="2026-09-12T07:00:00Z",
-        return_time="2026-09-12T11:00:00Z",
+        departure_time=_DEPARTURE.isoformat(),
+        return_time=_RETURN.isoformat(),
         data_mode="SNAPSHOT",
     )
 
