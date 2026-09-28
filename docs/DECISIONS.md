@@ -825,6 +825,7 @@ Status: ACCEPTED
   - Frontend test suite: 21 test files, 266/266 tests passing in Vitest (`npm run test`).
   - Frontend TypeScript validation: 0 errors in `tsc --noEmit`.
 
+<<<<<<< Updated upstream
 ## D048 — Light Mode Support for Authority Command Deck 3D Deck.gl Map
 Status: ACCEPTED
 
@@ -884,6 +885,38 @@ Status: ACCEPTED
 - Tests/verification:
   - Frontend Vitest suite: 21 test files, 266/266 tests passing (`npm run test`).
   - Frontend TypeScript compiler: 0 errors (`npx tsc --noEmit`).
+
+## D050 — Interactive Nautical Measure Tool, Dynamic Forecast Route Exposure & Tactical Surveillance Rings
+Status: ACCEPTED
+
+- Date: 2026-09-28
+- Agent/person: Senior Maritime Fullstack Engineer (Antigravity)
+- Task/context: User request to advance marine geospatial map capabilities across Fisher Console and Authority Command Deck with deterministic nautical navigation tools.
+- Decision:
+  1. **Nautical Measure Tool (Distance, Heading & Voyage Duration Ruler)**:
+     - Implemented spherical Haversine distance in nautical miles (`haversineDistanceNm`), initial true bearing (`initialBearingDeg`), 16-point cardinal compass quadrant resolution (`compassDirection`), and speed-based voyage transit time calculation (`calculateTransitTime` with default 8.5 kn trawler cruising velocity).
+     - Added interactive point-to-point clicking directly on coastal water in `MapView.tsx`, rendering an animated dashed cyan route ruler, glowing waypoint nodes, and a floating glassmorphic `map-ruler-hud` displaying distance (`NM` and `km`), true heading (`°` and compass code), estimated transit duration, and point reset controls.
+     - Preserved ESC-to-cancel shortcut and isolated ruler clicks to prevent triggering point bathymetry popups or accidental map drags.
+  2. **Dynamic 48-Hour Forecast Route Exposure**:
+     - Connected the 48-hour forecast timeline scrubber (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`) to dynamic route corridor styling.
+     - Routes dynamically transition their line stroke and opacity on the map based on forecasted wave heights along the corridor (Green: calm `< 1.8m`, Amber: caution `1.8m - 2.4m`, Coral/Red: dangerous rough seas `> 2.4m`).
+  3. **Sea-Surface Dynamic Wind & Current Vectors**:
+     - Built `generateWindVectorGrid` synthesizing spatial flow vectors across the sector based on INCOIS and IMD wave/wind direction and velocity.
+     - Registered custom canvas arrow icons on MapLibre with speed-adaptive coloring (Sky `<12 kn`, Emerald `12-20 kn`, Amber `20-28 kn`, Crimson `≥28 kn`) and a toggle button in the coastal navigation bar.
+  4. **Tactical Radar Surveillance Rings & Hazard Proximity Warnings**:
+     - Implemented geodesic concentric radar surveillance range rings (5 NM inner patrol, 12 NM territorial sea limit, 24 NM contiguous surveillance zone) centered on the active sector Coast Guard radar station in `AuthorityDeckGLMap.tsx`.
+     - Added real-time tactical proximity vectors in Deck.gl: when an authority operator clicks any monitored naval craft, if the vessel is within 15 km of an active marine hazard (severe weather polygon, shallow reef, or sanctuary), a dashed range vector connects the craft directly to the hazard centroid with live distance in kilometers.
+     - Replaced text layer outlines with solid background pills to eliminate Deck.gl outline warnings without requiring SDF font textures.
+  5. **Dual-Client Parity**:
+     - Synchronized pure nautical utilities to `nextjs/utils/geo.ts`, `nextjs/components/map/MapView.tsx`, and `nextjs/components/authority/AuthorityDeckGLMap.tsx`.
+- Why:
+  Transforms standard web map views into operational marine navigation surfaces, providing artisanal fishers with instant voyaging insights (bearing, nautical miles, transit time) and coastal authorities with tactical defense and hazard containment tools.
+- Affected areas:
+  `frontend/src/utils/geo.ts`, `frontend/src/utils/geo.test.ts`, `frontend/src/components/map/MapView.tsx`, `frontend/src/components/authority/AuthorityDeckGLMap.tsx`, `nextjs/utils/geo.ts`, `nextjs/components/map/MapView.tsx`, `nextjs/components/authority/AuthorityDeckGLMap.tsx`, `.gitignore`.
+- Tests/verification:
+  - 11/11 unit tests in `src/utils/geo.test.ts` passing.
+  - 271/271 Vitest frontend tests passing across all 21 test suites.
+  - 0 TypeScript errors in `tsc --project frontend/tsconfig.json --noEmit`.
 
 ## Decision template
 

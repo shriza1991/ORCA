@@ -6,9 +6,19 @@
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
-- Current version: `v0.2.5-m4-deckgl-optimization`
+- Current version: `v0.2.6-m4-nautical-map-suite`
 - Active branch: `feat/m4-mission-twin`
-- Current feature: **Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle (§D049)**
+- Current milestone: **M4 Advanced Nautical Map Suite & Tactical Command Surface (§D050)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Frontend Vitest: 271/271 passing across 21 test suites (`npm run test`), including 11/11 in `src/utils/geo.test.ts`.
+    - Frontend TypeScript: 0 errors (`npm run typecheck`).
+    - Parity: Synchronized to `nextjs/utils/geo.ts`, `nextjs/components/map/MapView.tsx`, and `nextjs/components/authority/AuthorityDeckGLMap.tsx`.
+  - **M4 Nautical Map Suite Deliverables**:
+    - **Nautical Measure Tool (Distance, Heading & Voyage Duration Ruler)**: Spherical Haversine calculation in nautical miles (`haversineDistanceNm`), initial forward bearing (`initialBearingDeg`), 16-point cardinal compass quadrant resolution (`compassDirection`), and speed-based voyage transit time calculation (`calculateTransitTime` at 8.5 kn cruise speed). Interactive point-to-point clicking directly on coastal water in `MapView.tsx`, rendering an animated dashed cyan route ruler, glowing waypoint nodes, and a floating glassmorphic `map-ruler-hud` displaying distance, heading, estimated transit time, and waypoint controls.
+    - **Dynamic 48-Hour Forecast Route Exposure**: Real-time corridor line restyling in MapLibre reacting to the forecast timeline scrubber (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`), shifting line color based on forecasted wave heights (Green: calm `< 1.8m`, Amber: caution `1.8m - 2.4m`, Coral/Red: dangerous rough seas `> 2.4m`).
+    - **Sea-Surface Dynamic Wind & Current Directional Vectors**: Sea-surface vector grid generator (`generateWindVectorGrid`) synthesizing directional wind/wave flow from INCOIS and IMD telemetry, rendered via dynamic canvas icons on MapLibre with speed-adaptive coloring (Sky, Emerald, Amber, Crimson) and a coastal toggle control.
+    - **Tactical Radar Surveillance Rings & Hazard Proximity Warnings**: Geodesic concentric radar surveillance range rings (5 NM inner patrol, 12 NM territorial sea limit, 24 NM contiguous surveillance zone) centered on the active sector Coast Guard radar station in `AuthorityDeckGLMap.tsx`. Real-time tactical proximity vectors in Deck.gl: when an authority operator clicks any monitored naval craft, if the vessel is within 15 km of an active marine hazard, a dashed range vector connects the craft directly to the hazard centroid with live distance in kilometers.
+- Prior Feature: **Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle (§D049)**
   - **Status**: **COMPLETE & VERIFIED**
     - Frontend Vitest: 266/266 passing across 21 test suites (`npm run test`).
     - Frontend TypeScript: 0 errors (`npx tsc --noEmit`).

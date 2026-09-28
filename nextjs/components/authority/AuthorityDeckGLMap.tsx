@@ -20,6 +20,7 @@ import {
   type VesselHazardAssociation,
   type VesselHazardOperationalAlert,
 } from '../../api/client';
+import { generateRadarRangeRings, haversineDistanceKm } from '../../utils/geo';
 import type { SupportedLanguage } from '../../i18n/translations';
 
 // Sleek, compact naval craft SVG icons with heading orientation
@@ -429,6 +430,42 @@ export default function AuthorityDeckGLMap({
           radiusMaxPixels: 16,
         }),
       );
+
+      // Concentric Radar Range Rings (5 NM Inner Patrol, 12 NM Territorial, 24 NM Surveillance)
+      const radarRings = generateRadarRangeRings(activeSector.center[0], activeSector.center[1], [5, 12, 24]);
+      layers.push(
+        new PathLayer({
+          id: 'authority-radar-range-rings',
+          data: radarRings,
+          getPath: (d: any) => d.coords,
+          getColor: (d: any) => (d.radiusNm === 12 ? [14, 165, 233, 110] : [168, 85, 247, 80]),
+          getWidth: 1.5,
+          widthMinPixels: 1,
+          dashJustified: true,
+          getDashArray: [6, 4],
+        }),
+      );
+
+      layers.push(
+        new TextLayer({
+          id: 'authority-radar-range-labels',
+          data: radarRings.map((r) => ({
+            text: r.label,
+            position: r.coords[12] || r.coords[0],
+          })),
+          getPosition: (d: any) => d.position,
+          getText: (d: any) => d.text,
+          getSize: 10,
+          getColor: [148, 163, 184, 210],
+          getTextAnchor: 'start',
+          getAlignmentBaseline: 'center',
+          fontFamily: 'ui-sans-serif, system-ui, -apple-system',
+          fontWeight: 'bold',
+          background: true,
+          getBackgroundColor: [15, 23, 42, 180],
+          backgroundPadding: [4, 2],
+        }),
+      );
     }
 
     if (lineRoutes.length > 0) {
@@ -749,6 +786,83 @@ export default function AuthorityDeckGLMap({
           }),
         );
       }
+
+      // 8. Tactical Proximity Vectors to Nearby Hazards (<15 km)
+      if (selectedVessels.length > 0 && sectorHazards && sectorHazards.length > 0) {
+        const vPos = selectedVessels[0].position;
+        const proximityVectors: Array<{
+          path: [number, number][];
+          hazardName: string;
+          distKm: number;
+          severity: string;
+          isClose: boolean;
+        }> = [];
+
+        for (const h of sectorHazards) {
+          if (h.status === 'INACTIVE' || h.status === 'EXPIRED') continue;
+          let hCoords: [number, number] | null = null;
+          if (h.geometry?.type === 'Point' && Array.isArray(h.geometry.coordinates)) {
+            hCoords = [h.geometry.coordinates[0], h.geometry.coordinates[1]];
+          } else if (h.geometry?.type === 'Polygon' && Array.isArray(h.geometry.coordinates?.[0])) {
+            const pts = h.geometry.coordinates[0];
+            let sumX = 0;
+            let sumY = 0;
+            for (const p of pts) {
+              sumX += p[0];
+              sumY += p[1];
+            }
+            hCoords = [sumX / pts.length, sumY / pts.length];
+          }
+
+          if (hCoords) {
+            const dKm = haversineDistanceKm(vPos, hCoords);
+            if (dKm <= 15.0) {
+              proximityVectors.push({
+                path: [vPos, hCoords],
+                hazardName: h.headline || h.hazard_id,
+                distKm: Math.round(dKm * 10) / 10,
+                severity: h.severity,
+                isClose: dKm <= 5.0,
+              });
+            }
+          }
+        }
+
+        if (proximityVectors.length > 0) {
+          layers.push(
+            new PathLayer({
+              id: 'authority-vessel-hazard-proximity-vectors',
+              data: proximityVectors,
+              getPath: (d: any) => d.path,
+              getColor: (d: any) => (d.isClose ? [239, 68, 68, 220] : [245, 158, 11, 160]),
+              getWidth: 2,
+              widthMinPixels: 1.5,
+              getDashArray: [4, 4],
+              dashJustified: true,
+            }),
+          );
+
+          layers.push(
+            new TextLayer({
+              id: 'authority-vessel-hazard-proximity-labels',
+              data: proximityVectors.map((pv) => ({
+                text: `! ${pv.distKm} km to ${pv.hazardName}`,
+                position: [(pv.path[0][0] + pv.path[1][0]) / 2, (pv.path[0][1] + pv.path[1][1]) / 2],
+                isClose: pv.isClose,
+              })),
+              getPosition: (d: any) => d.position,
+              getText: (d: any) => d.text,
+              getSize: 11,
+              getColor: (d: any) => (d.isClose ? [254, 202, 202, 240] : [254, 240, 138, 220]),
+              fontFamily: 'ui-sans-serif, system-ui, -apple-system',
+              fontWeight: 'bold',
+              background: true,
+              getBackgroundColor: [15, 23, 42, 210],
+              backgroundPadding: [4, 2],
+            }),
+          );
+        }
+      }
     }
 
     return layers;
@@ -760,6 +874,7 @@ export default function AuthorityDeckGLMap({
     selectedVessels,
     unselectedVessels,
     vesselVectorPaths,
+    sectorHazards,
     isLight,
   ]);
 

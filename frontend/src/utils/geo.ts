@@ -470,6 +470,145 @@ export function generateCirclePolygon(centerLon: number, centerLat: number, radi
 }
 
 /**
+ * Deterministic spherical Haversine distance in kilometers between two points [lon, lat].
+ */
+export function haversineDistanceKm(p1: [number, number], p2: [number, number]): number {
+  const [lon1, lat1] = p1;
+  const [lon2, lat2] = p2;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const radLat1 = (lat1 * Math.PI) / 180;
+  const radLat2 = (lat2 * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(radLat1) * Math.cos(radLat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return 6371.0 * c;
+}
+
+/**
+ * Deterministic nautical distance in Nautical Miles (NM). 1 NM = 1.852 km.
+ */
+export function haversineDistanceNm(p1: [number, number], p2: [number, number]): number {
+  return haversineDistanceKm(p1, p2) / 1.852;
+}
+
+/**
+ * Initial forward true bearing / heading in degrees (0°..360°) from p1 to p2.
+ */
+export function initialBearingDeg(p1: [number, number], p2: [number, number]): number {
+  const [lon1, lat1] = p1;
+  const [lon2, lat2] = p2;
+  const radLat1 = (lat1 * Math.PI) / 180;
+  const radLat2 = (lat2 * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const y = Math.sin(dLon) * Math.cos(radLat2);
+  const x =
+    Math.cos(radLat1) * Math.sin(radLat2) -
+    Math.sin(radLat1) * Math.cos(radLat2) * Math.cos(dLon);
+
+  const deg = (Math.atan2(y, x) * 180) / Math.PI;
+  return (deg + 360) % 360;
+}
+
+/**
+ * Converts degrees into 16-point cardinal compass direction (e.g. 245° -> WSW).
+ */
+export function compassDirection(deg: number): string {
+  const cardinals = [
+    'N', 'NNE', 'NE', 'ENE',
+    'E', 'ESE', 'SE', 'SSE',
+    'S', 'SSW', 'SW', 'WSW',
+    'W', 'WNW', 'NW', 'NNW',
+  ];
+  const normalized = ((deg % 360) + 360) % 360;
+  const idx = Math.round(normalized / 22.5) % 16;
+  return cardinals[idx];
+}
+
+/**
+ * Calculates estimated transit duration based on nautical distance and vessel cruise speed in knots.
+ */
+export function calculateTransitTime(
+  distanceNm: number,
+  speedKnots: number = 8.5,
+): { totalHours: number; hours: number; minutes: number; text: string } {
+  const effectiveSpeed = Math.max(speedKnots, 1.0);
+  const totalHours = distanceNm / effectiveSpeed;
+  const totalMinutes = Math.round(totalHours * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  let text = '';
+  if (hours > 0 && minutes > 0) text = `~${hours}h ${minutes}m`;
+  else if (hours > 0) text = `~${hours}h`;
+  else text = `~${minutes} min`;
+
+  return { totalHours, hours, minutes, text };
+}
+
+/**
+ * Generates concentric radar surveillance range rings around a center station.
+ */
+export function generateRadarRangeRings(
+  centerLon: number,
+  centerLat: number,
+  radiiNm: number[] = [5, 12, 24],
+): Array<{ radiusNm: number; label: string; coords: number[][] }> {
+  return radiiNm.map((nm) => {
+    const km = nm * 1.852;
+    const ringCoords = generateCirclePolygon(centerLon, centerLat, km, 48);
+    const label = nm === 5 ? '5 NM INNER PATROL' : nm === 12 ? '12 NM TERRITORIAL SEAS' : `${nm} NM SURVEILLANCE`;
+    return {
+      radiusNm: nm,
+      label,
+      coords: ringCoords,
+    };
+  });
+}
+
+/**
+ * Generates an operational grid of directional wind and current vectors across a sea sector.
+ */
+export function generateWindVectorGrid(
+  centerLon: number,
+  centerLat: number,
+  windDirectionDeg: number,
+  windSpeedKn: number,
+  spanDeg: number = 0.8,
+  stepDeg: number = 0.16,
+): Array<{ position: [number, number]; bearing: number; speed: number; color: string }> {
+  const vectors: Array<{ position: [number, number]; bearing: number; speed: number; color: string }> = [];
+  const minLon = centerLon - spanDeg;
+  const maxLon = centerLon + spanDeg;
+  const minLat = centerLat - spanDeg;
+  const maxLat = centerLat + spanDeg;
+
+  let color = '#38bdf8'; // <12 kn (Sky)
+  if (windSpeedKn >= 28) color = '#ef4444'; // Squall / Gale (Red)
+  else if (windSpeedKn >= 20) color = '#f59e0b'; // Fresh/Strong (Amber)
+  else if (windSpeedKn >= 12) color = '#10b981'; // Moderate (Emerald)
+
+  for (let lat = minLat; lat <= maxLat; lat += stepDeg) {
+    for (let lon = minLon; lon <= maxLon; lon += stepDeg) {
+      const jitter = Math.sin(lat * 10 + lon * 10) * 6;
+      const angle = (windDirectionDeg + jitter + 360) % 360;
+      vectors.push({
+        position: [parseFloat(lon.toFixed(4)), parseFloat(lat.toFixed(4))],
+        bearing: Math.round(angle),
+        speed: windSpeedKn,
+        color,
+      });
+    }
+  }
+
+  return vectors;
+}
+
+
+/**
  * Fetches official base operational boundaries (IMBL, Naval ranges, MPAs),
  * DGLL landfall lighthouses, PFZ thermal fronts, and active IMD/INCOIS hazard corridors.
  */

@@ -58,6 +58,7 @@ nextjs/.next/
 nextjs/out/
 out/
 .vercel/
+.vite/
 *.tsbuildinfo
 .npm
 .yarn/
