@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import MapView from "../components/map/MapView";
 import GuidedTripSetup from "../components/fisher/GuidedTripSetup";
 import FisherDecisionSurface from "../components/fisher/FisherDecisionSurface";
+import { getFisherDecisionStatus } from "../components/fisher/FisherDecisionSurface";
 import WhatIfSimulator from "../components/mission/WhatIfSimulator";
 import OceanDetails from "../components/fisher/OceanDetails";
 import ChatPanel from "../components/chat/ChatPanel";
@@ -32,7 +33,7 @@ export interface FisherPageProps {
 export default function FisherPage({
   chat,
   theme,
-  mobileView: _mobileView,
+  mobileView,
   onStartCall,
   onOpenEvidence,
   onViewMap,
@@ -159,6 +160,18 @@ export default function FisherPage({
       ? assessment.decision
       : assessment.decision.status
     : "UNKNOWN";
+  const canonicalMapDecision = (() => {
+    switch (getFisherDecisionStatus(assessment, error)) {
+      case "SAFE_TO_GO":
+        return "GO" as const;
+      case "CAUTION":
+        return "CAUTION" as const;
+      case "DO_NOT_GO":
+        return "NO_GO" as const;
+      default:
+        return "UNKNOWN" as const;
+    }
+  })();
 
   const effectiveLayers = useMemo(() => {
     const chatLayers = assessment?.map_layers?.layers || [];
@@ -260,7 +273,7 @@ export default function FisherPage({
   } as const;
 
   return (
-    <main className={`app-main fisher-page`} role="main">
+    <main className={`app-main fisher-page view-${mobileView}`} role="main">
       <div className="fisher-content-column">
         {sidebarTab === "voyage" ? (
           <div
@@ -461,7 +474,7 @@ export default function FisherPage({
           timeOffsetHours={mapTimeOffset}
           onTimeOffsetChange={handleTimeOffsetChange}
           canonicalConditions={assessment?.conditions}
-          canonicalDecision={assessment?.decision}
+          canonicalDecision={canonicalMapDecision}
         />
       </div>
     </main>

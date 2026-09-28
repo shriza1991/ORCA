@@ -86,7 +86,7 @@ interface MapViewProps {
    */
   canonicalConditions?: any;
   /** Canonical deterministic decision corresponding to canonicalConditions. */
-  canonicalDecision?: string | { status?: string };
+  canonicalDecision?: "GO" | "CAUTION" | "NO_GO" | "UNKNOWN" | string | { status?: string };
 }
 
 export default function MapView({
@@ -108,7 +108,7 @@ export default function MapView({
   timeOffsetHours,
   onTimeOffsetChange,
   canonicalConditions,
-  canonicalDecision,
+  canonicalDecision = "UNKNOWN",
 }: MapViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -150,7 +150,7 @@ export default function MapView({
     sst_c: number;
     tide_height_m: number;
     tide_phase: string;
-    status: "GO" | "CAUTION" | "NO_GO";
+    status: "GO" | "CAUTION" | "NO_GO" | "UNKNOWN";
   } | null>(null);
 
   const [inspectedPoint, setInspectedPoint] = useState<{
@@ -280,24 +280,6 @@ export default function MapView({
     executeSpatialQuery(targetLat, targetLon, 50, selectedTimeStep)
       .then((res) => {
         if (isCancelled) return;
-        const wave = res.ocean_state.wave_height_m;
-        const craftUpper = (craftProfile || "motorized_boat").toUpperCase();
-        let limit = 2.2;
-        if (
-          craftUpper.includes("NON_MOTORIZED") ||
-          craftUpper.includes("CANOE")
-        )
-          limit = 1.4;
-        else if (
-          craftUpper.includes("MECHANIZED") ||
-          craftUpper.includes("TRAWLER")
-        )
-          limit = 3.5;
-
-        let status: "GO" | "CAUTION" | "NO_GO" = "GO";
-        if (wave > limit) status = "NO_GO";
-        else if (wave > limit * 0.8) status = "CAUTION";
-
         setMapForecast({
           loading: false,
           wave_height_m: res.ocean_state.wave_height_m,
@@ -308,7 +290,17 @@ export default function MapView({
           sst_c: res.ocean_state.sst_c,
           tide_height_m: res.astronomical_tide.current_height_m,
           tide_phase: res.astronomical_tide.phase,
-          status,
+          status:
+            (typeof canonicalDecision === "string" &&
+            ["GO", "CAUTION", "NO_GO", "UNKNOWN"].includes(canonicalDecision)
+              ? (canonicalDecision as "GO" | "CAUTION" | "NO_GO" | "UNKNOWN")
+              : (canonicalDecision as any)?.status === "SAFE_TO_GO"
+                ? "GO"
+                : (canonicalDecision as any)?.status === "DO_NOT_GO"
+                  ? "NO_GO"
+                  : (canonicalDecision as any)?.status === "CAUTION"
+                    ? "CAUTION"
+                    : "UNKNOWN"),
         });
 
         if (inspectedPoint) {
@@ -327,7 +319,7 @@ export default function MapView({
     return () => {
       isCancelled = true;
     };
-  }, [selectedTimeStep, center?.[0], center?.[1], craftProfile, canonicalConditions]);
+  }, [selectedTimeStep, center?.[0], center?.[1], craftProfile, canonicalConditions, canonicalDecision]);
 
   const activeStyle = theme === "dark" ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
   const currentStyleRef = useRef(activeStyle);
@@ -2140,7 +2132,9 @@ export default function MapView({
                       : "#991b1b",
               }}
             >
-              {mapForecast.status}
+              {mapForecast.status === "UNKNOWN"
+                ? t("MapView.safety_unavailable", "Safety status unavailable")
+                : mapForecast.status}
             </span>
             <span
               style={{

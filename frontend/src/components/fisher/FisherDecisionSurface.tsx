@@ -518,12 +518,6 @@ export default function FisherDecisionSurface({
         {TRANSLATIONS[language].planMyTrip}
       </button>
 
-      <TripPlanDetails
-        assessment={assessment}
-        language={language}
-        mainStatus={status}
-      />
-
       {/* 1. Decision Banner */}
       <div
         className={`fisher-decision-card ${currentCfg.bgClass}`}
@@ -697,6 +691,12 @@ export default function FisherDecisionSurface({
           </div>
         )}
       </div>
+
+      <TripPlanDetails
+        assessment={assessment}
+        language={language}
+        mainStatus={status}
+      />
 
       {/* 2. Mission Brief */}
       <MissionBriefPanel

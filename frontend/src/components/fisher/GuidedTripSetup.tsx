@@ -639,14 +639,6 @@ export default function GuidedTripSetup({
                   language,
                 ),
               },
-              {
-                value: "custom",
-                label: translateText("Use Custom Target Coordinates", language),
-                desc: translateText(
-                  "Evaluates custom waypoint coordinates",
-                  language,
-                ),
-              },
             ].map((opt) => (
               <button
                 key={opt.value}

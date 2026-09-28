@@ -66,7 +66,7 @@ export function useTripAssessment() {
         mission_state:
           request.mission_state ??
           (missionStateMatchesRequest(missionState, request)
-            ? missionState ?? undefined
+            ? (missionState ?? undefined)
             : undefined),
       };
 
