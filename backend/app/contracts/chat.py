@@ -269,6 +269,10 @@ class ChatResponse(BaseModel):
         None,
         description="Canonical M1.1 MissionState context",
     )
+    data_mode: str = Field(
+        "UNAVAILABLE",
+        description="Resolved source mode: LIVE | CACHED_REAL | DEMO | MOCK | FALLBACK | UNAVAILABLE",
+    )
 
 
 class DataQualityRating(str, Enum):

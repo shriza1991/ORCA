@@ -134,6 +134,7 @@ export interface ChatResponse {
   agent_collaboration?: AgentCollaborationPayload;
   decision_delta?: any;
   mission_state?: MissionState;
+  data_mode: 'LIVE' | 'CACHED_REAL' | 'DEMO' | 'MOCK' | 'FALLBACK' | 'UNAVAILABLE';
 }
 
 export type DataQualityRating = 'Verified' | 'Partial' | 'Snapshot Fallback' | 'Limited';

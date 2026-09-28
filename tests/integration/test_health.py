@@ -95,6 +95,7 @@ def test_chat_response_schema_on_success(client: TestClient):
     assert "conversation_id" in data
     assert "answer" in data
     assert "recommendation" in data
+    assert data["data_mode"] in ("LIVE", "DEMO", "UNAVAILABLE")
     assert "confidence" in data
     assert "evidence" in data
     # Recommendation status must be a known value

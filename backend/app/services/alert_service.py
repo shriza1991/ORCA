@@ -145,7 +145,7 @@ class AlertService:
                 return True
         except Exception as e:
             logger.warning(f"Database unavailable for acknowledge_alert: {e}")
-            return True # Pretend it succeeded for offline mode
+            return False
 
     @staticmethod
     def reassess_saved_trips():

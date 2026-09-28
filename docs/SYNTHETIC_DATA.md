@@ -58,16 +58,16 @@ The data pipeline flows through three distinct layers:
 
 ## 4. Dataset Composition (`SAMUDRA_DEMO_V1`)
 
-The dataset comprises **644 deterministic records** spanning **14 relational models**:
+The dataset comprises **1,122 deterministic records** spanning **15 relational models**:
 
 | Model | Table Name | Count | Key Features |
 | :--- | :--- | :---: | :--- |
 | `DemoStakeholder` | `demo_stakeholders` | 5 | Multi-role personas (`fisher`, `harbor_master`, `coast_guard`, `fleet_operator`, `admin`) |
-| `DemoHarbor` | `demo_harbors` | 2 | Ratnagiri (`16.99°N, 73.28°E`) and Malvan (`16.06°N, 73.47°E`) |
+| `DemoHarbor` | `demo_harbors` | 5 | Ratnagiri, Mumbai Coastal, Malvan, Kochi, and Goa demo harbors |
 | `DemoFisher` | `demo_fishers` | 8 | Preferred languages (English, Hindi, Marathi), craft profiles |
-| `DemoVessel` | `demo_vessels` | 8 | Trawlers, motorized fiberglass boats, traditional canoes |
-| `DemoTrip` | `demo_trips` | 12 | Planned, active, and completed fishing voyages |
-| `DemoMarineObservation`| `demo_marine_observations`| 96 | 48 hourly observations per harbor across 48 hours |
+| `DemoVessel` | `demo_vessels` | 14 | Trawlers, motorized fiberglass boats, traditional canoes |
+| `DemoTrip` | `demo_trips` | 18 | Planned, active, and completed fishing voyages |
+| `DemoMarineObservation`| `demo_marine_observations`| 194 | 97 hourly slots per harbor across -24h/+72h |
 | `DemoEOGridCell` | `demo_eo_grid_cells` | 350 | 25 spatial cells across 14 daily time slices (SST & Chlorophyll) |
 | `DemoPFZCandidate` | `demo_pfz_candidates` | 12 | Valid, expired, and out-of-radius test candidates with confidence tags |
 | `DemoGeofence` | `demo_geofences` | 5 | Naval firing range, Malvan Marine Sanctuary, security zone, shallow reef, operational area |
@@ -75,9 +75,9 @@ The dataset comprises **644 deterministic records** spanning **14 relational mod
 | `DemoRouteEdge` | `demo_route_edges` | 32 | Navigable topological sea lanes with hazard exposure weights |
 | `DemoHazardEvent` | `demo_hazard_events` | 10 | Squall alerts, gale warnings, high swell advisories, thunderstorms |
 | `DemoNotification` | `demo_notifications` | 20 | Role-linked safety alerts and trip status notifications |
-| `DemoVesselReplayPosition`| `demo_vessel_replay_positions`| 60 | 30 timestamped GPS breadcrumbs for 2 moving vessels |
+| `DemoVesselReplayPosition` | `demo_vessel_replay_positions` | 420 | Timestamped GPS replay positions |
 
-**Total Records:** `644`
+**Total Records:** `1,122`
 
 ---
 

@@ -553,7 +553,7 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
         elif any(w in msg_lower for w in ["today", "now", "aaj", "atta", "abhi"]):
             dep_time = "now"
 
-    if any(k in msg_lower for k in ["pfz", "fishing zone", "fish ground", "मत्स्य"]) or (
+    if any(k in msg_lower for k in ["pfz", "fishing zone", "fish ground", "fishing spot", "fishing spots", "मत्स्य"]) or (
         any(f in msg_lower for f in ["fish", "मछली", "मासेमारी", "macchi", "masemari"]) and any(q in msg_lower for q in ["where", "nearest", "find", "कुठे", "कहाँ", "कहा", "निकटतम", "kuthe", "kaha", "kidhar", "jawal"])
     ):
         intent = IntentCategory.PFZ
@@ -728,7 +728,7 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
         # 1. Capability requirements by intent
         msg_lower = state.get("user_message", "").lower()
         destination = state.get("destination")
-        has_weather_hazard = any(k in msg_lower for k in ["cyclone", "storm", "squall", "depression", "gale", "weather", "तूफान"])
+        has_weather_hazard = any(k in msg_lower for k in ["cyclone", "storm", "squall", "depression", "gale", "weather", "hazard", "alert", "warning", "तूफान"])
         has_geofence = any(k in msg_lower for k in ["restricted", "geofence", "naval", "firing", "protected", "mpa", "boundary", "reef", "coral", "zone", "प्रतिबंधित", "क्षेत्र"])
         has_route = any(k in msg_lower for k in ["route", "along my route", "on my route", "passage", "channel", "waypoint", "रास्ता", "मार्ग"]) or bool(destination)
 
@@ -754,6 +754,48 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
 
                 if tool.capability and tool.capability not in required_capabilities:
                     required_capabilities.append(tool.capability)
+
+        # ToolDefinition.supported_intents is optional metadata. The M2
+        # contract providers omit it, so the planner owns a canonical minimum
+        # capability plan for each supported intent. This also prevents a
+        # registered but unrelated LLM proposal from replacing the plan.
+        intent_capabilities = {
+            IntentCategory.PFZ.value: ["marine_conditions", "pfz_search"],
+            IntentCategory.SAFETY.value: [
+                "marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation",
+            ],
+            IntentCategory.CONDITIONS.value: ["marine_conditions", "weather_conditions"],
+            IntentCategory.HAZARDS.value: ["weather_conditions", "hazard_search"],
+            IntentCategory.ROUTE.value: [
+                "marine_conditions", "weather_conditions", "hazard_search",
+                "geospatial_hazard", "route_analysis", "risk_evaluation",
+            ],
+            IntentCategory.ANALYTICAL_EXPLANATION.value: [
+                "marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation",
+            ],
+            IntentCategory.WHAT_CHANGED.value: [
+                "marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation",
+            ],
+            IntentCategory.WHAT_IF.value: [
+                "marine_conditions", "weather_conditions", "hazard_search", "risk_evaluation",
+            ],
+            IntentCategory.ALTERNATIVE.value: [
+                "marine_conditions", "weather_conditions", "hazard_search",
+                "route_analysis", "risk_evaluation",
+            ],
+        }
+        canonical_capabilities = intent_capabilities.get(intent_val, [])
+        if intent_val == IntentCategory.HAZARDS.value:
+            canonical_capabilities = []
+            if has_weather_hazard:
+                canonical_capabilities.append("hazard_search")
+            if has_geofence:
+                canonical_capabilities.append("geospatial_hazard")
+            if has_route:
+                canonical_capabilities.append("route_analysis")
+        if intent_val in (IntentCategory.WHAT_IF.value, IntentCategory.ALTERNATIVE.value) and (has_route or destination):
+            canonical_capabilities.append("route_analysis")
+        required_capabilities = list(dict.fromkeys(canonical_capabilities))
 
         # 2. Capability availability check
         unavailable = tool_registry.get_unavailable_capabilities(required_capabilities)
@@ -791,13 +833,22 @@ def supervisor_node(state: ORCAState) -> Dict[str, Any]:
                     timeout_seconds=5.0,
                 )
                 approved_capabilities = tool_registry.list_capabilities()
+                intent_allowed_capabilities = set(required_capabilities)
+                # Weather context is a safe, relevant enhancement to PFZ
+                # discovery; it cannot replace the required marine/PFZ inputs.
+                if intent_val == IntentCategory.PFZ.value:
+                    intent_allowed_capabilities.add("weather_conditions")
                 valid_proposed = [
                     cap for cap in proposal.requested_capabilities
-                    if cap in approved_capabilities and tool_registry.is_capability_available(cap)
+                    if cap in approved_capabilities
+                    and cap in intent_allowed_capabilities
+                    and tool_registry.is_capability_available(cap)
                 ]
                 if valid_proposed:
                     # Enforce strict dependency ordering
-                    ordered_tools = _enforce_dependency_order(valid_proposed)
+                    ordered_tools = _enforce_dependency_order(
+                        list(dict.fromkeys(required_capabilities + valid_proposed))
+                    )
                     dur = round((time.perf_counter() - start_time) * 1000, 2)
                     trace = _append_trace(
                         state.get("trace"),
@@ -1997,6 +2048,20 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
 
     elif intent_val == IntentCategory.ANALYTICAL_EXPLANATION.value:
         rec = state.get("risk_assessment")
+        if rec is None and thread_id:
+            # Short follow-ups such as "Why?" reuse the last evaluated decision
+            # from this conversation. Keep the explanation grounded in the same
+            # canonical assessment instead of falling through to the legacy demo.
+            try:
+                saved_ctx = memory_manager.load_context(thread_id)
+                saved_assessment = saved_ctx.metadata.get("last_risk_assessment")
+                if saved_assessment:
+                    rec = Recommendation.model_validate(saved_assessment)
+                    sources = sorted({p.source_name for p in rec.provenance if p.source_name})
+                    if sources:
+                        evidence_names = ", ".join(sources)
+            except Exception as exc:
+                logger.debug("Could not restore prior assessment for explanation: %s", exc)
         craft = state.get("user_profile", {}).get("craft_profile", "motorized_boat")
         if rec:
             recommendation = rec
@@ -2614,10 +2679,7 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                     "next_action": recommendation.next_action,
                 }
             persisted_ctx.metadata["last_risk_assessment"] = {
-                "status": recommendation.status.value,
-                "summary": recommendation.summary,
-                "decisive_factors": recommendation.decisive_factors,
-                "next_action": recommendation.next_action,
+                **recommendation.model_dump(mode="json"),
             }
             memory_manager.save_context(persisted_ctx)
         except Exception as e:

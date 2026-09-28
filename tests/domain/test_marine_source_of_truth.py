@@ -23,6 +23,7 @@ from backend.app.domain.marine_dataset import IN_MEMORY_MARINE_DATASET, get_mari
 from backend.app.domain.risk_engine import DeterministicRiskEngine
 from backend.app.domain.situation import evaluate_sector_situation
 from backend.app.services.data_service import DataService
+from backend.app.domain.synthetic.generator import REFERENCE_TIME
 
 
 FIXTURE_PATH = (
@@ -53,7 +54,7 @@ def test_1_fixture_backed_marine_observation_contains_expected_values(osf_fixtur
     assert ratnagiri_ref["swell_period"] == 8.0
     assert ratnagiri_ref["current_speed"] == 1.0
     assert ratnagiri_ref["sst"] == 28.2
-    assert ratnagiri_ref["observation_time"] == "2026-09-12T06:00:00+00:00"
+    assert ratnagiri_ref["observation_time"] == REFERENCE_TIME.isoformat()
     assert ratnagiri_ref["qc_status"] == "VALID"
 
     malvan_ref = next(
@@ -109,7 +110,7 @@ def test_4_domain_reasoning_and_risk_evaluation_see_fixture_values():
     ctx = ToolInvocationContext(origin_harbor="Ratnagiri", craft_profile="motorized_boat")
     bundle = ds.get_observation_bundle(ctx)
 
-    reference_time = "2026-09-12T06:00:00Z"
+    reference_time = REFERENCE_TIME.isoformat()
     risk = DeterministicRiskEngine.evaluate(ctx, bundle=bundle, reference_time=reference_time)
 
     assert risk.status == RecommendationStatus.GO

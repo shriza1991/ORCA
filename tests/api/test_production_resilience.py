@@ -20,11 +20,20 @@ def test_situation_provider_failure_returns_explicit_unknown(monkeypatch):
     app = create_app()
 
     with TestClient(app) as client:
+        preflight = client.options(
+            "/api/v1/demo/sectors/sector-ratnagiri/situation",
+            headers={
+                "Origin": "https://samudra-qxx1.vercel.app",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
         response = client.get(
             "/api/v1/demo/sectors/sector-ratnagiri/situation",
             headers={"Origin": "https://samudra-qxx1.vercel.app"},
         )
 
+    assert preflight.status_code == 200
+    assert preflight.headers["access-control-allow-origin"] == "https://samudra-qxx1.vercel.app"
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "https://samudra-qxx1.vercel.app"
     payload = response.json()

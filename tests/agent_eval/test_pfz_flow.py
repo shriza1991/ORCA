@@ -37,7 +37,7 @@ def test_case_a_explicit_origin_ratnagiri():
     assert state["clarification_needed"] is False
     assert state["location"] is not None
     assert state["location"]["harbor"] == "Ratnagiri"
-    assert state["location"]["coordinates"] == [73.28, 16.99]
+    assert state["location"]["coordinates"] == [73.2847, 16.9942]
     assert "pfz_stub" in state["tool_results"]
     assert len(state["evidence"]) > 0
 
@@ -49,9 +49,9 @@ def test_case_a_explicit_origin_ratnagiri():
 def test_case_a_explicit_origin_other_harbors():
     """Verify explicit origin extraction works across multiple Indian coastal harbors."""
     test_cases = [
-        ("Where is the nearest PFZ from Veraval?", "Veraval", [70.37, 20.90]),
-        ("Find the closest fishing zone from Malvan", "Malvan", [73.47, 16.06]),
-        ("Nearest PFZ from Mumbai today", "Mumbai", [72.87, 18.92]),
+        ("Where is the nearest PFZ from Veraval?", "Veraval", [70.3689, 20.9022]),
+        ("Find the closest fishing zone from Malvan", "Malvan", [73.4658, 16.0583]),
+        ("Nearest PFZ from Mumbai today", "Mumbai", [72.8258, 18.9158]),
         ("Where is the nearest PFZ from Porbandar?", "Porbandar", [69.60, 21.64]),
     ]
 

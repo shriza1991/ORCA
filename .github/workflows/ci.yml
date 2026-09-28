@@ -48,7 +48,7 @@ jobs:
 
       - name: Run Backend Domain & API Test Suite
         run: |
-          pytest tests/domain tests/api tests/connectors tests/marinewatch -v
+          pytest -v
 
   frontend-legacy:
     name: Legacy Frontend (Vite)

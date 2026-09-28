@@ -61,7 +61,7 @@ def test_1_bundle_construction_from_data_service(data_service: DataService, cont
     # Weather fields
     assert bundle.weather.harbor == "Ratnagiri"
     assert bundle.weather.wind_speed_knots == 12.0
-    assert bundle.weather.wind_gust_knots == 16.0
+    assert bundle.weather.wind_gust_knots == 16.5
 
     # Hazard fields
     assert bundle.hazard.cyclone_warning_active is False
@@ -82,7 +82,7 @@ def test_2_same_value_lineage_to_risk_engine(data_service: DataService, context:
     assert any("12.0" in factor or "12" in factor for factor in result.decisive_factors + result.non_decisive_factors)
 
     # Invariance check: evaluating the exact same bundle past validity produces UNKNOWN
-    expired_reference_time = "2026-09-14T12:00:00Z"
+    expired_reference_time = "2026-10-02T12:00:00Z"
     stale_result = DeterministicRiskEngine.evaluate(context, bundle=bundle, reference_time=expired_reference_time)
     assert stale_result.status == RecommendationStatus.UNKNOWN
     assert any("Missing, degraded, or expired" in factor for factor in stale_result.decisive_factors)
@@ -136,6 +136,7 @@ def test_3_no_duplicate_retrieval_with_bundle(context: ToolInvocationContext):
         weather=weather,
         hazard=hazard,
         bundle=bundle,
+        data_mode="MOCK",
     )
 
 

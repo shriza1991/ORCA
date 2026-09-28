@@ -109,7 +109,7 @@ def test_dataset_generation_counts():
         "fishers": 8,
         "vessels": 14,
         "trips": 18,
-        "marine_observations": 96,
+        "marine_observations": 194,
         "eo_grid_cells": 350,
         "pfz_candidates": 12,
         "geofences": 5,
@@ -128,7 +128,7 @@ def test_dataset_generation_counts():
         )
 
     total_records = sum(len(v) for v in dataset.values())
-    assert total_records == 1024
+    assert total_records == 1122
 
 
 def test_dataset_determinism():
@@ -387,7 +387,7 @@ def test_seeder_db_lifecycle(sqlite_session):
     res1 = seed_synthetic_demo(session=sqlite_session, reset_first=False, dry_run=False)
     assert res1["status"] == "SUCCESS"
     assert res1["seeded_counts"]["stakeholders"] == 5
-    assert res1["seeded_counts"]["marine_observations"] == 96
+    assert res1["seeded_counts"]["marine_observations"] == 194
 
     counts1 = repo.get_counts_by_namespace(SYNTHETIC_NAMESPACE)
     assert counts1["stakeholders"] == 5
@@ -427,7 +427,7 @@ def test_repository_query_helpers(sqlite_session):
 
     # Marine observations by harbor
     ratnagiri_obs = repo.get_marine_observations(harbor_id="harbor-ratnagiri")
-    assert len(ratnagiri_obs) == 48
+    assert len(ratnagiri_obs) == 97
     assert all(o.harbor_id == "harbor-ratnagiri" for o in ratnagiri_obs)
 
     # PFZ candidates valid filter
@@ -457,7 +457,7 @@ def test_data_service_synthetic_routing():
     assert marine_data["mode"] == "SYNTHETIC"
     assert marine_data["data_source"] == "INCOIS-OSF"
     assert "hourly_forecast" in marine_data
-    assert len(marine_data["hourly_forecast"]) == 48
+    assert len(marine_data["hourly_forecast"]) == 97
 
     weather_data = service._get_synthetic_weather(lat=16.99, lon=73.28)
     assert weather_data["mode"] == "SYNTHETIC"
@@ -527,7 +527,7 @@ def test_demo_api_endpoints(sqlite_session):
             # 7. Marine observations
             res = test_client.get("/api/v1/demo/marine-observations?harbor_id=harbor-ratnagiri")
             assert res.status_code == 200
-            assert len(res.json()) == 48
+            assert len(res.json()) == 97
 
             # 8. EO grid cells
             res = test_client.get("/api/v1/demo/eo-grid-cells?cell_id=CELL-00-00")

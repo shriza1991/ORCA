@@ -164,6 +164,7 @@ def _build_degraded_response(
             "Response is unreliable and must not be used for voyage decisions."
         ],
         suggested_followups=[],
+        data_mode="UNAVAILABLE",
     )
 
 
@@ -184,6 +185,17 @@ class AgentRunService:
     @property
     def data_mode(self) -> str:
         return self._data_mode or settings.DATA_MODE
+
+    def _response_data_mode(self) -> str:
+        """Map internal connector modes to honest public response labels."""
+        mode = self.data_mode.upper()
+        if mode in {"SNAPSHOT", "SYNTHETIC"}:
+            return "DEMO"
+        if mode == "LIVE":
+            return "LIVE"
+        # HYBRID is rejected before graph execution because its live provider
+        # path is not wired; never imply that it supplied evidence.
+        return "UNAVAILABLE"
 
     async def run_agent(
         self,
@@ -326,6 +338,7 @@ class AgentRunService:
         response = state_mapper.map_state_to_response(final_state, run_id, conversation_id)
         if response.run_id != run_id:
             response.run_id = run_id
+        response.data_mode = self._response_data_mode()
 
         # Determine run status
         has_warnings = any(
@@ -343,6 +356,7 @@ class AgentRunService:
             "confidence": response.confidence.model_dump(),
             "warnings": response.warnings,
             "suggested_followups": response.suggested_followups,
+            "data_mode": response.data_mode,
         }
         trace_list = [
             t.model_dump() if hasattr(t, "model_dump") else t for t in response.trace

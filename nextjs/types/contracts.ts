@@ -5,7 +5,7 @@
  * Owned by Dev 1 (Frontend Lead) & Dev 2 (Backend Platform).
  */
 
-import type { DecisionObject } from './mission';
+import type { DecisionObject, MissionState } from './mission';
 
 export type RecommendationStatus = 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN' | 'INFORMATIONAL';
 
@@ -130,6 +130,9 @@ export interface ChatResponse {
   warnings: string[];
   suggested_followups: string[];
   agent_collaboration?: AgentCollaborationPayload;
+  decision_delta?: any;
+  mission_state?: MissionState;
+  data_mode: 'LIVE' | 'CACHED_REAL' | 'DEMO' | 'MOCK' | 'FALLBACK' | 'UNAVAILABLE';
 }
 
 export type DataQualityRating = 'Verified' | 'Partial' | 'Snapshot Fallback' | 'Limited';

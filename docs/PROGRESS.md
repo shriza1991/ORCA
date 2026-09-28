@@ -1810,6 +1810,54 @@ ecommended_action for human-readable text.
 egister_trip_monitoring to correct UI timestamp gaps causing departure_time == return_time.
 - Verified background worker process completes a single batch reassessment successfully per 60s cycle without repeating geographic fallback logs indefinitely.
 
+## 2026-09-28 - System Repair Forensic Audit and Verified Corrections
+- Status: **PARTIAL; full end-to-end repair remains in progress**
+- Created `feat/orca-system-repair` before changes, as required by the repository repair instructions.
+- Audit findings:
+  - CORS middleware is outermost and focused production-resilience tests confirm configured-origin headers are present on both degraded and unhandled-error responses.
+  - The Ratnagiri situation endpoint catches source evaluation failures and returns `UNKNOWN` with `data_mode=UNAVAILABLE` and null unavailable counts.
+  - The deterministic PFZ local is initialized before evaluation, and map t=0 already consumes assessment conditions.
+  - `frontend/src/hooks/useTripAssessment.ts` had the documented nullable destination and nullable `MissionState` type errors.
+  - CI referenced the nonexistent `tests/marinewatch` directory despite root `pytest.ini` configuring `testpaths=tests`.
+  - `acknowledge_alert` reported success after a database error, falsely implying that the write persisted.
+- Root-cause register:
+
+  | Symptom | Root cause / affected path | Fallback gap | Correction / regression coverage |
+  | --- | --- | --- | --- |
+  | Vite strict typecheck errors | Nullable `MissionState.destination` and nullable hook state in `useTripAssessment` | Type contract handled only the non-null path | Optional access and explicit nullable normalization; Vite typecheck |
+  | CI references missing test directory | CI backend job bypassed root pytest discovery and named absent `tests/marinewatch` | Existing tests never ran in CI | Use `pytest -v`; root `pytest.ini` discovers `tests` |
+  | Alert acknowledgment says success offline | `acknowledge_alert` returned `True` from its DB exception path | Caller could assume a write persisted | Return `False`; DB outage regression test |
+  | Situation browser CORS failure | No local reproduction; CORS is outermost with explicit Vercel origin | Existing safety fallback returns a response with configured CORS headers | Added OPTIONS assertion; degraded GET and 500 tests cover headers |
+  | Chat request without DB/provider | Local deterministic smoke returned HTTP 200 / `UNKNOWN`; response lacked top-level `data_mode` | Data mode is not propagated in the chat response contract | Unresolved contract gap; full response unification remains |
+  | “Tomorrow” graph assessment UNKNOWN | Reproduction shows deterministic evidence is insufficient for that relative timeframe | No valid forecast covers requested time | Unresolved fixture/horizon issue; `test_flagship_multi_turn_flow` regression currently fails |
+- Changes:
+  - Fixed optional destination access and normalized nullable mission state to `undefined` in the Vite assessment hook.
+  - Changed CI backend test command to `pytest -v`, allowing configured discovery of the real test suite.
+  - Changed alert acknowledgment to return `False` on DB failure and added focused DB degradation tests.
+- Verification:
+  - Focused alert/CORS resilience tests: 4 passed.
+  - Vite typecheck and production build: passed after the nullability patch. Vite unit suite: 274/274 passed after the patch.
+  - Full pytest under CI-like env (`DEBUG=false`, `APP_ENV=test`, `DATA_MODE=SNAPSHOT`, `LLM_MODE=fake`): **688 passed, 114 failed, 52 skipped, 25 errors**. The 25 setup errors include pytest `tmp_path` writes blocked under the default user Temp path by this sandbox. With `TEMP`/`TMP` redirected into the workspace, the targeted filesystem-backed connector subset ran and reduced those errors to one remaining connector behavior failure (`test_manager_hybrid_fallback` expects permanent auth failure to raise, while current manager falls back). Representative agent failure `test_flagship_multi_turn_flow` produces `UNKNOWN` because its deterministic data is insufficient for the test's relative "tomorrow" query. Additional scenario/agent-evaluation failures remain unresolved.
+  - Next.js typecheck and production build passed; build skipped remote Google Fonts optimization because network access was unavailable.
+  - Local smoke run: Vite served `/` with HTTP 200. With PostgreSQL absent, FastAPI started, health returned `status=unavailable`, the Ratnagiri situation endpoint returned `UNKNOWN`, and chat returned HTTP 200 with `UNKNOWN`; request logs included request IDs. Chat returned no top-level `data_mode`, which remains a response-contract gap. Local browser interaction was not performed.
+- Remaining work: resolve backend agent/scenario failures and align outdated test expectations with current deterministic fixtures, verify runtime chat/assessment/map flow, and complete final diff review. Deployment was not tested.
+
+## 2026-09-28 - Confirmed Planner, Forecast, and Conversation Continuity Fixes
+- Status: **IN PROGRESS; wider verification continues**
+- The earlier audit row attributing the flagship UNKNOWN result only to missing forecast coverage is superseded by these reproduced root causes:
+  - Contract-mock tools omit optional `supported_intents`, yielding no required safety capabilities.
+  - Structured LLM proposals were accepted if registered, even when unrelated to the classified intent (the deterministic planner proposed `svas_advisory` for a safety request).
+  - WHY intent continuity carried the conversation but did not restore its prior canonical risk assessment, allowing the composer to substitute legacy reef demo text.
+- Safety planning now includes canonical marine, weather, hazard, and risk capabilities. LLM proposals are constrained to the capabilities required for the current intent.
+- WHY follow-ups restore the prior serialized canonical Recommendation and its provenance from conversation metadata.
+- Regenerated checked-in synthetic data using the canonical generator. Its 97 hourly observations per harbor now have matching fixture files, DataService selection, documentation, and repository/API count assertions.
+- Chat responses now expose `data_mode` on normal and degraded paths, including voice chat. Frontend contract unions and explicit DEMO mock values match the API contract.
+- Verification: `tests/agent_eval/test_flagship_flow.py` passed (1/1) after the planner and memory fixes. The combined agent intent/planner/scenario/benchmark and forecast-alignment suites now pass **252 tests, 1 skipped**. Vite typecheck, Vitest (274/274), Vite production build, Next.js typecheck, and Next.js production build passed. A full backend run is in progress; the earlier 770-pass/62-fail result preceded the final planner and forecast corrections. No deployment was tested.
+- Follow-up planner correction: canonical plans now cover PFZ, safety, conditions, hazards, routes, explanations, what-if, what-changed, and alternatives. Hazard sub-capabilities are selected from explicit weather/geofence/route language. Planner proposals may add only intent-relevant capabilities, while the deterministic required set is always retained. Added "fishing spots" as a PFZ phrase. This prevents optional metadata gaps and unrelated capabilities from emptying or contaminating plans.
+- Removed SnapshotConnector's nearest-record fallback when every fixture is future-dated or older than the freshness window. Such data no longer masquerades as covering the requested departure; the connector returns the existing structured unavailable payload.
+- Corrected PFZ coordinate regression assertions to the actual full-precision canonical harbor coordinates (the previous expected values had been rounded inconsistently).
+- Second complete backend run: **828 passed, 4 failed, 52 skipped**. Three of the four failures exposed remaining fixes now applied: HYBRID auth fallback had been mislabeled/untested (and a local variable placement bug in the first correction); marine source-of-truth and mission-brief tests still hard-coded the obsolete 2026-09-12 fixture date. The fourth failure (`test_manager_hybrid_fallback`) is being rerun after the fallback correction. Targeted 252-test agent/connector suite was green before these latest fallback/date edits.
+
 ## 2026-09-27 - M2 Snapshot Evidence & UI Consistency Updates
 - Status: **COMPLETE & VERIFIED**
 - **1. Contradictory GO Banner Fix:** Updated FisherDecisionSurface.tsx and TripPlanDetails.tsx to respect the top-level assessment status. When the status is UNKNOWN or DEGRADED_DATA, the bottom conditions bar displays 'INSUFFICIENT DATA' in gray rather than a green 'GO' banner, ensuring a unified UI state.

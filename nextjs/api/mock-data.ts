@@ -8,6 +8,7 @@ export const SAMPLE_QUERIES = [
 ];
 
 export const MOCK_SAFETY_RESPONSE: ChatResponse = {
+  data_mode: 'DEMO',
   run_id: 'run_98f82a1e-84b2-4d22-964d-0457639f283a',
   conversation_id: 'conv_67b3112c-15a4-4a5e-9f0e-3b2d18302f3a',
   language: 'en',
@@ -119,6 +120,7 @@ export const MOCK_SAFETY_RESPONSE: ChatResponse = {
 };
 
 export const MOCK_PFZ_RESPONSE: ChatResponse = {
+  data_mode: 'DEMO',
   run_id: 'run_pfz_demo_001',
   conversation_id: 'conv_67b3112c-15a4-4a5e-9f0e-3b2d18302f3a',
   language: 'en',
