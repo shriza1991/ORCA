@@ -6,18 +6,38 @@ Owned by Dev 2 (Backend Platform Lead).
 import logging
 from contextlib import asynccontextmanager
 import asyncio
+import sys
+from pathlib import Path
+
+# Ensure project root and backend directory are in sys.path
+_current_dir = Path(__file__).resolve().parent
+_backend_dir = _current_dir.parent
+_repo_root = _backend_dir.parent
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+if str(_backend_dir) not in sys.path:
+    sys.path.insert(0, str(_backend_dir))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from backend.app.agents.memory import memory_manager
-from backend.app.api.v1.marinewatch import router as marinewatch_router
-from backend.app.api.v1.routes import router as api_v1_router
-from backend.app.connectors.client import connector_http_client
-from backend.app.core.config import settings
-from backend.app.core.logging import setup_logging
-from backend.app.db.store import SQLAlchemyConversationStore
+try:
+    from backend.app.agents.memory import memory_manager
+    from backend.app.api.v1.marinewatch import router as marinewatch_router
+    from backend.app.api.v1.routes import router as api_v1_router
+    from backend.app.connectors.client import connector_http_client
+    from backend.app.core.config import settings
+    from backend.app.core.logging import setup_logging
+    from backend.app.db.store import SQLAlchemyConversationStore
+except ImportError:
+    from app.agents.memory import memory_manager
+    from app.api.v1.marinewatch import router as marinewatch_router
+    from app.api.v1.routes import router as api_v1_router
+    from app.connectors.client import connector_http_client
+    from app.core.config import settings
+    from app.core.logging import setup_logging
+    from app.db.store import SQLAlchemyConversationStore
 
 logger = logging.getLogger(__name__)
 
