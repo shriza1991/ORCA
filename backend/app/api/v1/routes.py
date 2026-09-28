@@ -507,18 +507,29 @@ async def get_map_layer(layer_id: str):
     try:
         layer_uuid = uuid.UUID(layer_id)
     except ValueError:
-        return JSONResponse(status_code=400, content={"error": "Invalid layer_id format"})
+        layer_uuid = None
 
     # 1. Try database first
     try:
         with SessionLocal() as session:
-            layer = session.query(MapLayer).filter_by(id=layer_uuid).first()
+            layer = (
+                session.query(MapLayer).filter_by(id=layer_uuid).first()
+                if layer_uuid is not None
+                else None
+            )
+            if layer is None:
+                # API clients use the stable semantic ID from the response
+                # (for example, ``layer_pfz_candidates``); the database row
+                # also has an internal UUID primary key. Support both IDs.
+                layer = session.query(MapLayer).filter(
+                    MapLayer.properties["layer_id"].astext == layer_id
+                ).first()
             if layer:
                 geom_shape = to_shape(layer.geometry)
                 geojson_geom = mapping(geom_shape)
 
                 return {
-                    "id": str(layer.id),
+                    "id": layer.properties.get("layer_id") or str(layer.id),
                     "run_id": str(layer.run_id),
                     "layer_type": layer.layer_type,
                     "geometry": geojson_geom,

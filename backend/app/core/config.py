@@ -61,7 +61,7 @@ class Settings(BaseSettings):
         return self
 
     # Data Strategy
-    DATA_MODE: str = "HYBRID"  # LIVE | HYBRID | SNAPSHOT
+    DATA_MODE: str = "SNAPSHOT"  # LIVE | HYBRID | SNAPSHOT (offline-first local demo default)
 
     @property
     def validated_data_mode(self) -> str:

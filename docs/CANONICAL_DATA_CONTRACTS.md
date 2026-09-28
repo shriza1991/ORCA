@@ -60,11 +60,15 @@ class MarineConditionsPayload(BaseModel):
     swell_period_sec: Optional[float]        # Swell period in seconds (>= 0.0)
     surface_current_knots: Optional[float]   # Surface current speed in knots
     sea_surface_temp_c: Optional[float]      # Sea surface temperature (SST) in °C
+    tide_level_m: Optional[float]             # Tide height in meters above the source datum
+    tide_phase: Optional[str]                 # FLOOD, EBB, HIGH, LOW when supplied
     observed_at: str                         # Measurement observation timestamp (ISO-8601 UTC)
     valid_to: str                            # Forecast validity expiration (ISO-8601 UTC)
     source_name: str                         # "INCOIS Ocean State Forecast"
     source_url: Optional[str]                # Official bulletin URL
 ```
+
+Demo/SYNTHETIC payloads retain explicit demo source names and must not carry an institutional live-feed URL as their provenance URL. Tide values are passed through only when present in the same canonical marine record.
 
 #### Normalized Metric Mapping (`EvidenceItem`):
 - `metric_name="significant_wave_height"`, `metric_unit="meters"`

@@ -153,6 +153,14 @@ class DeterministicRiskEngine:
         weather_stale = False
         hazard_stale = False
 
+        def provenance_quality(source_name: str, degraded: bool, official: bool) -> list[str]:
+            normalized_source = source_name.upper()
+            if any(marker in normalized_source for marker in ("SAMUDRA", "DEMO", "SYNTHETIC", "MOCK")):
+                return ["deterministic_demo"] if not degraded else ["degraded", "stale_demo_data"]
+            if degraded:
+                return ["degraded", "stale_telemetry"]
+            return ["official_source"] if official else ["fallback_model"]
+
         if marine is not None:
             if marine.valid_to:
                 try:
@@ -179,7 +187,7 @@ class DeterministicRiskEngine:
                 valid_to=marine.valid_to,
                 data_mode=data_mode,
                 is_stale=marine_stale,
-                quality_flags=["official_source"] if not is_marine_degraded and marine_provider == "INCOIS" else (["fallback_model"] if not is_marine_degraded else ["degraded", "stale_telemetry"]),
+                quality_flags=provenance_quality(marine_source, is_marine_degraded, marine_provider == "INCOIS"),
             )
             provenance_list.append(prov_marine)
             evidence_ids.append(f"EV-{marine_provider.upper()}-OSF-01")
@@ -210,7 +218,7 @@ class DeterministicRiskEngine:
                 valid_to=weather.valid_to,
                 data_mode=data_mode,
                 is_stale=weather_stale,
-                quality_flags=["official_source"] if not is_weather_degraded and weather_provider == "IMD" else (["fallback_model"] if not is_weather_degraded else ["degraded", "stale_telemetry"]),
+                quality_flags=provenance_quality(weather_source, is_weather_degraded, weather_provider == "IMD"),
             )
             provenance_list.append(prov_weather)
             evidence_ids.append(f"EV-{weather_provider.upper()}-WEATHER-01")
@@ -241,7 +249,7 @@ class DeterministicRiskEngine:
                 valid_to=hazard.valid_to,
                 data_mode=data_mode,
                 is_stale=hazard_stale,
-                quality_flags=["official_source"] if not is_hazard_degraded else ["degraded", "stale_bulletin"],
+                quality_flags=provenance_quality(hazard_source, is_hazard_degraded, True),
             )
             provenance_list.append(prov_hazard)
             evidence_ids.append(f"EV-{hazard_provider.upper()}-HAZARD-01")

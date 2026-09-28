@@ -11,6 +11,11 @@ import pytest
 from datetime import datetime, timezone
 from backend.app.contracts.assessment import TripAssessmentRequest, TripAssessmentResponse
 from backend.app.services.assessment_service import AssessmentService
+from backend.app.domain.synthetic.generator import REFERENCE_TIME
+
+
+_DEPARTURE = REFERENCE_TIME.replace(hour=7).isoformat()
+_RETURN = REFERENCE_TIME.replace(hour=11).isoformat()
 
 
 def test_m1_3_acceptance_test_1_assessment_contains_agent_collaboration():
@@ -20,8 +25,8 @@ def test_m1_3_acceptance_test_1_assessment_contains_agent_collaboration():
         origin_harbor="Ratnagiri",
         coordinates=[73.28, 16.99],
         craft_profile="motorized_boat",
-        departure_time="2026-09-12T07:00:00Z",
-        return_time="2026-09-12T11:00:00Z",
+        departure_time=_DEPARTURE,
+        return_time=_RETURN,
         data_mode="SNAPSHOT",
         language_preference="en",
     )
@@ -42,8 +47,8 @@ def test_m1_3_acceptance_test_2_specialist_agents_and_arbitration_populated():
         origin_harbor="Ratnagiri",
         coordinates=[73.28, 16.99],
         craft_profile="motorized_boat",
-        departure_time="2026-09-12T07:00:00Z",
-        return_time="2026-09-12T11:00:00Z",
+        departure_time=_DEPARTURE,
+        return_time=_RETURN,
         data_mode="SNAPSHOT",
         language_preference="en",
     )
@@ -82,8 +87,8 @@ def test_m1_3_acceptance_test_3_threshold_comparisons_in_evidence():
         origin_harbor="Ratnagiri",
         coordinates=[73.28, 16.99],
         craft_profile="motorized_boat",
-        departure_time="2026-09-12T07:00:00Z",
-        return_time="2026-09-12T11:00:00Z",
+        departure_time=_DEPARTURE,
+        return_time=_RETURN,
         data_mode="SNAPSHOT",
         language_preference="en",
     )

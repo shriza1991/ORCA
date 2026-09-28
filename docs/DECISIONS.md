@@ -986,12 +986,20 @@ Alternatives: Trust the structured planner based on registry membership alone (r
 Impact: Safety graph execution is deterministic when optional metadata is absent, structured proposals cannot cross intent boundaries, and explanations reference the decision/provenance already saved for the thread. Unknown remains the output whenever the saved assessment itself is unavailable.
 Owner: ORCA engineering
 Date: 2026-09-28
-
-## D056 - Degraded Connector Fallback and Forecast Window Honesty
+## D056 - Degraded Connector Fallback and Forecast Window Honesty
 Status: ACCEPTED
 Decision: In HYBRID mode, fall back to the configured snapshot when all live providers fail, including authentication/provider errors, and include the failure category in the source label. Snapshot OSF selection never substitutes a nearest observation that is after the requested departure or older than the configured freshness window. Fixture-dependent tests use the generator's REFERENCE_TIME.
 Reason: Demo/offline UI behavior must remain available during live-provider failures while preserving the actual failure type. Separately, nearest-neighbor reuse presented stale or future observations as if they covered a trip window. The regenerated synthetic fixtures moved the source horizon, while several assertions still named the previous date.
 Alternatives: Raise authentication failures without fallback (rejected for demo-first continuity requirements; the fallback remains clearly marked); label every fallback "Transient Error" (rejected because auth/configuration failures are not transient); serve nearest fixture data beyond coverage (rejected because it can create a false safety assessment).
 Impact: HYBRID fallback remains available and its provenance distinguishes authentication and provider errors. Missing forecast coverage returns structured unavailable evidence. Synthetic acceptance tests remain coupled to the generator's canonical reference date.
+Owner: ORCA engineering
+Date: 2026-09-28
+
+## D057 - Offline Demo Snapshot Authority and Provenance
+Status: ACCEPTED
+Decision: Local Fisher demo requests use SNAPSHOT mode by default. The checked-in deterministic OSF fixture is authoritative over older database-seeded demo rows; marine, weather, hazard, PFZ, and route forecast inputs are selected for the requested time from the same generated timeline. Demo provenance is explicit and risk evidence must not label SAMUDRA/DEMO/SYNTHETIC sources as official institutional data.
+Reason: The UI requested a future Sep 29-30 trip while the database-first snapshot path returned old rows, producing stale/degraded panels and no valid route forecast. Provider names such as INCOIS and IMD describe the fixture schema, not live provenance.
+Alternatives: Use old database rows whenever available (rejected because their validity can predate the requested trip); relabel synthetic records as official (rejected because it misstates evidence).
+Impact: Offline assessments use matching demo observations and route forecast data when fixture coverage exists; stale/future observations are reported unavailable outside fixture coverage. Provenance distinguishes deterministic demo evidence from official live feeds.
 Owner: ORCA engineering
 Date: 2026-09-28

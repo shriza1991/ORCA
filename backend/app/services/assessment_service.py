@@ -5,7 +5,7 @@ Coordinates the single assessment pipeline for the Fisher dashboard and conversa
 """
 import uuid
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 from typing import List, Optional
 
 from backend.app.contracts.assessment import (
@@ -288,6 +288,22 @@ class AssessmentService:
                         selected_pfz = pfz_ranking.ranked_candidates[0]
                     target_coords = [selected_pfz.longitude, selected_pfz.latitude]
                     target_dest = selected_pfz.location_reference or selected_pfz.candidate_id
+
+                route_start = datetime.fromisoformat(
+                    (effective_departure_time or now_iso).replace("Z", "+00:00")
+                )
+                if route_start.tzinfo is None:
+                    route_start = route_start.replace(tzinfo=UTC)
+                route_end = (
+                    datetime.fromisoformat(effective_return_time.replace("Z", "+00:00"))
+                    if effective_return_time
+                    else route_start + timedelta(hours=72)
+                )
+                if route_end.tzinfo is None:
+                    route_end = route_end.replace(tzinfo=UTC)
+                hourly_forecast = data_service.get_hourly_marine_forecast(
+                    ctx, start_time=route_start, end_time=route_end
+                )
                 
                 route_payload = route_engine.evaluate_routes(
                     context=ctx,
@@ -297,6 +313,8 @@ class AssessmentService:
                     hazard=hazard,
                     geospatial_engine=geo_engine,
                     dest_coords=target_coords,
+                    hourly_forecast=hourly_forecast,
+                    departure_time=route_start,
                 )
                 route_candidates = []
                 for r in route_payload.routes:

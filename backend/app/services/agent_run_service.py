@@ -186,15 +186,27 @@ class AgentRunService:
     def data_mode(self) -> str:
         return self._data_mode or settings.DATA_MODE
 
-    def _response_data_mode(self) -> str:
+    def _response_data_mode(self, response: ChatResponse | None = None) -> str:
         """Map internal connector modes to honest public response labels."""
         mode = self.data_mode.upper()
         if mode in {"SNAPSHOT", "SYNTHETIC"}:
             return "DEMO"
         if mode == "LIVE":
             return "LIVE"
-        # HYBRID is rejected before graph execution because its live provider
-        # path is not wired; never imply that it supplied evidence.
+        if mode == "HYBRID" and response is not None:
+            source_names = [item.source_name for item in response.evidence]
+            source_names.extend(item.source_name for item in response.recommendation.provenance)
+            normalized_sources = [name.upper() for name in source_names]
+            if any(
+                marker in name
+                for name in normalized_sources
+                for marker in ("HYBRID FALLBACK", "SAMUDRA", "SYNTHETIC", "SNAPSHOT", "DEMO")
+            ):
+                return "FALLBACK"
+            if normalized_sources:
+                return "LIVE"
+        # Do not describe a hybrid request with no attributable evidence as
+        # live or cached data.
         return "UNAVAILABLE"
 
     async def run_agent(
@@ -338,7 +350,7 @@ class AgentRunService:
         response = state_mapper.map_state_to_response(final_state, run_id, conversation_id)
         if response.run_id != run_id:
             response.run_id = run_id
-        response.data_mode = self._response_data_mode()
+        response.data_mode = self._response_data_mode(response)
 
         # Determine run status
         has_warnings = any(

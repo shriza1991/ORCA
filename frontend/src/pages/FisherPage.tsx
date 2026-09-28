@@ -124,7 +124,9 @@ export default function FisherPage({
       return_time: chat.missionContext.return_time,
       destination_id: chat.missionContext.target_pfz,
       language_preference: chat.language,
-      data_mode: "HYBRID",
+      // The Fisher demo must remain usable offline. Snapshot mode resolves
+      // against the checked-in deterministic marine fixture set.
+      data_mode: "SNAPSHOT",
     });
 
     registerTrip({
@@ -459,6 +461,7 @@ export default function FisherPage({
           timeOffsetHours={mapTimeOffset}
           onTimeOffsetChange={handleTimeOffsetChange}
           canonicalConditions={assessment?.conditions}
+          canonicalDecision={assessment?.decision}
         />
       </div>
     </main>

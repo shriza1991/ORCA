@@ -53,6 +53,8 @@ class IncoisOSFNormalizer:
         swell_period = clean_val(source_record.get("swell_period", source_record.get("swell_period_sec", source_record.get("wave_period_sec"))))
         current_speed = clean_val(source_record.get("current_speed", source_record.get("surface_current_knots", source_record.get("current_speed_knots"))))
         sst = clean_val(source_record.get("sst", source_record.get("sea_surface_temp_c")))
+        tide_level = clean_val(source_record.get("tide_level_m", source_record.get("sea_level_m")))
+        tide_phase = source_record.get("tide_phase")
 
         obs_time = (
             source_record.get("timestamp_utc")
@@ -116,6 +118,8 @@ class IncoisOSFNormalizer:
             swell_period_sec=swell_period,
             surface_current_knots=current_speed,
             sea_surface_temp_c=sst,
+            tide_level_m=tide_level,
+            tide_phase=str(tide_phase) if tide_phase is not None else None,
             observed_at=obs_time,
             valid_to=valid_to,
             source_name=source_label,
@@ -147,6 +151,7 @@ class IncoisPFZNormalizer:
                 "id": feat.get("id", feat.get("feature_id", f"PFZ-F{idx+1:02d}")),
                 "lat": float(lat) if lat is not None else 16.92,
                 "lon": float(lon) if lon is not None else 73.15,
+                "sst": feat.get("sea_surface_temp_c", feat.get("sst_c", feat.get("sst"))),
                 "sst_grad": feat.get("sst_gradient_c", feat.get("sst_grad", feat.get("sst", 0.8))),
                 "chlorophyll": feat.get("chl_indicator", feat.get("chlorophyll", 1.4)),
                 "confidence": feat.get("confidence", "HIGH"),

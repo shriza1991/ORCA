@@ -34,6 +34,7 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
 
   const rawMode = health?.data_mode?.trim();
   const mode = rawMode && !rawMode.includes('{{') ? rawMode.toUpperCase() : 'UNKNOWN';
+  const visibleMode = mode === 'SNAPSHOT' ? 'DEMO' : mode;
   const databaseConnected = health?.database?.trim().toLowerCase() === 'connected';
 
   const getModeClass = () => {
@@ -64,7 +65,7 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
     <div className="data-mode-indicator">
       <span className={`mode-badge ${getModeClass()}`} title="System Data Ingestion Mode">
         <Database size={12} />
-        <span>{t('DataModeIndicator.mode', { val: t('DataModeIndicator.' + mode, mode) })}</span>
+        <span>{t('DataModeIndicator.mode', { val: t('DataModeIndicator.' + visibleMode, visibleMode) })}</span>
       </span>
       {health?.database && !health.database.includes('{{') && (
         <span

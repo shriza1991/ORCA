@@ -82,10 +82,12 @@ def test_provider_authentication_failure(test_client, enable_live_mode):
     with patch("backend.app.connectors.client.connector_http_client.get") as mock_get:
         mock_get.side_effect = httpx.HTTPStatusError("Forbidden", request=MagicMock(), response=MagicMock(status_code=403))
         
-        # Authentication failure is permanent, it bubbles up from manager, caught by routes
+        # HYBRID remains available through its labeled snapshot fallback.
         resp = _post_chat(test_client, {"message": "Safe?"})
-        assert resp.status_code == 503
-        assert resp.json()["error"]["code"] == "UPSTREAM_AUTH_FAILED"
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["data_mode"] == "FALLBACK"
+        assert data["recommendation"]["status"] in {"GO", "CAUTION", "NO_GO", "UNKNOWN"}
 
 
 def test_provider_malformed_response(test_client, enable_live_mode):
@@ -93,29 +95,34 @@ def test_provider_malformed_response(test_client, enable_live_mode):
         mock_get.return_value.json.side_effect = ValueError("Malformed JSON")
         
         resp = _post_chat(test_client, {"message": "Safe?"})
-        assert resp.status_code == 502
-        assert resp.json()["error"]["code"] == "UPSTREAM_MALFORMED_DATA"
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["data_mode"] == "FALLBACK"
+        assert data["recommendation"]["status"] in {"GO", "CAUTION", "NO_GO", "UNKNOWN"}
 
 
 def test_missing_snapshot(test_client):
     # Default is SNAPSHOT mode
-    with patch("backend.app.connectors.snapshot.SnapshotConnector._load_snapshot") as mock_load:
+    with patch("backend.app.connectors.snapshot.SnapshotConnector._load_osf_fixture", return_value=[]), \
+         patch("backend.app.connectors.snapshot.SnapshotConnector._load_snapshot") as mock_load:
         from backend.app.connectors.errors import ConnectorMissingSnapshotError
         mock_load.side_effect = ConnectorMissingSnapshotError("Not found")
         
-        # Will bubble up and be caught as Agent Execution Failed (Upstream Unavailable logic)
+        # Missing fixture data yields an explicit UNKNOWN in the stable response contract.
         resp = _post_chat(test_client, {"message": "Safe?"})
-        assert resp.status_code == 502
-        assert resp.json()["error"]["code"] == "UPSTREAM_UNAVAILABLE"
+        assert resp.status_code == 200
+        assert resp.json()["recommendation"]["status"] == "UNKNOWN"
 
 
 def test_stale_snapshot(test_client):
-    with patch("backend.app.connectors.snapshot.SnapshotConnector._load_snapshot") as mock_load:
+    with patch("backend.app.connectors.snapshot.SnapshotConnector._load_osf_fixture", return_value=[]), \
+         patch("backend.app.connectors.snapshot.SnapshotConnector._load_snapshot") as mock_load:
         from backend.app.connectors.errors import ConnectorStaleSnapshotError
         mock_load.side_effect = ConnectorStaleSnapshotError("Stale")
         
         resp = _post_chat(test_client, {"message": "Safe?"})
-        assert resp.status_code == 502
+        assert resp.status_code == 200
+        assert resp.json()["recommendation"]["status"] == "UNKNOWN"
 
 
 def test_database_outage(test_client):
@@ -152,8 +159,8 @@ def test_all_critical_sources_unavailable(test_client, enable_live_mode):
             mock_get.side_effect = httpx.TimeoutException("Timeout")
             
             resp = _post_chat(test_client, {"message": "Safe?"})
-            assert resp.status_code == 504
-            assert resp.json()["error"]["code"] == "UPSTREAM_TIMEOUT"
+            assert resp.status_code == 200
+            assert resp.json()["recommendation"]["status"] == "UNKNOWN"
             
             # Health should be degraded or unavailable
             health_resp = test_client.get("/api/v1/health")

@@ -19,6 +19,7 @@ from backend.app.agents.integrations.contracts import ToolInvocationContext
 from backend.app.connectors.snapshot import SnapshotConnector
 from backend.app.repositories import PFZRepository
 from backend.app.services.data_service import DataService
+from backend.app.domain.synthetic.generator import REFERENCE_TIME
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +71,27 @@ class TestDataServiceSnapshotMode:
         payload = snapshot_data_service.get_pfz_raw_advisories(ctx)
         assert isinstance(payload.features, list)
         assert payload.source_name
+
+    def test_snapshot_bundle_and_hourly_forecast_share_demo_timeline(self):
+        service = DataService(data_mode="SNAPSHOT")
+        departure = REFERENCE_TIME + timedelta(hours=20)
+        end = departure + timedelta(hours=24)
+        context = ToolInvocationContext(
+            origin_harbor="Ratnagiri",
+            craft_profile="motorized_boat",
+            departure_time=departure.isoformat(),
+        )
+
+        bundle = service.get_observation_bundle(context)
+        forecast = service.get_hourly_marine_forecast(context, departure, end)
+
+        assert bundle.marine.source_name.startswith("SAMUDRA deterministic demo")
+        assert bundle.weather.source_name.startswith("SAMUDRA deterministic demo")
+        assert bundle.hazard.source_name.startswith("SAMUDRA deterministic demo")
+        assert bundle.marine.observed_at == bundle.weather.observed_at
+        assert bundle.marine.observed_at == bundle.hazard.valid_from
+        assert len(forecast) == 25
+        assert all(item.observed_at and item.significant_wave_height_m is not None for item in forecast)
 
 
 # ---------------------------------------------------------------------------

@@ -29,7 +29,15 @@ def test_trip_assessment_synthetic_success():
     assert data["conditions"]["weather"] is not None
     assert data["conditions"]["hazard"] is not None
     assert len(data["source_status"]) > 0
-    assert not data["is_durable"]
+    # Demo assessment works without PostgreSQL and is persisted when a local
+    # PostgreSQL instance is configured and healthy.
+    from backend.app.db.session import engine
+    try:
+        with engine.connect():
+            database_available = True
+    except Exception:
+        database_available = False
+    assert data["is_durable"] is database_available
 
 def test_trip_assessment_unknown_fallback():
     # Force a failure in the pipeline by asking for a mode that might fail or an unknown harbor in LIVE

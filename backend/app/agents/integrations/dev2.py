@@ -37,6 +37,8 @@ class MarineConditionsPayload(BaseModel):
     )
     surface_current_knots: Optional[float] = Field(None, description="Surface current speed in knots")
     sea_surface_temp_c: Optional[float] = Field(None, description="Sea surface temperature in Celsius")
+    tide_level_m: Optional[float] = Field(None, description="Observed/model tide height in meters above the source datum")
+    tide_phase: Optional[str] = Field(None, description="Tidal flow phase when supplied by the marine observation")
     observed_at: Optional[str] = Field(None, description="Sensor or satellite measurement timestamp (ISO-8601 UTC)")
     valid_to: Optional[str] = Field(None, description="Forecast window expiration (ISO-8601 UTC)")
     source_name: str = Field("INCOIS Ocean State Forecast", description="Official issuing authority")

@@ -34,6 +34,8 @@ wheels/
 
 # Testing & Coverage
 .pytest_cache/
+.pytest-tmp*/
+.codex-tmp/
 .coverage
 htmlcov/
 .tox/

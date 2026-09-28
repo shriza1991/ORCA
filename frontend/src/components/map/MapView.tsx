@@ -76,6 +76,8 @@ interface MapViewProps {
    * the Map and Brief/Agent Panel always display the same observation data.
    */
   canonicalConditions?: any;
+  /** Canonical deterministic decision corresponding to canonicalConditions. */
+  canonicalDecision?: string | { status?: string };
 }
 
 export default function MapView({
@@ -97,6 +99,7 @@ export default function MapView({
   timeOffsetHours,
   onTimeOffsetChange,
   canonicalConditions,
+  canonicalDecision,
 }: MapViewProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -164,14 +167,20 @@ export default function MapView({
     const windDir: number = weather?.wind_direction_deg ?? marine?.wind_direction_deg ?? 0;
     const swellM: number = marine?.swell_wave_height_m ?? marine?.swell_height_m ?? 0;
     const swellP: number = marine?.swell_period_seconds ?? marine?.wave_period_seconds ?? 0;
-    const sstC: number = marine?.sea_surface_temperature_c ?? 0;
+    const sstC: number = marine?.sea_surface_temp_c ?? marine?.sea_surface_temperature_c ?? 0;
 
     const craftUpper = (craftProfile || 'motorized_boat').toUpperCase();
     let limit = 2.2;
     if (craftUpper.includes('NON_MOTORIZED') || craftUpper.includes('CANOE')) limit = 1.4;
     else if (craftUpper.includes('MECHANIZED') || craftUpper.includes('TRAWLER')) limit = 3.5;
     let canonStatus: 'GO' | 'CAUTION' | 'NO_GO' = 'GO';
-    if (waveM > limit) canonStatus = 'NO_GO';
+    const decisionStatus = typeof canonicalDecision === 'string'
+      ? canonicalDecision
+      : canonicalDecision?.status;
+    if (decisionStatus === 'NO_GO') canonStatus = 'NO_GO';
+    else if (decisionStatus === 'CAUTION') canonStatus = 'CAUTION';
+    else if (decisionStatus === 'GO') canonStatus = 'GO';
+    else if (waveM > limit) canonStatus = 'NO_GO';
     else if (waveM > limit * 0.8) canonStatus = 'CAUTION';
 
     setMapForecast({
@@ -182,11 +191,11 @@ export default function MapView({
       swell_height_m: swellM,
       swell_period_s: swellP,
       sst_c: sstC,
-      tide_height_m: 0,
-      tide_phase: '—',
+      tide_height_m: marine?.tide_level_m ?? 0,
+      tide_phase: marine?.tide_phase ?? '—',
       status: canonStatus,
     });
-  }, [canonicalConditions, selectedTimeStep, craftProfile]);
+  }, [canonicalConditions, canonicalDecision, selectedTimeStep, craftProfile]);
 
   useEffect(() => {
     let isCancelled = false;

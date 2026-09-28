@@ -162,6 +162,20 @@ describe('P0-22: Fisherman Decision Surface & Local Conditions', () => {
       expect(conds.hazard).toBe('Squall Alert');
     });
 
+    it('projects visibility and tide from the canonical DEMO bundle', () => {
+      const demoResponse: TripAssessmentResponse = {
+        ...mockSafeResponse,
+        conditions: {
+          data_mode: 'SNAPSHOT',
+          marine: { significant_wave_height_m: 1.1, tide_level_m: 0.4, tide_phase: 'FLOOD' },
+          weather: { wind_speed_knots: 10.5, visibility_km: 9.5 },
+        },
+      };
+      const conds = extractFisherConditions(demoResponse);
+      expect(conds.visibility).toBe('9.5 km');
+      expect(conds.tide).toBe('0.4 m (FLOOD)');
+    });
+
     it('preserves missing values as "—" and never coerces to 0', () => {
       const conds = extractFisherConditions(mockUnknownResponse);
       expect(conds.waves).toBe('—');

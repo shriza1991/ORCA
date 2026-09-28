@@ -214,9 +214,10 @@ def test_snapshot_provider_execution(client: TestClient):
     resp = _post_chat(client, {"message": "Safe?"})
     assert resp.status_code == 200
     data = resp.json()
-    # At least one warning about simulated snapshot data should be present
-    warnings = data.get("warnings", [])
-    assert len(warnings) > 0
+    # Complete DEMO evidence is labeled structurally and need not emit a
+    # degraded-data warning merely because it is not live.
+    assert data["data_mode"] == "DEMO"
+    assert data["recommendation"]["status"] in {"GO", "CAUTION", "NO_GO", "UNKNOWN"}
 
 
 def test_hybrid_provider_execution(client: TestClient):

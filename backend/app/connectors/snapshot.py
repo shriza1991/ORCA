@@ -193,20 +193,9 @@ class SnapshotConnector:
                     return self._osf_cache
             return []
 
-        try:
-            from backend.app.db.repositories import SyntheticDemoRepository
-            from backend.app.db.session import SessionLocal
-
-            with SessionLocal() as session:
-                repo = SyntheticDemoRepository(session)
-                items = repo.get_marine_observations(namespace="SAMUDRA_DEMO_V1")
-                if items:
-                    from backend.app.api.v1.routes import _model_to_dict
-                    self._osf_cache = [_model_to_dict(it) for it in items]
-                    return self._osf_cache
-        except Exception:
-            pass
-
+        # Snapshot mode is the deterministic local demo source. The database
+        # can contain an older seeded demo version, so it must not shadow the
+        # checked-in fixture with a stale forecast horizon.
         fix_path = self._find_fixture_file("osf_hourly_observations.json")
         if fix_path and fix_path.exists():
             with open(fix_path, "r", encoding="utf-8") as fh:
@@ -366,6 +355,8 @@ class SnapshotConnector:
 
                 # Normalize the selected record; preserve its original timestamps
                 payload = IncoisOSFNormalizer.normalize(chosen)
+                payload.source_name = "SAMUDRA deterministic demo marine fixture"
+                payload.source_url = None
                 # Always use the requested harbor name (do not silently relabel as Ratnagiri)
                 payload.harbor = harbor
                 # Attach freshness_flags from the original record timestamps

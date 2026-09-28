@@ -21,8 +21,32 @@ export interface AssessmentSourceStatus {
 }
 
 export interface ObservationBundle {
-  timestamp: string;
-  measurements: Record<string, any>;
+  timestamp?: string;
+  captured_at?: string;
+  data_mode?: string;
+  marine?: {
+    significant_wave_height_m?: number | null;
+    swell_height_m?: number | null;
+    swell_period_sec?: number | null;
+    surface_current_knots?: number | null;
+    sea_surface_temp_c?: number | null;
+    tide_level_m?: number | null;
+    tide_phase?: string | null;
+    observed_at?: string | null;
+    valid_to?: string | null;
+    source_name?: string;
+  } | null;
+  weather?: {
+    wind_speed_knots?: number | null;
+    wind_gust_knots?: number | null;
+    wind_direction_deg?: number | null;
+    visibility_km?: number | null;
+    observed_at?: string | null;
+    valid_to?: string | null;
+    source_name?: string;
+  } | null;
+  hazard?: Record<string, any> | null;
+  measurements?: Record<string, any>;
 }
 
 export interface Alert {

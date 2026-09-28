@@ -1,7 +1,7 @@
 """Deterministic Synthetic Demo Data Generator for SAMUDRA.
 
 Generates the canonical SAMUDRA_DEMO_V1 dataset derived deterministically
-from a fixed reference timestamp (2026-09-26T06:00:00Z).
+from a fixed reference timestamp (2026-09-28T06:00:00Z).
 
 Models official source structures for:
 - INCOIS Ocean State Forecasts (OSF) and PFZ Advisories
@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 # Authoritative reference timestamp for deterministic generation
-REFERENCE_TIME = datetime(2026, 9, 26, 6, 0, 0, tzinfo=timezone.utc)
+REFERENCE_TIME = datetime(2026, 9, 28, 6, 0, 0, tzinfo=timezone.utc)
 SYNTHETIC_NAMESPACE = "SAMUDRA_DEMO_V1"
 DATASET_VERSION = "synthetic_demo_v1"
 

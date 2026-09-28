@@ -140,11 +140,14 @@ class DataService:
         if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
             logger.debug("DataService: %s mode — marine conditions from fixture.", self.data_mode)
             _ctx = context
-            if self.data_mode == "SYNTHETIC" and not context.departure_time:
+            if not context.departure_time:
                 from backend.app.domain.synthetic.generator import REFERENCE_TIME
 
                 _ctx = context.model_copy(update={"departure_time": REFERENCE_TIME.isoformat()})
-            return self._snapshot.get_marine_conditions(_ctx)
+            payload = self._snapshot.get_marine_conditions(_ctx)
+            payload.source_name = "SAMUDRA deterministic demo marine fixture"
+            payload.source_url = None
+            return payload
 
         try:
             payload = self._incois.get_marine_conditions(context)
@@ -169,7 +172,7 @@ class DataService:
         LIVE/HYBRID → ImdWeatherConnector with Open-Meteo fallback.
         """
         harbor = context.origin_harbor or "Ratnagiri"
-        if self.data_mode == "SYNTHETIC":
+        if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
             from backend.app.connectors.normalizers.imd import ImdWeatherNormalizer
             record = self._synthetic_record_for(context)
             if record is None:
@@ -262,7 +265,7 @@ class DataService:
         falling back to marine_dataset which invents timestamps.
         """
         harbor = context.origin_harbor or "Ratnagiri"
-        if self.data_mode == "SYNTHETIC":
+        if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
             from backend.app.connectors.normalizers.imd import ImdHazardNormalizer
             record = self._synthetic_record_for(context)
             if record is None:
@@ -303,6 +306,7 @@ class DataService:
             }
             normalized = ImdHazardNormalizer.normalize(raw)
             normalized.source_name = "SAMUDRA deterministic demo hazard fixture"
+            normalized.source_url = None
             return normalized
 
         if self.data_mode == "SNAPSHOT":
@@ -360,7 +364,7 @@ class DataService:
 
     def get_pfz_raw_advisories(self, context: ToolInvocationContext) -> PFZSourceDataPayload:
         """Route to the appropriate PFZ connector based on DATA_MODE."""
-        if self.data_mode == "SYNTHETIC":
+        if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
             from backend.app.connectors.normalizers.incois import IncoisPFZNormalizer
             record = self._synthetic_record_for(context)
             if record is None:
@@ -373,8 +377,9 @@ class DataService:
                 )
             raw = {
                 "features": [
-                    {"id": "PFZ-F01", "lat": 16.85, "lon": 73.10, "sst_grad": 0.35, "chlorophyll": 1.85, "confidence": "HIGH", "distance_km": 16.5},
-                    {"id": "PFZ-F02", "lat": 17.10, "lon": 73.05, "sst_grad": 0.40, "chlorophyll": 2.10, "confidence": "HIGH", "distance_km": 24.0},
+                    {"id": "PFZ-F01", "lat": 16.85, "lon": 73.10, "sst_c": record.get("sea_surface_temp_c", record.get("sst")), "sst_grad": 0.35, "chlorophyll": 1.85, "confidence": "HIGH", "distance_km": 16.5},
+                    {"id": "PFZ-F02", "lat": 17.10, "lon": 73.05, "sst_c": record.get("sea_surface_temp_c", record.get("sst")), "sst_grad": 0.40, "chlorophyll": 2.10, "confidence": "HIGH", "distance_km": 24.0},
+                    {"id": "PFZ-F03", "lat": 16.72, "lon": 73.18, "sst_c": record.get("sea_surface_temp_c", record.get("sst")), "sst_grad": 0.30, "chlorophyll": 1.62, "confidence": "MEDIUM", "distance_km": 18.8},
                 ],
                 "bulletin_date": record["observation_time"].isoformat(),
                 "valid_to": record["valid_to_utc"],
@@ -454,6 +459,44 @@ class DataService:
                 "craft_profile": context.craft_profile or "motorized_boat",
             },
         )
+
+    def get_hourly_marine_forecast(
+        self, context: ToolInvocationContext, start_time: datetime, end_time: datetime
+    ) -> list[MarineConditionsPayload]:
+        """Return deterministic hourly marine records covering a mission interval.
+
+        The route exposure engine consumes these same generated OSF records
+        used by the assessment bundle. No separate route weather values are
+        synthesized or fetched.
+        """
+        if self.data_mode not in ("SNAPSHOT", "SYNTHETIC"):
+            return []
+
+        from backend.app.connectors.normalizers.incois import IncoisOSFNormalizer
+
+        start = start_time if start_time.tzinfo else start_time.replace(tzinfo=timezone.utc)
+        end = end_time if end_time.tzinfo else end_time.replace(tzinfo=timezone.utc)
+        harbor = (context.origin_harbor or "Ratnagiri").strip().lower()
+        aliases = {"mumbai coastal": "mumbai", "mumbai-coastal": "mumbai"}
+        harbor_id = f"harbor-{aliases.get(harbor, harbor)}"
+        output: list[MarineConditionsPayload] = []
+
+        for record in self._synthetic_osf_records():
+            if record.get("harbor_id") != harbor_id:
+                continue
+            observed = record.get("observation_time")
+            if isinstance(observed, str):
+                observed = datetime.fromisoformat(observed.replace("Z", "+00:00"))
+            if observed is None:
+                continue
+            if observed.tzinfo is None:
+                observed = observed.replace(tzinfo=timezone.utc)
+            if start <= observed <= end:
+                payload = IncoisOSFNormalizer.normalize(record)
+                payload.source_name = "SAMUDRA deterministic demo marine fixture"
+                payload.source_url = None
+                output.append(payload)
+        return output
 
     # ------------------------------------------------------------------
     # Synthetic Demo Dataset Accessors

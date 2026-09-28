@@ -206,6 +206,8 @@ export function extractFisherConditions(
   }
 
   const measurements = response.conditions?.measurements || {};
+  const marine = response.conditions?.marine || {};
+  const weather = response.conditions?.weather || {};
   const evidence: Record<string, any>[] = response.evidence || [];
   const isForecast = !!measurements.is_forecast;
 
@@ -243,7 +245,7 @@ export function extractFisherConditions(
     "kt",
   );
 
-  // Visibility: not in evidence array today — show '—' (no data) rather than 'N/A'
+  // Prefer the canonical observation bundle before threshold-only evidence.
   const visRaw = (() => {
     if (status === "UNKNOWN") return "INSUFFICIENT DATA";
     for (const key of ["visibility", "visibility_km"]) {
@@ -251,16 +253,23 @@ export function extractFisherConditions(
       const n = safeNum(m?.value ?? m);
       if (n !== null) return `${n.toFixed(1)} ${m?.unit || "km"}`.trim();
     }
+    const visibility = safeNum(weather.visibility_km);
+    if (visibility !== null) return `${visibility.toFixed(1)} km`;
     return "—";
   })();
 
-  // Tide: not wired to live data yet — show 'Not available' rather than just a dash
+  // Tide comes from the same canonical marine record as the wave/SST fields.
   const tideVal = (() => {
     if (status === "UNKNOWN") return "INSUFFICIENT DATA";
     for (const key of ["tide", "tide_level", "tide_height_m"]) {
       const m = measurements[key];
       const n = safeNum(m?.value ?? m);
       if (n !== null) return `${n.toFixed(1)} ${m?.unit || "m"}`.trim();
+    }
+    const tideLevel = safeNum(marine.tide_level_m);
+    if (tideLevel !== null) {
+      const phase = marine.tide_phase ? ` (${marine.tide_phase})` : "";
+      return `${tideLevel.toFixed(1)} m${phase}`;
     }
     if (measurements.tide_schedule) return "Available";
     return "Not available";
@@ -528,6 +537,9 @@ export default function FisherDecisionSurface({
               (a.message || a.title || "").includes("Stale") ||
               (a.message || a.title || "").includes("incomplete telemetry"),
           );
+          const isDemo = ["SNAPSHOT", "SYNTHETIC", "DEMO"].includes(
+            String(assessment?.conditions?.data_mode || "").toUpperCase(),
+          );
           return (
             <div
               className="connectivity-strip"
@@ -569,6 +581,10 @@ export default function FisherDecisionSurface({
                 >
                   <AlertTriangle size={12} />
                   {t.statusLabels?.["PARTIAL"] || "Partial Data"}
+                </span>
+              ) : isDemo ? (
+                <span className="badge badge-cached" style={{ fontSize: "0.7rem" }}>
+                  DEMO DATA
                 </span>
               ) : (
                 <span

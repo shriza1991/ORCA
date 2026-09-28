@@ -10,7 +10,7 @@ Verifies:
 7. Unified Trip Assessment Integration (response.stability & response.safe_window populated).
 """
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from backend.app.contracts.chat import (
     ConfidenceLevel,
@@ -33,6 +33,7 @@ from backend.app.domain.risk_engine import (
     compute_safe_window,
 )
 from backend.app.services.assessment_service import AssessmentService
+from backend.app.domain.synthetic.generator import REFERENCE_TIME
 
 
 def test_decision_boundary_analysis_nearest_selection():
@@ -289,8 +290,8 @@ def test_assessment_service_populates_stability_and_safe_window():
         origin_harbor="Ratnagiri",
         craft_profile="motorized_boat",
         data_mode="SNAPSHOT",
-        departure_time="2026-09-12T06:00:00Z",
-        return_time="2026-09-12T12:00:00Z",
+        departure_time=REFERENCE_TIME.isoformat(),
+        return_time=(REFERENCE_TIME + timedelta(hours=6)).isoformat(),
     )
     response = AssessmentService.assess_trip(req)
 
