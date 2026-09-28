@@ -163,8 +163,15 @@ export default function TripPlanDetails({
   const etaHours = primaryRoute.eta_hours || 0;
   const fuel = primaryRoute.fuel_estimate_liters || 0;
   let risk = primaryRoute.risk_rating || "UNKNOWN";
-  if (mainStatus === "UNKNOWN") {
-    risk = "UNKNOWN";
+  if (mainStatus) {
+    risk =
+      mainStatus === "SAFE_TO_GO"
+        ? "LOW"
+        : mainStatus === "CAUTION"
+          ? "MODERATE"
+          : mainStatus === "DO_NOT_GO"
+            ? "HIGH"
+            : "UNKNOWN";
   }
   const waves = primaryRoute.max_wave_height_m || 0;
 

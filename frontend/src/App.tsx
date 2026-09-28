@@ -1,17 +1,23 @@
-import { useState, useEffect } from 'react';
-import Header from './components/layout/Header';
-import PortalPage from './pages/PortalPage';
-import FisherPage from './pages/FisherPage';
-import AuthorityPage from './pages/AuthorityPage';
-import ResearcherPage from './pages/ResearcherPage';
-import SettingsPage from './pages/SettingsPage';
-import EvidenceDrawer from './components/evidence/EvidenceDrawer';
-import CallModal from './components/call/CallModal';
-import DeckGLExperimentView from './components/experimental/DeckGLExperimentView';
-import { useChat } from './hooks/useChat';
-import { MessageSquare, Map as MapIcon } from 'lucide-react';
+import { useState, useEffect } from "react";
+import Header from "./components/layout/Header";
+import PortalPage from "./pages/PortalPage";
+import FisherPage from "./pages/FisherPage";
+import AuthorityPage from "./pages/AuthorityPage";
+import ResearcherPage from "./pages/ResearcherPage";
+import SettingsPage from "./pages/SettingsPage";
+import EvidenceDrawer from "./components/evidence/EvidenceDrawer";
+import CallModal from "./components/call/CallModal";
+import DeckGLExperimentView from "./components/experimental/DeckGLExperimentView";
+import { useChat } from "./hooks/useChat";
+import { MessageSquare, Map as MapIcon } from "lucide-react";
 
-export type PortalMode = 'selection' | 'fisher' | 'authority' | 'researcher' | 'settings' | 'deckgl-experiment';
+export type PortalMode =
+  | "selection"
+  | "fisher"
+  | "authority"
+  | "researcher"
+  | "settings"
+  | "deckgl-experiment";
 
 /**
  * SAMUDRA Main Application Shell
@@ -27,22 +33,22 @@ export type PortalMode = 'selection' | 'fisher' | 'authority' | 'researcher' | '
  */
 export default function App() {
   const chat = useChat();
-  const [portal, setPortal] = useState<PortalMode>('selection');
-  const [previousPortal, setPreviousPortal] = useState<PortalMode>('selection');
+  const [portal, setPortal] = useState<PortalMode>("selection");
+  const [previousPortal, setPreviousPortal] = useState<PortalMode>("selection");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [mobileView, setMobileView] = useState<'chat' | 'map'>('chat');
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [mobileView, setMobileView] = useState<"chat" | "map">("chat");
 
   // Synchronize theme on HTML element
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   const handleOpenSettings = () => {
-    if (portal !== 'settings') {
+    if (portal !== "settings") {
       setPreviousPortal(portal);
-      setPortal('settings');
+      setPortal("settings");
     } else {
       setPortal(previousPortal);
     }
@@ -55,8 +61,8 @@ export default function App() {
   const handleBack = () => {
     if (chat.messages.length > 0) {
       chat.clearChat();
-    } else if (mobileView === 'chat') {
-      setMobileView('map');
+    } else if (mobileView === "chat") {
+      setMobileView("map");
     }
   };
 
@@ -69,40 +75,49 @@ export default function App() {
         onOpenEvidence={() => setIsDrawerOpen(true)}
         theme={theme}
         currentPortal={portal}
-        onLogout={() => setPortal('selection')}
-        onReturnToPortal={() => setPortal('selection')}
+        onLogout={() => setPortal("selection")}
+        onReturnToPortal={() => setPortal("selection")}
         onOpenSettings={handleOpenSettings}
       />
 
       {/* Mobile Segmented View Tabs (Visible only on <= 768px viewports when in a role console) */}
-      {portal !== 'selection' && portal !== 'settings' && (
-        <nav className="mobile-view-tabs" role="tablist" aria-label="Mobile viewport selection">
+      {portal !== "selection" && portal !== "settings" && (
+        <nav
+          className="mobile-view-tabs"
+          role="tablist"
+          aria-label="Mobile viewport selection"
+        >
           <button
-            className={`mobile-tab-btn ${mobileView === 'chat' ? 'active' : ''}`}
-            onClick={() => setMobileView('chat')}
+            className={`mobile-tab-btn ${mobileView === "chat" ? "active" : ""}`}
+            onClick={() => setMobileView("chat")}
             role="tab"
-            aria-selected={mobileView === 'chat'}
+            aria-selected={mobileView === "chat"}
           >
             <MessageSquare size={16} />
-            <span>Chat</span>
+            <span>{portal === "fisher" ? "Decision" : "Chat"}</span>
           </button>
           <button
-            className={`mobile-tab-btn ${mobileView === 'map' ? 'active' : ''}`}
-            onClick={() => setMobileView('map')}
+            className={`mobile-tab-btn ${mobileView === "map" ? "active" : ""}`}
+            onClick={() => setMobileView("map")}
             role="tab"
-            aria-selected={mobileView === 'map'}
+            aria-selected={mobileView === "map"}
           >
             <MapIcon size={16} />
             <span>Map</span>
-            {layerCount > 0 && <span className="mobile-tab-badge">{layerCount}</span>}
+            {layerCount > 0 && (
+              <span className="mobile-tab-badge">{layerCount}</span>
+            )}
           </button>
         </nav>
       )}
 
       {/* Pages: Portal Selection vs. Fisher Console vs. Authority Command Deck vs. Settings */}
-      {portal === 'selection' ? (
-        <PortalPage onSelectRole={(selected) => setPortal(selected)} language={chat.language} />
-      ) : portal === 'fisher' ? (
+      {portal === "selection" ? (
+        <PortalPage
+          onSelectRole={(selected) => setPortal(selected)}
+          language={chat.language}
+        />
+      ) : portal === "fisher" ? (
         <FisherPage
           chat={chat}
           theme={theme}
@@ -110,9 +125,9 @@ export default function App() {
           onStartCall={() => setIsCallModalOpen(true)}
           onOpenEvidence={() => setIsDrawerOpen(true)}
           onBack={handleBack}
-          onViewMap={() => setMobileView('map')}
+          onViewMap={() => setMobileView("map")}
         />
-      ) : portal === 'authority' ? (
+      ) : portal === "authority" ? (
         <AuthorityPage
           chat={chat}
           theme={theme}
@@ -120,10 +135,10 @@ export default function App() {
           onOpenEvidence={() => setIsDrawerOpen(true)}
           onBack={handleBack}
         />
-      ) : portal === 'researcher' ? (
+      ) : portal === "researcher" ? (
         <ResearcherPage />
-      ) : portal === 'deckgl-experiment' ? (
-        <DeckGLExperimentView onBackToPortal={() => setPortal('selection')} />
+      ) : portal === "deckgl-experiment" ? (
+        <DeckGLExperimentView onBackToPortal={() => setPortal("selection")} />
       ) : (
         <SettingsPage
           theme={theme}
@@ -155,9 +170,12 @@ export default function App() {
         departureTime={chat.missionContext.departure_time}
         returnTime={chat.missionContext.return_time}
         targetPfz={chat.missionContext.target_pfz}
-        parentAssessmentId={chat.missionContext.parent_assessment_id || chat.missionState?.parent_assessment_id || undefined}
+        parentAssessmentId={
+          chat.missionContext.parent_assessment_id ||
+          chat.missionState?.parent_assessment_id ||
+          undefined
+        }
       />
     </div>
   );
 }
-
