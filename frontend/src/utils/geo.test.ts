@@ -9,6 +9,13 @@ import {
   createAuthorityHazardLayers,
   filterLayersByRegion,
   filterLayersBySectorPolygon,
+  haversineDistanceKm,
+  haversineDistanceNm,
+  initialBearingDeg,
+  compassDirection,
+  calculateTransitTime,
+  generateRadarRangeRings,
+  generateWindVectorGrid,
 } from "./geo";
 import type { MapLayer } from "../types/contracts";
 
@@ -243,4 +250,78 @@ describe("Geospatial Utilities & Baseline Situational Layers", () => {
       ),
     ).toBe(true);
   });
+
+  describe('Nautical Mathematics & Radar/Wind Vector Systems', () => {
+    const ratnagiri: [number, number] = [73.28, 16.99];
+    const malvan: [number, number] = [73.47, 16.06];
+
+    it('calculates deterministic spherical Haversine distances in km and nm', () => {
+      const distKm = haversineDistanceKm(ratnagiri, malvan);
+      const distNm = haversineDistanceNm(ratnagiri, malvan);
+
+      expect(distKm).toBeGreaterThan(100);
+      expect(distKm).toBeLessThan(110);
+      expect(distNm).toBeCloseTo(distKm / 1.852, 2);
+    });
+
+    it('calculates true bearing and cardinal compass directions accurately', () => {
+      // Ratnagiri to Malvan sails South-Southeast (~169°)
+      const bearing = initialBearingDeg(ratnagiri, malvan);
+      expect(bearing).toBeGreaterThan(160);
+      expect(bearing).toBeLessThan(180);
+      expect(compassDirection(bearing)).toBe('S');
+      expect(compassDirection(157.5)).toBe('SSE');
+
+      // Cardinal direction checks
+      expect(compassDirection(0)).toBe('N');
+      expect(compassDirection(90)).toBe('E');
+      expect(compassDirection(180)).toBe('S');
+      expect(compassDirection(270)).toBe('W');
+      expect(compassDirection(245)).toBe('WSW');
+    });
+
+    it('calculates transit time estimates based on nautical distance and vessel speed', () => {
+      // 57 nm at 9.5 knots = 6 hours
+      const transit = calculateTransitTime(57, 9.5);
+      expect(transit.hours).toBe(6);
+      expect(transit.minutes).toBe(0);
+      expect(transit.text).toBe('~6h');
+
+      // 12.5 nm at 8 knots = ~1h 34m
+      const transitShort = calculateTransitTime(12.5, 8.0);
+      expect(transitShort.hours).toBe(1);
+      expect(transitShort.minutes).toBe(34);
+      expect(transitShort.text).toBe('~1h 34m');
+    });
+
+    it('generates radar range rings with concentric nautical radii and closed polygons', () => {
+      const rings = generateRadarRangeRings(73.28, 16.99, [5, 12, 24]);
+      expect(rings).toHaveLength(3);
+      expect(rings[0].label).toBe('5 NM INNER PATROL');
+      expect(rings[1].label).toBe('12 NM TERRITORIAL SEAS');
+      expect(rings[2].label).toBe('24 NM SURVEILLANCE');
+
+      // Check polygon is closed (first coord equals last coord)
+      for (const r of rings) {
+        expect(r.coords.length).toBeGreaterThan(24);
+        const first = r.coords[0];
+        const last = r.coords[r.coords.length - 1];
+        expect(first[0]).toEqual(last[0]);
+        expect(first[1]).toEqual(last[1]);
+      }
+    });
+
+    it('generates directional wind and current vectors across sea sectors', () => {
+      const vectors = generateWindVectorGrid(73.28, 16.99, 230, 22);
+      expect(vectors.length).toBeGreaterThan(10);
+      for (const v of vectors) {
+        expect(v.position).toHaveLength(2);
+        expect(v.bearing).toBeGreaterThanOrEqual(0);
+        expect(v.bearing).toBeLessThanOrEqual(360);
+        expect(v.speed).toBe(22);
+        expect(v.color).toBe('#f59e0b'); // Fresh/Strong breeze color
+      }
+    });
+  });
 });
+

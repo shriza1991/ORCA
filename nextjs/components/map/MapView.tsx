@@ -1,31 +1,23 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { createRoot, type Root } from "react-dom/client";
-import maplibregl from "maplibre-gl";
-import * as Popover from "@radix-ui/react-popover";
-import * as turf from "@turf/turf";
-import type { MapLayer } from "../../types/contracts";
-import type { OperationalMode } from "../../types/mission";
-import LayerManager from "./LayerManager";
-import MissionMapBrief from "./MissionMapBrief";
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import maplibregl from 'maplibre-gl';
+import * as Popover from '@radix-ui/react-popover';
+import * as turf from '@turf/turf';
+import type { MapLayer } from '../../types/contracts';
+import type { OperationalMode } from '../../types/mission';
+import LayerManager from './LayerManager';
+import MissionMapBrief from './MissionMapBrief';
+import { Layers, Navigation, Play, Square, Ship, Sailboat, Clock, Waves, X, Bookmark, RefreshCw, Ruler, Wind } from 'lucide-react';
+import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import { executeSpatialQuery, type UnifiedSpatialQueryResponse } from '../../api/marinewatch-client';
 import {
-  Layers,
-  Navigation,
-  Play,
-  Square,
-  Ship,
-  Sailboat,
-  Clock,
-  Waves,
-  X,
-  Bookmark,
-  RefreshCw,
-} from "lucide-react";
-import { translateText, type SupportedLanguage } from "../../i18n/translations";
-import {
-  executeSpatialQuery,
-  type UnifiedSpatialQueryResponse,
-} from "../../api/marinewatch-client";
-import { NATIONAL_COASTAL_BOOKMARKS } from "../../utils/geo";
+  NATIONAL_COASTAL_BOOKMARKS,
+  haversineDistanceNm,
+  initialBearingDeg,
+  compassDirection,
+  calculateTransitTime,
+  generateWindVectorGrid,
+} from '../../utils/geo';
 
 const TIME_STEPS = [
   { label: "Now", hours: 0 },
@@ -138,6 +130,56 @@ export default function MapView({
     loading: boolean;
   } | null>(null);
   const [showBookmarks, setShowBookmarks] = useState(false);
+
+  // Nautical Measure Tool State
+  const [isRulerActive, setIsRulerActive] = useState(false);
+  const [rulerPoints, setRulerPoints] = useState<[number, number][]>([]);
+  const isRulerActiveRef = useRef(isRulerActive);
+  isRulerActiveRef.current = isRulerActive;
+
+  // Wind and Currents vector layer toggle
+  const [showWindVectors, setShowWindVectors] = useState(true);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.getCanvas().style.cursor = isRulerActive ? 'crosshair' : '';
+  }, [isRulerActive]);
+
+  // ESC key cancels ruler mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isRulerActive) {
+        setIsRulerActive(false);
+        setRulerPoints([]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRulerActive]);
+
+  const rulerStats = useMemo(() => {
+    if (rulerPoints.length < 2) return null;
+    let totalDistNm = 0;
+    let lastBearing = 0;
+    for (let i = 0; i < rulerPoints.length - 1; i++) {
+      totalDistNm += haversineDistanceNm(rulerPoints[i], rulerPoints[i + 1]);
+      if (i === rulerPoints.length - 2) {
+        lastBearing = initialBearingDeg(rulerPoints[i], rulerPoints[i + 1]);
+      }
+    }
+    const totalDistKm = totalDistNm * 1.852;
+    const transit = calculateTransitTime(totalDistNm, 8.5);
+    const compass = compassDirection(lastBearing);
+    return {
+      distNm: totalDistNm.toFixed(1),
+      distKm: totalDistKm.toFixed(1),
+      bearing: Math.round(lastBearing),
+      compass,
+      transit: transit.text,
+      waypoints: rulerPoints.length,
+    };
+  }, [rulerPoints]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -272,18 +314,37 @@ export default function MapView({
       selectedFeat = allRouteFeatures[0];
     }
 
-    // P0-8I: Render ONLY the single currently selected route on the map to prevent visual overload/clutter.
-    // The candidate alternatives are represented and selectable via the Mission Map & Corridors controls.
+    // Dynamic Route Exposure & Temporal Forecast Color
+    const isForecastElevated = selectedTimeStep > 0 && mapForecast;
+    let routeColor = '#06b6d4';
+    let routeWidth = 4;
+    let forecastTag = '';
+
+    if (isForecastElevated) {
+      if (mapForecast.status === 'NO_GO' || mapForecast.wave_height_m >= 2.4) {
+        routeColor = '#ef4444';
+        routeWidth = 5;
+        forecastTag = `(+${selectedTimeStep}h Forecast: DANGER - Wave ${mapForecast.wave_height_m}m)`;
+      } else if (mapForecast.status === 'CAUTION' || mapForecast.wave_height_m >= 1.8) {
+        routeColor = '#f59e0b';
+        routeWidth = 4.5;
+        forecastTag = `(+${selectedTimeStep}h Forecast: CAUTION - Wave ${mapForecast.wave_height_m}m)`;
+      } else {
+        routeColor = '#10b981';
+        forecastTag = `(+${selectedTimeStep}h Forecast: SAFE - Wave ${mapForecast.wave_height_m}m)`;
+      }
+    }
+
     const dynamicRouteLayers: MapLayer[] = [
       {
         layer_id: "layer_recommended_route",
-        name: `Selected Corridor (${selectedFeat.properties?.name || selectedFeat.properties?.route_id || "Route"})`,
+        name: `Selected Corridor (${selectedFeat.properties?.name || selectedFeat.properties?.route_id || "Route"})${forecastTag ? " " + forecastTag : ""}`.trim(),
         layer_type: "geojson",
         visible: true,
         style: {
-          color: "#06b6d4",
+          color: routeColor,
           opacity: 0.95,
-          line_width: 4,
+          line_width: routeWidth,
           layer_category: "navigation",
         },
         geojson: {
@@ -401,7 +462,7 @@ export default function MapView({
     }
 
     return [...nonRouteLayers, ...dynamicRouteLayers];
-  }, [layers, selectedCorridorMode, liveLocation, liveLocationStatus]);
+  }, [layers, selectedCorridorMode, liveLocation, liveLocationStatus, selectedTimeStep, mapForecast]);
 
   // Pan to user's location when tracking is enabled and location updates
   useEffect(() => {
@@ -472,15 +533,26 @@ export default function MapView({
     simulationRootRef.current = root;
 
     let Icon = Ship;
-    if (craftProfile === "traditional_non_motorized") Icon = Sailboat;
-    else if (craftProfile === "mechanized_trawler") Icon = Ship; // using Ship for both, but we can differentiate color
+    let iconColor = "#2563eb";
+    let bgColor = "white";
 
+    if (craftProfile === "traditional_non_motorized") {
+      Icon = Sailboat;
+      iconColor = "#16a34a";
+      el.style.borderColor = "#16a34a";
+    } else if (craftProfile === "mechanized_trawler") {
+      Icon = Ship;
+      bgColor = "#bfdbfe";
+      iconColor = "#1e3a8a";
+      el.style.borderColor = "#1e3a8a";
+    }
+
+    // Lucide icons generally point UP or RIGHT. Ship and Sailboat might need rotation.
+    // Wrap the icon in a div that corrects its default orientation to face UP (0 degrees).
     root.render(
-      <Icon
-        size={24}
-        color="#2563eb"
-        fill={craftProfile === "mechanized_trawler" ? "#bfdbfe" : "none"}
-      />,
+      <div style={{ transform: "rotate(-90deg)", display: "flex" }}>
+        <Icon size={22} color={iconColor} fill={bgColor} />
+      </div>,
     );
 
     const marker = new maplibregl.Marker({
@@ -561,7 +633,65 @@ export default function MapView({
       "bottom-right",
     );
 
-    map.on("click", async (e) => {
+    map.on('style.load', () => {
+      if (!map.hasImage('icon-anchor')) {
+        const createEmojiImg = (char: string) => {
+          const c = document.createElement('canvas');
+          c.width = 40;
+          c.height = 40;
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            ctx.font = '28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(char, 20, 22);
+            return ctx.getImageData(0, 0, 40, 40);
+          }
+          return null;
+        };
+        const anchorImg = createEmojiImg('⚓');
+        if (anchorImg) map.addImage('icon-anchor', anchorImg);
+        const fishImg = createEmojiImg('🐟');
+        if (fishImg) map.addImage('icon-fish', fishImg);
+
+        // Register directional nautical wind flow arrow
+        const createWindArrowImg = () => {
+          const c = document.createElement('canvas');
+          c.width = 28;
+          c.height = 28;
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            ctx.strokeStyle = '#0284c7';
+            ctx.fillStyle = '#0284c7';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(14, 4);
+            ctx.lineTo(14, 24);
+            ctx.moveTo(8, 12);
+            ctx.lineTo(14, 4);
+            ctx.lineTo(20, 12);
+            ctx.stroke();
+            return ctx.getImageData(0, 0, 28, 28);
+          }
+          return null;
+        };
+        const windImg = createWindArrowImg();
+        if (windImg) map.addImage('icon-wind-arrow', windImg);
+      }
+    });
+
+    map.on('click', async (e) => {
+      // If nautical ruler is active, capture waypoint instead of opening spatial inspection popup
+      if (isRulerActiveRef.current) {
+        const pt: [number, number] = [
+          parseFloat(e.lngLat.lng.toFixed(5)),
+          parseFloat(e.lngLat.lat.toFixed(5)),
+        ];
+        setRulerPoints((prev) => [...prev, pt]);
+        return;
+      }
       const lat = parseFloat(e.lngLat.lat.toFixed(4));
       const lon = parseFloat(e.lngLat.lng.toFixed(4));
       setInspectedPoint({ lat, lon, data: null, loading: true });
@@ -587,7 +717,6 @@ export default function MapView({
     };
     map.on("zoom", updateZoomTier);
     updateZoomTier();
-
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
     });
@@ -1096,6 +1225,7 @@ export default function MapView({
           attachedListenersRef.current.add(interactiveLayerId);
 
           map.on("click", interactiveLayerId, (e) => {
+            if (isRulerActiveRef.current) return;
             if (!e.features?.length) return;
             const feature = e.features[0];
             const props = feature.properties || {};
@@ -1145,10 +1275,12 @@ export default function MapView({
               html = `<div class="map-popup"><h5 style="margin:0 0 6px;color:#0284c7;font-size:12px;font-weight:700">${layer.name}</h5>${content}</div>`;
             }
 
+            const isFisherDark = html.includes("map-popup-fisher");
             const popup = new maplibregl.Popup({
               closeButton: true,
               maxWidth: "280px",
               offset: 10,
+              className: isFisherDark ? "dark-theme-popup" : "",
             })
               .setLngLat(e.lngLat)
               .setHTML(html)
@@ -1381,6 +1513,154 @@ export default function MapView({
     }
   }, [resetViewTrigger, handleResetView]);
 
+  // Synchronize Nautical Measure Tool (Ruler) layers on MapLibre
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    const sourceId = 'samudra-nautical-ruler-source';
+    const lineLayerId = 'samudra-nautical-ruler-line';
+    const pointsLayerId = 'samudra-nautical-ruler-points';
+
+    if (rulerPoints.length === 0) {
+      if (map.getLayer(lineLayerId)) map.removeLayer(lineLayerId);
+      if (map.getLayer(pointsLayerId)) map.removeLayer(pointsLayerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      return;
+    }
+
+    const lineFeature = rulerPoints.length >= 2 ? {
+      type: 'Feature' as const,
+      geometry: {
+        type: 'LineString' as const,
+        coordinates: rulerPoints,
+      },
+      properties: {},
+    } : null;
+
+    const pointFeatures = rulerPoints.map((pt, idx) => ({
+      type: 'Feature' as const,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: pt,
+      },
+      properties: {
+        index: idx + 1,
+        label: `WP ${idx + 1}`,
+      },
+    }));
+
+    const features = lineFeature ? [lineFeature, ...pointFeatures] : pointFeatures;
+    const geojsonData: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features,
+    };
+
+    const existingSource = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+    if (existingSource && typeof existingSource.setData === 'function') {
+      existingSource.setData(geojsonData);
+    } else {
+      map.addSource(sourceId, { type: 'geojson', data: geojsonData });
+    }
+
+    if (!map.getLayer(lineLayerId)) {
+      map.addLayer({
+        id: lineLayerId,
+        type: 'line',
+        source: sourceId,
+        filter: ['==', '$type', 'LineString'],
+        paint: {
+          'line-color': '#06b6d4',
+          'line-width': 3.5,
+          'line-dasharray': [2, 1.5],
+        },
+      });
+    }
+
+    if (!map.getLayer(pointsLayerId)) {
+      map.addLayer({
+        id: pointsLayerId,
+        type: 'circle',
+        source: sourceId,
+        filter: ['==', '$type', 'Point'],
+        paint: {
+          'circle-radius': 7,
+          'circle-color': '#06b6d4',
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#ffffff',
+        },
+      });
+    }
+  }, [rulerPoints]);
+
+  // Synchronize Wind & Current Vector Grid layer
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    const sourceId = 'samudra-wind-vectors-source';
+    const layerId = 'samudra-wind-vectors-layer';
+
+    if (!showWindVectors || !mapForecast) {
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      return;
+    }
+
+    const cLon = center ? center[0] : 73.28;
+    const cLat = center ? center[1] : 16.99;
+    const vectors = generateWindVectorGrid(
+      cLon,
+      cLat,
+      mapForecast.wind_direction_deg,
+      mapForecast.wind_speed_kn,
+      0.8,
+      0.18,
+    );
+
+    const geojsonData: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: vectors.map((v) => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: v.position,
+        },
+        properties: {
+          bearing: v.bearing,
+          speed: v.speed,
+          color: v.color,
+        },
+      })),
+    };
+
+    const existingSource = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+    if (existingSource && typeof existingSource.setData === 'function') {
+      existingSource.setData(geojsonData);
+    } else {
+      map.addSource(sourceId, { type: 'geojson', data: geojsonData });
+    }
+
+    if (!map.getLayer(layerId) && map.hasImage('icon-wind-arrow')) {
+      map.addLayer({
+        id: layerId,
+        type: 'symbol',
+        source: sourceId,
+        layout: {
+          'icon-image': 'icon-wind-arrow',
+          'icon-size': 0.85,
+          'icon-rotate': ['get', 'bearing'],
+          'icon-rotation-alignment': 'map',
+          'icon-allow-overlap': true,
+        },
+        paint: {
+          'icon-opacity': 0.8,
+        },
+      });
+    }
+  }, [showWindVectors, mapForecast, center?.[0], center?.[1]]);
+
+
   return (
     <section className="map-view" aria-label="Geospatial map viewport">
       <div ref={containerRef} className="map-container" />
@@ -1476,6 +1756,30 @@ export default function MapView({
               {isSimulating ? "Stop" : "Simulate"}
             </button>
           )}
+          <button
+            onClick={() => {
+              setIsRulerActive(!isRulerActive);
+              if (isRulerActive) setRulerPoints([]);
+            }}
+            style={{
+              padding: '16px',
+              fontSize: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: isRulerActive ? '#eff6ff' : 'white',
+              color: isRulerActive ? '#2563eb' : '#0f172a',
+              borderRadius: '8px',
+              border: 'none',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+              fontWeight: isRulerActive ? 'bold' : 'normal',
+              cursor: 'pointer',
+            }}
+            title="Measure nautical distance & transit time"
+          >
+            <Ruler size={24} />
+            {isRulerActive ? 'Measuring…' : 'Measure (nm)'}
+          </button>
         </div>
       )}
 
@@ -1518,7 +1822,7 @@ export default function MapView({
         </Popover.Root>
       )}
 
-      {/* Quick Jump Coastal Bookmarks */}
+      {/* Quick Jump Coastal Bookmarks & Wind Toggle */}
       <div
         className="map-coastal-bookmarks"
         style={{
@@ -1526,6 +1830,8 @@ export default function MapView({
           top: "16px",
           left: hideAdvancedControls ? "180px" : "16px",
           zIndex: 10,
+          display: 'flex',
+          gap: '8px',
         }}
       >
         <button
@@ -1554,6 +1860,63 @@ export default function MapView({
           <Bookmark size={14} style={{ color: "#0ea5e9" }} />
           <span>Coastal Bookmarks</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setShowWindVectors(!showWindVectors)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            background: showWindVectors
+              ? (theme === 'dark' ? 'rgba(30, 58, 138, 0.85)' : 'rgba(219, 234, 254, 0.92)')
+              : (theme === 'dark' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.92)'),
+            backdropFilter: 'blur(8px)',
+            border: showWindVectors ? '1px solid #3b82f6' : '1px solid var(--border, #334155)',
+            borderRadius: '8px',
+            color: showWindVectors ? (theme === 'dark' ? '#93c5fd' : '#1d4ed8') : 'var(--foreground, #0f172a)',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+          }}
+          title="Toggle dynamic wind & sea surface vectors"
+        >
+          <Wind size={14} style={{ color: showWindVectors ? '#2563eb' : '#64748b' }} />
+          <span>Wind Flow: {showWindVectors ? 'ON' : 'OFF'}</span>
+        </button>
+
+        {!hideAdvancedControls && (
+          <button
+            type="button"
+            onClick={() => {
+              setIsRulerActive(!isRulerActive);
+              if (isRulerActive) setRulerPoints([]);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              background: isRulerActive
+                ? (theme === 'dark' ? 'rgba(30, 58, 138, 0.85)' : 'rgba(219, 234, 254, 0.92)')
+                : (theme === 'dark' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.92)'),
+              backdropFilter: 'blur(8px)',
+              border: isRulerActive ? '1px solid #3b82f6' : '1px solid var(--border, #334155)',
+              borderRadius: '8px',
+              color: isRulerActive ? (theme === 'dark' ? '#93c5fd' : '#1d4ed8') : 'var(--foreground, #0f172a)',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+            }}
+            title="Measure distance, heading & voyage duration"
+          >
+            <Ruler size={14} style={{ color: isRulerActive ? '#2563eb' : '#64748b' }} />
+            <span>{isRulerActive ? 'Measuring…' : 'Measure (nm)'}</span>
+          </button>
+        )}
 
         {showBookmarks && (
           <div
@@ -2013,6 +2376,132 @@ export default function MapView({
               )}
             </div>
           ) : null}
+        </div>
+      )}
+
+      {/* Floating Nautical Measure & Voyage Transit HUD */}
+      {isRulerActive && (
+        <div
+          className="map-ruler-hud"
+          style={{
+            position: 'absolute',
+            top: '70px',
+            left: hideAdvancedControls ? '200px' : '16px',
+            zIndex: 25,
+            width: '310px',
+            background: theme === 'dark' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid var(--border, #334155)',
+            borderRadius: '12px',
+            padding: '14px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
+            fontSize: '12px',
+            color: 'var(--foreground, #0f172a)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid var(--border, rgba(255,255,255,0.1))', paddingBottom: '6px' }}>
+            <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', color: '#2563eb' }}>
+              <Ruler size={16} />
+              Nautical Measure Tool
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRulerActive(false);
+                setRulerPoints([]);
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground, #94a3b8)', padding: '2px' }}
+              aria-label="Close ruler tool"
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          {rulerPoints.length === 0 && (
+            <p style={{ color: 'var(--muted-foreground, #94a3b8)', fontSize: '11px', lineHeight: 1.4, margin: '4px 0' }}>
+              Click anywhere on the coastal waters to place your starting waypoint. Click additional points to measure route legs.
+            </p>
+          )}
+
+          {rulerPoints.length === 1 && (
+            <div>
+              <p style={{ color: '#2563eb', fontWeight: 600, fontSize: '11px', marginBottom: '6px' }}>
+                📍 Point 1 set ({rulerPoints[0][1].toFixed(3)}°N, {rulerPoints[0][0].toFixed(3)}°E)
+              </p>
+              <p style={{ color: 'var(--muted-foreground, #94a3b8)', fontSize: '11px', lineHeight: 1.4, margin: 0 }}>
+                Click a destination or second waypoint on the water to calculate nautical distance, true heading, and voyage time.
+              </p>
+            </div>
+          )}
+
+          {rulerStats && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Total Distance:</span>
+                <div>
+                  <strong style={{ fontSize: '16px', color: '#2563eb' }}>{rulerStats.distNm} NM</strong>{' '}
+                  <span style={{ fontSize: '11px', color: 'var(--muted-foreground, #94a3b8)' }}>({rulerStats.distKm} km)</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>True Bearing / Heading:</span>
+                <strong style={{ color: '#0ea5e9' }}>
+                  {rulerStats.bearing}° ({rulerStats.compass})
+                </strong>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted-foreground, #94a3b8)' }}>Est. Transit (@8.5 kn):</span>
+                <strong style={{ color: '#10b981' }}>{rulerStats.transit}</strong>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--muted-foreground, #94a3b8)' }}>
+                <span>Waypoints: {rulerStats.waypoints}</span>
+                <span>Press ESC to exit</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '6px', paddingTop: '8px', borderTop: '1px solid var(--border, rgba(255,255,255,0.1))' }}>
+                <button
+                  type="button"
+                  onClick={() => setRulerPoints([])}
+                  style={{
+                    flex: 1,
+                    padding: '6px 10px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    border: '1px solid var(--border, #cbd5e1)',
+                    background: 'transparent',
+                    color: 'var(--foreground, #0f172a)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear Points
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRulerActive(false);
+                    setRulerPoints([]);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '6px 10px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </section>
