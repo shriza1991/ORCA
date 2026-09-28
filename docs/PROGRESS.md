@@ -62,32 +62,30 @@ extjs/.
 
 > Documentation note: This file records current implementation status only. The final ORCA product direction is documented in [docs/ORCA_AI_MASTER_CONTEXT.md](docs/ORCA_AI_MASTER_CONTEXT.md) and the product decisions in [docs/DECISIONS.md](docs/DECISIONS.md). Final architecture statements below are authoritative product direction, not a claim that every feature is fully implemented in the current codebase.
 
-
-
-### 2026-09-26 Deployment Drift & Error-Path Resilience (current branch)
-
-
+### 2026-09-26 Deployment Drift & Error-Path Resilience
 
 - **ROOT CAUSE VERIFIED FROM LIVE RESPONSES**: Render `/api/v1/health` reports `app_env=development` and `data_mode=SNAPSHOT`, while the checked-in Render blueprint specifies `production` and `HYBRID`; the deployed build/config is not aligned with this repository state. Render logs were not accessible, so the exception causing the live situation 500 remains unverified.
-
 - **IMPLEMENTED**: replaced wildcard Render CORS configuration with the explicit Vercel origin; CORS now wraps a safe unhandled-exception middleware while `create_app()` remains a FastAPI instance.
-
 - **IMPLEMENTED**: situation-provider failures preserve sector identity but return `UNKNOWN`, null counts, `data_mode=UNAVAILABLE`, and a do-not-rely-on-this-response action; unavailable data is not represented as zero.
-
 - **IMPLEMENTED**: health responses expose API status, update timestamp, and Render commit/branch metadata; database errors no longer appear in the public health payload.
-
 - **IMPLEMENTED**: fixed Vite mode/DB i18n interpolation and removed expected missing-voice warnings.
-
 - **VERIFIED**: targeted backend resilience/sector tests: 11 passed. Full suites, production deployment, and browser verification remain pending.
 
+### 2026-09-28 M4 Advanced Nautical Map Suite & Tactical Command Surface (main branch)
 
-
-- Current version: `v0.2.5-m4-deckgl-optimization`
-
-- Active branch: `feat/m4-mission-twin`
-
-- Current feature: **Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle (§D049)**
-
+- Current version: `v0.2.7-main-mission-twin`
+- Active branch: `main`
+- Current milestone: **M4 Advanced Nautical Map Suite & Tactical Command Surface (§D057, §D058)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Frontend Vitest: 271/271 passing across 21 test suites (`npm run test`), including 11/11 in `src/utils/geo.test.ts`.
+    - Frontend TypeScript: 0 errors (`npm run typecheck`).
+    - Parity: Synchronized to `nextjs/utils/geo.ts`, `nextjs/components/map/MapView.tsx`, and `nextjs/components/authority/AuthorityDeckGLMap.tsx`.
+  - **M4 Nautical Map Suite Deliverables**:
+    - **Nautical Measure Tool (Distance, Heading & Voyage Duration Ruler)**: Spherical Haversine calculation in nautical miles (`haversineDistanceNm`), initial forward bearing (`initialBearingDeg`), 16-point cardinal compass quadrant resolution (`compassDirection`), and speed-based voyage transit time calculation (`calculateTransitTime` at 8.5 kn cruise speed). Interactive point-to-point clicking directly on coastal water in `MapView.tsx`, rendering an animated dashed cyan route ruler, glowing waypoint nodes, and a floating glassmorphic `map-ruler-hud` displaying distance, heading, estimated transit time, and waypoint controls.
+    - **Dynamic 48-Hour Forecast Route Exposure**: Real-time corridor line restyling in MapLibre reacting to the forecast timeline scrubber (`Now`, `+3h`, `+6h`, `+12h`, `+24h`, `+48h`), shifting line color based on forecasted wave heights (Green: calm `< 1.8m`, Amber: caution `1.8m - 2.4m`, Coral/Red: dangerous rough seas `> 2.4m`).
+    - **Sea-Surface Dynamic Wind & Current Directional Vectors**: Sea-surface vector grid generator (`generateWindVectorGrid`) synthesizing directional wind/wave flow from INCOIS and IMD telemetry, rendered via dynamic canvas icons on MapLibre with speed-adaptive coloring (Sky, Emerald, Amber, Crimson) and a coastal toggle control.
+    - **Tactical Radar Surveillance Rings & Hazard Proximity Warnings**: Geodesic concentric radar surveillance range rings (5 NM inner patrol, 12 NM territorial sea limit, 24 NM contiguous surveillance zone) centered on the active sector Coast Guard radar station in `AuthorityDeckGLMap.tsx`. Real-time tactical proximity vectors in Deck.gl: when an authority operator clicks any monitored naval craft, if the vessel is within 15 km of an active marine hazard, a dashed range vector connects the craft directly to the hazard centroid with live distance in kilometers.
+- Prior Feature: **Deck.gl Map Performance Optimization & Decoupled Rendering Lifecycle (§D049/§D050)**
   - **Status**: **COMPLETE & VERIFIED**
 
     - Frontend Vitest: 266/266 passing across 21 test suites (`npm run test`).
@@ -1681,6 +1679,30 @@ None
   - Frontend test suite: 21 test files, 266/266 passed (`vitest run`).
 
   - Frontend TypeScript validation: 0 errors (`tsc --noEmit`).
+
+## 2026-09-28 — Researcher Lab Layout Integrity & CSS Polish (§D051)
+- Status: **COMPLETE & VERIFIED**
+- **1. App Container Layout Containment**:
+  - Fixed flex expansion in `.researcher-page`: applied `flex: 1 1 0%; min-height: 0; height: calc(100vh - var(--header-height)); height: calc(100dvh - var(--header-height)); overflow: hidden; background: var(--color-bg-primary);`.
+  - Permanently eliminated double scrollbars and layout clipping inside `.app-container`.
+- **2. Segmented Navigation & Button Chrome Resets**:
+  - Added button resets (`background: transparent; border: none; cursor: pointer; font-family: inherit; outline: none;`) to `.researcher-segment-btn`, `.researcher-run-all-btn`, `.researcher-run-btn`, `.researcher-refresh-btn`, and `.researcher-scenario-card`.
+  - Added crisp borders, dark/light active states, and focus styling to segmented control decks.
+- **3. Deduplication & Consolidation of Query Workbench CSS**:
+  - Removed 350 lines of duplicate legacy Query Workbench CSS rules (lines 7947–8293) that conflicted with the modern analytical upgrade block.
+  - Preserved and enhanced `.researcher-trace-timeline` and `.researcher-trace-step` styles (adding support for `.researcher-trace-agent`, `.researcher-trace-duration`, and status badges) within the active analytical section.
+- **4. Scenario Lab Split-Pane Containment**:
+  - Configured `.researcher-scenario-lab` with `340px 1fr` columns, guaranteeing independent scrolling for the scenario card list and the inspection/comparison panel.
+- **5. Theme Contrast & Mobile View Isolation**:
+  - Updated `.researcher-prototype-info-card` to use `var(--color-accent)` token, ensuring high-contrast rendering across light mode (`#0284c7`) and dark mode (`#38bdf8`).
+  - Added crisp `border-color` to all `.researcher-status-badge` variants (`go`, `caution`, `no-go`, `unknown`).
+  - Updated `App.tsx` so mobile view tabs ("Chat / Map") only render when `portal === 'fisher' || portal === 'authority'`, eliminating phantom mobile navigation on Researcher and experiment views.
+- **6. Dual-Client Parity**:
+  - Synchronized `components.css` identically between `frontend/src/styles/components.css` and `nextjs/styles/components.css`.
+- **Verification**:
+  - Frontend test suite: 21/21 test files passed, 271/271 tests passed (`npm --prefix frontend test -- --run`).
+  - Frontend TypeScript validation: 0 errors (`npx --prefix frontend tsc --project frontend/tsconfig.json --noEmit`).
+
 
 
 
