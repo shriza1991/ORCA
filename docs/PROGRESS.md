@@ -8,6 +8,24 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-29 Production Deployment Recovery (Phases 2, 3, 4 — §D061)
+
+- **IMPLEMENTED Phase 3 (Alembic Entrypoint)**:
+  - Added `backend/scripts/entrypoint.sh` with robust database readiness polling (`SELECT 1` with 15 retries) and automatic migration execution (`python -m alembic upgrade head`).
+  - Updated `backend/Dockerfile` with `ENTRYPOINT ["/bin/sh", "/app/scripts/entrypoint.sh"]` while retaining Uvicorn startup CMD with dynamic `${PORT:-8000}` evaluation.
+  - Updated `backend/app/core/config.py` to transparently map `postgres://` connection strings (standard on Render) to `postgresql+psycopg2://`.
+- **IMPLEMENTED Phase 4 (Docker Context & Data Packaging)**:
+  - Updated `render.yaml` to set `dockerContext: .` and `dockerfilePath: backend/Dockerfile`.
+  - Updated `backend/Dockerfile` to copy `backend/` to `/app` and `data/` to `/app/data` with `/data` symlink.
+  - Updated `docker-compose.yml` backend service build context to repository root for local parity.
+- **IMPLEMENTED Phase 2 (Resilient Reference Data Path Resolution)**:
+  - Updated `backend/app/services/marinewatch_service.py` with multi-candidate `_resolve_data_file()` checking `PROJECT_ROOT`, `Path.cwd()`, `/app/data`, and `/data`.
+  - Applied to `cmfri_landing_centres.json`, `caa_aquaculture_sites.json`, `lighthouses_india.json`, `india_maritime_boundaries.geojson`, and `marine_restrictions.geojson`.
+- **VERIFIED**:
+  - Marinewatch endpoints & map layers: 28/28 tests passed.
+  - Synthetic seed & data service integration tests: 42/42 tests passed.
+  - Alembic configuration check: `python -m alembic -c backend/alembic.ini current` runs cleanly.
+
 ### 2026-09-29 Dashboard Simplification: Experimental deck.gl Benchmark Component Removal
 
 - **IMPLEMENTED**: Removed redundant experimental visual benchmark deck.gl comparison banner and routes from the main dashboard:

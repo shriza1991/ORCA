@@ -27,8 +27,8 @@ services:
   # ============================================================================
   # backend:
   #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
+  #     context: .
+  #     dockerfile: backend/Dockerfile
   #   container_name: orca_backend
   #   restart: unless-stopped
   #   env_file:

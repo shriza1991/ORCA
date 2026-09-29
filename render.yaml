@@ -10,8 +10,8 @@ services:
   - type: web
     name: orca-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
     plan: starter
     region: oregon
     healthCheckPath: /api/v1/health

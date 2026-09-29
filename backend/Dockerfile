@@ -7,8 +7,8 @@
 #   Stage 2 (runtime) — slim production image
 #
 # Usage:
-#   docker build -t orca-backend ./backend
-#   docker run --env-file ../.env -p 8000:8000 orca-backend
+#   docker build -t orca-backend -f backend/Dockerfile .
+#   docker run --env-file .env -p 8000:8000 orca-backend
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
@@ -54,12 +54,19 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Copy backend source
-COPY . /app
+# Copy backend source and repository reference/fixture data
+COPY backend /app
+COPY data /app/data
+
+# Ensure /data symlink points to /app/data for absolute container path resolution
+RUN ln -s /app/data /data 2>/dev/null || true
 
 # Create symlink so 'from backend.app...' and 'from app...' both resolve cleanly
 RUN ln -s /app /app/backend 2>/dev/null || true
 ENV PYTHONPATH="/app:${PYTHONPATH}"
+
+# Configure executable entrypoint script
+RUN chmod +x /app/scripts/entrypoint.sh 2>/dev/null || true
 
 # Non-root user for security
 RUN useradd -m -u 1001 orca && chown -R orca:orca /app
@@ -77,4 +84,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD python -c "import httpx; httpx.get('http://localhost:8000/api/v1/health', timeout=5)"
 
+ENTRYPOINT ["/bin/sh", "/app/scripts/entrypoint.sh"]
 CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --log-level info"]

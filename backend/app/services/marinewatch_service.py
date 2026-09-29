@@ -32,11 +32,31 @@ logger = logging.getLogger(__name__)
 
 # Data Paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-LANDING_CENTRES_PATH = PROJECT_ROOT / "data" / "reference" / "cmfri_landing_centres.json"
-AQUACULTURE_PATH = PROJECT_ROOT / "data" / "reference" / "caa_aquaculture_sites.json"
-LIGHTHOUSES_PATH = PROJECT_ROOT / "data" / "reference" / "lighthouses_india.json"
-BOUNDARIES_PATH = PROJECT_ROOT / "data" / "reference" / "india_maritime_boundaries.geojson"
-RESTRICTIONS_PATH = PROJECT_ROOT / "data" / "reference" / "marine_restrictions.geojson"
+
+
+def _resolve_data_file(relative_path: str | Path) -> Path:
+    """Resolve a reference data file path across local dev, Docker container, or CWD."""
+    rel = Path(relative_path)
+    if rel.is_absolute() and rel.exists():
+        return rel
+
+    candidates = [
+        PROJECT_ROOT / rel,
+        Path.cwd() / rel,
+        Path("/app") / rel,
+        Path("/") / rel,
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return PROJECT_ROOT / rel
+
+
+LANDING_CENTRES_PATH = _resolve_data_file("data/reference/cmfri_landing_centres.json")
+AQUACULTURE_PATH = _resolve_data_file("data/reference/caa_aquaculture_sites.json")
+LIGHTHOUSES_PATH = _resolve_data_file("data/reference/lighthouses_india.json")
+BOUNDARIES_PATH = _resolve_data_file("data/reference/india_maritime_boundaries.geojson")
+RESTRICTIONS_PATH = _resolve_data_file("data/reference/marine_restrictions.geojson")
 
 
 def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -67,24 +87,26 @@ class IndiaMarineWatchService:
         self._restrictions_geojson = self._load_geojson(RESTRICTIONS_PATH)
 
     def _load_json(self, path: Path) -> List[Dict[str, Any]]:
-        if not path.exists():
-            logger.warning("Reference data file not found: %s", path)
+        target = _resolve_data_file(path)
+        if not target.exists():
+            logger.warning("Reference data file not found: %s", target)
             return []
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(target, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as exc:
-            logger.error("Failed to read JSON from %s: %s", path, exc)
+            logger.error("Failed to read JSON from %s: %s", target, exc)
             return []
 
     def _load_geojson(self, path: Path) -> Dict[str, Any]:
-        if not path.exists():
+        target = _resolve_data_file(path)
+        if not target.exists():
             return {"type": "FeatureCollection", "features": []}
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(target, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as exc:
-            logger.error("Failed to read GeoJSON from %s: %s", path, exc)
+            logger.error("Failed to read GeoJSON from %s: %s", target, exc)
             return {"type": "FeatureCollection", "features": []}
 
     # -----------------------------------------------------------------------

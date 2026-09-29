@@ -56,6 +56,10 @@ class Settings(BaseSettings):
                 self.SYNC_DATABASE_URL = self.DATABASE_URL.replace(
                     "postgresql://", "postgresql+psycopg2://", 1
                 )
+            elif self.DATABASE_URL.startswith("postgres://"):
+                self.SYNC_DATABASE_URL = self.DATABASE_URL.replace(
+                    "postgres://", "postgresql+psycopg2://", 1
+                )
             else:
                 self.SYNC_DATABASE_URL = self.DATABASE_URL
         return self

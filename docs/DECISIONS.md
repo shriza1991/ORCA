@@ -2043,3 +2043,26 @@ Impact:
 - 0 TypeScript errors and clean production build.
 Owner: ORCA Engineering
 Date: 2026-09-29
+
+## D061 — Production Deployment Remediation: Container Entrypoint, Root Docker Context, and Resilient Reference Data Path Resolution
+Status: ACCEPTED
+Decision:
+1. Container Lifecycle & Migrations (Phase 3):
+   - Introduced `backend/scripts/entrypoint.sh` as the Docker ENTRYPOINT.
+   - Script polls database readiness (`SELECT 1`) with retry backoff before running `python -m alembic upgrade head`.
+   - On completion, hands over to Uvicorn process via `exec "$@"` to ensure clean signal forwarding.
+   - Configured `derive_sync_database_url` in `backend/app/core/config.py` to handle both `postgresql://` and `postgres://` connection strings.
+2. Build Context & Fixtures Packaging (Phase 4):
+   - Updated `render.yaml` to set `dockerContext: .` and `dockerfilePath: backend/Dockerfile`.
+   - Updated `backend/Dockerfile` to copy `backend/` to `/app` and `data/` to `/app/data`, with `/data` symlinked for backward compatibility.
+   - Updated `docker-compose.yml` to align backend build context with repository root.
+3. Resilient Reference Data Path Resolution (Phase 2):
+   - Updated `backend/app/services/marinewatch_service.py` to resolve reference data files across `PROJECT_ROOT`, `Path.cwd()`, `/app/data`, and `/data`.
+   - Eliminates missing reference file errors (`cmfri_landing_centres.json`, `caa_aquaculture_sites.json`, `lighthouses_india.json`) both locally and in containerized deployment.
+Reason:
+Resolve Render deployment failures where migrations were never executed (causing missing `geometry` and `saved_trip_subscriptions` table errors) and reference data files were omitted from the Docker image due to restricted build context.
+Impact:
+- Production containers bootstrap PostGIS and database schema automatically on boot.
+- Authoritative reference catalogs (landing centres, aquaculture sites, lighthouses) load reliably in all environments.
+Owner: Dev 2 (Backend Platform)
+Date: 2026-09-29

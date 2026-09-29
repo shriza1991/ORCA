@@ -488,7 +488,7 @@ class AssessmentService:
             from backend.app.core.config import settings
             # Only attempt DB persistence if configured with a real non-placeholder password and not testing
             db_url = getattr(settings, "DATABASE_URL", "")
-            if db_url and "placeholder" not in db_url and not getattr(settings, "TESTING", False):
+            if db_url and not getattr(settings, "TESTING", False):
                 try:
                     with SessionLocal() as db:
                         repo = AssessmentRepository(db)
