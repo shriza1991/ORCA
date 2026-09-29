@@ -1,4 +1,4 @@
-"""In-Memory Deterministic Marine & Weather Dataset for SAMUDRA.
+"""In-Memory Deterministic Marine & Weather Dataset for ORCA.
 
 Provides deterministic baseline marine conditions, atmospheric weather,
 and safety statuses for coastal landing centers / harbors (e.g. Ratnagiri,

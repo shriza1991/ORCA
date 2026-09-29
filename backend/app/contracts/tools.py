@@ -1,4 +1,4 @@
-"""Canonical Tool Result Contracts for SAMUDRA.
+"""Canonical Tool Result Contracts for ORCA.
 
 Owned by Dev 2 (Backend Platform), implemented by Dev 4 (Domain/Tools), consumed by Dev 3 (Agents).
 All deterministic domain functions in backend/app/tools/ MUST return ToolResult.

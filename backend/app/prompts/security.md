@@ -20,7 +20,7 @@ The agent orchestrator and response composer MUST treat this string solely as li
 
 ## 2. Threat Mitigations Matrix
 
-| Vulnerability | Attack Vector | SAMUDRA Defense Mechanism |
+| Vulnerability | Attack Vector | ORCA Defense Mechanism |
 | :--- | :--- | :--- |
 | **Prompt Injection / Jailbreak** | User submits adversarial prompt to override safety checks or extract system prompt. | Schema-constrained input/output; system prompts strictly delimit user content with XML tags (`<user_query>...</user_query>`); LLM has no authority over risk state. |
 | **Indirect Prompt Injection** | Malicious content embedded in third-party marine remarks or port notices. | Observations and advisories are parsed through typed Pydantic models with string escaping before LLM prompt assembly. |

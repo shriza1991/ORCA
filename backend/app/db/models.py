@@ -153,7 +153,7 @@ class TripAssessmentRecord(Base):
 
 
 # =============================================================================
-# SYNTHETIC DEMO DATASET MODELS (SAMUDRA_DEMO_V1)
+# SYNTHETIC DEMO DATASET MODELS (ORCA_DEMO_V1)
 # =============================================================================
 from sqlalchemy import Float, JSON
 
@@ -166,7 +166,7 @@ class DemoStakeholder(Base):
     role = Column(String, nullable=False, index=True)
     display_name = Column(String, nullable=False)
     metadata_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -181,7 +181,7 @@ class DemoHarbor(Base):
     state = Column(String, nullable=False)
     metadata_json = Column(JSON, nullable=False, default=dict)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -197,7 +197,7 @@ class DemoFisher(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     metadata_json = Column(JSON, nullable=False, default=dict)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -215,7 +215,7 @@ class DemoVessel(Base):
     status = Column(String, default="OPERATIONAL", nullable=False)
     metadata_json = Column(JSON, nullable=False, default=dict)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -233,7 +233,7 @@ class DemoTrip(Base):
     status = Column(String, default="PLANNED", nullable=False)
     metadata_json = Column(JSON, nullable=False, default=dict)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -262,7 +262,7 @@ class DemoMarineObservation(Base):
     qc_status = Column(String, default="VALID", nullable=False)
     is_stale = Column(Boolean, default=False, nullable=False)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -282,7 +282,7 @@ class DemoEOGridCell(Base):
     cloud_fraction = Column(Float, default=0.0, nullable=False)
     source_name = Column(String, default="synthetic-demo", nullable=False)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -303,7 +303,7 @@ class DemoPFZCandidate(Base):
     distance_km = Column(Float, nullable=True)
     qc_status = Column(String, default="VALID", nullable=False)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -319,7 +319,7 @@ class DemoGeofence(Base):
     geometry_geojson = Column(JSON, nullable=False)
     properties_json = Column(JSON, nullable=False, default=dict)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -334,7 +334,7 @@ class DemoRouteNode(Base):
     depth_m = Column(Float, nullable=True)
     is_sheltered = Column(Boolean, default=False, nullable=False)
     properties_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -349,7 +349,7 @@ class DemoRouteEdge(Base):
     route_name = Column(String, nullable=False)
     hazard_exposure_score = Column(Float, default=0.0, nullable=False)
     properties_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -366,7 +366,7 @@ class DemoHazardEvent(Base):
     end_time = Column(DateTime(timezone=True), nullable=False)
     status = Column(String, default="ACTIVE", nullable=False)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -388,7 +388,7 @@ class DemoNotification(Base):
     is_acknowledged = Column(Boolean, default=False, nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -405,6 +405,6 @@ class DemoVesselReplayPosition(Base):
     speed_knots = Column(Float, nullable=True)
     heading_deg = Column(Float, nullable=True)
     provenance_json = Column(JSON, nullable=False, default=dict)
-    namespace = Column(String, default="SAMUDRA_DEMO_V1", index=True, nullable=False)
+    namespace = Column(String, default="ORCA_DEMO_V1", index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 

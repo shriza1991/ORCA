@@ -1,7 +1,7 @@
 /**
  * Spatial Analytics Utilities using Turf.js
  *
- * Real deterministic geospatial calculations over authentic SAMUDRA coordinates:
+ * Real deterministic geospatial calculations over authentic ORCA coordinates:
  * - Geodesic distance (Haversine/Turf)
  * - Initial navigational bearing
  * - Cross-track distance (point-to-route distance)

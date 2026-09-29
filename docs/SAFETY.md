@@ -1,4 +1,4 @@
-# SAMUDRA Safety & Risk Evaluation Model
+# ORCA Safety & Risk Evaluation Model
 
 > **SIH Problem Statement:** PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents  
 > **Target Audience:** Fishermen, coastal vessel operators, researchers, disaster authorities  
@@ -10,7 +10,7 @@
 
 > [!CAUTION]
 > **PROTOTYPE DECISION-SUPPORT NOTICE**  
-> SAMUDRA is an experimental, functional artificial intelligence prototype developed for the Smart India Hackathon 2026. It is **NOT** a certified marine navigational aid, SOLAS-compliant life-safety system, or official substitute for statutory bulletins issued by the India Meteorological Department (IMD), Indian National Centre for Ocean Information Services (INCOIS), or the Indian Coast Guard. Mariners must always cross-reference official VHF broadcasts, port warning flags, and local harbor master directives before proceeding to sea.
+> ORCA is an experimental, functional artificial intelligence prototype developed for the Smart India Hackathon 2026. It is **NOT** a certified marine navigational aid, SOLAS-compliant life-safety system, or official substitute for statutory bulletins issued by the India Meteorological Department (IMD), Indian National Centre for Ocean Information Services (INCOIS), or the Indian Coast Guard. Mariners must always cross-reference official VHF broadcasts, port warning flags, and local harbor master directives before proceeding to sea.
 
 ---
 
@@ -42,7 +42,7 @@ These deterministic rules run in Python code (`backend/app/domain/risk_engine.py
 
 ## 4. Deterministic Confidence Derivation
 
-SAMUDRA rejects arbitrary LLM confidence percentages (e.g., *"I am 94% sure"*). Confidence is computed purely based on **Data Provenance & Freshness**:
+ORCA rejects arbitrary LLM confidence percentages (e.g., *"I am 94% sure"*). Confidence is computed purely based on **Data Provenance & Freshness**:
 
 - **`HIGH`**: Both primary government sources (INCOIS + IMD) are online, fresh (<6h), and spatially congruent.
 - **`MEDIUM`**: Primary forecast available, but secondary data relied on Open-Meteo fallback or snapshot cache (<12h old).

@@ -1,7 +1,7 @@
 import type { TripAssessmentResponse } from '../types/assessment';
 
-const CACHE_KEY_PREFIX = 'samudra_trip_assessment_';
-const DB_NAME = 'samudra_offline_db';
+const CACHE_KEY_PREFIX = 'orca_trip_assessment_';
+const DB_NAME = 'orca_offline_db';
 const STORE_NAME = 'assessments';
 
 export interface CachedAssessment {

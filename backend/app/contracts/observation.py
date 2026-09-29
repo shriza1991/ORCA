@@ -1,4 +1,4 @@
-"""ObservationBundle Domain Contract for SAMUDRA.
+"""ObservationBundle Domain Contract for ORCA.
 
 Owned by Dev 2 (Backend Platform) & Dev 4 (Domain Intelligence).
 Represents the immutable snapshot bundle of domain observations (marine, weather, hazard)

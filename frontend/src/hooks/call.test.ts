@@ -18,7 +18,7 @@ describe('Call Mode Pipeline, VAD & Translations', () => {
   describe('Call Mode Multilingual Translations', () => {
     it.each(['en', 'hi', 'mr'] as const)('provides complete Call Mode strings for %s including VAD hearing state', (lang) => {
       const t = TRANSLATIONS[lang];
-      expect(t.callSamudraBtn).toBeTruthy();
+      expect(t.callOrcaBtn).toBeTruthy();
       expect(t.callTitle).toBeTruthy();
       expect(t.callStatusConnecting).toBeTruthy();
       expect(t.callStatusListening).toBeTruthy();
@@ -34,7 +34,7 @@ describe('Call Mode Pipeline, VAD & Translations', () => {
       expect(t.callNoSpeech).toBeTruthy();
       expect(t.callDetectedLanguage).toBeTruthy();
       expect(t.callSubtitleUser).toBeTruthy();
-      expect(t.callSubtitleSamudra).toBeTruthy();
+      expect(t.callSubtitleOrca).toBeTruthy();
     });
   });
 

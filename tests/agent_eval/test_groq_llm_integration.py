@@ -1,4 +1,4 @@
-"""Comprehensive Test Suite for Real Groq/LLM Integration & Safety Architecture in SAMUDRA / ORCA.
+"""Comprehensive Test Suite for Real Groq/LLM Integration & Safety Architecture in ORCA.
 
 Validates:
 1. Groq provider initialization, API key handling, and configuration fallback.

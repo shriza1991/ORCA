@@ -30,8 +30,8 @@ describe('offline-cache M1.1 collision resistance', () => {
     const key1 = getOfflineCacheKey('Ratnagiri', 'Small Vessel', '2026-09-27T04:00:00Z');
     const key2 = getOfflineCacheKey('Ratnagiri', 'Small Vessel', '2026-09-27T08:00:00Z');
 
-    expect(key1).toBe('samudra_trip_assessment_Ratnagiri_Small Vessel_2026-09-27T04:00:00Z');
-    expect(key2).toBe('samudra_trip_assessment_Ratnagiri_Small Vessel_2026-09-27T08:00:00Z');
+    expect(key1).toBe('orca_trip_assessment_Ratnagiri_Small Vessel_2026-09-27T04:00:00Z');
+    expect(key2).toBe('orca_trip_assessment_Ratnagiri_Small Vessel_2026-09-27T08:00:00Z');
     expect(key1).not.toBe(key2);
   });
 

@@ -253,7 +253,7 @@ export default function CallModal({
                   🎙️ Speak naturally in <strong>मराठी</strong>, <strong>हिन्दी</strong>, or <strong>English</strong>.
                 </p>
                 <p className="call-empty-subhint">
-                  SAMUDRA automatically detects when you speak and pauses for 3 seconds before responding.
+                  ORCA automatically detects when you speak and pauses for 3 seconds before responding.
                 </p>
               </div>
             ) : (
@@ -261,7 +261,7 @@ export default function CallModal({
                 <div key={turn.id} className={`call-turn-item role-${turn.role}`}>
                   <div className="call-turn-header">
                     <span className="call-turn-author">
-                      {turn.role === 'user' ? t.callSubtitleUser : t.callSubtitleSamudra}
+                      {turn.role === 'user' ? t.callSubtitleUser : t.callSubtitleOrca}
                     </span>
                     {turn.language && (
                       <span className="call-turn-lang">

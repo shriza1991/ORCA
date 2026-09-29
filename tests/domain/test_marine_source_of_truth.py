@@ -117,7 +117,7 @@ def test_4_domain_reasoning_and_risk_evaluation_see_fixture_values():
     # Verify wave evaluation factor reflects the fixture's 1.2m significant wave height
     all_factors = risk.decisive_factors + risk.non_decisive_factors
     assert any("1.2m" in f for f in all_factors)
-    demo_provenance = [p for p in risk.provenance if "SAMUDRA deterministic demo" in p.source_name]
+    demo_provenance = [p for p in risk.provenance if "ORCA deterministic demo" in p.source_name]
     assert len(demo_provenance) == 3
     assert all("deterministic_demo" in p.quality_flags for p in demo_provenance)
     assert all("official_source" not in p.quality_flags for p in demo_provenance)

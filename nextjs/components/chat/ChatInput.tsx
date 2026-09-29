@@ -134,15 +134,15 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
             {onStartCall && (
               <button
                 type="button"
-                className="call-samudra-trigger-btn"
+                className="call-orca-trigger-btn"
                 onClick={onStartCall}
                 disabled={disabled || isRecording || isTranscribing}
-                title={t.callSamudraBtn}
-                aria-label={t.callSamudraBtn}
+                title={t.callOrcaBtn}
+                aria-label={t.callOrcaBtn}
               >
                 <span className="call-trigger-pulse-dot" aria-hidden="true" />
                 <PhoneCall size={13} />
-                <span>{t.callSamudraBtn}</span>
+                <span>{t.callOrcaBtn}</span>
               </button>
             )}
           </div>

@@ -1,4 +1,4 @@
-"""LangGraph Agentic Orchestrator Package for SAMUDRA / ORCA.
+"""LangGraph Agentic Orchestrator Package for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

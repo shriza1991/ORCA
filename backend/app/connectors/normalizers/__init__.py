@@ -1,4 +1,4 @@
-"""Source Normalizers Package for SAMUDRA.
+"""Source Normalizers Package for ORCA.
 
 Provides standardized normalizers for INCOIS, IMD, and MOSDAC/ISRO products.
 """

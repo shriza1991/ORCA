@@ -4,7 +4,7 @@ Imports genuine marine hazard bulletins from a file when live access is unconfig
 
 Supported formats:
 1. IMD Marine Hazard Bulletin JSON (direct format with bulletin_id, issued_at, etc.)
-2. SAMUDRA snapshot envelope (payload.harbor, payload.severity, etc.)
+2. ORCA snapshot envelope (payload.harbor, payload.severity, etc.)
 
 Preserves:
 - Original source metadata (issuing_authority, bulletin_id, issued_at, valid_from, valid_to)
@@ -43,9 +43,9 @@ class HazardImporter(BaseImporter):
                 f"Invalid hazard bulletin format in {self.file_path}. Expected dict."
             )
 
-        # Support both direct format and SAMUDRA snapshot envelope format
+        # Support both direct format and ORCA snapshot envelope format
         if "payload" in data and "severity" in data.get("payload", {}):
-            # SAMUDRA snapshot envelope: { metadata: {...}, payload: { severity, harbor, ... } }
+            # ORCA snapshot envelope: { metadata: {...}, payload: { severity, harbor, ... } }
             record = dict(data["payload"])
             issuing_authority = (
                 data.get("metadata", {}).get("provider", "IMD")

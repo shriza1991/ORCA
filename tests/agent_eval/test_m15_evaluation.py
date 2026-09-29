@@ -1,6 +1,6 @@
 """Milestone M15: 20-Query Agent Evaluation Test Suite.
 
-Project: SAMUDRA — Smart Autonomous Marine Understanding, Decision & Risk Assistant
+Project: ORCA — Marine Mission Intelligence Platform
 SIH Problem Statement: PS 26176 — ORCA
 Owner: Dev 3 — Agent Orchestration & Explainability
 
@@ -427,7 +427,7 @@ def test_m15_q19_unsupported_domain_query():
     assert state.get("intent") == IntentCategory.UNSUPPORTED.value
     # No specialist tools should be scheduled
     assert len(state.get("task_plan", [])) == 0
-    assert "SAMUDRA" in state.get("response", "") or "marine" in state.get("response", "").lower()
+    assert "ORCA" in state.get("response", "") or "marine" in state.get("response", "").lower()
 
 
 def test_m15_q20_reliability_fallback_and_payload_isolation():
@@ -556,7 +556,7 @@ def test_m15_aggregated_20_query_evaluation_benchmark(capsys):
 
     # Print summary report
     print("\n" + "=" * 65)
-    print("           SAMUDRA / ORCA — M15 AGENT EVALUATION REPORT          ")
+    print("                    ORCA — M15 AGENT EVALUATION REPORT          ")
     print("=" * 65)
     print(f"Queries Evaluated:              {total_queries}")
     print(f"Queries Terminated:             {terminated_count}/{total_queries} (Target: 20/20) -> {'PASS' if terminated_count == 20 else 'FAIL'}")

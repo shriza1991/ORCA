@@ -299,7 +299,7 @@ class AssessmentRepository(BaseRepository):
 
 
 class SyntheticDemoRepository(BaseRepository):
-    """Repository for managing the SAMUDRA synthetic demo dataset."""
+    """Repository for managing the ORCA synthetic demo dataset."""
 
     def delete_by_namespace(self, namespace: str) -> dict[str, int]:
         """Delete all synthetic demo entities under a given namespace."""
@@ -378,28 +378,28 @@ class SyntheticDemoRepository(BaseRepository):
             for key, model_cls in models_map.items()
         }
 
-    def get_stakeholders(self, namespace: str = "SAMUDRA_DEMO_V1") -> list[DemoStakeholder]:
+    def get_stakeholders(self, namespace: str = "ORCA_DEMO_V1") -> list[DemoStakeholder]:
         return self.session.query(DemoStakeholder).filter_by(namespace=namespace).all()
 
-    def get_harbors(self, namespace: str = "SAMUDRA_DEMO_V1") -> list[DemoHarbor]:
+    def get_harbors(self, namespace: str = "ORCA_DEMO_V1") -> list[DemoHarbor]:
         return self.session.query(DemoHarbor).filter_by(namespace=namespace).all()
 
-    def get_fishers(self, namespace: str = "SAMUDRA_DEMO_V1") -> list[DemoFisher]:
+    def get_fishers(self, namespace: str = "ORCA_DEMO_V1") -> list[DemoFisher]:
         return self.session.query(DemoFisher).filter_by(namespace=namespace).all()
 
     def get_vessels(
-        self, namespace: str = "SAMUDRA_DEMO_V1", harbor_id: str | None = None
+        self, namespace: str = "ORCA_DEMO_V1", harbor_id: str | None = None
     ) -> list[DemoVessel]:
         q = self.session.query(DemoVessel).filter_by(namespace=namespace)
         if harbor_id:
             q = q.filter_by(home_harbor_id=harbor_id)
         return q.all()
 
-    def get_trips(self, namespace: str = "SAMUDRA_DEMO_V1") -> list[DemoTrip]:
+    def get_trips(self, namespace: str = "ORCA_DEMO_V1") -> list[DemoTrip]:
         return self.session.query(DemoTrip).filter_by(namespace=namespace).all()
 
     def get_marine_observations(
-        self, namespace: str = "SAMUDRA_DEMO_V1", harbor_id: str | None = None
+        self, namespace: str = "ORCA_DEMO_V1", harbor_id: str | None = None
     ) -> list[DemoMarineObservation]:
         q = self.session.query(DemoMarineObservation).filter_by(namespace=namespace)
         if harbor_id:
@@ -407,7 +407,7 @@ class SyntheticDemoRepository(BaseRepository):
         return q.order_by(DemoMarineObservation.observation_time.asc()).all()
 
     def get_eo_grid_cells(
-        self, namespace: str = "SAMUDRA_DEMO_V1", cell_id: str | None = None
+        self, namespace: str = "ORCA_DEMO_V1", cell_id: str | None = None
     ) -> list[DemoEOGridCell]:
         q = self.session.query(DemoEOGridCell).filter_by(namespace=namespace)
         if cell_id:
@@ -415,7 +415,7 @@ class SyntheticDemoRepository(BaseRepository):
         return q.order_by(DemoEOGridCell.observation_time.asc()).all()
 
     def get_pfz_candidates(
-        self, namespace: str = "SAMUDRA_DEMO_V1", valid_only: bool = False, as_of: Any = None
+        self, namespace: str = "ORCA_DEMO_V1", valid_only: bool = False, as_of: Any = None
     ) -> list[DemoPFZCandidate]:
         q = self.session.query(DemoPFZCandidate).filter_by(namespace=namespace)
         if valid_only:
@@ -424,17 +424,17 @@ class SyntheticDemoRepository(BaseRepository):
                 q = q.filter(DemoPFZCandidate.valid_to >= as_of)
         return q.all()
 
-    def get_geofences(self, namespace: str = "SAMUDRA_DEMO_V1") -> list[DemoGeofence]:
+    def get_geofences(self, namespace: str = "ORCA_DEMO_V1") -> list[DemoGeofence]:
         return self.session.query(DemoGeofence).filter_by(namespace=namespace).all()
 
-    def get_route_nodes(self, namespace: str = "SAMUDRA_DEMO_V1") -> list[DemoRouteNode]:
+    def get_route_nodes(self, namespace: str = "ORCA_DEMO_V1") -> list[DemoRouteNode]:
         return self.session.query(DemoRouteNode).filter_by(namespace=namespace).all()
 
-    def get_route_edges(self, namespace: str = "SAMUDRA_DEMO_V1") -> list[DemoRouteEdge]:
+    def get_route_edges(self, namespace: str = "ORCA_DEMO_V1") -> list[DemoRouteEdge]:
         return self.session.query(DemoRouteEdge).filter_by(namespace=namespace).all()
 
     def get_hazards(
-        self, namespace: str = "SAMUDRA_DEMO_V1", status: str | None = None
+        self, namespace: str = "ORCA_DEMO_V1", status: str | None = None
     ) -> list[DemoHazardEvent]:
         q = self.session.query(DemoHazardEvent).filter_by(namespace=namespace)
         if status:
@@ -443,7 +443,7 @@ class SyntheticDemoRepository(BaseRepository):
 
     def get_notifications(
         self,
-        namespace: str = "SAMUDRA_DEMO_V1",
+        namespace: str = "ORCA_DEMO_V1",
         role: str | None = None,
         is_read: bool | None = None,
         vessel_ids: list[str] | None = None,
@@ -458,7 +458,7 @@ class SyntheticDemoRepository(BaseRepository):
         return q.order_by(DemoNotification.timestamp.desc()).all()
 
     def get_vessel_replay(
-        self, namespace: str = "SAMUDRA_DEMO_V1", vessel_id: str | None = None
+        self, namespace: str = "ORCA_DEMO_V1", vessel_id: str | None = None
     ) -> list[DemoVesselReplayPosition]:
         q = self.session.query(DemoVesselReplayPosition).filter_by(namespace=namespace)
         if vessel_id:

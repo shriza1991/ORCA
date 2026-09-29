@@ -35,7 +35,7 @@ export interface LocaleContent {
   micTranscribingAria: string;
   recordingIndicator: string;
   transcribingIndicator: string;
-  callSamudraBtn: string;
+  callOrcaBtn: string;
   callTitle: string;
   callStatusConnecting: string;
   callStatusListening: string;
@@ -51,7 +51,7 @@ export interface LocaleContent {
   callNoSpeech: string;
   callDetectedLanguage: string;
   callSubtitleUser: string;
-  callSubtitleSamudra: string;
+  callSubtitleOrca: string;
   logoutBtn: string;
   listenBtn: string;
   stopAudioBtn: string;
@@ -125,7 +125,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     micTranscribingAria: 'Transcribing voice audio...',
     recordingIndicator: 'Recording voice...',
     transcribingIndicator: 'Transcribing...',
-    callSamudraBtn: 'Call ORCA',
+    callOrcaBtn: 'Call ORCA',
     callTitle: 'ORCA Voice Call',
     callStatusConnecting: 'Connecting call...',
     callStatusListening: 'Listening... (Speak naturally)',
@@ -141,7 +141,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     callNoSpeech: 'No speech detected. Please speak into your microphone.',
     callDetectedLanguage: 'Detected Language',
     callSubtitleUser: 'You',
-    callSubtitleSamudra: 'ORCA',
+    callSubtitleOrca: 'ORCA',
     logoutBtn: 'Logout',
     listenBtn: 'Listen',
     stopAudioBtn: 'Stop',
@@ -212,7 +212,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     micTranscribingAria: 'आवाज रूपांतरित हो रही है...',
     recordingIndicator: 'आवाज रिकॉर्ड हो रही है...',
     transcribingIndicator: 'पहचाना जा रहा है...',
-    callSamudraBtn: 'समुद्र को कॉल करें',
+    callOrcaBtn: 'ORCA को कॉल करें',
     callTitle: 'ORCA वॉयस कॉल',
     callStatusConnecting: 'कॉल कनेक्ट हो रहा है...',
     callStatusListening: 'सुन रहा है... (अपनी भाषा में बोलें)',
@@ -228,7 +228,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     callNoSpeech: 'कोई आवाज नहीं सुनाई दी। कृपया माइक में बोलें।',
     callDetectedLanguage: 'पहचानी गई भाषा',
     callSubtitleUser: 'आप',
-    callSubtitleSamudra: 'ORCA',
+    callSubtitleOrca: 'ORCA',
     logoutBtn: 'लॉग आउट',
     listenBtn: 'सुनें',
     stopAudioBtn: 'रोकें',
@@ -299,7 +299,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     micTranscribingAria: 'आवाज रूपांतरित होत आहे...',
     recordingIndicator: 'आवाज रेकॉर्ड होत आहे...',
     transcribingIndicator: 'ओळखले जात आहे...',
-    callSamudraBtn: 'समुद्रला कॉल करा',
+    callOrcaBtn: 'ORCA ला कॉल करा',
     callTitle: 'ORCA थेट व्हॉइस कॉल',
     callStatusConnecting: 'कॉल जोडला जात आहे...',
     callStatusListening: 'ऐकत आहे... (तुमच्या भाषेत बोला)',
@@ -315,7 +315,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, LocaleContent> = {
     callNoSpeech: 'कोणताही आवाज ऐकू आला नाही. कृपया माईकमध्ये बोला.',
     callDetectedLanguage: 'ओळखलेली भाषा',
     callSubtitleUser: 'तुम्ही',
-    callSubtitleSamudra: 'ORCA',
+    callSubtitleOrca: 'ORCA',
     logoutBtn: 'लॉग आउट करा',
     listenBtn: 'ऐका',
     stopAudioBtn: 'थांबा',
@@ -872,9 +872,9 @@ export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
     mr: 'इस्रो (ISRO) आणि इनकोइस (INCOIS) सागरी बुद्धिमत्ता मंच',
   },
   {
-    en: "SAMUDRA orchestrates India's oceanographic, meteorological, and regulatory data into deterministic voyage advisories, risk evaluations, and maritime surveillance.",
-    hi: 'समुद्र (SAMUDRA) भारत के समुद्र विज्ञान, मौसम विज्ञान और नियामक डेटा को निश्चित यात्रा सलाह, जोखिम मूल्यांकन और समुद्री निगरानी में संयोजित करता है।',
-    mr: 'समुद्र (SAMUDRA) भारताचा समुद्रशास्त्र, हवामानशास्त्र आणि नियामक डेटा निश्चित प्रवास सल्ले, जोखीम मूल्यांकन आणि सागरी पाळतीमध्ये एकत्रित करतो.',
+    en: "ORCA orchestrates India's oceanographic, meteorological, and regulatory data into deterministic voyage advisories, risk evaluations, and maritime surveillance.",
+    hi: 'ORCA भारत के समुद्र विज्ञान, मौसम विज्ञान और नियामक डेटा को निश्चित यात्रा सलाह, जोखिम मूल्यांकन और समुद्री निगरानी में संयोजित करता है।',
+    mr: 'ORCA भारताचा समुद्रशास्त्र, हवामानशास्त्र आणि नियामक डेटा निश्चित प्रवास सल्ले, जोखीम मूल्यांकन आणि सागरी पाळतीमध्ये एकत्रित करतो.',
   },
   {
     en: 'Artisanal Fishers & Vessel Skippers',
@@ -1027,9 +1027,9 @@ export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
     mr: 'संशोधक प्रयोगशाळा',
   },
   {
-    en: "Explore ocean observation data, satellite EO products, evaluate benchmark scenarios, and inspect evidence provenance across SAMUDRA's marine data ecosystem.",
-    hi: 'समुद्र (SAMUDRA) के सागरीय डेटा तंत्र में महासागर अवलोकन डेटा, उपग्रह ईओ उत्पादों का अन्वेषण करें, बेंचमार्क परिदृश्यों का मूल्यांकन करें और साक्ष्य स्रोतों का निरीक्षण करें।',
-    mr: 'समुद्र (SAMUDRA) च्या सागरी डेटा परिसंस्थेतील महासागर निरीक्षण डेटा, उपग्रह ईओ उत्पादने एक्सप्लोर करा, बेंचमार्क परिस्थितींचे मूल्यांकन करा आणि पुराव्यांचे परीक्षण करा.',
+    en: "Explore ocean observation data, satellite EO products, evaluate benchmark scenarios, and inspect evidence provenance across ORCA's marine data ecosystem.",
+    hi: 'ORCA के सागरीय डेटा तंत्र में महासागर अवलोकन डेटा, उपग्रह ईओ उत्पादों का अन्वेषण करें, बेंचमार्क परिदृश्यों का मूल्यांकन करें और साक्ष्य स्रोतों का निरीक्षण करें।',
+    mr: 'ORCA च्या सागरी डेटा परिसंस्थेतील महासागर निरीक्षण डेटा, उपग्रह ईओ उत्पादने एक्सप्लोर करा, बेंचमार्क परिस्थितींचे मूल्यांकन करा आणि पुराव्यांचे परीक्षण करा.',
   },
   {
     en: 'Ocean Data Explorer:',

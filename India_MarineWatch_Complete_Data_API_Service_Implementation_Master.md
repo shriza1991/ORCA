@@ -200,7 +200,7 @@ This is the initial source strategy.
 | Oil spills | INCOIS OOSA | OPEN/service | Phase 2 | Trajectory/advisory |
 | Storm surge | INCOIS | OPEN/service | Phase 2 | Disaster layer |
 | High waves/swell surge | INCOIS | OPEN/service | Yes | Hazard layer |
-| Tsunami | INCOIS ITEWS/SAMUDRA | OPEN/public service | Yes | Display authoritative bulletins |
+| Tsunami | INCOIS ITEWS/ORCA | OPEN/public service | Yes | Display authoritative bulletins |
 | SARAT | INCOIS | OPEN_ACCOUNT / specialized | Later | Registration required |
 | SVAS | INCOIS | OPEN/service / product-specific | Later | Small-vessel advisory |
 | Meteorological marine forecasts | IMD | OPEN/public service | Yes | Fishermen + port + sea area warnings |
@@ -758,7 +758,7 @@ These belong in the common **Marine Hazard Engine**.
 
 ### Never build your own official warning layer.
 
-Consume/display authoritative information from INCOIS ITEWS/SAMUDRA where permitted.
+Consume/display authoritative information from INCOIS ITEWS/ORCA where permitted.
 
 Potential components:
 
@@ -774,11 +774,11 @@ Potential components:
 - threat maps
 - status/updates
 
-SAMUDRA consolidates multiple marine services including tsunami information, high-wave/swell-surge, currents, OSF and other marine advisories. 
+ORCA consolidates multiple marine services including tsunami information, high-wave/swell-surge, currents, OSF and other marine advisories. 
 
 Primary sources:
 - https://tsunami.incois.gov.in/
-- https://incois.gov.in/site/SAMUDRA/index.html
+- https://incois.gov.in/site/ORCA/index.html
 
 ### Safety UI
 
@@ -4943,7 +4943,7 @@ Current geospatial guidelines are permissive for standard political boundary dat
 - OSF service: https://www.incois.gov.in/site/services/osf.jsp
 - ERDDAP: https://erddap.incois.gov.in/erddap/
 - PFZ: https://www.incois.gov.in/MarineFisheries/PfzAdvisory
-- SAMUDRA: https://incois.gov.in/site/SAMUDRA/index.html
+- ORCA: https://incois.gov.in/site/ORCA/index.html
 - Tsunami: https://tsunami.incois.gov.in/
 - OOSA: https://oosa.incois.gov.in/
 
@@ -5028,7 +5028,7 @@ Current geospatial guidelines are permissive for standard political boundary dat
 [ ] TCHP
 [ ] ocean energy atlas
 [ ] OOSA
-[ ] tsunami/SAMUDRA information
+[ ] tsunami/ORCA information
 [ ] SARAT access evaluation
 [ ] SVAS access evaluation
 [ ] ERDDAP catalogue
@@ -8098,7 +8098,7 @@ Primary/current sources consulted include:
 - INCOIS Ocean State Forecast: https://www.incois.gov.in/oceanservices/osfforecast.jsp
 - INCOIS ERDDAP: https://erddap.incois.gov.in/erddap/
 - INCOIS PFZ: https://www.incois.gov.in/MarineFisheries/PfzAdvisory
-- INCOIS SAMUDRA: https://incois.gov.in/site/SAMUDRA/index.html
+- INCOIS ORCA: https://incois.gov.in/site/ORCA/index.html
 - IMD Marine Forecast: https://mausam.imd.gov.in/responsive/marine_forecast.php
 - MOSDAC Data Access Policy: https://www.mosdac.gov.in/data-access-policy
 - Bhuvan WMS documentation: https://bhuvan.nrsc.gov.in/wiki/index.php/How_to_use_WMS_services

@@ -1,7 +1,7 @@
 import os
 from sarvamai import SarvamAI
 
-audio_path = r"C:\Users\dyara\SAMUDRA\test_audio.wav"
+audio_path = r"C:\Users\dyara\ORCA\test_audio.wav"
 
 api_key = os.getenv("SARVAM_API_KEY")
 

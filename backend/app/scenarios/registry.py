@@ -1,4 +1,4 @@
-"""Canonical Evaluation Scenario Registry for SAMUDRA.
+"""Canonical Evaluation Scenario Registry for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability) & Dev 4 (Domain Intelligence).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

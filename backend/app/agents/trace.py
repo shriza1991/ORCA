@@ -1,4 +1,4 @@
-"""Sanitized Agent Execution Trace Contracts & Logger for SAMUDRA / ORCA.
+"""Sanitized Agent Execution Trace Contracts & Logger for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

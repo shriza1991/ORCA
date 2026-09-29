@@ -1,4 +1,4 @@
-"""Deterministic GeoJSON MapLayer Generator for SAMUDRA.
+"""Deterministic GeoJSON MapLayer Generator for ORCA.
 
 Owned by Dev 4 (Marine, Geo, Risk & Route Intelligence) & Dev 2 (Platform Contracts).
 Transforms existing deterministic domain observations, risk recommendations,

@@ -4,7 +4,7 @@ Imports genuine PFZ advisories from a file when the live API is unconfigured.
 
 Supported formats:
 1. INCOIS PFZ GeoJSON-like format (features array with lat/lon + SST gradient)
-2. Internal SAMUDRA snapshot format (features under payload.features)
+2. Internal ORCA snapshot format (features under payload.features)
 
 Preserves:
 - Original source metadata (issuing_authority, product_id, acquisition_time,
@@ -42,9 +42,9 @@ class PfzImporter(BaseImporter):
         with open(self.file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # Support both direct format and SAMUDRA snapshot envelope format
+        # Support both direct format and ORCA snapshot envelope format
         if "payload" in data and "features" in data.get("payload", {}):
-            # SAMUDRA snapshot envelope: { metadata: {...}, payload: { features: [...] } }
+            # ORCA snapshot envelope: { metadata: {...}, payload: { features: [...] } }
             raw_features = data["payload"].get("features", [])
             bulletin_date = data["payload"].get("bulletin_date")
             valid_to = data["payload"].get("valid_to")

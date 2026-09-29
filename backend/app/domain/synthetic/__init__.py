@@ -1,7 +1,7 @@
 """Synthetic Demo Data Seeding Foundation Package.
 
 Provides deterministic generator, geospatial validators, seeder, and dataset constants
-for the SAMUDRA prototype (SAMUDRA_DEMO_V1).
+for the ORCA prototype (ORCA_DEMO_V1).
 """
 
 from backend.app.domain.synthetic.generator import (

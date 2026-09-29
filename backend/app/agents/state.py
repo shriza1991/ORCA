@@ -22,7 +22,7 @@ from backend.app.contracts.observation import ObservationBundle
 
 
 class ORCAState(TypedDict, total=False):
-    """Shared state dictionary traversed by SAMUDRA / ORCA LangGraph nodes.
+    """Shared state dictionary traversed by ORCA LangGraph nodes.
 
     Lifecycle stages:
     1. Input & Context (session, request, user inputs)

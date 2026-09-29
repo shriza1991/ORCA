@@ -1,4 +1,4 @@
-"""Unit and Integration Tests for SAMUDRA Synthetic Demo Data Seeding Foundation.
+"""Unit and Integration Tests for ORCA Synthetic Demo Data Seeding Foundation.
 
 Verifies:
 - 3-tier provider schema fidelity and normalization
@@ -497,7 +497,7 @@ def test_demo_api_endpoints(sqlite_session):
             res = test_client.get("/api/v1/demo/manifest")
             assert res.status_code == 200
             data = res.json()
-            assert data["dataset_name"] == "SAMUDRA_DEMO_V1"
+            assert data["dataset_name"] == "ORCA_DEMO_V1"
 
             # 2. Stakeholders
             res = test_client.get("/api/v1/demo/stakeholders")
@@ -635,7 +635,7 @@ def test_authority_fleet_surveillance_sectors(sqlite_session):
     assert {v["public_id"] for v in malvan_vessels} == {"vessel-05", "vessel-06", "vessel-07", "vessel-08"}
 
     # 5, 6, 20. Immutability check against existing fixture baseline
-    fixture_path = pathlib.Path(__file__).resolve().parent.parent / "data" / "fixtures" / "synthetic" / "samudra"
+    fixture_path = pathlib.Path(__file__).resolve().parent.parent / "data" / "fixtures" / "synthetic" / "orca"
     with open(fixture_path / "vessels.json", "r", encoding="utf-8") as f:
         fixture_vessels = json.load(f)
     for i in range(8):

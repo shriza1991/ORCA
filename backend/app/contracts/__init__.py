@@ -1,4 +1,4 @@
-"""Canonical Contracts Package for SAMUDRA."""
+"""Canonical Contracts Package for ORCA."""
 
 from backend.app.contracts.chat import (
     AgentTraceItem,

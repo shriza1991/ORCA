@@ -1,4 +1,4 @@
-"""Typed Tool Registry & Execution Wrapper for SAMUDRA / ORCA.
+"""Typed Tool Registry & Execution Wrapper for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -112,7 +112,7 @@ class ToolExecutionRecord(BaseModel):
 
 
 class AgentToolRegistry:
-    """Central registry of approved specialist tools callable by the SAMUDRA agent.
+    """Central registry of approved specialist tools callable by the ORCA agent.
 
     Enforces strict execution boundaries: no arbitrary code execution or unvetted APIs.
     Supports capability discovery and operational availability checks.

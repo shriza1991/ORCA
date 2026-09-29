@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "dataset_name": "SAMUDRA Synthetic Demo Dataset",
+  "dataset_name": "ORCA Synthetic Demo Dataset",
   "dataset_version": "synthetic_demo_v1",
-  "namespace": "SAMUDRA_DEMO_V1",
+  "namespace": "ORCA_DEMO_V1",
   "reference_time": "2026-09-12T06:00:00Z",
   "data_mode": "SYNTHETIC",
   "source": "synthetic-demo",
-  "description": "Authoritative reproducible synthetic baseline dataset for SAMUDRA prototype workflows (Fishers, Researchers, Coastal Authorities, Disaster Management, Maritime Operators). Modeled after official provider schemas from INCOIS, IMD, and MOSDAC/ISRO.",
+  "description": "Authoritative reproducible synthetic baseline dataset for ORCA prototype workflows (Fishers, Researchers, Coastal Authorities, Disaster Management, Maritime Operators). Modeled after official provider schemas from INCOIS, IMD, and MOSDAC/ISRO.",
   "sources": {
     "incois": {
       "provider": "Indian National Centre for Ocean Information Services (INCOIS)",
@@ -43,8 +43,8 @@
         "INSAT-3D/3DR Thermal Sea Surface Temperature Grid"
       ]
     },
-    "samudra": {
-      "provider": "SAMUDRA Platform Domain Model",
+    "orca": {
+      "provider": "ORCA Platform Domain Model",
       "intended_use": [
         "Stakeholder identities, fishers, vessels, voyages, routes, notifications, replay tracks, geofences"
       ]
@@ -164,7 +164,7 @@
       "case_id": "QC-GEOFENCE-INTERACTION-01",
       "entity": "replay_positions",
       "vessel_id": "vessel-02",
-      "source_provider": "SAMUDRA",
+      "source_provider": "ORCA",
       "condition": "Replay GPS track moves past Malvan North boundary and near coral sanctuary perimeter."
     }
   ]

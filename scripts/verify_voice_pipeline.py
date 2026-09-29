@@ -1,4 +1,4 @@
-"""Verification Script for SAMUDRA End-to-End Voice Chat Pipeline.
+"""Verification Script for ORCA End-to-End Voice Chat Pipeline.
 
 Runs all required flows using the audio fixtures:
 1. test_marathi.wav -> Marathi STT -> ORCA -> Marathi response -> TTS

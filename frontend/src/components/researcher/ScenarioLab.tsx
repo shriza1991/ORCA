@@ -452,7 +452,7 @@ export default function ScenarioLab() {
                 <FlaskConical size={24} />
                 <p>
                   Click <strong>Run Scenario</strong> to execute this evaluation
-                  through the SAMUDRA pipeline.
+                  through the ORCA pipeline.
                 </p>
               </div>
             )}

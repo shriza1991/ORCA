@@ -1,4 +1,4 @@
-"""Deterministic Multi-Agent Collaboration and Arbitration Engine for SAMUDRA.
+"""Deterministic Multi-Agent Collaboration and Arbitration Engine for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability) & Dev 4 (Domain Intelligence).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -292,8 +292,8 @@ class AgentCollaborationEngine:
 
         safety_sources = [
             AgentEvidenceSource(
-                source_name="Deterministic Marine Risk Engine (SAMUDRA Core)",
-                provider="SAMUDRA Safety Authority",
+                source_name="Deterministic Marine Risk Engine (ORCA Core)",
+                provider="ORCA Safety Authority",
                 last_updated=now_iso,
                 coverage=f"Vessel Class: {craft_profile}",
                 quality_rating=DataQualityRating.VERIFIED,
@@ -347,7 +347,7 @@ class AgentCollaborationEngine:
                 conflict_type = "SAFETY_OVERRIDE_OPPORTUNITY"
                 conflict_reason = f"Marine Agent identified favorable fishing conditions/PFZ, but Safety/Weather Agent flagged hazardous operating conditions for {craft_profile}."
                 winning_decision = deterministic_status
-                winning_rule = "Safety Hard-Stop Invariant: Vessel physical operating limits strictly override fishing opportunity (SOLAS Protocol & SAMUDRA D010)."
+                winning_rule = "Safety Hard-Stop Invariant: Vessel physical operating limits strictly override fishing opportunity (SOLAS Protocol & ORCA D010)."
                 accepted_reasons.append(f"Deterministic safety analysis identified breached operational limit: {risk_assessment.summary if risk_assessment else 'Threshold exceeded'}.")
                 accepted_reasons.append("Precautionary Principle mandates protection of human life and craft stability over catch potential.")
                 rejected_reasons.append("Marine Agent's 'GO' recommendation was overridden: High fish density and favorable thermal gradients cannot justify navigating in dangerous seas.")

@@ -1,4 +1,4 @@
-"""Supervisor & Task Planning Contracts for SAMUDRA / ORCA.
+"""Supervisor & Task Planning Contracts for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

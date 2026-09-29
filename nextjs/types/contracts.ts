@@ -1,5 +1,5 @@
 /**
- * Canonical Shared Contracts for SAMUDRA Frontend
+ * Canonical Shared Contracts for ORCA Frontend
  *
  * Direct TypeScript translation of backend/app/contracts/chat.py
  * Owned by Dev 1 (Frontend Lead) & Dev 2 (Backend Platform).

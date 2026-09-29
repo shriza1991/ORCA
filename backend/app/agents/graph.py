@@ -1,4 +1,4 @@
-"""LangGraph Node Implementations & Executable Graph for SAMUDRA / ORCA (Milestone M1).
+"""LangGraph Node Implementations & Executable Graph for ORCA (Milestone M1).
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -157,7 +157,7 @@ else:
 # =============================================================================
 
 class NodeId(str, Enum):
-    """Canonical identifiers for all nodes in the SAMUDRA LangGraph pipeline."""
+    """Canonical identifiers for all nodes in the ORCA LangGraph pipeline."""
 
     INTENT_LOCALE = "intent_locale"
     CLARIFICATION = "clarification"
@@ -581,7 +581,7 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
         intent = IntentCategory.SAFETY
     elif any(k in msg_lower for k in ["why", "explain", "risky", "reason", "कारण", "क्यों", "kaaran", "kyon"]):
         intent = IntentCategory.ANALYTICAL_EXPLANATION
-    elif any(k in msg_lower for k in ["wave", "swell", "current", "condition", "sea state", "समुद्र", "लाटा", "लहरें", "lata", "lahre", "samudra", "darya"]):
+    elif any(k in msg_lower for k in ["wave", "swell", "current", "condition", "sea state", "समुद्र", "लाटा", "लहरें", "lata", "lahre", "sagar", "darya"]):
         intent = IntentCategory.CONDITIONS
     else:
         # Check if user is continuing a previous intent conversation
@@ -1454,19 +1454,19 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
     if intent_val == IntentCategory.UNSUPPORTED.value:
         if lang == "mr":
             answer = (
-                "समुद्रा (SAMUDRA) प्रणाली केवळ सागरी माहिती, संभाव्य मत्स्य क्षेत्र (PFZ), "
+                "ORCA प्रणाली केवळ सागरी माहिती, संभाव्य मत्स्य क्षेत्र (PFZ), "
                 "किनारपट्टी हवामान अंदाज आणि सागरी सुरक्षा सल्ल्यासाठी तयार केली आहे. आपली विचारणा सागरी कामकाजाशी "
                 "संबंधित दिसत नाही. कृपया समुद्र स्थिती, मत्स्य क्षेत्र, सुरक्षित मार्ग किंवा प्रस्थान सल्ल्याबद्दल विचारा."
             )
         elif lang == "hi":
             answer = (
-                "समुद्रा (SAMUDRA) प्रणाली विशेष रूप से समुद्री समझ, संभावित मत्स्य क्षेत्र (PFZ), "
+                "ORCA प्रणाली विशेष रूप से समुद्री समझ, संभावित मत्स्य क्षेत्र (PFZ), "
                 "तटीय मौसम पूर्वानुमान और समुद्री सुरक्षा सलाह के लिए समर्पित है। आपका प्रश्न समुद्री कार्यों से "
                 "संबंधित नहीं लगता है। कृपया समुद्र की स्थिति, मछली पकड़ने के क्षेत्र, सुरक्षित मार्ग या प्रस्थान सलाह के बारे में पूछें।"
             )
         else:
             answer = (
-                "SAMUDRA is focused exclusively on marine intelligence, Potential Fishing Zones (PFZ), "
+                "ORCA is focused exclusively on marine intelligence, Potential Fishing Zones (PFZ), "
                 "coastal weather forecasts, and maritime safety advisories. Your query does not appear to be "
                 "related to marine operations. Please ask about sea conditions, fishing zones, safe routes, "
                 "or departure advisories."
@@ -2818,7 +2818,7 @@ def terminal_node(state: ORCAState) -> Dict[str, Any]:
 # =============================================================================
 
 def build_orca_graph():
-    """Builds and compiles the bounded LangGraph StateGraph for SAMUDRA."""
+    """Builds and compiles the bounded LangGraph StateGraph for ORCA."""
     builder = StateGraph(ORCAState)
 
     # 1. Register Nodes

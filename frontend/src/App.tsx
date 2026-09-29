@@ -20,7 +20,7 @@ export type PortalMode =
   | "deckgl-experiment";
 
 /**
- * SAMUDRA Main Application Shell
+ * ORCA Main Application Shell
  *
  * Owned by Dev 1 (Frontend & Geospatial UX Lead).
  * Default Theme: Light Mode
@@ -160,7 +160,7 @@ export default function App() {
         language={chat.language}
       />
 
-      {/* Dedicated Phone-Style Call SAMUDRA Modal */}
+      {/* Dedicated Phone-Style Call ORCA Modal */}
       <CallModal
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}

@@ -1,4 +1,4 @@
-# SAMUDRA API & Data Contracts Specification
+# ORCA API & Data Contracts Specification
 
 > **SIH Problem Statement:** PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents  
 > **Status:** Canonical Shared Contracts for Frontend, Backend, Agents & Domain

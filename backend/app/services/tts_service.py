@@ -1,4 +1,4 @@
-"""Text-to-Speech (TTS) Service for SAMUDRA using Sarvam AI.
+"""Text-to-Speech (TTS) Service for ORCA using Sarvam AI.
 
 Integrates with Sarvam AI's bulbul:v3 model for Indian language voice synthesis
 (English, Hindi, Marathi, Tamil, Telugu, Kannada, Bengali, Gujarati, Odia, Punjabi, Malayalam).

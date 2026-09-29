@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "version": "2.0.0",
-  "description": "Authoritative Registry of the 8 canonical benchmark evaluation scenarios (S1-S8) for SAMUDRA",
+  "description": "Authoritative Registry of the 8 canonical benchmark evaluation scenarios (S1-S8) for ORCA",
   "scenarios": [
     {
       "id": "S1",

@@ -1,4 +1,4 @@
-"""Agent Evaluation Schema & Test Case Definitions for SAMUDRA / ORCA.
+"""Agent Evaluation Schema & Test Case Definitions for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

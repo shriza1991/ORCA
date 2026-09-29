@@ -55,12 +55,12 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
-      "intended_provider": "SAMUDRA_MARITIME_AUTHORITY",
+      "intended_provider": "ORCA_MARITIME_AUTHORITY",
       "note": "Demonstration surveillance sector boundary \u2014 not an official legal maritime demarcation"
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -115,12 +115,12 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
-      "intended_provider": "SAMUDRA_MARITIME_AUTHORITY",
+      "intended_provider": "ORCA_MARITIME_AUTHORITY",
       "note": "Demonstration surveillance sector boundary \u2014 not an official legal maritime demarcation"
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -179,12 +179,12 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
-      "intended_provider": "SAMUDRA_MARITIME_AUTHORITY",
+      "intended_provider": "ORCA_MARITIME_AUTHORITY",
       "note": "Demonstration surveillance sector boundary \u2014 not an official legal maritime demarcation"
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -239,12 +239,12 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
-      "intended_provider": "SAMUDRA_MARITIME_AUTHORITY",
+      "intended_provider": "ORCA_MARITIME_AUTHORITY",
       "note": "Demonstration surveillance sector boundary \u2014 not an official legal maritime demarcation"
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -299,12 +299,12 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
-      "intended_provider": "SAMUDRA_MARITIME_AUTHORITY",
+      "intended_provider": "ORCA_MARITIME_AUTHORITY",
       "note": "Demonstration surveillance sector boundary \u2014 not an official legal maritime demarcation"
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   }
 ]

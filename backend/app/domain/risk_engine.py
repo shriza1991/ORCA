@@ -1,4 +1,4 @@
-"""Deterministic Marine Risk Evaluation Engine for SAMUDRA.
+"""Deterministic Marine Risk Evaluation Engine for ORCA.
 
 Owned by Dev 4 (Marine, Geo, Risk & Route Intelligence).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -155,7 +155,7 @@ class DeterministicRiskEngine:
 
         def provenance_quality(source_name: str, degraded: bool, official: bool) -> list[str]:
             normalized_source = source_name.upper()
-            if any(marker in normalized_source for marker in ("SAMUDRA", "DEMO", "SYNTHETIC", "MOCK")):
+            if any(marker in normalized_source for marker in ("ORCA", "DEMO", "SYNTHETIC", "MOCK")):
                 return ["deterministic_demo"] if not degraded else ["degraded", "stale_demo_data"]
             if degraded:
                 return ["degraded", "stale_telemetry"]

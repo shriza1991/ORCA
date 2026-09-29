@@ -1,12 +1,12 @@
-# SAMUDRA Synthetic Demo Data Seeding Foundation
+# ORCA Synthetic Demo Data Seeding Foundation
 
 ## 1. Overview & Purpose
 
-SAMUDRA is an AI-powered maritime decision support copilot for artisanal and motorized fishing communities along the Indian coastline.
+ORCA is an AI-powered maritime decision support copilot for artisanal and motorized fishing communities along the Indian coastline.
 
-In prototype and offline development modes (`DATA_MODE=SYNTHETIC`), SAMUDRA utilizes a deterministic, highly realistic synthetic dataset (`SAMUDRA_DEMO_V1`) seeded into the backend datastore. This eliminates any dependency on live external provider APIs, private API keys, or unpredictable real-time network states during development, demonstrations, and automated testing.
+In prototype and offline development modes (`DATA_MODE=SYNTHETIC`), ORCA utilizes a deterministic, highly realistic synthetic dataset (`ORCA_DEMO_V1`) seeded into the backend datastore. This eliminates any dependency on live external provider APIs, private API keys, or unpredictable real-time network states during development, demonstrations, and automated testing.
 
-Crucially, rather than inventing ad-hoc frontend dummy data, SAMUDRA uses a **3-tier data architecture** based directly on **official Indian marine and meteorological data provider schemas**.
+Crucially, rather than inventing ad-hoc frontend dummy data, ORCA uses a **3-tier data architecture** based directly on **official Indian marine and meteorological data provider schemas**.
 
 ---
 
@@ -32,7 +32,7 @@ The data pipeline flows through three distinct layers:
                                       |
                                       v
 +-------------------------------------------------------------------------------+
-| 3. SAMUDRA INTERNAL CANONICAL REPOSITORIES & DOMAIN SERVICES                 |
+| 3. ORCA INTERNAL CANONICAL REPOSITORIES & DOMAIN SERVICES                 |
 |    - SyntheticDemoRepository / DataService                                   |
 |    - LangGraph ORCA Agent Tools & Safety Rules                                |
 |    - REST Endpoints (/api/v1/demo/*) & Frontend UI (Mapbox, Cards)           |
@@ -43,7 +43,7 @@ The data pipeline flows through three distinct layers:
 
 ## 3. Official Provider Schemas & Field Mappings
 
-| Provider | Official Service / Document | Source Field Format | Normalized SAMUDRA Metric |
+| Provider | Official Service / Document | Source Field Format | Normalized ORCA Metric |
 | :--- | :--- | :--- | :--- |
 | **INCOIS** | Ocean State Forecast (OSF) | `WND_SPD_KTS`, `WND_DIR_DEG`, `MAX_WND_GUST_KTS` | `wind_speed_knots`, `wind_direction_deg`, `wind_gust_knots` |
 | **INCOIS** | Ocean State Forecast (OSF) | `SIG_WAVE_HT_M`, `WAVE_PRD_SEC` | `wave_height_m`, `wave_period_sec` |
@@ -56,7 +56,7 @@ The data pipeline flows through three distinct layers:
 
 ---
 
-## 4. Dataset Composition (`SAMUDRA_DEMO_V1`)
+## 4. Dataset Composition (`ORCA_DEMO_V1`)
 
 The dataset comprises **1,122 deterministic records** spanning **15 relational models**:
 
@@ -148,7 +148,7 @@ Source-partitioned JSON fixtures are stored on disk under `data/fixtures/synthet
 - `data/fixtures/synthetic/incois/`
 - `data/fixtures/synthetic/imd/`
 - `data/fixtures/synthetic/mosdac/`
-- `data/fixtures/synthetic/samudra/`
+- `data/fixtures/synthetic/orca/`
 - `data/fixtures/synthetic/manifest.json`
 
 To regenerate all JSON fixture files:

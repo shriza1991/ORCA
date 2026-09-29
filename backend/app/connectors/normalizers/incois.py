@@ -1,7 +1,7 @@
 """INCOIS Source Normalizers.
 
 Normalizes source-native INCOIS Ocean State Forecast (OSF) bulletins and
-PFZ mission vector advisories into SAMUDRA internal contracts.
+PFZ mission vector advisories into ORCA internal contracts.
 """
 
 from __future__ import annotations
@@ -70,7 +70,7 @@ class IncoisOSFNormalizer:
         if isinstance(valid_to, datetime):
             valid_to = valid_to.isoformat()
         # Derive a sensible valid_to when absent or degenerate (≤ obs_time).
-        # INCOIS OSF publishes hourly bulletins; each hour's data is valid for 72 h in SAMUDRA simulation.
+        # INCOIS OSF publishes hourly bulletins; each hour's data is valid for 72 h in ORCA simulation.
         # Use obs_time + 72h — computed from the record's own timestamp, not from now_utc.
         _derive_valid_to = False
         if not valid_to:

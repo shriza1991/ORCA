@@ -1,1 +1,1 @@
-"""Root tests package for SAMUDRA."""
+"""Root tests package for ORCA."""

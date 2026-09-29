@@ -76,7 +76,7 @@ describe('Map Layer GeoJSON Contract & Semantics', () => {
     expect(toggled[1].visible).toBe(initialVisibility[1]);
   });
 
-  it('validates all 9 canonical SAMUDRA layer types and categories', () => {
+  it('validates all 9 canonical ORCA layer types and categories', () => {
     const testLayers: MapLayer[] = [
       {
         layer_id: 'layer_vessel_position',

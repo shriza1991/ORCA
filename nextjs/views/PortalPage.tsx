@@ -42,7 +42,7 @@ export default function PortalPage({ onSelectRole, language = 'en' }: PortalPage
           </div>
           <h1 className="portal-title">{tr('Select Your Operational Mission Portal')}</h1>
           <p className="portal-description">
-            {tr("SAMUDRA orchestrates India's oceanographic, meteorological, and regulatory data into deterministic voyage advisories, risk evaluations, and maritime surveillance.")}
+            {tr("ORCA orchestrates India's oceanographic, meteorological, and regulatory data into deterministic voyage advisories, risk evaluations, and maritime surveillance.")}
           </p>
         </section>
 
@@ -159,7 +159,7 @@ export default function PortalPage({ onSelectRole, language = 'en' }: PortalPage
             </div>
 
             <p className="portal-card-summary">
-              {tr('Explore ocean observation data, satellite EO products, evaluate benchmark scenarios, and inspect evidence provenance across SAMUDRA\'s marine data ecosystem.')}
+              {tr('Explore ocean observation data, satellite EO products, evaluate benchmark scenarios, and inspect evidence provenance across ORCA\'s marine data ecosystem.')}
             </p>
 
             <ul className="portal-features-list">

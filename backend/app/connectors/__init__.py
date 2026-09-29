@@ -1,4 +1,4 @@
-"""External Data Connectors Package for SAMUDRA.
+"""External Data Connectors Package for ORCA.
 
 Owned by Dev 2 (Backend Platform).
 

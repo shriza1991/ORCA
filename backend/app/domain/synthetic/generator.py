@@ -1,13 +1,13 @@
-"""Deterministic Synthetic Demo Data Generator for SAMUDRA.
+"""Deterministic Synthetic Demo Data Generator for ORCA.
 
-Generates the canonical SAMUDRA_DEMO_V1 dataset derived deterministically
+Generates the canonical ORCA_DEMO_V1 dataset derived deterministically
 from a fixed reference timestamp (2026-09-28T06:00:00Z).
 
 Models official source structures for:
 - INCOIS Ocean State Forecasts (OSF) and PFZ Advisories
 - IMD Coastal Weather & Marine Hazard Bulletins
 - MOSDAC / ISRO Satellite EO Products (Oceansat OCM & INSAT SST)
-- SAMUDRA-owned application entities (Fishers, Vessels, Trips, Routes, etc.)
+- ORCA-owned application entities (Fishers, Vessels, Trips, Routes, etc.)
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from typing import Any, Dict, List
 
 # Authoritative reference timestamp for deterministic generation
 REFERENCE_TIME = datetime(2026, 9, 28, 6, 0, 0, tzinfo=timezone.utc)
-SYNTHETIC_NAMESPACE = "SAMUDRA_DEMO_V1"
+SYNTHETIC_NAMESPACE = "ORCA_DEMO_V1"
 DATASET_VERSION = "synthetic_demo_v1"
 
 PROVENANCE_BASE = {
@@ -62,7 +62,7 @@ def generate_harbors() -> List[Dict[str, Any]]:
             "longitude": 73.28,
             "state": "Maharashtra",
             "metadata_json": {"coastal_zone": "Konkan", "vhf_channel": 16, "tide_station_id": "RAT-01"},
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         },
@@ -73,7 +73,7 @@ def generate_harbors() -> List[Dict[str, Any]]:
             "longitude": 73.47,
             "state": "Maharashtra",
             "metadata_json": {"coastal_zone": "Sindhudurg", "vhf_channel": 16, "tide_station_id": "MAL-01"},
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         },
@@ -88,7 +88,7 @@ def generate_harbors() -> List[Dict[str, Any]]:
             "longitude": 73.83,
             "state": "Goa",
             "metadata_json": {"coastal_zone": "Goa Coast", "vhf_channel": 16, "tide_station_id": "PAN-01"},
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         },
@@ -99,7 +99,7 @@ def generate_harbors() -> List[Dict[str, Any]]:
             "longitude": 72.87,
             "state": "Maharashtra",
             "metadata_json": {"coastal_zone": "Mumbai Coastal", "vhf_channel": 16, "tide_station_id": "BOM-01"},
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         },
@@ -110,7 +110,7 @@ def generate_harbors() -> List[Dict[str, Any]]:
             "longitude": 70.37,
             "state": "Gujarat",
             "metadata_json": {"coastal_zone": "Saurashtra Coast", "vhf_channel": 16, "tide_station_id": "VER-01"},
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         },
@@ -143,7 +143,7 @@ def generate_fishers() -> List[Dict[str, Any]]:
             "craft_profile": craft,
             "is_active": active,
             "metadata_json": meta,
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         }
@@ -157,7 +157,7 @@ def generate_vessels() -> List[Dict[str, Any]]:
         ("vessel-01", "Matsya Sagar 01", "fisher-01", "motorized_boat", 9.5, 3.0, "harbor-ratnagiri", "OPERATIONAL", {"engine_hp": 30, "hull_material": "FRP"}),
         ("vessel-02", "Konkan Pride", "fisher-02", "mechanized_trawler", 18.0, 15.0, "harbor-ratnagiri", "OPERATIONAL", {"engine_hp": 120, "hull_material": "Wood"}),
         ("vessel-03", "Al-Bahr Explorer", "fisher-03", "motorized_boat", 10.2, 4.0, "harbor-ratnagiri", "OPERATIONAL", {"engine_hp": 40, "hull_material": "FRP"}),
-        ("vessel-04", "Samudra Ratna", "fisher-04", "artisanal_craft", 6.5, 1.2, "harbor-ratnagiri", "DOCKED", {"engine_hp": 10, "hull_material": "Wood"}),
+        ("vessel-04", "Orca Ratna", "fisher-04", "artisanal_craft", 6.5, 1.2, "harbor-ratnagiri", "DOCKED", {"engine_hp": 10, "hull_material": "Wood"}),
         ("vessel-05", "Sea Hawk Goa", "fisher-05", "motorized_boat", 11.0, 4.5, "harbor-malvan", "OPERATIONAL", {"engine_hp": 45, "hull_material": "FRP"}),
         ("vessel-06", "Sindhudurg Queen", "fisher-06", "mechanized_trawler", 20.5, 22.0, "harbor-malvan", "OPERATIONAL", {"engine_hp": 160, "hull_material": "Steel"}),
         ("vessel-07", "Kripa Sagar", "fisher-07", "artisanal_craft", 7.0, 1.5, "harbor-malvan", "DOCKED", {"engine_hp": 9.9, "hull_material": "Wood"}),
@@ -183,7 +183,7 @@ def generate_vessels() -> List[Dict[str, Any]]:
             "home_harbor_id": harbor,
             "status": status,
             "metadata_json": meta,
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         }
@@ -227,7 +227,7 @@ def generate_trips() -> List[Dict[str, Any]]:
             "end_time": end,
             "status": status,
             "metadata_json": meta,
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         }
@@ -459,7 +459,7 @@ def generate_pfz_candidates() -> List[Dict[str, Any]]:
             "created_at": REFERENCE_TIME,
         })
         
-    json_path = Path("C:/Users/vikram/OneDrive/Desktop/SAMUDRA/data/source_snapshots/pfz_advisories.json")
+    json_path = Path("C:/Users/vikram/OneDrive/Desktop/ORCA/data/source_snapshots/pfz_advisories.json")
     if json_path.exists():
         try:
             with open(json_path, 'r', encoding='utf-8') as f:
@@ -607,7 +607,7 @@ def generate_geofences() -> List[Dict[str, Any]]:
             "is_hard_restriction": hard,
             "geometry_geojson": geom,
             "properties_json": props,
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA_MARITIME_AUTHORITY"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA_MARITIME_AUTHORITY"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         }
@@ -1035,7 +1035,7 @@ def generate_notifications() -> List[Dict[str, Any]]:
             "is_read": read,
             "is_acknowledged": ack,
             "timestamp": ts,
-            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA"},
+            "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA"},
             "namespace": SYNTHETIC_NAMESPACE,
             "created_at": REFERENCE_TIME,
         }
@@ -1156,7 +1156,7 @@ def generate_sectors() -> List[Dict[str, Any]]:
             "polygon": poly,
             "provenance_json": {
                 **PROVENANCE_BASE,
-                "intended_provider": "SAMUDRA_MARITIME_AUTHORITY",
+                "intended_provider": "ORCA_MARITIME_AUTHORITY",
                 "note": "Demonstration surveillance sector boundary — not an official legal maritime demarcation",
             },
             "namespace": SYNTHETIC_NAMESPACE,
@@ -1259,7 +1259,7 @@ def generate_vessel_replay_positions() -> List[Dict[str, Any]]:
                 "longitude": lon,
                 "speed_knots": spd,
                 "heading_deg": hdg,
-                "provenance_json": {**PROVENANCE_BASE, "intended_provider": "SAMUDRA_VESSEL_TRACKING"},
+                "provenance_json": {**PROVENANCE_BASE, "intended_provider": "ORCA_VESSEL_TRACKING"},
                 "namespace": SYNTHETIC_NAMESPACE,
                 "created_at": REFERENCE_TIME,
             })

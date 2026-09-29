@@ -4,7 +4,7 @@
 
 **Goal:** Complete the remaining M4/P4 Domain & GIS responsibilities by implementing the Dynamic Trajectory Exposure Engine, Time-Dependent A* Current Vector Routing, Temporal Departure Window Scanner (+48h forecast envelope), and Proactive Trajectory Geofence Monitoring.
 
-**Architecture:** Extend SAMUDRA's deterministic Python domain stack (`backend/app/domain/`) with waypoint timeline interpolation, current-vector edge weighting in `MarinePathfinder`, hourly forecast exposure analysis, and proactive boundary lookaheads. Pure Python deterministic algorithms with zero LLM hallucination in safety and navigation loops.
+**Architecture:** Extend ORCA's deterministic Python domain stack (`backend/app/domain/`) with waypoint timeline interpolation, current-vector edge weighting in `MarinePathfinder`, hourly forecast exposure analysis, and proactive boundary lookaheads. Pure Python deterministic algorithms with zero LLM hallucination in safety and navigation loops.
 
 **Tech Stack:** Python 3.12, Shapely, Pydantic v2, pytest.
 

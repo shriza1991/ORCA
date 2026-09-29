@@ -1,6 +1,6 @@
 # Phase 0 Freeze Audit: Data Sources & Fixtures
 
-This document outlines the current state of marine/GIS data sources and offline fixture scenarios implemented in the SAMUDRA codebase ahead of the Phase 0 baseline freeze.
+This document outlines the current state of marine/GIS data sources and offline fixture scenarios implemented in the ORCA codebase ahead of the Phase 0 baseline freeze.
 
 ## 1. Marine & GIS Data Sources
 

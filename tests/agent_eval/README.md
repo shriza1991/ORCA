@@ -1,4 +1,4 @@
-# Agent Evaluation Framework for SAMUDRA / ORCA
+# Agent Evaluation Framework for ORCA
 
 > **Owned by Dev 3 (Agent Orchestration & Explainability)**  
 > **Problem Statement:** PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents
@@ -9,7 +9,7 @@
 
 In maritime safety, loose or purely qualitative agent evaluation is unacceptable. The evaluation framework rigorously benchmarks cognitive accuracy, evidence grounding, safety decision immutability, and localization fidelity across the canonical evaluation scenarios (S1-S8).
 
-Evaluation cases are typed using the `AgentEvalCase` schema in [`eval_types.py`](file:///c:/Users/dyara/SAMUDRA/tests/agent_eval/eval_types.py) and defined in [`fixtures.py`](file:///c:/Users/dyara/SAMUDRA/tests/agent_eval/fixtures.py).
+Evaluation cases are typed using the `AgentEvalCase` schema in [`eval_types.py`](file:///c:/Users/dyara/ORCA/tests/agent_eval/eval_types.py) and defined in [`fixtures.py`](file:///c:/Users/dyara/ORCA/tests/agent_eval/fixtures.py).
 
 ---
 

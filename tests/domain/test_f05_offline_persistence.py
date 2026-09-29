@@ -176,7 +176,7 @@ def test_get_run_offline_fallback():
         thread_id=thread_id,
         metadata_json={
             "request_id": "req-003",
-            "request": {"message": "Hello SAMUDRA"},
+            "request": {"message": "Hello ORCA"},
         },
         status="COMPLETED",
     )
@@ -286,7 +286,7 @@ def test_synthetic_demo_endpoints_with_db_offline():
         # 1. Manifest
         res = client.get("/api/v1/demo/manifest")
         assert res.status_code == 200
-        assert res.json()["dataset_name"] == "SAMUDRA_DEMO_V1"
+        assert res.json()["dataset_name"] == "ORCA_DEMO_V1"
 
         # 2. Stakeholders
         res = client.get("/api/v1/demo/stakeholders")

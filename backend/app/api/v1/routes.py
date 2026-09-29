@@ -1,4 +1,4 @@
-"""API v1 Routing for SAMUDRA.
+"""API v1 Routing for ORCA.
 
 Owned by Dev 2 (Backend Platform).
 Routes declare types and inputs, delegating to:
@@ -594,7 +594,7 @@ async def get_scenario_details(scenario_id: str):
 @router.post(
     "/scenarios/{scenario_id}/run",
     tags=["Evaluation & Demo"],
-    summary="Execute evaluation scenario through SAMUDRA pipeline",
+    summary="Execute evaluation scenario through ORCA pipeline",
 )
 async def run_scenario_endpoint(scenario_id: str, language: str | None = None):
     """Executes a scenario deterministically through the LangGraph pipeline and returns the evaluation audit."""
@@ -1004,7 +1004,7 @@ import json
 _in_memory_synthetic_cache: dict[str, Any] | None = None
 
 
-def _get_synthetic_records(key: str, namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
+def _get_synthetic_records(key: str, namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """Fallback generator for synthetic demo records when PostgreSQL is offline."""
     global _in_memory_synthetic_cache
     if _in_memory_synthetic_cache is None:
@@ -1042,20 +1042,20 @@ def _model_to_dict(obj: Any) -> dict[str, Any]:
 
 @router.get("/demo/manifest", tags=["Synthetic Demo"])
 def get_demo_manifest() -> dict[str, Any]:
-    """Retrieve the manifest and metadata for the SAMUDRA synthetic demo dataset."""
+    """Retrieve the manifest and metadata for the ORCA synthetic demo dataset."""
     manifest_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "manifest.json"
     if manifest_path.exists():
         with open(manifest_path, "r", encoding="utf-8") as f:
             return json.load(f)
     return {
-        "dataset_name": "SAMUDRA_DEMO_V1",
-        "description": "Deterministic synthetic marine, weather, EO, and operational demo dataset for SAMUDRA",
+        "dataset_name": "ORCA_DEMO_V1",
+        "description": "Deterministic synthetic marine, weather, EO, and operational demo dataset for ORCA",
         "status": "active",
     }
 
 
 @router.get("/demo/stakeholders", tags=["Synthetic Demo"])
-def get_demo_stakeholders(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
+def get_demo_stakeholders(namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """List all synthetic demo stakeholders."""
     try:
         with SessionLocal() as session:
@@ -1069,7 +1069,7 @@ def get_demo_stakeholders(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, 
 
 
 @router.get("/demo/harbors", tags=["Synthetic Demo"])
-def get_demo_harbors(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
+def get_demo_harbors(namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """List all synthetic demo harbors."""
     try:
         with SessionLocal() as session:
@@ -1083,7 +1083,7 @@ def get_demo_harbors(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]
 
 
 @router.get("/demo/fishers", tags=["Synthetic Demo"])
-def get_demo_fishers(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
+def get_demo_fishers(namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """List all synthetic demo fishers."""
     try:
         with SessionLocal() as session:
@@ -1111,7 +1111,7 @@ def _resolve_sector_to_harbor_id(sector: str | None) -> str | None:
     # Keep compatibility with historical display-name inputs that are not
     # present in the canonical sector registry.
     try:
-        sectors_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "samudra" / "sectors.json"
+        sectors_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "orca" / "sectors.json"
         if sectors_path.exists():
             with open(sectors_path, "r", encoding="utf-8") as f:
                 sectors_data = json.load(f)
@@ -1140,7 +1140,7 @@ def _resolve_sector_to_harbor_id(sector: str | None) -> str | None:
 
 
 @router.get("/demo/sectors", tags=["Synthetic Demo"])
-def get_demo_sectors(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
+def get_demo_sectors(namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """List canonical demonstration surveillance sectors."""
     from backend.app.domain.situation import get_canonical_sectors
 
@@ -1160,7 +1160,7 @@ def get_demo_sector_situation(
     sector_id: str,
     reference_time: str | None = None,
     craft_profile: str = "motorized_boat",
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
 ) -> SectorSituationResponse:
     """Retrieve authoritative situation, fleet count, active hazards, and deterministic risk for a sector."""
     from backend.app.domain.situation import evaluate_sector_situation, resolve_authority_sector_context
@@ -1230,7 +1230,7 @@ def get_demo_sector_situation(
 def get_demo_vessels(
     sector: str | None = None,
     harbor_id: str | None = None,
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
 ) -> list[dict[str, Any]]:
     """List synthetic demo vessels, optionally filtered by surveillance sector or home harbor."""
     effective_harbor = harbor_id or _resolve_sector_to_harbor_id(sector)
@@ -1251,7 +1251,7 @@ def get_demo_vessels(
 
 
 @router.get("/demo/trips", tags=["Synthetic Demo"])
-def get_demo_trips(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
+def get_demo_trips(namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """List all synthetic demo fishing trips."""
     try:
         with SessionLocal() as session:
@@ -1266,7 +1266,7 @@ def get_demo_trips(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
 
 @router.get("/demo/marine-observations", tags=["Synthetic Demo"])
 def get_demo_marine_observations(
-    harbor_id: str | None = None, namespace: str = "SAMUDRA_DEMO_V1"
+    harbor_id: str | None = None, namespace: str = "ORCA_DEMO_V1"
 ) -> list[dict[str, Any]]:
     """List synthetic demo marine observations."""
     try:
@@ -1285,7 +1285,7 @@ def get_demo_marine_observations(
 
 @router.get("/demo/eo-grid-cells", tags=["Synthetic Demo"])
 def get_demo_eo_grid_cells(
-    cell_id: str | None = None, namespace: str = "SAMUDRA_DEMO_V1"
+    cell_id: str | None = None, namespace: str = "ORCA_DEMO_V1"
 ) -> list[dict[str, Any]]:
     """List synthetic Earth Observation grid cell data."""
     try:
@@ -1304,7 +1304,7 @@ def get_demo_eo_grid_cells(
 
 @router.get("/demo/pfz-candidates", tags=["Synthetic Demo"])
 def get_demo_pfz_candidates(
-    valid_only: bool = False, namespace: str = "SAMUDRA_DEMO_V1"
+    valid_only: bool = False, namespace: str = "ORCA_DEMO_V1"
 ) -> list[dict[str, Any]]:
     """List synthetic Potential Fishing Zone (PFZ) advisory candidates."""
     try:
@@ -1322,7 +1322,7 @@ def get_demo_pfz_candidates(
 
 
 @router.get("/demo/geofences", tags=["Synthetic Demo"])
-def get_demo_geofences(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any]]:
+def get_demo_geofences(namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """List synthetic demo maritime geofences and restricted zones."""
     try:
         with SessionLocal() as session:
@@ -1336,7 +1336,7 @@ def get_demo_geofences(namespace: str = "SAMUDRA_DEMO_V1") -> list[dict[str, Any
 
 
 @router.get("/demo/routes", tags=["Synthetic Demo"])
-def get_demo_routes(namespace: str = "SAMUDRA_DEMO_V1") -> dict[str, Any]:
+def get_demo_routes(namespace: str = "ORCA_DEMO_V1") -> dict[str, Any]:
     """List synthetic demo maritime route graph (nodes and edges)."""
     try:
         with SessionLocal() as session:
@@ -1369,7 +1369,7 @@ def get_demo_route_alternatives(
     destination: str | None = None,
     craft_profile: str = "motorized_boat",
     vessel_id: str | None = None,
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
 ) -> dict[str, Any]:
     """Retrieve evaluated passage route alternatives computed by RouteExposureEngine."""
     from backend.app.agents.integrations.contracts import ToolInvocationContext
@@ -1494,7 +1494,7 @@ def get_demo_sector_route_alternatives(
     destination: str | None = None,
     craft_profile: str = "motorized_boat",
     vessel_id: str | None = None,
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
 ) -> dict[str, Any]:
     """Canonical alias for retrieving route alternatives for a specific sector."""
     return get_demo_route_alternatives(
@@ -1517,7 +1517,7 @@ def _canonical_sector_hazards(sector_id: str, namespace: str) -> list[dict[str, 
 def get_demo_hazards(
     sector: str | None = None,
     status: str | None = None,
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
 ) -> list[dict[str, Any]]:
     """List synthetic demo marine weather hazard advisories, optionally filtered by sector."""
     if sector:
@@ -1547,7 +1547,7 @@ def get_demo_hazards(
 )
 def get_demo_sector_hazards(
     sector_id: str,
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
 ) -> SectorHazardsResponse:
     """Return only canonical active hazards relevant to one Authority sector."""
     hazards = _canonical_sector_hazards(sector_id, namespace)
@@ -1582,7 +1582,7 @@ def get_demo_sector_hazards(
     tags=["Synthetic Demo"],
 )
 def get_demo_sector_hazard_associations(
-    sector_id: str, namespace: str = "SAMUDRA_DEMO_V1"
+    sector_id: str, namespace: str = "ORCA_DEMO_V1"
 ) -> SectorHazardAssociationsResponse:
     """Return observational vessel-in-active-hazard-area associations."""
     from backend.app.domain.situation import get_canonical_vessel_hazard_associations_for_sector
@@ -1601,7 +1601,7 @@ def get_demo_sector_hazard_associations(
     tags=["Synthetic Demo"],
 )
 def get_demo_sector_operational_alerts(
-    sector_id: str, namespace: str = "SAMUDRA_DEMO_V1"
+    sector_id: str, namespace: str = "ORCA_DEMO_V1"
 ) -> SectorOperationalAlertsResponse:
     """Return current derived vessel-in-active-hazard-area alerts."""
     from backend.app.domain.situation import get_canonical_operational_alerts_for_sector
@@ -1619,7 +1619,7 @@ def get_demo_notifications(
     sector: str | None = None,
     role: str | None = None,
     is_read: bool | None = None,
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
 ) -> list[dict[str, Any]]:
     """List synthetic demo notifications and safety advisories, optionally filtered by sector."""
     effective_harbor = _resolve_sector_to_harbor_id(sector)
@@ -1662,7 +1662,7 @@ def get_demo_notifications(
 
 @router.get("/demo/vessels/{vessel_id}/replay", tags=["Synthetic Demo"])
 def get_demo_vessel_replay(
-    vessel_id: str, namespace: str = "SAMUDRA_DEMO_V1"
+    vessel_id: str, namespace: str = "ORCA_DEMO_V1"
 ) -> list[dict[str, Any]]:
     """Get recorded replay track positions for a specific vessel."""
     try:
@@ -1678,7 +1678,7 @@ def get_demo_vessel_replay(
 
 
 @router.get("/demo/vessels/{vessel_id}/estimated-trajectory", tags=["Synthetic Demo"])
-def get_demo_vessel_estimated_trajectory(vessel_id: str, namespace: str = "SAMUDRA_DEMO_V1") -> dict[str, Any]:
+def get_demo_vessel_estimated_trajectory(vessel_id: str, namespace: str = "ORCA_DEMO_V1") -> dict[str, Any]:
     """Bounded synthetic surveillance estimate from the latest canonical replay state."""
     positions = get_demo_vessel_replay(vessel_id, namespace)
     if not positions:

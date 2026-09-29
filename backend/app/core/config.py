@@ -1,4 +1,4 @@
-"""Core Configuration Settings for SAMUDRA.
+"""Core Configuration Settings for ORCA.
 
 Loads from environment variables and .env file.
 Owned by Dev 2 (Backend Platform).
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     # Application
-    APP_NAME: str = "SAMUDRA"
+    APP_NAME: str = "ORCA"
     APP_ENV: str = "development"
     DEBUG: bool = True
     LOG_LEVEL: str = "INFO"
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # Server
     BACKEND_HOST: str = "0.0.0.0"
     BACKEND_PORT: int = 8000
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://samudra-qxx1.vercel.app"
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://orca-qxx1.vercel.app"
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         return origins
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://samudra_user:samudra_password_placeholder@localhost:5432/samudra_db"
+    DATABASE_URL: str = "postgresql+asyncpg://orca_user:orca_password_placeholder@localhost:5432/orca_db"
     # Render supplies DATABASE_URL. Derive the synchronous SQLAlchemy URL
     # automatically unless a local/test override is explicitly provided.
     SYNC_DATABASE_URL: str = ""

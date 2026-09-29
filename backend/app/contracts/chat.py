@@ -1,4 +1,4 @@
-"""Canonical Chat Request and Response Contracts for SAMUDRA.
+"""Canonical Chat Request and Response Contracts for ORCA.
 
 Owned by Dev 2 (Backend Platform), referenced by Dev 1, Dev 3, and Dev 4.
 All changes to these models must follow the RFC process in docs/DEVELOPMENT.md.
@@ -85,7 +85,7 @@ class ThresholdComparison(BaseModel):
 class DataProvenance(BaseModel):
     """Data provenance and validity envelope for underlying feeds."""
 
-    provider_name: str = Field(..., description="Originating agency (e.g., 'INCOIS', 'IMD', 'SAMUDRA')")
+    provider_name: str = Field(..., description="Originating agency (e.g., 'INCOIS', 'IMD', 'ORCA')")
     source_name: str = Field(..., description="Specific feed, bulletin, or model designation")
     source_url: Optional[str] = Field(None, description="Direct URL to official bulletin or portal")
     observed_time: Optional[str] = Field(None, description="Observation / telemetry timestamp (ISO-8601 UTC)")

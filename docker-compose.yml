@@ -4,18 +4,18 @@ services:
   # ============================================================================
   db:
     image: postgis/postgis:16-3.4
-    container_name: samudra_postgis
+    container_name: orca_postgis
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-samudra_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-samudra_password_placeholder}
-      POSTGRES_DB: ${POSTGRES_DB:-samudra_db}
+      POSTGRES_USER: ${POSTGRES_USER:-orca_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orca_password_placeholder}
+      POSTGRES_DB: ${POSTGRES_DB:-orca_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-samudra_user} -d ${POSTGRES_DB:-samudra_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orca_user} -d ${POSTGRES_DB:-orca_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,12 +29,12 @@ services:
   #   build:
   #     context: ./backend
   #     dockerfile: Dockerfile
-  #   container_name: samudra_backend
+  #   container_name: orca_backend
   #   restart: unless-stopped
   #   env_file:
   #     - .env
   #   environment:
-  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-samudra_user}:${POSTGRES_PASSWORD:-samudra_password_placeholder}@db:5432/${POSTGRES_DB:-samudra_db}
+  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-orca_user}:${POSTGRES_PASSWORD:-orca_password_placeholder}@db:5432/${POSTGRES_DB:-orca_db}
   #     - DATA_MODE=${DATA_MODE:-HYBRID}
   #     - LLM_PROVIDER=${LLM_PROVIDER:-openai}
   #     - LLM_API_KEY=${LLM_API_KEY}
@@ -61,7 +61,7 @@ services:
   #   build:
   #     context: ./frontend
   #     dockerfile: Dockerfile
-  #   container_name: samudra_frontend
+  #   container_name: orca_frontend
   #   restart: unless-stopped
   #   ports:
   #     - "${FRONTEND_PORT:-5173}:5173"

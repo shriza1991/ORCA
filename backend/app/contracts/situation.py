@@ -1,4 +1,4 @@
-"""Sector Situation Domain and API Contracts for SAMUDRA.
+"""Sector Situation Domain and API Contracts for ORCA.
 
 Represents the authoritative sector situation response consumed by the
 Authority Command Deck, combining dynamic canonical fleet counts, active

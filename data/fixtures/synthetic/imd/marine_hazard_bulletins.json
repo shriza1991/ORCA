@@ -58,7 +58,7 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
@@ -67,7 +67,7 @@
         "sector-ratnagiri"
       ]
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -121,7 +121,7 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
@@ -130,7 +130,7 @@
         "sector-ratnagiri"
       ]
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -188,7 +188,7 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
@@ -197,7 +197,7 @@
         "sector-goa"
       ]
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -251,14 +251,14 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
       "official_documentation": "https://rsmcnewdelhi.imd.gov.in",
       "affected_sector_ids": []
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -324,7 +324,7 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
@@ -333,7 +333,7 @@
         "sector-ratnagiri"
       ]
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -387,14 +387,14 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
       "official_documentation": "https://rsmcnewdelhi.imd.gov.in",
       "affected_sector_ids": []
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -448,14 +448,14 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
       "official_documentation": "https://rsmcnewdelhi.imd.gov.in",
       "affected_sector_ids": []
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -505,14 +505,14 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
       "official_documentation": "https://rsmcnewdelhi.imd.gov.in",
       "affected_sector_ids": []
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -566,14 +566,14 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
       "official_documentation": "https://rsmcnewdelhi.imd.gov.in",
       "affected_sector_ids": []
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   },
   {
@@ -631,14 +631,14 @@
       "mode": "SYNTHETIC",
       "source": "synthetic-demo",
       "dataset_version": "synthetic_demo_v1",
-      "namespace": "SAMUDRA_DEMO_V1",
+      "namespace": "ORCA_DEMO_V1",
       "generated_at": "2026-09-28T06:00:00+00:00",
       "intended_provider": "IMD_CYCLONE_DIVISION",
       "source_product": "IMD Severe Weather & Cyclone Warning Bulletin",
       "official_documentation": "https://rsmcnewdelhi.imd.gov.in",
       "affected_sector_ids": []
     },
-    "namespace": "SAMUDRA_DEMO_V1",
+    "namespace": "ORCA_DEMO_V1",
     "created_at": "2026-09-28T06:00:00+00:00"
   }
 ]

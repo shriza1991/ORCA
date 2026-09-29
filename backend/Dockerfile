@@ -1,5 +1,5 @@
 # =============================================================================
-# SAMUDRA Backend Dockerfile
+# ORCA Backend Dockerfile
 # Owned by Dev 2 (Backend Platform)
 #
 # Multi-stage build:
@@ -7,8 +7,8 @@
 #   Stage 2 (runtime) — slim production image
 #
 # Usage:
-#   docker build -t samudra-backend ./backend
-#   docker run --env-file ../.env -p 8000:8000 samudra-backend
+#   docker build -t orca-backend ./backend
+#   docker run --env-file ../.env -p 8000:8000 orca-backend
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ FROM python:3.11-slim AS runtime
 
 LABEL org.opencontainers.image.title="ORCA Backend"
 LABEL org.opencontainers.image.description="ORCA — Marine EcOsystem Reasoning with Collaborative Agents"
-LABEL org.opencontainers.image.source="https://github.com/shriza1991/SAMUDRA"
+LABEL org.opencontainers.image.source="https://github.com/shriza1991/ORCA"
 
 # Runtime system libraries for PostGIS/Shapely
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -62,8 +62,8 @@ RUN ln -s /app /app/backend 2>/dev/null || true
 ENV PYTHONPATH="/app:${PYTHONPATH}"
 
 # Non-root user for security
-RUN useradd -m -u 1001 samudra && chown -R samudra:samudra /app
-USER samudra
+RUN useradd -m -u 1001 orca && chown -R orca:orca /app
+USER orca
 
 # Default environment (overridden at runtime via --env-file or -e flags)
 ENV APP_ENV=production \

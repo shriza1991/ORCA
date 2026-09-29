@@ -200,7 +200,7 @@ class AgentRunService:
             if any(
                 marker in name
                 for name in normalized_sources
-                for marker in ("HYBRID FALLBACK", "SAMUDRA", "SYNTHETIC", "SNAPSHOT", "DEMO")
+                for marker in ("HYBRID FALLBACK", "ORCA", "SYNTHETIC", "SNAPSHOT", "DEMO")
             ):
                 return "FALLBACK"
             if normalized_sources:

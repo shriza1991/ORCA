@@ -1,4 +1,4 @@
-"""Speech-to-Text (STT) Service for SAMUDRA using Sarvam AI.
+"""Speech-to-Text (STT) Service for ORCA using Sarvam AI.
 
 Integrates with Sarvam AI's saaras:v4 STT model for Indian language
 voice recognition (English, Hindi, Marathi, etc.).

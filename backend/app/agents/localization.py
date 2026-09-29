@@ -1,4 +1,4 @@
-"""Multilingual Detection, Normalization & Localization Subsystem for SAMUDRA / ORCA.
+"""Multilingual Detection, Normalization & Localization Subsystem for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -18,7 +18,7 @@ from backend.app.agents.intent import ExtractedEntities, IntentCategory
 
 
 class LanguageCode(str, Enum):
-    """Supported ISO-639-1 language codes in SAMUDRA."""
+    """Supported ISO-639-1 language codes in ORCA."""
 
     EN = "en"
     HI = "hi"

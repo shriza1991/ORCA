@@ -218,7 +218,7 @@ const MOCK_SCENARIOS: ScenarioMeta[] = [
 
 const MOCK_HEALTH: HealthStatus = {
   status: 'healthy',
-  app_name: 'SAMUDRA',
+  app_name: 'ORCA',
   app_env: 'development',
   data_mode: 'SNAPSHOT',
   database: 'connected',
@@ -233,7 +233,7 @@ export const DATA_SOURCES: DataSourceInfo[] = [
   { name: 'IMD Cyclone & Hazard', provider: 'IMD', data_mode: 'SYNTHETIC_BULLETIN', status: 'online', last_updated: '2026-09-12T06:00:00Z', freshness_hours: 0.5, cadence: '30-minute bulletin cadence', description: 'Cyclone bulletins, squall alerts, depression tracks, red alert triggers.' },
   { name: 'Open-Meteo Marine', provider: 'Open-Meteo', data_mode: 'FALLBACK_PROFILE', status: 'online', last_updated: '2026-09-12T06:00:00Z', freshness_hours: 1, cadence: 'Hourly model profile', description: 'High-resolution wave, swell, and wind fallback profile (unauthoritative).' },
   { name: 'ISRO MOSDAC EO', provider: 'ISRO', data_mode: 'SYNTHETIC_EO', status: 'online', last_updated: '2026-09-14T00:00:00Z', freshness_hours: 24, cadence: '14-day daily raster snapshot', description: 'Satellite SST and Chlorophyll-a 5x5 grid rasters from Oceansat-3.' },
-  { name: 'Pilot GIS Restrictions', provider: 'SAMUDRA', data_mode: 'STATIC_GIS', status: 'online', last_updated: '2026-09-01T00:00:00Z', freshness_hours: 720, cadence: 'Static geofence registry', description: 'Static geofences: MPAs, naval firing ranges, IMBL buffer boundaries.' },
+  { name: 'Pilot GIS Restrictions', provider: 'ORCA', data_mode: 'STATIC_GIS', status: 'online', last_updated: '2026-09-01T00:00:00Z', freshness_hours: 720, cadence: 'Static geofence registry', description: 'Static geofences: MPAs, naval firing ranges, IMBL buffer boundaries.' },
 ];
 
 // ---------------------------------------------------------------------------

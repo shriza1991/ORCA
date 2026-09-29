@@ -1,4 +1,4 @@
-"""Integration Contracts, Ownership, Errors & Capability Taxonomy for SAMUDRA / ORCA.
+"""Integration Contracts, Ownership, Errors & Capability Taxonomy for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -221,4 +221,4 @@ class FallbackSnapshot(BaseModel):
     data: Dict[str, Any] = Field(default_factory=dict, description="Structured observation payload")
     evidence: List[Any] = Field(default_factory=list, description="Evidence items with citations")
     warnings: List[str] = Field(default_factory=list, description="Associated warnings")
-    source_name: str = Field("SAMUDRA Offline Snapshot Archive", description="Provider origin")
+    source_name: str = Field("ORCA Offline Snapshot Archive", description="Provider origin")

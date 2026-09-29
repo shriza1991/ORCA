@@ -310,7 +310,7 @@ export default function QueryWorkbench() {
                     {/* Header line with role & timestamp */}
                     <div className="message-meta-header">
                       <span className="message-sender-name">
-                        {msg.role === 'user' ? 'Marine Researcher' : 'SAMUDRA Reasoning Pipeline'}
+                        {msg.role === 'user' ? 'Marine Researcher' : 'ORCA Reasoning Pipeline'}
                       </span>
                       <span className="message-timestamp">
                         <Clock size={11} />

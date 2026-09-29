@@ -1,11 +1,11 @@
-"""Standalone Voice-Language Switching Multi-Turn Integration Test for SAMUDRA.
+"""Standalone Voice-Language Switching Multi-Turn Integration Test for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability) / Integration Testing.
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
 
 This test validates the complete end-to-end voice-to-graph conversation lifecycle:
 1. Transcribes 3 audio files (Marathi, Hindi, English) using the Sarvam STT setup (saaras:v4).
-2. Passes transcripts sequentially into the SAMUDRA LangGraph pipeline (run_orca_graph)
+2. Passes transcripts sequentially into the ORCA LangGraph pipeline (run_orca_graph)
    under a single fixed conversation_id / thread_id.
 3. Verifies after each turn:
    - (1) STT detects the correct language (mr / hi / en).
@@ -160,7 +160,7 @@ def run_voice_language_switching_test(
         provider_name, raw_lang, transcript = transcribe_audio_file(audio_path)
         normalized_stt_lang = normalize_stt_language_code(raw_lang)
 
-        # Execute turn through SAMUDRA LangGraph pipeline
+        # Execute turn through ORCA LangGraph pipeline
         state: ORCAState = run_orca_graph(
             user_message=transcript,
             thread_id=conversation_id,
@@ -267,7 +267,7 @@ def print_turn_by_turn_report(
     sub_sep = "-" * 80
 
     print("\n" + separator)
-    print(" SAMUDRA MULTI-TURN VOICE-LANGUAGE SWITCHING INTEGRATION REPORT")
+    print(" ORCA MULTI-TURN VOICE-LANGUAGE SWITCHING INTEGRATION REPORT")
     print(f" Conversation / Thread ID: {conversation_id}")
     print(separator)
 

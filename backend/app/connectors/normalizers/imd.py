@@ -1,7 +1,7 @@
 """IMD Source Normalizers.
 
 Normalizes source-native IMD Coastal Weather Bulletins (CWB) and
-Cyclone Warning Division advisories into SAMUDRA internal contracts.
+Cyclone Warning Division advisories into ORCA internal contracts.
 """
 
 from __future__ import annotations

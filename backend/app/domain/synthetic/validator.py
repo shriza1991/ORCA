@@ -1,4 +1,4 @@
-"""Geospatial & Relational Validation for SAMUDRA Synthetic Demo Data.
+"""Geospatial & Relational Validation for ORCA Synthetic Demo Data.
 
 Validates coordinates, geometries, foreign key relationships, temporal ordering,
 source schema compatibility, and data-quality edge cases.

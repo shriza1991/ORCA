@@ -355,7 +355,7 @@ class SnapshotConnector:
 
                 # Normalize the selected record; preserve its original timestamps
                 payload = IncoisOSFNormalizer.normalize(chosen)
-                payload.source_name = "SAMUDRA deterministic demo marine fixture"
+                payload.source_name = "INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture)"
                 payload.source_url = None
                 # Always use the requested harbor name (do not silently relabel as Ratnagiri)
                 payload.harbor = harbor

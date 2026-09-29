@@ -1,4 +1,4 @@
-"""Integration Contracts, Adapters, and Mocks Package for SAMUDRA / ORCA.
+"""Integration Contracts, Adapters, and Mocks Package for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

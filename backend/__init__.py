@@ -1,1 +1,1 @@
-"""SAMUDRA Backend Root Package."""
+"""ORCA Backend Root Package."""

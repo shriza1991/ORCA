@@ -1,4 +1,4 @@
-"""Evidence Provenance, Citations & Claim Validation for SAMUDRA / ORCA.
+"""Evidence Provenance, Citations & Claim Validation for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

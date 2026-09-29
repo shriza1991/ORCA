@@ -28,7 +28,7 @@ export default function OperationalSnapshot({
         <div>
           <span className="snapshot-eyebrow">Voyage brief</span>
           <strong>{context.origin_harbor} · {formatCraft(context.craft_profile)}</strong>
-          <p>{response ? `Latest advisory: ${status.replace('_', '-')}.` : 'Set your context, then ask SAMUDRA before leaving port.'}</p>
+          <p>{response ? `Latest advisory: ${status.replace('_', '-')}.` : 'Set your context, then ask ORCA before leaving port.'}</p>
         </div>
         {response && evidenceCount > 0 && (
           <button type="button" onClick={onOpenEvidence} className="snapshot-action">

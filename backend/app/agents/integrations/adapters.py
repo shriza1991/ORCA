@@ -1,4 +1,4 @@
-"""Provider & Engine Tool Adapters for SAMUDRA / ORCA.
+"""Provider & Engine Tool Adapters for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -407,7 +407,7 @@ class ProviderToolAdapter:
             evidence = [
                 EvidenceItem(
                     evidence_id="EV-RISK-STATUS-01",
-                    source_name="SAMUDRA Risk Engine (Dev 4)",
+                    source_name="ORCA Risk Engine (Dev 4)",
                     retrieved_at=datetime.now(timezone.utc).isoformat(),
                     metric_name="risk_status",
                     metric_value=payload.status.value,

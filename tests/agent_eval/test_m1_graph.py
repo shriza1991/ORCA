@@ -1,4 +1,4 @@
-"""Milestone M1 Executable Graph Tests for SAMUDRA / ORCA.
+"""Milestone M1 Executable Graph Tests for ORCA.
 
 Validates the first end-to-end vertical slice of the Bounded Agent Graph:
 1. PFZ vertical slice flow (Where is the nearest PFZ?)
@@ -116,7 +116,7 @@ def test_m1_unsupported_query():
     assert state["intent"] == IntentCategory.UNSUPPORTED.value
     assert state["task_plan"] == []
     assert state["tool_results"] == {}
-    assert "SAMUDRA is focused exclusively on marine intelligence" in state["response"]
+    assert "ORCA is focused exclusively on marine intelligence" in state["response"]
 
 
 def test_m1_tool_registry_execution():

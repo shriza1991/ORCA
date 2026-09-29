@@ -1,5 +1,5 @@
 # ORCA — Marine EcOsystem Reasoning with Collaborative Agents
-### Active Prototype Moniker: SAMUDRA (Smart Autonomous Marine Understanding, Decision & Risk Assistant)
+### Active Prototype Moniker: ORCA (Smart Autonomous Marine Understanding, Decision & Risk Assistant)
 
 > **SIH 2026 Problem Statement:** PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents  
 > **Organization:** Indian Space Research Organisation (ISRO) / Department of Space  

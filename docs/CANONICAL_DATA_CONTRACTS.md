@@ -1,4 +1,4 @@
-# SAMUDRA — Canonical Marine, Weather, Hazard & PFZ Data Contracts
+# ORCA — Canonical Marine, Weather, Hazard & PFZ Data Contracts
 
 **Classification**: Architecture Specification & Data Dictionary  
 **Milestone**: M2–M15 Normalization Standard  
@@ -8,7 +8,7 @@
 
 ## 1. Architectural Normalization Pattern
 
-SAMUDRA strictly isolates external data provider schemas (INCOIS, IMD, MOSDAC, Open-Meteo) from the downstream cognitive and rendering layers. 
+ORCA strictly isolates external data provider schemas (INCOIS, IMD, MOSDAC, Open-Meteo) from the downstream cognitive and rendering layers. 
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -262,5 +262,5 @@ class VesselProfileRecord(BaseModel):
 
 ## 4. Contract Conformance Verification
 
-- **Backend Protocol Tests**: [`tests/contract/test_connector_contracts.py`](file:///c:/Users/dyara/SAMUDRA/tests/contract/test_connector_contracts.py) validates runtime conformance of all providers.
-- **Frontend TypeScript Typings**: [`frontend/src/types/contracts.ts`](file:///c:/Users/dyara/SAMUDRA/frontend/src/types/contracts.ts) provides compile-time verification mirroring `backend/app/contracts/chat.py`.
+- **Backend Protocol Tests**: [`tests/contract/test_connector_contracts.py`](file:///c:/Users/dyara/ORCA/tests/contract/test_connector_contracts.py) validates runtime conformance of all providers.
+- **Frontend TypeScript Typings**: [`frontend/src/types/contracts.ts`](file:///c:/Users/dyara/ORCA/frontend/src/types/contracts.ts) provides compile-time verification mirroring `backend/app/contracts/chat.py`.

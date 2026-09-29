@@ -4,7 +4,7 @@ import { useSpokenGuidance } from './useSpokenGuidance';
 import { translateText, type SupportedLanguage } from '../i18n/translations';
 
 // Centralized API base — must match client.ts to hit the deployed backend.
-// On Vercel production, VITE_API_BASE_URL = https://samudra-1.onrender.com/api/v1
+// On Vercel production, VITE_API_BASE_URL = https://orca-1.onrender.com/api/v1
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
 
 export function useAlerts(language: SupportedLanguage) {

@@ -94,7 +94,7 @@ export default function DeckGLMarineMap({
     [externalOnViewStateChange],
   );
 
-  // Transform genuine SAMUDRA data into GeoJSON (memoized)
+  // Transform genuine ORCA data into GeoJSON (memoized)
   const hazardGeoJSON = useMemo(() => buildHazardGeoJSON(hazards), [hazards]);
   const pfzGeoJSON = useMemo(() => buildPFZGeoJSON(pfzCandidates), [pfzCandidates]);
 

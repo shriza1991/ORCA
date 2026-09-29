@@ -317,7 +317,7 @@ Relevant systems researched include:
 - INCOIS PFZ
 - INCOIS OSF
 - INCOIS SVAS
-- INCOIS SAMUDRA
+- INCOIS ORCA
 - IMD marine weather/forecast services
 - SACHET alerts
 - Nabhmitra / VCSS

@@ -1,4 +1,4 @@
-"""Sector Situation Evaluation Domain Service for SAMUDRA.
+"""Sector Situation Evaluation Domain Service for ORCA.
 
 Integrates canonical surveillance sectors with:
 1. Dynamic fleet count derived from canonical vessel records matching the sector's harbor.
@@ -33,12 +33,12 @@ from backend.app.services.data_service import DataService
 
 logger = logging.getLogger(__name__)
 
-FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "samudra"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "orca"
 
 # ---------------------------------------------------------------------------
 # In-memory canonical sector + harbor registry
 # ---------------------------------------------------------------------------
-# This mirrors the data/fixtures/synthetic/samudra/sectors.json and
+# This mirrors the data/fixtures/synthetic/orca/sectors.json and
 # harbors.json data and is used as a hardened final fallback when the fixture
 # files cannot be resolved at runtime (e.g., Render working-directory).
 # UPDATE this registry whenever the fixture data changes.
@@ -229,7 +229,7 @@ def resolve_authority_sector_context(sector_id: str) -> Optional[Dict[str, Any]]
 
 
 def get_canonical_active_hazards_for_sector(
-    sector_id: str, namespace: str = "SAMUDRA_DEMO_V1"
+    sector_id: str, namespace: str = "ORCA_DEMO_V1"
 ) -> Optional[List[Dict[str, Any]]]:
     """Return the canonical active hazards assigned to a canonical sector.
 
@@ -257,7 +257,7 @@ def get_canonical_active_hazards_for_sector(
 
 
 def get_canonical_vessel_hazard_associations_for_sector(
-    sector_id: str, namespace: str = "SAMUDRA_DEMO_V1"
+    sector_id: str, namespace: str = "ORCA_DEMO_V1"
 ) -> Optional[List[Dict[str, Any]]]:
     """Observational current-position containment in canonical active hazards."""
     context = resolve_authority_sector_context(sector_id)
@@ -298,7 +298,7 @@ def get_canonical_vessel_hazard_associations_for_sector(
 
 
 def get_canonical_operational_alerts_for_sector(
-    sector_id: str, namespace: str = "SAMUDRA_DEMO_V1"
+    sector_id: str, namespace: str = "ORCA_DEMO_V1"
 ) -> Optional[List[Dict[str, Any]]]:
     """Derive stable current operational alerts from P0-8B associations."""
     associations = get_canonical_vessel_hazard_associations_for_sector(sector_id, namespace)
@@ -325,7 +325,7 @@ def get_canonical_operational_alerts_for_sector(
     return alerts
 
 
-def _get_canonical_vessels(harbor_id: str, namespace: str = "SAMUDRA_DEMO_V1") -> List[Dict[str, Any]]:
+def _get_canonical_vessels(harbor_id: str, namespace: str = "ORCA_DEMO_V1") -> List[Dict[str, Any]]:
     """Dynamically query canonical vessels assigned to a specific harbor."""
     try:
         from backend.app.db.repositories import SyntheticDemoRepository
@@ -367,7 +367,7 @@ def evaluate_sector_situation(
     bundle: Optional[ObservationBundle] = None,
     reference_time: Optional[datetime | str] = None,
     craft_profile: str = "motorized_boat",
-    namespace: str = "SAMUDRA_DEMO_V1",
+    namespace: str = "ORCA_DEMO_V1",
     data_service: Optional[DataService] = None,
 ) -> Optional[SectorSituationResponse]:
     """Evaluates the situation and deterministic risk for a canonical surveillance sector.
@@ -468,7 +468,7 @@ def evaluate_sector_situation(
     evidence_items.append(
         EvidenceItem(
             evidence_id=f"EV-STATUS-{public_id}",
-            source_name="SAMUDRA Deterministic Risk Engine",
+            source_name="ORCA Deterministic Risk Engine",
             metric_name="risk_status",
             metric_value=risk_assessment.status.value,
             quality_flags=["DETERMINISTIC_EVAL"],

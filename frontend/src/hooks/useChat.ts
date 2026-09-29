@@ -101,7 +101,7 @@ export function useChat() {
       setMessages(prev => prev.map(m => m.id === loadingMsg.id ? assistantMsg : m));
       setActiveResponse(response);
     } catch (err) {
-      let errorMsg = 'Failed to connect to SAMUDRA backend.';
+      let errorMsg = 'Failed to connect to ORCA backend.';
       if (err instanceof ApiError) {
         if (typeof err.body === 'object' && err.body !== null && 'detail' in err.body) {
           errorMsg = String((err.body as Record<string, unknown>).detail);

@@ -207,7 +207,7 @@ def test_clarification_is_contract_valid(client: TestClient):
 # ---------------------------------------------------------------------------
 
 def test_unsupported_query_is_contract_valid(client: TestClient):
-    """A query outside SAMUDRA's domain must return a valid ChatResponse body."""
+    """A query outside ORCA's domain must return a valid ChatResponse body."""
     resp = _post_chat(client, {
         "message": "What is the capital of France?",
     })

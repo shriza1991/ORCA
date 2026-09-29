@@ -48,30 +48,30 @@ def dump_synthetic_fixtures(output_root: str = "data/fixtures/synthetic") -> Non
     with open(mosdac_dir / "satellite_eo_grid.json", "w", encoding="utf-8") as f:
         json.dump(dataset["eo_grid_cells"], f, indent=2, default=_json_serializer)
 
-    # SAMUDRA directory
-    samudra_dir = root / "samudra"
-    samudra_dir.mkdir(parents=True, exist_ok=True)
-    with open(samudra_dir / "stakeholders.json", "w", encoding="utf-8") as f:
+    # ORCA directory
+    orca_dir = root / "orca"
+    orca_dir.mkdir(parents=True, exist_ok=True)
+    with open(orca_dir / "stakeholders.json", "w", encoding="utf-8") as f:
         json.dump(dataset["stakeholders"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "harbors.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "harbors.json", "w", encoding="utf-8") as f:
         json.dump(dataset["harbors"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "fishers.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "fishers.json", "w", encoding="utf-8") as f:
         json.dump(dataset["fishers"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "vessels.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "vessels.json", "w", encoding="utf-8") as f:
         json.dump(dataset["vessels"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "trips.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "trips.json", "w", encoding="utf-8") as f:
         json.dump(dataset["trips"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "geofences.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "geofences.json", "w", encoding="utf-8") as f:
         json.dump(dataset["geofences"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "route_nodes.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "route_nodes.json", "w", encoding="utf-8") as f:
         json.dump(dataset["route_nodes"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "route_edges.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "route_edges.json", "w", encoding="utf-8") as f:
         json.dump(dataset["route_edges"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "notifications.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "notifications.json", "w", encoding="utf-8") as f:
         json.dump(dataset["notifications"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "replay_positions.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "replay_positions.json", "w", encoding="utf-8") as f:
         json.dump(dataset["replay_positions"], f, indent=2, default=_json_serializer)
-    with open(samudra_dir / "sectors.json", "w", encoding="utf-8") as f:
+    with open(orca_dir / "sectors.json", "w", encoding="utf-8") as f:
         json.dump(dataset["sectors"], f, indent=2, default=_json_serializer)
 
 

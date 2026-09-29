@@ -1,4 +1,4 @@
-"""Comprehensive Test Suite for SAMUDRA Voice Chat Pipeline (STT -> ORCA -> TTS).
+"""Comprehensive Test Suite for ORCA Voice Chat Pipeline (STT -> ORCA -> TTS).
 
 Tests:
 1. Marathi voice query: test_marathi.wav -> Marathi STT -> ORCA -> Marathi response -> TTS

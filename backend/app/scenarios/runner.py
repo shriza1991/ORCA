@@ -1,4 +1,4 @@
-"""Scenario Execution & Evaluation Runner for SAMUDRA.
+"""Scenario Execution & Evaluation Runner for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability) & Dev 4 (Domain Intelligence).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -197,7 +197,7 @@ _scenario_lock = threading.RLock()
 
 
 class ScenarioRunner:
-    """Executes a ScenarioDefinition through the full SAMUDRA pipeline."""
+    """Executes a ScenarioDefinition through the full ORCA pipeline."""
 
     @classmethod
     def run(

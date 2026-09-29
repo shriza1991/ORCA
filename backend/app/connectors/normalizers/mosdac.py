@@ -1,7 +1,7 @@
 """MOSDAC / ISRO / GHRSST Satellite EO Source Normalizers.
 
 Normalizes satellite ocean-colour and SST grid cell records into normalized
-SAMUDRA EO cell representations.
+ORCA EO cell representations.
 
 Supported products and their canonical variable names:
 
@@ -46,7 +46,7 @@ ProductSpec = Literal[
 ]
 
 # ── Per-product variable maps ─────────────────────────────────────────────────
-# Maps SAMUDRA internal field names → source product variable names.
+# Maps ORCA internal field names → source product variable names.
 # These are NOT invented; sourced from official product documentation.
 
 GHRSST_MUR_VARIABLE_MAP: dict[str, str] = {
@@ -151,7 +151,7 @@ class MosdacEONormalizer:
 
         Returns
         -------
-        Normalized EO cell dict with SAMUDRA internal field names.
+        Normalized EO cell dict with ORCA internal field names.
         Missing/cloud-masked values are None, not 0.
         """
         variable_map = PRODUCT_VARIABLE_MAPS.get(product_spec, SYNTHETIC_VARIABLE_MAP)

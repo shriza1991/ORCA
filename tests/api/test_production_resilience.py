@@ -12,7 +12,7 @@ def test_situation_provider_failure_returns_explicit_unknown(monkeypatch):
     # Ensure the Vercel origin is allowed regardless of local .env configuration.
     monkeypatch.setenv(
         "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,https://samudra-qxx1.vercel.app",
+        "http://localhost:5173,http://127.0.0.1:5173,https://orca-qxx1.vercel.app",
     )
     # Re-instantiate Settings to pick up the monkeypatched env var.
     from backend.app.core import config as core_config
@@ -23,19 +23,19 @@ def test_situation_provider_failure_returns_explicit_unknown(monkeypatch):
         preflight = client.options(
             "/api/v1/demo/sectors/sector-ratnagiri/situation",
             headers={
-                "Origin": "https://samudra-qxx1.vercel.app",
+                "Origin": "https://orca-qxx1.vercel.app",
                 "Access-Control-Request-Method": "GET",
             },
         )
         response = client.get(
             "/api/v1/demo/sectors/sector-ratnagiri/situation",
-            headers={"Origin": "https://samudra-qxx1.vercel.app"},
+            headers={"Origin": "https://orca-qxx1.vercel.app"},
         )
 
     assert preflight.status_code == 200
-    assert preflight.headers["access-control-allow-origin"] == "https://samudra-qxx1.vercel.app"
+    assert preflight.headers["access-control-allow-origin"] == "https://orca-qxx1.vercel.app"
     assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "https://samudra-qxx1.vercel.app"
+    assert response.headers["access-control-allow-origin"] == "https://orca-qxx1.vercel.app"
     payload = response.json()
     assert payload["situation_status"] == "UNKNOWN"
     assert payload["fleet_count"] is None
@@ -55,11 +55,11 @@ def test_unhandled_failure_has_safe_json_and_cors_headers():
     with TestClient(app) as client:
         response = client.get(
             "/test/unhandled",
-            headers={"Origin": "https://samudra-qxx1.vercel.app"},
+            headers={"Origin": "https://orca-qxx1.vercel.app"},
         )
 
     assert response.status_code == 500
-    assert response.headers["access-control-allow-origin"] == "https://samudra-qxx1.vercel.app"
+    assert response.headers["access-control-allow-origin"] == "https://orca-qxx1.vercel.app"
     assert response.headers.get("x-request-id")
     assert response.json()["error"]["code"] == "INTERNAL_ERROR"
     assert "database password" not in response.text

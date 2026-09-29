@@ -2723,10 +2723,10 @@
 }
 
 /* ==========================================================================
-   SAMUDRA Call Mode UI Styles (Simulated Phone Call)
+   ORCA Call Mode UI Styles (Simulated Phone Call)
    ========================================================================== */
 
-.call-samudra-trigger-btn {
+.call-orca-trigger-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2747,20 +2747,20 @@
   white-space: nowrap;
 }
 
-.call-samudra-trigger-btn span:last-child {
+.call-orca-trigger-btn span:last-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.call-samudra-trigger-btn:hover {
+.call-orca-trigger-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 14px
     color-mix(in srgb, var(--color-accent) 45%, transparent);
   background: var(--color-accent-hover);
 }
 
-.call-samudra-trigger-btn:active {
+.call-orca-trigger-btn:active {
   transform: translateY(0);
 }
 
@@ -3533,7 +3533,7 @@
     padding: 3px 6px;
   }
 
-  .call-samudra-trigger-btn {
+  .call-orca-trigger-btn {
     padding: 4px 8px;
     font-size: 11px;
     gap: 4px;

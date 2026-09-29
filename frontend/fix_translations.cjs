@@ -26,7 +26,7 @@ const taStr = `  ta: {
     callNoSpeech: "No speech detected",
     callDetectedLanguage: "Detected:",
     callSubtitleUser: "You:",
-    callSubtitleSamudra: "Samudra:",
+    callSubtitleOrca: "Orca:",
     logoutBtn: "Logout",
     listenBtn: "Listen",
     stopAudioBtn: "Stop Audio",

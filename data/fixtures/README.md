@@ -1,4 +1,4 @@
-# SAMUDRA Deterministic Test Fixtures & Snapshot Catalog
+# ORCA Deterministic Test Fixtures & Snapshot Catalog
 
 > **Owned by Dev 4 (Marine/Geo Intelligence) & Member 5 (Domain Research)**  
 > **Purpose:** Provides reproducible offline scenario data for CI tests, offline demonstrations, and `DATA_MODE=SNAPSHOT`.

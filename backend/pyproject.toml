@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "samudra-backend"
+name = "orca-backend"
 version = "0.1.0"
 description = "Smart Autonomous Marine Understanding, Decision & Risk Assistant - Backend Platform"
 readme = "README.md"

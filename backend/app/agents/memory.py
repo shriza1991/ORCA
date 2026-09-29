@@ -1,4 +1,4 @@
-"""Conversation Memory, Persistence Abstraction & Multi-Turn Context for SAMUDRA / ORCA.
+"""Conversation Memory, Persistence Abstraction & Multi-Turn Context for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -268,7 +268,7 @@ class PostgreSQLConversationStore(ConversationStore):
 class RedisConversationStore(ConversationStore):
     """Redis-compatible conversation store adapter for session-oriented contexts.
 
-    Stores serialized JSON under key `samudra:thread:{thread_id}` with configurable TTL.
+    Stores serialized JSON under key `orca:thread:{thread_id}` with configurable TTL.
     Operates via mock storage when live Redis client is not present.
     """
 
@@ -278,7 +278,7 @@ class RedisConversationStore(ConversationStore):
         self._mock_redis: Dict[str, str] = {}
 
     def _key(self, thread_id: str) -> str:
-        return f"samudra:thread:{thread_id}"
+        return f"orca:thread:{thread_id}"
 
     def get_thread(self, thread_id: str) -> Optional[ThreadContext]:
         key = self._key(thread_id)

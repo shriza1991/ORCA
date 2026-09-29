@@ -1,4 +1,4 @@
-"""Services Package for SAMUDRA.
+"""Services Package for ORCA.
 
 Owned by Dev 2 (Backend Platform) — integration coordination layer.
 

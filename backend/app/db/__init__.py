@@ -1,4 +1,4 @@
-"""Database Package for SAMUDRA.
+"""Database Package for ORCA.
 
 Owned by Dev 2 (Backend Platform).
 Provides sync SQLAlchemy engine factory and declarative base.

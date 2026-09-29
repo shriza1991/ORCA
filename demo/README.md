@@ -1,4 +1,4 @@
-# SAMUDRA SIH Demonstration Kit & Media Artifacts
+# ORCA SIH Demonstration Kit & Media Artifacts
 
 > **Owned by Member 6 (QA & Demo Lead)**  
 > **Jury:** ISRO / Department of Space (SIH 2026)
@@ -11,8 +11,8 @@
 - [ ] Frontend running at `http://localhost:5173`.
 - [ ] MapLibre basemap tiles pre-cached locally (or using offline fallback tiles).
 - [ ] Secondary backup laptop pre-warmed with duplicate environment.
-- [ ] High-definition screen recording (`samudra_demo_backup.mp4`) placed in this folder.
-- [ ] Presentation slides synchronized with [`docs/DEMO.md`](file:///c:/Users/dyara/SAMUDRA/docs/DEMO.md).
+- [ ] High-definition screen recording (`orca_demo_backup.mp4`) placed in this folder.
+- [ ] Presentation slides synchronized with [`docs/DEMO.md`](file:///c:/Users/dyara/ORCA/docs/DEMO.md).
 
 ---
 

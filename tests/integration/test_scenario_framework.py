@@ -1,4 +1,4 @@
-"""Integration & Automated Test Suite for SAMUDRA Scenario Framework (S1–S8).
+"""Integration & Automated Test Suite for ORCA Scenario Framework (S1–S8).
 
 Owned by Dev 3 (Agent Orchestration & Explainability) & Dev 4 (Domain Intelligence).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

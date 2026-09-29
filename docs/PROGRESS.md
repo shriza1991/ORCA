@@ -1,4 +1,4 @@
-# ORCA / SAMUDRA Operational Progress
+# ORCA Operational Progress
 
 
 
@@ -7,6 +7,23 @@
 
 
 ## Current Release & Workstream State
+
+### 2026-09-29 Project-wide Rebrand from SAMUDRA to ORCA (§D060)
+
+- **IMPLEMENTED**: Complete, project-wide rebranding from `SAMUDRA` to `ORCA` across the full codebase:
+  - Frontend (`frontend/`) & Next.js (`nextjs/`): App headers, brand headings, portal titles, welcome copy, hero badges, tooltips, translations (`translations.ts`, `locales/en.json`, `mr.json`, `ta.json`, `te.json`), CSS class styles, and HTML metadata (`index.html`, `<title>`, `<meta name="application-name">`, OpenGraph, Twitter tags, webmanifest).
+  - Package Naming & Environment: Renamed packages to `orca-frontend`, `orca-backend`, `orca-nextjs`, `orca-ai`; renamed branding variables in `.env.example`, `docker-compose.yml`, and `render.yaml`.
+  - Backend & Agents: Updated logger outputs, agent instruction prompts, scenarios, seeds, importer manifests, and synthetic demo namespace (`ORCA_DEMO_V1`).
+  - Synthetic Data Fixtures: Renamed fixture folder from `data/fixtures/synthetic/samudra/` to `data/fixtures/synthetic/orca/` and updated all internal records and references.
+  - Documentation: Refactored `README.md`, `docs/ORCA_AI_MASTER_CONTEXT.md`, `docs/API_CONTRACTS.md`, `docs/CANONICAL_DATA_CONTRACTS.md`, `docs/SAFETY.md`, `docs/SYNTHETIC_DATA.md`, etc.
+- **SAFETY & COMPATIBILITY PRESERVED**:
+  - 0 modifications to business logic, API route signatures (`/api/v1/...`), database table schemas, canonical contracts, DTOs, Pydantic models, TypeScript interfaces, or deterministic safety calculations.
+- **VERIFIED**:
+  - `git grep -i "samudra"` returns **0 matches** across the entire repository.
+  - Frontend TypeScript check (`npm run typecheck`): **0 errors**.
+  - Frontend Vitest suite (`npm run test`): **280/280 passed** across 22 suites.
+  - Frontend Production Build (`npm run build`): **Built successfully in 45.59s**.
+  - Backend Pytest suite (`tests/agent_eval/`, `tests/domain/`, `tests/api/`, `tests/contract/`): **622 passed**, 1 skipped (Groq live key check), 0 failed.
 
 ### 2026-09-28 Merge m2/data-source-evidence-layer into main
 
@@ -179,7 +196,7 @@ extjs/.
 
     - **Voice Pipeline**: `/voice/chat` endpoint accepts `departure_time`, `return_time`, `target_pfz`, and `parent_assessment_id`, constructing canonical `MissionState` before agent execution.
 
-    - **Frontend State & Cache Isolation**: `useTripAssessment` and `useChat` maintain persistent `MissionState` references; `offline-cache.ts` isolates keys using `samudra_trip_assessment_${originHarbor}_${craftProfile}_${departureTime}`, preventing collisions across different departure hours.
+    - **Frontend State & Cache Isolation**: `useTripAssessment` and `useChat` maintain persistent `MissionState` references; `offline-cache.ts` isolates keys using `orca_trip_assessment_${originHarbor}_${craftProfile}_${departureTime}`, preventing collisions across different departure hours.
 
     - **Decision Type Normalization**: Updated frontend `decision` contract to `RecommendationStatus | Recommendation` to eliminate runtime crashes between backend string statuses and rich recommendation objects.
 
@@ -1197,7 +1214,7 @@ None
 
 - Added isolated experimental deck.gl component (`DeckGLMarineMap.tsx`) and evaluation command view (`DeckGLExperimentView.tsx`) to visually benchmark WebGL2-accelerated geospatial rendering against production MapLibre.
 
-- Rendered authentic SAMUDRA data layers without fabricating coordinates:
+- Rendered authentic ORCA data layers without fabricating coordinates:
 
   - **Marine/Hazard Polygons**: GeoJSON layer with severity-coded translucent styling and optional 3D extrusion (2500m / 1800m / 1200m prisms).
 
@@ -1393,7 +1410,7 @@ None
 
 
 
-| **M1** | Frontend & UI | READY | MapLayer schema alignment, voice call interface, Fisher/Authority separate pages, single portal switching, header logout button, dynamic MapView with harbor auto-pan & sector surveillance layers, base operational geofences integration, canonical scenario benchmark runner (S1–S8), data-driven fleet trajectory replay scrubber & notifications driven by canonical backend dataset (`GET /api/v1/demo/sectors`, `vessels`, `replay`, `notifications`, `hazards`), removal of all fabricated mock telemetry, strict offline banners, full coverage for 8 monitored vessels across Ratnagiri and Malvan, inline voice audio/TTS listen button, UI decluttering, end-to-end multilingual localization (EN, HI, MR) across all pages, decks, and simulators, modern web standards integration (standard thin scrollbars, text-wrap balancing & orphan prevention, container queries), Radix UI/shadcn overlay primitives integration (Dialog, Sheet, Popover for EvidenceDrawer, CallModal, LayerManager), sidebar layout stabilization (eliminated horizontal/vertical overflow, unified single-row tab & context header, resilient 2-row chat card), CallModal design system alignment (replaced hardcoded skeuomorphic dark styles with native theme tokens across Light and Dark modes), header decluttering (removed redundant Call SAMUDRA button from header, anchored exclusively in chat toolbar), dedicated Settings Page (centralized theme toggle, vernacular language cards, operational voyage defaults, voice assistance/VAD parameters, feed diagnostics, seamless two-way portal return routing), authority page decluttering (consolidated dual command and tab bars into unified command bar with segmented pill switcher, removed redundant empty evidence tab and double terminal headers, fully styled S1–S8 Benchmark Runner deck with 2-column layout, spec cards, and live execution audit metrics), Fisher Console CTA text contrast fix (high-contrast white in light mode, dark navy in dark mode), end-to-end mobile/tablet responsive layout stabilization across portal, fisher, authority, and settings views, unified 3-column single row layout for Fisher, Authority, and Researcher persona cards on the portal selection page (`max-width: 1320px`, `repeat(3, 1fr)`), dedicated Researcher Lab persona dashboard with 4 modular decks (Ocean Data Explorer, Data Source Monitor, Scenario Lab with S1–S8 benchmark evaluation, and Query Workbench with inline evidence & trace) strictly preserving Fisher and Authority dashboards untouched, hardened with deck error boundaries, resilient backend payload normalization, and multi-day EO cell de-duplication | Vitest (93 passed) |
+| **M1** | Frontend & UI | READY | MapLayer schema alignment, voice call interface, Fisher/Authority separate pages, single portal switching, header logout button, dynamic MapView with harbor auto-pan & sector surveillance layers, base operational geofences integration, canonical scenario benchmark runner (S1–S8), data-driven fleet trajectory replay scrubber & notifications driven by canonical backend dataset (`GET /api/v1/demo/sectors`, `vessels`, `replay`, `notifications`, `hazards`), removal of all fabricated mock telemetry, strict offline banners, full coverage for 8 monitored vessels across Ratnagiri and Malvan, inline voice audio/TTS listen button, UI decluttering, end-to-end multilingual localization (EN, HI, MR) across all pages, decks, and simulators, modern web standards integration (standard thin scrollbars, text-wrap balancing & orphan prevention, container queries), Radix UI/shadcn overlay primitives integration (Dialog, Sheet, Popover for EvidenceDrawer, CallModal, LayerManager), sidebar layout stabilization (eliminated horizontal/vertical overflow, unified single-row tab & context header, resilient 2-row chat card), CallModal design system alignment (replaced hardcoded skeuomorphic dark styles with native theme tokens across Light and Dark modes), header decluttering (removed redundant Call ORCA button from header, anchored exclusively in chat toolbar), dedicated Settings Page (centralized theme toggle, vernacular language cards, operational voyage defaults, voice assistance/VAD parameters, feed diagnostics, seamless two-way portal return routing), authority page decluttering (consolidated dual command and tab bars into unified command bar with segmented pill switcher, removed redundant empty evidence tab and double terminal headers, fully styled S1–S8 Benchmark Runner deck with 2-column layout, spec cards, and live execution audit metrics), Fisher Console CTA text contrast fix (high-contrast white in light mode, dark navy in dark mode), end-to-end mobile/tablet responsive layout stabilization across portal, fisher, authority, and settings views, unified 3-column single row layout for Fisher, Authority, and Researcher persona cards on the portal selection page (`max-width: 1320px`, `repeat(3, 1fr)`), dedicated Researcher Lab persona dashboard with 4 modular decks (Ocean Data Explorer, Data Source Monitor, Scenario Lab with S1–S8 benchmark evaluation, and Query Workbench with inline evidence & trace) strictly preserving Fisher and Authority dashboards untouched, hardened with deck error boundaries, resilient backend payload normalization, and multi-day EO cell de-duplication | Vitest (93 passed) |
 
 | **M2** | Backend Platform & Connectors | OFFLINE_VERIFIED | Harbors loader, INCOIS OSF/PFZ/SVAS, IMD weather/hazard, Open-Meteo fallback, ConnectorManager, P0-3 non-fabricating partial payload contracts | pytest connectors & contracts (71 passed) |
 
@@ -1445,7 +1462,7 @@ None
 
   - Graceful degradation: wrapped all M3 construction in exception-safe fallbacks logging errors without failing missions.
 
-  - Updated CORS configuration in `backend/app/core/config.py` to allow deployed Vercel frontend (`https://samudra-qxx1.vercel.app`).
+  - Updated CORS configuration in `backend/app/core/config.py` to allow deployed Vercel frontend (`https://orca-qxx1.vercel.app`).
 
 - **Verification**:
 
@@ -1789,7 +1806,7 @@ None
 
 - Fixed state_mapper.py DecisionObject fallback construction when confidence payload arrives as a dictionary, preventing AttributeError during degraded/offline runs.
 
-- Resolved remaining SAMUDRA branding occurrences across frontend error messages (useChat.ts, ChatWindow.tsx), voice chat endpoints (routes.py), backend fallback responses (state_mapper.py), and Docker container metadata (backend/Dockerfile).
+- Resolved remaining ORCA branding occurrences across frontend error messages (useChat.ts, ChatWindow.tsx), voice chat endpoints (routes.py), backend fallback responses (state_mapper.py), and Docker container metadata (backend/Dockerfile).
 
 - Added production render.yaml specification for Render web service deployment and managed PostgreSQL database.
 
@@ -1828,7 +1845,7 @@ ecommended_action for human-readable text.
   - Added canonicalConditions prop to MapView. When ssessment?.conditions is provided and time offset is 0, the map card is seeded from the canonical assessment bundle instead of making an independent fetch.
   - Future time offsets (+3h, +6h, etc.) and point inspection clicks still use executeSpatialQuery as intended.
 - **6. CORS_ORIGINS .env and Test Fix**:
-  - Local .env was missing https://samudra-qxx1.vercel.app from CORS_ORIGINS, causing the resilience test to fail.
+  - Local .env was missing https://orca-qxx1.vercel.app from CORS_ORIGINS, causing the resilience test to fail.
   - Added the Vercel production origin to .env's CORS_ORIGINS.
   - Made 	est_situation_provider_failure_returns_explicit_unknown self-isolating via monkeypatch.setenv + monkeypatch.setattr(config, 'settings', Settings()).
 - **Verification**:

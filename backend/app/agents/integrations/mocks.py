@@ -1,4 +1,4 @@
-"""Dev 2 & Dev 4 Contract Mocks / Test Doubles for SAMUDRA (Milestone M2).
+"""Dev 2 & Dev 4 Contract Mocks / Test Doubles for ORCA (Milestone M2).
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -199,7 +199,7 @@ class MockRiskEngine:
                 confidence_reasons=["Deterministic Dev 4 test double evaluation"],
                 provenance=[
                     DataProvenance(
-                        provider_name="SAMUDRA Risk Engine",
+                        provider_name="ORCA Risk Engine",
                         source_name="Dev 4 Deterministic Engine (Mock)",
                         data_mode="M2_CONTRACT_MOCK",
                     )

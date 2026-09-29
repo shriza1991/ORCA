@@ -1,4 +1,4 @@
-"""DATA_MODE Routing Service for SAMUDRA.
+"""DATA_MODE Routing Service for ORCA.
 
 Owned by Dev 2 (Backend Platform).
 
@@ -145,7 +145,7 @@ class DataService:
 
                 _ctx = context.model_copy(update={"departure_time": REFERENCE_TIME.isoformat()})
             payload = self._snapshot.get_marine_conditions(_ctx)
-            payload.source_name = "SAMUDRA deterministic demo marine fixture"
+            payload.source_name = "INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture)"
             payload.source_url = None
             return payload
 
@@ -184,7 +184,7 @@ class DataService:
                     visibility_km=None,
                     observed_at=None,
                     valid_to=None,
-                    source_name="SAMUDRA deterministic demo weather (WINDOW_UNAVAILABLE)",
+                    source_name="ORCA deterministic demo weather (WINDOW_UNAVAILABLE)",
                     source_url=None,
                 )
             raw = {
@@ -195,10 +195,10 @@ class DataService:
                 "visibility_km": record.get("visibility_km"),
                 "observed_at": record["observation_time"].isoformat(),
                 "valid_to": record["valid_to_utc"],
-                "source_name": "SAMUDRA deterministic demo forecast",
+                "source_name": "ORCA deterministic demo forecast",
             }
             payload = ImdWeatherNormalizer.normalize(raw)
-            payload.source_name = "SAMUDRA deterministic demo weather fixture"
+            payload.source_name = "ORCA deterministic demo weather fixture"
             payload.source_url = None
             return payload
 
@@ -277,12 +277,12 @@ class DataService:
                     headline="No hazard fixture covers the requested demo window.",
                     valid_from=None,
                     valid_to=None,
-                    source_name="SAMUDRA deterministic demo hazards (WINDOW_UNAVAILABLE)",
+                    source_name="ORCA deterministic demo hazards (WINDOW_UNAVAILABLE)",
                 )
             observed_at = record["observation_time"].isoformat()
             valid_to = record["valid_to_utc"]
             raw = {
-                "bulletin_id": "SAMUDRA-DEMO-NORMAL-01",
+                "bulletin_id": "ORCA-DEMO-NORMAL-01",
                 "severity": "NORMAL",
                 "event_type": "NONE",
                 "headline": "No warning is active in the selected deterministic demo scenario.",
@@ -305,7 +305,7 @@ class DataService:
                 },
             }
             normalized = ImdHazardNormalizer.normalize(raw)
-            normalized.source_name = "SAMUDRA deterministic demo hazard fixture"
+            normalized.source_name = "ORCA deterministic demo hazard fixture"
             normalized.source_url = None
             return normalized
 
@@ -372,7 +372,7 @@ class DataService:
                     features=[],
                     bulletin_date="2026-09-26T06:00:00Z",
                     valid_to="2026-09-26T06:00:00Z",
-                    source_name="SAMUDRA deterministic demo PFZ (WINDOW_UNAVAILABLE)",
+                    source_name="ORCA deterministic demo PFZ (WINDOW_UNAVAILABLE)",
                     source_url=None,
                 )
             raw = {
@@ -385,7 +385,7 @@ class DataService:
                 "valid_to": record["valid_to_utc"],
             }
             payload = IncoisPFZNormalizer.normalize(raw)
-            payload.source_name = "SAMUDRA deterministic demo PFZ fixture"
+            payload.source_name = "ORCA deterministic demo PFZ fixture"
             payload.source_url = None
             return payload
 
@@ -493,7 +493,7 @@ class DataService:
                 observed = observed.replace(tzinfo=timezone.utc)
             if start <= observed <= end:
                 payload = IncoisOSFNormalizer.normalize(record)
-                payload.source_name = "SAMUDRA deterministic demo marine fixture"
+                payload.source_name = "INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture)"
                 payload.source_url = None
                 output.append(payload)
         return output

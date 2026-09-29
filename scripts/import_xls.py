@@ -29,10 +29,10 @@ def parse_range(range_str):
     except:
         return 0.0
 
-df = pd.read_excel('C:/Users/vikram/OneDrive/Desktop/SAMUDRA/data-sample/PfzForecast_GUJARAT.xls', skiprows=3)
+df = pd.read_excel('C:/Users/vikram/OneDrive/Desktop/ORCA/data-sample/PfzForecast_GUJARAT.xls', skiprows=3)
 
 # Load existing json
-with open('C:/Users/vikram/OneDrive/Desktop/SAMUDRA/data/source_snapshots/pfz_advisories.json', 'r', encoding='utf-8') as f:
+with open('C:/Users/vikram/OneDrive/Desktop/ORCA/data/source_snapshots/pfz_advisories.json', 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 start_id = 100
@@ -74,7 +74,7 @@ for idx, row in df.iterrows():
     data['payload']['features'].append(feature)
     count += 1
 
-with open('C:/Users/vikram/OneDrive/Desktop/SAMUDRA/data/source_snapshots/pfz_advisories.json', 'w', encoding='utf-8') as f:
+with open('C:/Users/vikram/OneDrive/Desktop/ORCA/data/source_snapshots/pfz_advisories.json', 'w', encoding='utf-8') as f:
     json.dump(data, f, indent=2)
 
 print(f"Added {count} GUJARAT PFZ records to pfz_advisories.json")

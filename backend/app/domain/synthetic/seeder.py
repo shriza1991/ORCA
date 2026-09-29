@@ -1,4 +1,4 @@
-"""Synthetic Demo Seeding Orchestrator for SAMUDRA.
+"""Synthetic Demo Seeding Orchestrator for ORCA.
 
 Handles dataset generation, source normalization, validation, idempotency,
 namespace reset, and database persistence.
@@ -45,13 +45,13 @@ def seed_synthetic_demo(
     dry_run: bool = False,
     namespace: str = SYNTHETIC_NAMESPACE,
 ) -> Dict[str, Any]:
-    """Orchestrates deterministic seeding of the SAMUDRA demo dataset.
+    """Orchestrates deterministic seeding of the ORCA demo dataset.
 
     Args:
         session: Active SQLAlchemy session
         reset_first: If True, deletes all existing entities in target namespace before seeding
         dry_run: If True, validates and calculates counts without saving to DB
-        namespace: Target isolation namespace (default: SAMUDRA_DEMO_V1)
+        namespace: Target isolation namespace (default: ORCA_DEMO_V1)
 
     Returns:
         Structured execution summary with exact counts and validation status.

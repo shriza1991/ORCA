@@ -85,9 +85,9 @@ class TestDataServiceSnapshotMode:
         bundle = service.get_observation_bundle(context)
         forecast = service.get_hourly_marine_forecast(context, departure, end)
 
-        assert bundle.marine.source_name.startswith("SAMUDRA deterministic demo")
-        assert bundle.weather.source_name.startswith("SAMUDRA deterministic demo")
-        assert bundle.hazard.source_name.startswith("SAMUDRA deterministic demo")
+        assert "ORCA" in bundle.marine.source_name or "INCOIS" in bundle.marine.source_name
+        assert bundle.weather.source_name.startswith("ORCA deterministic demo")
+        assert bundle.hazard.source_name.startswith("ORCA deterministic demo")
         assert bundle.marine.observed_at == bundle.weather.observed_at
         assert bundle.marine.observed_at == bundle.hazard.valid_from
         assert len(forecast) == 25

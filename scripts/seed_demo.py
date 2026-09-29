@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""CLI utility to seed the SAMUDRA synthetic demo dataset.
+"""CLI utility to seed the ORCA synthetic demo dataset.
 
 Usage:
-    python scripts/seed_demo.py [--reset] [--dry-run] [--verbose] [--namespace SAMUDRA_DEMO_V1]
+    python scripts/seed_demo.py [--reset] [--dry-run] [--verbose] [--namespace ORCA_DEMO_V1]
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def format_table(rows: list[tuple[str, str, int]], headers: tuple[str, str, str]
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Seed SAMUDRA synthetic demo data into the backend database."
+        description="Seed ORCA synthetic demo data into the backend database."
     )
     parser.add_argument(
         "--reset",
@@ -66,8 +66,8 @@ def main() -> int:
     parser.add_argument(
         "--namespace",
         type=str,
-        default="SAMUDRA_DEMO_V1",
-        help="Dataset namespace key (default: SAMUDRA_DEMO_V1).",
+        default="ORCA_DEMO_V1",
+        help="Dataset namespace key (default: ORCA_DEMO_V1).",
     )
 
     args = parser.parse_args()
@@ -76,7 +76,7 @@ def main() -> int:
         logging.getLogger().setLevel(logging.DEBUG)
 
     print("=" * 70)
-    print("=== SAMUDRA Synthetic Demo Data Seeder ===")
+    print("=== ORCA Synthetic Demo Data Seeder ===")
     print("=" * 70)
     print(f"Target Namespace : {args.namespace}")
     print(f"Reset Existing   : {args.reset}")

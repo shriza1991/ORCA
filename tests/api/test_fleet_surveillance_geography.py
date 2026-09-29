@@ -21,7 +21,7 @@ from backend.app.main import app
 
 client = TestClient(app)
 
-FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "fixtures" / "synthetic" / "samudra"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "fixtures" / "synthetic" / "orca"
 
 
 def test_1_all_fourteen_vessels_have_replay():

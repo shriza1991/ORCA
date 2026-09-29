@@ -1,4 +1,4 @@
-"""Intent Taxonomy and Cognitive Extraction Schemas for SAMUDRA / ORCA.
+"""Intent Taxonomy and Cognitive Extraction Schemas for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 
 class IntentCategory(str, Enum):
-    """Controlled intent categories supported by SAMUDRA.
+    """Controlled intent categories supported by ORCA.
 
     Strictly partitions marine queries into specialist processing domains.
     """
@@ -70,7 +70,7 @@ class IntentCategory(str, Enum):
     """Queries asking how active bulletins or newly issued hazard alerts impact an ongoing/planned trip."""
 
     UNSUPPORTED = "UNSUPPORTED"
-    """Out-of-domain, non-marine, or irrelevant queries outside SAMUDRA's purview.
+    """Out-of-domain, non-marine, or irrelevant queries outside ORCA's purview.
     Example: 'What is the stock price of Tata Motors?' or 'Write a poem about fish.'
     """
 

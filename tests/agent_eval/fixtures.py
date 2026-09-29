@@ -1,4 +1,4 @@
-"""Standard Agent Evaluation Fixture Library for SAMUDRA / ORCA.
+"""Standard Agent Evaluation Fixture Library for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

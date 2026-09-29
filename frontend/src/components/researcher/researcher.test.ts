@@ -228,7 +228,7 @@ describe('Researcher Dashboard Components & Data Client', () => {
   it('fetches health status and validates authoritative data sources registry', async () => {
     const health = await fetchHealthStatus();
     expect(health.status).toBeTruthy();
-    expect(health.app_name).toBe('SAMUDRA');
+    expect(health.app_name).toBe('ORCA');
 
     expect(DATA_SOURCES.length).toBeGreaterThanOrEqual(7);
     const imd = DATA_SOURCES.find(s => s.provider === 'IMD' && s.name.includes('Cyclone'));

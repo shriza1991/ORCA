@@ -1,4 +1,4 @@
-"""Provider-Agnostic LLM Interface & Implementations for SAMUDRA / ORCA.
+"""Provider-Agnostic LLM Interface & Implementations for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -70,7 +70,7 @@ class LLMResponse(BaseModel):
 # =============================================================================
 
 class LLMProvider(ABC):
-    """Abstract interface that all LLM backends must implement for SAMUDRA."""
+    """Abstract interface that all LLM backends must implement for ORCA."""
 
     @property
     @abstractmethod

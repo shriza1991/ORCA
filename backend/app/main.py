@@ -1,4 +1,4 @@
-"""FastAPI Main Application Entrypoint for SAMUDRA.
+"""FastAPI Main Application Entrypoint for ORCA.
 
 Owned by Dev 2 (Backend Platform Lead).
 """
@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    """Application factory for SAMUDRA."""
+    """Application factory for ORCA."""
     setup_logging(settings.LOG_LEVEL)
     
     app = FastAPI(
@@ -60,7 +60,7 @@ def create_app() -> FastAPI:
         title=settings.APP_NAME,
         description=(
             "ORCA — Marine EcOsystem Reasoning with Collaborative Agents\n"
-            "Smart Autonomous Marine Understanding, Decision & Risk Assistant (SAMUDRA)\n"
+            "Marine Mission Intelligence Platform (ORCA)\n"
             "SIH 2026 Problem Statement PS 26176"
         ),
         version="0.1.0",

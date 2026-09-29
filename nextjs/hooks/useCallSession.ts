@@ -355,7 +355,7 @@ export function useCallSession({
         const currentState = callStateRef.current;
 
         // VAD only operates during user input phases (LISTENING or HEARING_YOU)
-        // While SAMUDRA is SPEAKING or PROCESSING, VAD is dormant to prevent speaker echo
+        // While ORCA is SPEAKING or PROCESSING, VAD is dormant to prevent speaker echo
         if ((currentState === 'LISTENING' || currentState === 'HEARING_YOU') && !isMutedRef.current) {
           const now = Date.now();
 
@@ -463,7 +463,7 @@ export function useCallSession({
       const isDenied = (err as Error)?.name === 'NotAllowedError' || (err as Error)?.name === 'PermissionDeniedError';
       setError(
         isDenied
-          ? 'Microphone permission denied. Please allow microphone access to talk with SAMUDRA.'
+          ? 'Microphone permission denied. Please allow microphone access to talk with ORCA.'
           : 'Unable to connect to audio input device.'
       );
     }

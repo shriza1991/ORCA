@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-// Target languages required for SAMUDRA
+// Target languages required for ORCA
 const TARGET_LANGUAGES = ['hi', 'mr', 'ta', 'te'];
 const LOCALES_DIR = path.join(__dirname, 'src', 'i18n', 'locales');
 const EN_JSON_PATH = path.join(LOCALES_DIR, 'en.json');

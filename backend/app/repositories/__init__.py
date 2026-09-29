@@ -1,4 +1,4 @@
-"""PFZ Snapshot Repository for SAMUDRA.
+"""PFZ Snapshot Repository for ORCA.
 
 Owned by Dev 2 (Backend Platform).
 

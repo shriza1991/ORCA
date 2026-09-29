@@ -1,13 +1,13 @@
-# SAMUDRA / ORCA Design System & Maritime UX Architecture
+# ORCA / ORCA Design System & Maritime UX Architecture
 
-> **Canonical UX & Styling Reference** for the SAMUDRA (Smart Autonomous Marine Understanding, Decision & Risk Assistant) / ORCA frontend platform.
+> **Canonical UX & Styling Reference** for the ORCA (Smart Autonomous Marine Understanding, Decision & Risk Assistant) / ORCA frontend platform.
 > Owned by Frontend / UX Lead (P1), coordinated with Product & Safety (P5).
 
 ---
 
 ## 1. Design Philosophy: Mission-Grade Maritime Clarity
 
-SAMUDRA is not a generic analytics dashboard or marketing landing page. It is an **Agentic Marine Intelligence Platform** operating in high-stakes environments:
+ORCA is not a generic analytics dashboard or marketing landing page. It is an **Agentic Marine Intelligence Platform** operating in high-stakes environments:
 - On a rocking, wet boat deck under direct tropical sunlight.
 - In a port authority control room monitoring active squall warnings and fleet corridors.
 - At an oceanographic research station analyzing satellite Earth Observation rasters.
@@ -97,7 +97,7 @@ Every status color has an associated background, border, and glow token to creat
 
 ## 4. Role-Specific UX Architectures
 
-SAMUDRA delivers tailored interfaces for three distinct personas, selectable from the central Portal:
+ORCA delivers tailored interfaces for three distinct personas, selectable from the central Portal:
 
 ### 4.1 Fisher Console (`/fisher`)
 Designed for **vessel skippers and artisanal fishers**:

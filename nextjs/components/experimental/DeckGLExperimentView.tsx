@@ -131,7 +131,7 @@ export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimen
   const [viewState, setViewState] = useState<MapViewState>(INITIAL_DECKGL_VIEW_STATE);
   const [selectedFeature, setSelectedFeature] = useState<{ type: string; id: string; properties: any } | null>(null);
 
-  // Load Authentic SAMUDRA Data
+  // Load Authentic ORCA Data
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
@@ -174,7 +174,7 @@ export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimen
         };
         setSelectedHarbor(ratnagiriHarbor);
       } catch (err) {
-        console.error('Failed to load real SAMUDRA data for deck.gl experiment:', err);
+        console.error('Failed to load real ORCA data for deck.gl experiment:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -317,7 +317,7 @@ export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimen
               </span>
             </div>
             <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
-              Isolated marine evaluation deck · Production MapLibre remains untouched · Real SAMUDRA Data & Turf.js
+              Isolated marine evaluation deck · Production MapLibre remains untouched · Real ORCA Data & Turf.js
             </p>
           </div>
         </div>
@@ -337,7 +337,7 @@ export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimen
         <div style={{ flex: 1, position: 'relative', height: '100%' }}>
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#090d16', color: '#38bdf8', fontSize: '15px' }}>
-              <span>Loading real SAMUDRA marine layers & spatial vectors…</span>
+              <span>Loading real ORCA marine layers & spatial vectors…</span>
             </div>
           ) : (
             <DeckGLMarineMap

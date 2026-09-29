@@ -34,7 +34,7 @@ services:
           name: orca-postgres
           property: connectionString
       - key: CORS_ORIGINS
-        value: https://samudra-qxx1.vercel.app
+        value: https://orca-qxx1.vercel.app
       - key: GEMINI_API_KEY
         sync: false
       - key: SARVAM_API_KEY

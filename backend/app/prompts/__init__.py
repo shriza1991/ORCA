@@ -1,4 +1,4 @@
-"""Prompts Package for SAMUDRA LangGraph Nodes.
+"""Prompts Package for ORCA LangGraph Nodes.
 
 Owned by Dev 3 (Agent Orchestration).
 Contains prompt templates and loader utilities for:

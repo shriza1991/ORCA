@@ -270,7 +270,7 @@ def test_16_no_system_prompt_in_trace():
     )
     trace = state["trace"]
     for t in trace:
-        assert "You are SAMUDRA" not in t.action
+        assert "You are ORCA" not in t.action
         assert "Developer instruction" not in t.action
 
 

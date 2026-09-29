@@ -13,14 +13,14 @@
 > **SIH 2026 Problem Statement:** PS 26176 — ORCA: Marine EcOsystem Reasoning with Collaborative Agents  
 > **Theme:** Disaster Management & Maritime Intelligence  
 > **Classification:** Authoritative Project Context & Verified System Baseline  
-> **Repository Baseline:** SAMUDRA (Smart Autonomous Marine Understanding, Decision & Risk Assistant)
+> **Repository Baseline:** ORCA (Smart Autonomous Marine Understanding, Decision & Risk Assistant)
 
 ---
 
 ## 1. Project Identity
 
 * **Project Name:** ORCA — Marine EcOsystem Reasoning with Collaborative Agents
-* **Active Codebase Moniker:** SAMUDRA (`Smart Autonomous Marine Understanding, Decision & Risk Assistant`)
+* **Active Codebase Moniker:** ORCA (`Smart Autonomous Marine Understanding, Decision & Risk Assistant`)
 * **Problem Statement:** PS 26176 (SIH 2026) — Sponsored by Indian Space Research Organisation (ISRO) / Department of Space
 * **Core Value Proposition:** A mission-intelligence reasoning layer positioned above India's existing fragmented marine information ecosystem (ISRO MOSDAC, INCOIS, IMD, Coast Guard, Fisheries Departments).
 
@@ -165,7 +165,7 @@ sequenceDiagram
 ## 9. Verified Repository Map
 
 ```text
-SAMUDRA/ (ORCA)
+ORCA/ (ORCA)
 ├── backend/
 │   ├── alembic/                         # Database schema migrations
 │   ├── app/

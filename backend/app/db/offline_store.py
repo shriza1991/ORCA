@@ -1,4 +1,4 @@
-"""Offline In-Memory Persistence Store for SAMUDRA.
+"""Offline In-Memory Persistence Store for ORCA.
 
 Owned by Dev 2 (Backend Platform).
 Provides ephemeral, thread-safe in-memory caching and fallback for runs,

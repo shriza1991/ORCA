@@ -1,4 +1,4 @@
-"""SAMUDRA First-Class Canonical Scenario Framework.
+"""ORCA First-Class Canonical Scenario Framework.
 
 Owned by Dev 3 (Agent Orchestration & Explainability) & Dev 4 (Domain Intelligence).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.

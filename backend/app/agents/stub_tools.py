@@ -1,4 +1,4 @@
-"""In-Memory Specialist Stub Tools for SAMUDRA / ORCA (Milestone M1).
+"""In-Memory Specialist Stub Tools for ORCA / ORCA (Milestone M1).
 
 Owned by Dev 3 (Agent Orchestration & Explainability).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -256,8 +256,8 @@ def risk_stub(
         },
         evidence=[
             EvidenceItem(
-                source_name="SAMUDRA Risk Engine (Simulated M1 Demo)",
-                source_url="https://samudra.internal/risk_eval",
+                source_name="ORCA Risk Engine (Simulated M1 Demo)",
+                source_url="https://orca.internal/risk_eval",
                 observed_time=now_iso,
                 metric_name="risk_status",
                 metric_value=rec_status.value,
@@ -321,8 +321,8 @@ def trip_assessment_stub(
         },
         evidence=[
             EvidenceItem(
-                source_name="SAMUDRA Trip Assessment (Simulated M1 Demo)",
-                source_url="https://samudra.internal/trip_assessment",
+                source_name="ORCA Trip Assessment (Simulated M1 Demo)",
+                source_url="https://orca.internal/trip_assessment",
                 observed_time=now_iso,
                 metric_name="risk_status",
                 metric_value=rec_status.value,
@@ -369,8 +369,8 @@ def route_stub(
         },
         evidence=[
             EvidenceItem(
-                source_name="SAMUDRA Route Planner (Simulated M1 Demo)",
-                source_url="https://samudra.internal/route_planner",
+                source_name="ORCA Route Planner (Simulated M1 Demo)",
+                source_url="https://orca.internal/route_planner",
                 observed_time=now_iso,
                 metric_name="route_inshore_distance_km",
                 metric_value=28.2,
@@ -403,7 +403,7 @@ def explanation_stub(
         evidence=[
             EvidenceItem(
                 source_name="Maritime Geofence Registry (Simulated M1 Demo)",
-                source_url="https://samudra.internal/geofence",
+                source_url="https://orca.internal/geofence",
                 observed_time=now_iso,
                 metric_name="geofence_id",
                 metric_value="RESTRICTED-REEF-ZONE-4",

@@ -1,4 +1,4 @@
-"""Canonical Scenario Domain Models for SAMUDRA.
+"""Canonical Scenario Domain Models for ORCA.
 
 Owned by Dev 3 (Agent Orchestration & Explainability) & Dev 4 (Domain Intelligence).
 Part of SIH 2026 Problem Statement PS 26176 — ORCA.
@@ -136,7 +136,7 @@ class ScenarioDefinition(BaseModel):
 
 
 class ScenarioExecutionResult(BaseModel):
-    """Audit result from executing a scenario through the SAMUDRA pipeline."""
+    """Audit result from executing a scenario through the ORCA pipeline."""
 
     scenario_id: str = Field(..., description="Evaluated scenario ID")
     scenario_name: str = Field(..., description="Evaluated scenario name")

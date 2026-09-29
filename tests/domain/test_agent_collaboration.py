@@ -86,7 +86,7 @@ def test_full_consensus_safe_go():
         assert agent.evidence_strength in (ConfidenceLevel.HIGH, ConfidenceLevel.MEDIUM)
         assert agent.data_quality in (DataQualityRating.VERIFIED, DataQualityRating.SNAPSHOT_FALLBACK)
         assert len(agent.sources) > 0
-        assert agent.sources[0].provider in ["INCOIS", "IMD", "INHO / MoEFCC", "SAMUDRA Safety Authority"]
+        assert agent.sources[0].provider in ["INCOIS", "IMD", "INHO / MoEFCC", "ORCA Safety Authority"]
 
     # 3. Decision Authority Arbitration (No conflict)
     arb = collab.arbitration

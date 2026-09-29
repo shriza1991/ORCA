@@ -1518,9 +1518,9 @@ export default function MapView({
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    const sourceId = 'samudra-nautical-ruler-source';
-    const lineLayerId = 'samudra-nautical-ruler-line';
-    const pointsLayerId = 'samudra-nautical-ruler-points';
+    const sourceId = 'orca-nautical-ruler-source';
+    const lineLayerId = 'orca-nautical-ruler-line';
+    const pointsLayerId = 'orca-nautical-ruler-points';
 
     if (rulerPoints.length === 0) {
       if (map.getLayer(lineLayerId)) map.removeLayer(lineLayerId);
@@ -1598,8 +1598,8 @@ export default function MapView({
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
 
-    const sourceId = 'samudra-wind-vectors-source';
-    const layerId = 'samudra-wind-vectors-layer';
+    const sourceId = 'orca-wind-vectors-source';
+    const layerId = 'orca-wind-vectors-layer';
 
     if (!showWindVectors || !mapForecast) {
       if (map.getLayer(layerId)) map.removeLayer(layerId);

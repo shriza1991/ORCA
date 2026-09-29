@@ -538,7 +538,7 @@ export default function FleetTrackingDeck({
           <div>
             <strong>{translateText('BACKEND OFFLINE — SURVEILLANCE DATA UNAVAILABLE', language)}</strong>
             <p>
-              {translateText('Cannot connect to SAMUDRA backend API. Synthetic telemetry, GPS replay tracks, and broadcast alerts are suspended. Offline fallback preserves sector navigation only.', language)}
+              {translateText('Cannot connect to ORCA backend API. Synthetic telemetry, GPS replay tracks, and broadcast alerts are suspended. Offline fallback preserves sector navigation only.', language)}
             </p>
           </div>
         </div>
