@@ -7,7 +7,7 @@ interface HeaderProps {
   evidenceCount: number;
   onOpenEvidence: () => void;
   theme: 'light' | 'dark';
-  currentPortal?: 'selection' | 'fisher' | 'authority' | 'researcher' | 'settings' | 'deckgl-experiment';
+  currentPortal?: 'selection' | 'fisher' | 'authority' | 'researcher' | 'settings';
   onLogout?: () => void;
   onReturnToPortal?: () => void;
   onOpenSettings?: () => void;

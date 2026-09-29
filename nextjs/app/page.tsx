@@ -8,12 +8,11 @@ export default function Home() {
   const router = useRouter();
 
   const handleSelectRole = (
-    role: 'fisher' | 'authority' | 'researcher' | 'deckgl-experiment'
+    role: 'fisher' | 'authority' | 'researcher'
   ) => {
     if (role === 'fisher') router.push('/fisher');
     else if (role === 'authority') router.push('/authority');
     else if (role === 'researcher') router.push('/researcher');
-    else if (role === 'deckgl-experiment') router.push('/deckgl-experiment');
   };
 
   return (

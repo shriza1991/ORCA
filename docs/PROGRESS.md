@@ -8,6 +8,20 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-29 Dashboard Simplification: Experimental deck.gl Benchmark Component Removal
+
+- **IMPLEMENTED**: Removed redundant experimental visual benchmark deck.gl comparison banner and routes from the main dashboard:
+  - `frontend/src/pages/PortalPage.tsx`: Removed the `Experimental Visual Benchmark: deck.gl (WebGL2)` card section and unused icons.
+  - `frontend/src/App.tsx`: Removed `DeckGLExperimentView` import, `'deckgl-experiment'` from `PortalMode` union, and its portal render branch.
+  - `frontend/src/components/layout/Header.tsx`: Removed `'deckgl-experiment'` from `currentPortal` union.
+  - `nextjs/views/PortalPage.tsx`: Removed redundant experiment benchmark banner and tightened role selection callback.
+  - `nextjs/app/page.tsx` & `nextjs/components/layout/Header.tsx`: Cleaned role type union and router navigation branches.
+- **VERIFIED**:
+  - Frontend typecheck (`npm run typecheck`): 0 errors.
+  - Frontend Vitest suite (`npm run test`): 280/280 tests passed across 22 test suites.
+  - Next.js typecheck (`npx tsc --noEmit`): 0 errors.
+  - Production build (`npm run build`): Passed cleanly.
+
 ### 2026-09-29 Project-wide Rebrand from SAMUDRA to ORCA (§D060)
 
 - **IMPLEMENTED**: Complete, project-wide rebranding from `SAMUDRA` to `ORCA` across the full codebase:
