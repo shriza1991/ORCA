@@ -127,6 +127,17 @@ def _safe_float(values: list, idx: int) -> float | None:
         return None
 
 
+def _derive_tide_phase(values: list, idx: int) -> str:
+    """Infer rising/falling from adjacent hourly sea-level forecast values."""
+    current = _safe_float(values, idx)
+    if current is None:
+        return "unknown"
+    previous = _safe_float(values, idx - 1) if idx > 0 else None
+    following = _safe_float(values, idx + 1)
+    comparison = following if following is not None else previous
+    if comparison is None or comparison == current:
+        return "unknown"
+    return "rising" if comparison > current else "falling"
 class OpenMeteoConnector(BaseLiveConnector):
     """Marine and weather data from Open-Meteo.
 
@@ -266,7 +277,7 @@ class OpenMeteoConnector(BaseLiveConnector):
             hourly=(
                 "wave_height,wave_direction,wave_period,"
                 "swell_wave_height,swell_wave_period,ocean_current_velocity,"
-                "sea_surface_temperature"
+                "sea_surface_temperature,sea_level_height_msl"
             ),
             forecast_days=7,
             timezone="UTC",
@@ -288,6 +299,20 @@ class OpenMeteoConnector(BaseLiveConnector):
         ocean_current_kmh = _safe_float(hourly.get("ocean_current_velocity"), idx)
         ocean_current_knots = (ocean_current_kmh * _KMH_TO_KNOTS) if ocean_current_kmh is not None else None
         sst = _safe_float(hourly.get("sea_surface_temperature"), idx)
+        sea_level = _safe_float(hourly.get("sea_level_height_msl"), idx)
+        tide_phase = _derive_tide_phase(hourly.get("sea_level_height_msl", []), idx)
+
+        marine_hourly = []
+        for i, time_value in enumerate(times):
+            marine_hourly.append(
+                {
+                    "observation_time": time_value,
+                    "wave_height_m": _safe_float(hourly.get("wave_height"), i),
+                    "swh": _safe_float(hourly.get("wave_height"), i),
+                    "sea_surface_temp_c": _safe_float(hourly.get("sea_surface_temperature"), i),
+                    "sea_level_height_m": _safe_float(hourly.get("sea_level_height_msl"), i),
+                }
+            )
 
         # Derive timestamps from the actual forecast time slot, not from the clock.
         forecast_valid_time: str | None = times[idx] if times and idx < len(times) else None
@@ -324,6 +349,9 @@ class OpenMeteoConnector(BaseLiveConnector):
             wave_direction_deg=wave_direction,
             surface_current_knots=ocean_current_knots,
             sea_surface_temp_c=sst,
+            sea_level_height_m=sea_level,
+            tide_phase=tide_phase,
+            tide_is_estimated=True,
             observed_at=observed_at_str,
             valid_to=valid_to_str,
             source_name="Open-Meteo Marine API",
@@ -335,6 +363,7 @@ class OpenMeteoConnector(BaseLiveConnector):
                 "cache_time": None,
                 "coverage_status": coverage_status,
             },
+            hourly_forecast=marine_hourly,
         )
 
     # ------------------------------------------------------------------
@@ -379,6 +408,19 @@ class OpenMeteoConnector(BaseLiveConnector):
         # visibility: Open-Meteo returns metres — convert to km
         visibility_km = (visibility_m / 1000.0) if visibility_m is not None else None
 
+        weather_hourly = []
+        for i, time_value in enumerate(times):
+            visibility_value = _safe_float(hourly.get("visibility"), i)
+            weather_hourly.append(
+                {
+                    "observation_time": time_value,
+                    "wind_speed_knots": _safe_float(hourly.get("wind_speed_10m"), i),
+                    "wind_gust_knots": _safe_float(hourly.get("wind_gusts_10m"), i),
+                    "wind_direction_deg": _safe_float(hourly.get("wind_direction_10m"), i),
+                    "visibility_km": visibility_value / 1000.0 if visibility_value is not None else None,
+                }
+            )
+
         # Derive timestamps from the actual forecast slot
         forecast_valid_time: str | None = times[idx] if times and idx < len(times) else None
         if forecast_valid_time:
@@ -413,4 +455,10 @@ class OpenMeteoConnector(BaseLiveConnector):
             valid_to=valid_to_str,
             source_name="Open-Meteo Weather API",
             source_url="https://open-meteo.com/en/docs",
+            freshness_flags={
+                "forecast_valid_time": forecast_valid_time,
+                "retrieved_at": retrieved_at.isoformat(),
+                "coverage_status": "OK",
+            },
+            hourly_forecast=weather_hourly,
         )

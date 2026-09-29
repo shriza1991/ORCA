@@ -63,7 +63,7 @@ class DepartureWindowEvaluator:
     def _match_forecast(
         self,
         target_time: datetime,
-        hourly_forecast: List[MarineConditionsPayload],
+        hourly_forecast: List[MarineConditionsPayload | Dict[str, Any]],
         fallback_wave: float = 1.0,
     ) -> float:
         """Finds closest forecast record for target_time and returns wave_height_m."""
@@ -74,15 +74,17 @@ class DepartureWindowEvaluator:
         best_wave = fallback_wave
 
         for item in hourly_forecast:
-            if not item.observed_at:
+            observed_at = item.get("observation_time") if isinstance(item, dict) else item.observed_at
+            if not observed_at:
                 continue
             try:
-                t = datetime.fromisoformat(item.observed_at.replace("Z", "+00:00"))
+                t = datetime.fromisoformat(str(observed_at).replace("Z", "+00:00"))
                 diff = abs((t - target_time).total_seconds())
                 if diff < best_diff:
                     best_diff = diff
-                    if item.significant_wave_height_m is not None:
-                        best_wave = item.significant_wave_height_m
+                    wave = item.get("wave_height_m", item.get("swh")) if isinstance(item, dict) else item.significant_wave_height_m
+                    if wave is not None:
+                        best_wave = float(wave)
             except Exception:
                 continue
 

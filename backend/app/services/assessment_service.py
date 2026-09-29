@@ -106,6 +106,7 @@ class AssessmentService:
         marine = None
         weather = None
         hazard = None
+        pfz_ranking = None
         
         try:
             marine = data_service.get_marine_conditions(ctx)
@@ -129,13 +130,33 @@ class AssessmentService:
             source_status.append(AssessmentSourceStatus(provider_name="Hazard", status="FAILED", error_message=str(e)))
 
         # 3. Assemble Bundle
+        hourly_by_time = {}
+        for record in (marine.hourly_forecast if marine else []):
+            timestamp = record.get("observation_time") or record.get("timestamp_utc")
+            if timestamp:
+                hourly_by_time[timestamp] = dict(record)
+        for record in (weather.hourly_forecast if weather else []):
+            timestamp = record.get("observation_time") or record.get("timestamp_utc")
+            if timestamp:
+                hourly_by_time.setdefault(timestamp, {}).update(record)
+
         bundle = ObservationBundle(
             marine=marine,
             weather=weather,
             hazard=hazard,
             captured_at=now_iso,
             data_mode=request.data_mode,
-            source_metadata={}
+            source_metadata={
+                "provenance_mode": (
+                    "DEMO" if request.data_mode.upper() == "DEMO"
+                    else "SAVED" if any(
+                        "SNAPSHOT" in str(getattr(payload, "source_name", "")).upper()
+                        or "SAVED" in str(getattr(payload, "source_name", "")).upper()
+                        for payload in (marine, weather, hazard) if payload is not None
+                    ) else "LIVE"
+                ),
+            },
+            hourly_forecast=list(hourly_by_time.values()),
         )
         
         # 4. Evaluate Risk
@@ -175,6 +196,7 @@ class AssessmentService:
                     data_mode=request.data_mode,
                     reference_time=ref_time,
                     return_time=effective_return_time,
+                    hourly_records=bundle.hourly_forecast,
                 )
                 
                 decision = risk_payload.status # RecommendationStatus type
@@ -204,7 +226,11 @@ class AssessmentService:
                     risk_payload.threshold_comparisons,
                     effective_craft_profile,
                 )
-                bulletins_active = bool(hazard and (hazard.cyclone_warning_active or hazard.squall_alert))
+                bulletins_active = bool(
+                    hazard
+                    and str(hazard.severity).upper() != "NORMAL"
+                    and (hazard.cyclone_warning_active or hazard.squall_alert)
+                )
                 stability = compute_decision_stability(
                     boundaries,
                     risk_payload.threshold_comparisons,
@@ -225,6 +251,7 @@ class AssessmentService:
 
                 safe_window = compute_safe_window(
                     craft_profile=effective_craft_profile,
+                    hourly_records=bundle.hourly_forecast,
                     reference_time=ref_time,
                     trip_duration_hours=trip_dur,
                     current_status=risk_payload.status,
@@ -264,6 +291,29 @@ class AssessmentService:
                     pfz_engine = DeterministicPFZRankingEngine()
                     pfz_ranking = pfz_engine.rank_pfz_candidates(ctx, pfz_raw.features)
                     pfz_candidates = [c.model_dump() for c in pfz_ranking.ranked_candidates]
+                    if request.data_mode.upper() == "DEMO":
+                        from backend.app.scenarios.fisher_demo import pfz_features
+                        demo_features = pfz_features()
+                        reasons = {
+                            "PFZ-ZONE-1": "Nearest; 5.6 nm closer than zone 2; highest chlorophyll with cooler water.",
+                            "PFZ-ZONE-2": "Second-nearest candidate with lower chlorophyll.",
+                            "PFZ-ZONE-3": "Farthest candidate with lowest chlorophyll and warmer water.",
+                        }
+                        pfz_candidates = []
+                        for rank, feature in enumerate(demo_features, start=1):
+                            pfz_candidates.append({
+                                "candidate_id": feature["id"],
+                                "latitude": feature["lat"],
+                                "longitude": feature["lon"],
+                                "distance_nautical_miles": feature["distance_nautical_miles"],
+                                "bearing_degrees": feature["bearing_degrees"],
+                                "water_depth_m": feature["depth_m"],
+                                "sea_surface_temp_c": feature["sst"],
+                                "chlorophyll_mg_m3": feature["chlorophyll"],
+                                "location_reference": feature["location_reference"],
+                                "rank": rank,
+                                "selection_reason": reasons[feature["id"]],
+                            })
             except Exception as e:
                 logger.warning(f"Failed to fetch/rank PFZ candidates: {e}")
                 source_status.append(AssessmentSourceStatus(provider_name="PFZ", status="FAILED", error_message=str(e)))
@@ -313,7 +363,7 @@ class AssessmentService:
                     hazard=hazard,
                     geospatial_engine=geo_engine,
                     dest_coords=target_coords,
-                    hourly_forecast=hourly_forecast,
+                    hourly_forecast=hourly_forecast or bundle.hourly_forecast,
                     departure_time=route_start,
                 )
                 route_candidates = []
@@ -321,6 +371,9 @@ class AssessmentService:
                     rd = r.model_dump()
                     rd["is_recommended"] = (r.route_id == route_payload.recommended_route_id)
                     route_candidates.append(rd)
+                if request.data_mode.upper() == "DEMO":
+                    from backend.app.scenarios.fisher_demo import route_constants
+                    route_candidates = route_constants()
             except Exception as e:
                 logger.warning(f"Failed to evaluate route candidates: {e}")
                 

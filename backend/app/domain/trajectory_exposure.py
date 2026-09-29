@@ -73,7 +73,7 @@ class TrajectoryExposureEngine:
     def _match_forecast_for_time(
         self,
         target_time: datetime,
-        hourly_forecast: List[MarineConditionsPayload],
+        hourly_forecast: List[MarineConditionsPayload | Dict[str, Any]],
         fallback_wave_m: float = 1.0,
         fallback_wind_kn: float = 12.0,
     ) -> tuple[float, float, bool]:
@@ -85,10 +85,11 @@ class TrajectoryExposureEngine:
         best_payload: Optional[MarineConditionsPayload] = None
 
         for item in hourly_forecast:
-            if not item.observed_at:
+            observed_at = item.get("observation_time") if isinstance(item, dict) else item.observed_at
+            if not observed_at:
                 continue
             try:
-                t_item = datetime.fromisoformat(item.observed_at.replace("Z", "+00:00"))
+                t_item = datetime.fromisoformat(str(observed_at).replace("Z", "+00:00"))
                 diff = abs((t_item - target_time).total_seconds())
                 if diff < best_diff_seconds:
                     best_diff_seconds = diff
@@ -98,12 +99,9 @@ class TrajectoryExposureEngine:
 
         # If matched within 3 hours, use it; otherwise fallback
         if best_payload and best_diff_seconds <= 10800:
-            wave = (
-                best_payload.significant_wave_height_m
-                if getattr(best_payload, "significant_wave_height_m", None) is not None
-                else fallback_wave_m
-            )
-            wind = getattr(best_payload, "wind_speed_knots", None)
+            wave = best_payload.get("wave_height_m", best_payload.get("swh")) if isinstance(best_payload, dict) else best_payload.significant_wave_height_m
+            wave = wave if wave is not None else fallback_wave_m
+            wind = best_payload.get("wind_speed_knots") if isinstance(best_payload, dict) else getattr(best_payload, "wind_speed_knots", None)
             wind = wind if wind is not None else fallback_wind_kn
             return wave, wind, True
 

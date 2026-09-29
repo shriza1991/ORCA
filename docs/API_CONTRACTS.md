@@ -8,6 +8,7 @@
 ## 1. Overview & Contract-First Rule
 
 To enable four developers to work asynchronously without blocking each other:
+
 1. **Frontend (Dev 1)** builds UI mockups against the TypeScript contract types.
 2. **Backend Platform (Dev 2)** implements FastAPI serialization adhering strictly to these Pydantic schemas.
 3. **Agent Orchestration (Dev 3)** ensures the final LangGraph state maps directly into `ChatResponse`.
@@ -16,6 +17,18 @@ To enable four developers to work asynchronously without blocking each other:
 ---
 
 ## 2. Shared Core Data Models
+
+### 2.0D Unified trip assessment observations
+
+`TripAssessmentResponse.conditions` is the canonical source for Fisher marine
+metrics. Its `marine` and `weather` payloads may include `hourly_forecast`
+records, while the bundle exposes the merged `hourly_forecast` series used by
+the deterministic risk engine, route evaluator, and What-If comparisons.
+Marine payloads may include `sea_level_height_m`, `tide_phase`, and
+`tide_is_estimated`. Route candidates expose `one_way_distance_km`,
+`round_trip_distance_km`, `one_way_fuel_liters`, and
+`round_trip_fuel_liters`. `source_metadata.provenance_mode` is the display
+authority for `LIVE`, `SAVED`, or `DEMO` badges.
 
 ### 2.0 Authority chat sector context
 
@@ -113,7 +126,13 @@ This is the payload returned by `POST /api/v1/chat` to the frontend.
             "geometry": {
               "type": "Polygon",
               "coordinates": [
-                [[72.5, 16.5], [73.5, 16.5], [73.5, 17.5], [72.5, 17.5], [72.5, 16.5]]
+                [
+                  [72.5, 16.5],
+                  [73.5, 16.5],
+                  [73.5, 17.5],
+                  [72.5, 17.5],
+                  [72.5, 16.5]
+                ]
               ]
             },
             "properties": {
@@ -141,9 +160,7 @@ This is the payload returned by `POST /api/v1/chat` to the frontend.
       "timestamp": "2026-09-04T22:31:02Z"
     }
   ],
-  "warnings": [
-    "Open-Meteo fallback was not needed. Primary data is fresh."
-  ],
+  "warnings": ["Open-Meteo fallback was not needed. Primary data is fresh."],
   "suggested_followups": [
     "Check safety window for tomorrow evening",
     "Where is the nearest safe anchorage near Ratnagiri?"
@@ -187,6 +204,7 @@ All domain tools in `backend/app/tools/` must return this standardized wrapper:
 ```
 
 **Status Enumeration**:
+
 - `ok`: Tool completed successfully with valid data.
 - `partial`: Tool returned fallback/degraded data or partial spatial coverage.
 - `failed`: Tool failed (details supplied in `error_code` and `warnings`).
@@ -196,6 +214,7 @@ All domain tools in `backend/app/tools/` must return this standardized wrapper:
 ## 3. Core API Endpoints
 
 ### 3.1 `POST /api/v1/chat`
+
 - **Description**: Main interaction endpoint. Processes user natural language query, runs the bounded LangGraph pipeline, and returns the unified response.
 - **Request Body**:
   ```json
@@ -213,10 +232,12 @@ All domain tools in `backend/app/tools/` must return this standardized wrapper:
 - **Response**: `200 OK` (`ChatResponse`) or `422 Unprocessable Entity` on malformed schema.
 
 ### 3.2 `GET /api/v1/chat/{conversation_id}/history`
+
 - **Description**: Retrieves session conversational context and high-level messages.
 - **Response**: List of previous user questions and assistant responses with metadata.
 
 ### 3.3 `GET /api/v1/health`
+
 - **Description**: Verifies service status and downstream provider connectivity.
 - **Response**:
   ```json
@@ -231,7 +252,9 @@ All domain tools in `backend/app/tools/` must return this standardized wrapper:
   ```
 
 ### 3.4 `GET /api/v1/scenarios`
+
 - **Description**: Returns metadata for the 8 canonical pre-configured test scenarios (S1-S8) to allow one-click testing in the UI or CI.
 
 ### 3.5 `GET /api/v1/layers/base`
+
 - **Description**: Returns GeoJSON geometries for Indian coastal boundaries, EEZ, major fishing harbors, and designated Marine Protected Areas (MPAs).

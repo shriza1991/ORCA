@@ -78,6 +78,7 @@ class PFZCandidatePayload(BaseModel):
     chlorophyll_mg_m3: Optional[float] = Field(None, description="Chlorophyll concentration")
     location_reference: Optional[str] = Field(None, description="Human readable location reference from raw data")
     rank: int = Field(..., ge=1, description="1-indexed proximity and productivity ranking")
+    selection_reason: Optional[str] = Field(None, description="Deterministic reason this candidate was selected or ranked")
 
 
 class PFZRankingPayload(BaseModel):
@@ -101,6 +102,10 @@ class EvaluatedRouteItem(BaseModel):
     eta_hours: Optional[float] = Field(None, description="Estimated time of arrival in hours")
     eta_assumptions: Optional[str] = Field(None, description="Assumptions used for ETA calculation")
     fuel_estimate_liters: Optional[float] = Field(None, description="Estimated fuel consumption")
+    one_way_distance_km: Optional[float] = Field(None, description="One-way route distance in kilometers")
+    round_trip_distance_km: Optional[float] = Field(None, description="Round-trip route distance in kilometers")
+    one_way_fuel_liters: Optional[float] = Field(None, description="One-way fuel estimate in liters")
+    round_trip_fuel_liters: Optional[float] = Field(None, description="Round-trip fuel estimate in liters")
     fuel_assumptions: Optional[str] = Field(None, description="Assumptions used for fuel calculation")
     is_feasible: bool = Field(True, description="False if route intersects land or NO_GO area")
     infeasibility_reasons: List[str] = Field(default_factory=list, description="Why the route is infeasible")

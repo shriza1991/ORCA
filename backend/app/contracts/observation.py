@@ -8,7 +8,7 @@ for a single analysis run.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
@@ -45,3 +45,19 @@ class ObservationBundle(BaseModel):
     source_metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Additional provenance and quality metadata"
     )
+    hourly_forecast: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Single merged marine/weather forecast series for this assessment",
+    )
+
+    @property
+    def provenance_mode(self) -> str:
+        """Return the display mode derived from the underlying source labels."""
+        if self.data_mode.upper() == "DEMO":
+            return "DEMO"
+        sources = " ".join(
+            str(getattr(payload, "source_name", ""))
+            for payload in (self.marine, self.weather, self.hazard)
+            if payload is not None
+        ).upper()
+        return "SAVED" if any(token in sources for token in ("SNAPSHOT", "SAVED", "DEGRADED")) else "LIVE"

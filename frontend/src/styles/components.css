@@ -4361,6 +4361,32 @@
   }
 }
 
+/* Fisher recording readability */
+.map-forecast-telemetry {
+  font-size: 14px !important;
+}
+
+.map-forecast-telemetry span {
+  line-height: 1.35;
+}
+
+.route-comparison-table-wrapper table {
+  font-size: 0.95rem !important;
+}
+
+.route-comparison-table-wrapper th,
+.route-comparison-table-wrapper td {
+  line-height: 1.35;
+}
+
+.pfz-details-container {
+  font-size: 1rem;
+}
+
+.pfz-details-container [data-testid^="pfz-candidate-"] {
+  font-size: 1rem !important;
+}
+
 /* ==========================================================================
    Voice Listen Button (TTS / Audio in Chat Messages)
    ========================================================================== */

@@ -32,6 +32,10 @@ import MissionBriefPanel from "./MissionBriefPanel";
 import PFZDetails from "./PFZDetails";
 import TripPlanDetails, { getRouteSummary } from "./TripPlanDetails";
 import EvidenceDrawer from "../evidence/EvidenceDrawer";
+import {
+  formatMissionTime,
+  formatMissionWindow,
+} from "../../utils/fisher-format";
 
 export type FisherDecisionStatus =
   | "SAFE_TO_GO"
@@ -193,6 +197,7 @@ function evidenceVal(
 export function extractFisherConditions(
   response: TripAssessmentResponse | null,
   status?: FisherDecisionStatus,
+  language: SupportedLanguage = "en",
 ): FisherConditions {
   if (!response) {
     return {
@@ -209,7 +214,10 @@ export function extractFisherConditions(
   const marine = response.conditions?.marine || {};
   const weather = response.conditions?.weather || {};
   const evidence: Record<string, any>[] = response.evidence || [];
-  const isForecast = !!measurements.is_forecast;
+  const isForecast = Boolean(
+    response.conditions?.hourly_forecast?.length ||
+    marine?.hourly_forecast?.length,
+  );
 
   /** Try measurements object first, then fall back to evidence array. */
   const resolveMetric = (
@@ -218,6 +226,16 @@ export function extractFisherConditions(
     unit: string,
   ): string => {
     if (status === "UNKNOWN") return "INSUFFICIENT DATA";
+
+    const canonicalValues: Record<string, number | null | undefined> = {
+      significant_wave_height_m: marine?.significant_wave_height_m,
+      wind_speed_knots: weather?.wind_speed_knots,
+      visibility_km: weather?.visibility_km,
+    };
+    for (const key of evidenceKeys) {
+      const canonical = safeNum(canonicalValues[key]);
+      if (canonical !== null) return `${canonical.toFixed(1)} ${unit}`;
+    }
 
     // 1. Try measurements map
     for (const key of measurementKeys) {
@@ -242,7 +260,7 @@ export function extractFisherConditions(
   const windVal = resolveMetric(
     ["wind_speed", "wind_speed_knots"],
     ["wind_speed_knots"],
-    "kt",
+    "knots",
   );
 
   // Prefer the canonical observation bundle before threshold-only evidence.
@@ -261,6 +279,13 @@ export function extractFisherConditions(
   // Tide comes from the same canonical marine record as the wave/SST fields.
   const tideVal = (() => {
     if (status === "UNKNOWN") return "INSUFFICIENT DATA";
+    const canonicalTide = safeNum(marine?.sea_level_height_m);
+    if (canonicalTide !== null) {
+      const phase = marine?.tide_phase
+        ? ` ${translateText(marine.tide_phase, language)}`
+        : "";
+      return `${canonicalTide.toFixed(1)} m${phase} ${marine?.tide_is_estimated ? `(${translateText("estimated", language)})` : ""}`.trim();
+    }
     for (const key of ["tide", "tide_level", "tide_height_m"]) {
       const m = measurements[key];
       const n = safeNum(m?.value ?? m);
@@ -272,11 +297,14 @@ export function extractFisherConditions(
       return `${tideLevel.toFixed(1)} m${phase}`;
     }
     if (measurements.tide_schedule) return "Available";
-    return "Not available";
+    return "INSUFFICIENT DATA";
   })();
 
   let hazardVal = "—";
-  if (response.alerts && response.alerts.length > 0) {
+  const normalBulletin =
+    String(response.conditions?.hazard?.severity || "").toUpperCase() ===
+    "NORMAL";
+  if (!normalBulletin && response.alerts && response.alerts.length > 0) {
     const highestAlert =
       response.alerts.find((a) => a.affects_trip) || response.alerts[0];
     hazardVal = highestAlert.title || (highestAlert as any).message || "—";
@@ -318,6 +346,7 @@ export default function FisherDecisionSurface({
   const conditions = extractFisherConditions(
     isLoading || error ? null : assessment,
     status,
+    language,
   );
   const hazardVal = conditions.hazard;
   const hasActiveHazard =
@@ -351,6 +380,21 @@ export default function FisherDecisionSurface({
   );
   const { speak, stop, isPlaying } = useSpokenGuidance({ language });
   const collab = collaboration || (assessment as any)?.agent_collaboration;
+  const provenanceMode =
+    assessment?.conditions?.source_metadata?.provenance_mode ||
+    (isOffline ? "SAVED" : "LIVE");
+  const provenanceUpdatedAt =
+    assessment?.conditions?.captured_at ||
+    assessment?.conditions?.marine?.observed_at ||
+    assessment?.conditions?.weather?.observed_at ||
+    assessment?.assessed_at;
+  const provenanceAge = provenanceUpdatedAt
+    ? Math.max(
+        0,
+        Math.round((Date.now() - Date.parse(provenanceUpdatedAt)) / 60000),
+      )
+    : 0;
+  const provenanceLabel = translateText(`${provenanceMode} Data`, language);
 
   const statusConfig: Record<
     FisherDecisionStatus,
@@ -599,7 +643,8 @@ export default function FisherDecisionSurface({
                       borderRadius: "50%",
                     }}
                   ></span>
-                  {t.statusLabels?.["LIVE"] || "Live Data"}
+                  {provenanceLabel} - {translateText("updated", language)}{" "}
+                  {provenanceAge}m ago
                 </span>
               )}
             </div>
@@ -644,20 +689,23 @@ export default function FisherDecisionSurface({
               <strong>
                 {i18nT(
                   "FisherDecisionSurface.Evaluated Window:",
-                  "Evaluated Window:",
+                  translateText("Evaluated Window", language),
                 )}
               </strong>{" "}
-              {assessment.trip_context.departure_time || "Now"} -{" "}
-              {assessment.trip_context.return_time || "End of trip"}
+              {formatMissionWindow(
+                assessment.trip_context.departure_time,
+                assessment.trip_context.return_time,
+                language,
+              )}
             </div>
             <div>
               <strong>
                 {i18nT(
                   "FisherDecisionSurface.Assessment Time:",
-                  "Assessment Time:",
+                  translateText("Assessment Time", language),
                 )}
               </strong>{" "}
-              {new Date(assessment.assessed_at).toLocaleString()}
+              {formatMissionTime(assessment.assessed_at, language)}
             </div>
           </div>
         )}
@@ -849,7 +897,7 @@ export default function FisherDecisionSurface({
           >
             <WavesIcon size={16} className="condition-icon" />
             <span className="condition-label">
-              {i18nT("FisherDecisionSurface.Waves", "Waves")}
+              {translateText("Waves", language)}
             </span>
           </div>
           <div
@@ -871,7 +919,7 @@ export default function FisherDecisionSurface({
           >
             <WindIcon size={16} className="condition-icon" />
             <span className="condition-label">
-              {i18nT("FisherDecisionSurface.Wind", "Wind")}
+              {translateText("Wind", language)}
             </span>
           </div>
           <div
@@ -893,7 +941,7 @@ export default function FisherDecisionSurface({
           >
             <VisibilityIcon size={16} className="condition-icon" />
             <span className="condition-label">
-              {i18nT("FisherDecisionSurface.Visibility", "Visibility")}
+              {translateText("Visibility", language)}
             </span>
           </div>
           <div
@@ -915,7 +963,7 @@ export default function FisherDecisionSurface({
           >
             <TideIcon size={16} className="condition-icon" />
             <span className="condition-label">
-              {i18nT("FisherDecisionSurface.Tide", "Tide")}
+              {translateText("Tide", language)}
             </span>
           </div>
           <div
@@ -936,14 +984,8 @@ export default function FisherDecisionSurface({
         }}
       >
         {conditions.isForecast
-          ? i18nT(
-              "FisherDecisionSurface.Based on forecast",
-              "Based on forecast",
-            )
-          : i18nT(
-              "FisherDecisionSurface.Based on current observation",
-              "Based on current observation",
-            )}
+          ? translateText("Based on forecast", language)
+          : translateText("Based on current observation", language)}
       </div>
 
       {hasActiveHazard && (
@@ -977,18 +1019,10 @@ export default function FisherDecisionSurface({
               color: status === "DO_NOT_GO" ? "#7f1d1d" : "#92400e",
             }}
           >
-            <strong>
-              {i18nT(
-                "FisherDecisionSurface.What is happening:",
-                "What is happening:",
-              )}
-            </strong>{" "}
+            <strong>{translateText("Based on forecast", language)}</strong>{" "}
             {i18nT("Hazard." + hazardVal, hazardVal)}.<br />
             <strong>
-              {i18nT(
-                "FisherDecisionSurface.Does it affect this trip?",
-                "Does it affect this trip?",
-              )}
+              {translateText("Based on current observation", language)}
             </strong>{" "}
             {i18nT(
               "FisherDecisionSurface.Yes, it directly affects your planned route.",

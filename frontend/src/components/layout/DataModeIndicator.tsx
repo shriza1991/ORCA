@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react';
-import { Database, ShieldCheck, WifiOff } from 'lucide-react';
-import { getHealth, type HealthResponse } from '../../api/client';
+import { useEffect, useState } from "react";
+import { Database, ShieldCheck, WifiOff } from "lucide-react";
+import { getHealth, type HealthResponse } from "../../api/client";
 import { useTranslation } from "react-i18next";
 
 interface DataModeIndicatorProps {
   initialHealth?: HealthResponse | null;
 }
 
-export default function DataModeIndicator({ initialHealth }: DataModeIndicatorProps) {
-    const { t } = useTranslation();
-  const [health, setHealth] = useState<HealthResponse | null>(initialHealth ?? null);
+export default function DataModeIndicator({
+  initialHealth,
+}: DataModeIndicatorProps) {
+  const { t } = useTranslation();
+  const [health, setHealth] = useState<HealthResponse | null>(
+    initialHealth ?? null,
+  );
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
@@ -32,28 +36,36 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
     };
   }, []);
 
-  const rawMode = health?.data_mode?.trim();
-  const mode = rawMode && !rawMode.includes('{{') ? rawMode.toUpperCase() : 'UNKNOWN';
-  const visibleMode = mode === 'SNAPSHOT' ? 'DEMO' : mode;
-  const databaseConnected = health?.database?.trim().toLowerCase() === 'connected';
+  const configuredMode = import.meta.env.VITE_DATA_MODE?.trim();
+  const rawMode = configuredMode || health?.data_mode?.trim();
+  const mode =
+    rawMode && !rawMode.includes("{{") ? rawMode.toUpperCase() : "UNKNOWN";
+  const visibleMode = mode === "SNAPSHOT" ? "DEMO" : mode;
+  const databaseConnected =
+    health?.database?.trim().toLowerCase() === "connected";
 
   const getModeClass = () => {
     switch (mode) {
-      case 'LIVE':
-        return 'mode-live';
-      case 'HYBRID':
-        return 'mode-hybrid';
-      case 'SNAPSHOT':
-        return 'mode-snapshot';
+      case "LIVE":
+        return "mode-live";
+      case "HYBRID":
+        return "mode-hybrid";
+      case "SNAPSHOT":
+        return "mode-snapshot";
+      case "DEMO":
+        return "mode-snapshot";
       default:
-        return 'mode-snapshot';
+        return "mode-snapshot";
     }
   };
 
   if (isOffline && !health) {
     return (
       <div className="data-mode-indicator">
-        <span className="mode-badge mode-snapshot" title="Backend service not connected">
+        <span
+          className="mode-badge mode-snapshot"
+          title="Backend service not connected"
+        >
           <WifiOff size={12} />
           <span>Backend Offline</span>
         </span>
@@ -63,17 +75,34 @@ export default function DataModeIndicator({ initialHealth }: DataModeIndicatorPr
 
   return (
     <div className="data-mode-indicator">
-      <span className={`mode-badge ${getModeClass()}`} title="System Data Ingestion Mode">
+      <span
+        className={`mode-badge ${getModeClass()}`}
+        title="System Data Ingestion Mode"
+      >
         <Database size={12} />
-        <span>{t('DataModeIndicator.mode', { val: t('DataModeIndicator.' + visibleMode, visibleMode) })}</span>
+        <span>
+          {t("DataModeIndicator.mode", {
+            val: t("DataModeIndicator." + visibleMode, visibleMode),
+          })}
+        </span>
       </span>
-      {health?.database && !health.database.includes('{{') && (
+      {health?.database && !health.database.includes("{{") && (
         <span
-          className={`pilot-badge ${databaseConnected ? 'db-connected' : 'db-offline'}`}
-          title={databaseConnected ? 'PostgreSQL Database Connected' : 'PostgreSQL Database Offline (Operating in in-memory snapshot mode)'}
+          className={`pilot-badge ${databaseConnected ? "db-connected" : "db-offline"}`}
+          title={
+            databaseConnected
+              ? "PostgreSQL Database Connected"
+              : "PostgreSQL Database Offline (Operating in in-memory snapshot mode)"
+          }
         >
           <ShieldCheck size={12} />
-          <span>{t('DataModeIndicator.db', { val: databaseConnected ? t('DataModeIndicator.Connected', 'Connected') : t('DataModeIndicator.Offline', 'Offline') })}</span>
+          <span>
+            {t("DataModeIndicator.db", {
+              val: databaseConnected
+                ? t("DataModeIndicator.Connected", "Connected")
+                : t("DataModeIndicator.Offline", "Offline"),
+            })}
+          </span>
         </span>
       )}
     </div>
