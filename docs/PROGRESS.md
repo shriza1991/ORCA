@@ -8,6 +8,19 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-30 Default Map Mode: 2D Flat Initialization (§D062)
+
+- **IMPLEMENTED 2D Flat as Initial Default Mode**:
+  - `DeckGLMapFoundation`: Updated `DEFAULT_VIEW_STATE` (`pitch: 0`, `bearing: 0`), set initial `localPreset` to `'flat'`, prioritized `2D Flat` in `CAMERA_PRESETS`, and added active camera pitch/bearing synchronization to ensure the "2D Flat" button is cleanly selected on initial mount and after view reset.
+  - `AuthorityDeckGLMap`: Updated initial `viewState` to `pitch: 0, bearing: 0`, and eliminated the hardcoded `pitch: 52, bearing: -18` override on sector transitions, preserving the user's camera angle (`prev.pitch ?? 0`) during cinematic swoops.
+  - Researcher & Spatial Maps: Updated `PFZSpatialMap.tsx`, `HazardSpatialMap.tsx`, and `DeckGLMarineMap.tsx` default view states to `pitch: 0, bearing: 0`.
+  - Next.js Parity: Synchronized all corresponding files in `nextjs/components/` (`DeckGLMapFoundation.tsx`, `AuthorityDeckGLMap.tsx`, `PFZSpatialMap.tsx`, `HazardSpatialMap.tsx`, `DeckGLMarineMap.tsx`, `DeckGLExperimentView.tsx`).
+- **TEST VERIFICATION & INTEGRITY**:
+  - Added dedicated Vitest tests in `frontend/src/components/authority/authority.test.ts` asserting 2D Flat defaults and camera presets.
+  - Vitest test suite: **283/283 tests passed** across 22 test files.
+  - Frontend typecheck (`npm run typecheck`): **0 errors**.
+  - Next.js typecheck (`npx tsc --noEmit`): **0 errors**.
+
 ### 2026-09-29 Production Deployment Recovery (Phases 2, 3, 4 — §D061)
 
 - **IMPLEMENTED Phase 3 (Alembic Entrypoint)**:

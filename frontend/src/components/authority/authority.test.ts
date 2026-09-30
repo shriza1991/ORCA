@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import ScenarioBenchmarkDeck from './ScenarioBenchmarkDeck';
 import FleetTrackingDeck from './FleetTrackingDeck';
 import AuthorityDeckGLMap from './AuthorityDeckGLMap';
+import { DEFAULT_VIEW_STATE, CAMERA_PRESETS } from '../map/DeckGLMapFoundation';
 import { createAuthorityHazardLayers, createHazardAssociationLayers, createSectorLayers, FALLBACK_DEMO_SECTORS } from '../../utils/geo';
 import type { DemoSector, SectorHazard, SectorSituation, VesselHazardAssociation } from '../../api/client';
 
@@ -706,6 +707,38 @@ describe('Authority Advanced Feature Decks', () => {
       expect(centerLat).toBeCloseTo(16.93, 2);
       expect(spanLng).toBeCloseTo(0.12, 2);
       expect(spanLat).toBeCloseTo(0.12, 2);
+    });
+  });
+
+  describe('Authority DeckGL Map Camera Defaults & Presets', () => {
+    it('initializes DEFAULT_VIEW_STATE in 2D Flat mode (pitch: 0, bearing: 0)', () => {
+      expect(DEFAULT_VIEW_STATE.pitch).toBe(0);
+      expect(DEFAULT_VIEW_STATE.bearing).toBe(0);
+      expect(DEFAULT_VIEW_STATE.zoom).toBe(8.5);
+      expect(DEFAULT_VIEW_STATE.longitude).toBe(73.28);
+      expect(DEFAULT_VIEW_STATE.latitude).toBe(16.99);
+    });
+
+    it('positions 2D Flat as the primary camera preset', () => {
+      expect(CAMERA_PRESETS[0].id).toBe('flat');
+      expect(CAMERA_PRESETS[0].label).toBe('2D Flat');
+      expect(CAMERA_PRESETS[0].pitch).toBe(0);
+      expect(CAMERA_PRESETS[0].bearing).toBe(0);
+    });
+
+    it('retains all manual camera presets (Tactical 3D, High Orbit, 2D Flat)', () => {
+      const presetIds = CAMERA_PRESETS.map((p) => p.id);
+      expect(presetIds).toContain('flat');
+      expect(presetIds).toContain('tactical');
+      expect(presetIds).toContain('orbit');
+
+      const tactical = CAMERA_PRESETS.find((p) => p.id === 'tactical');
+      expect(tactical?.pitch).toBe(52);
+      expect(tactical?.bearing).toBe(-18);
+
+      const orbit = CAMERA_PRESETS.find((p) => p.id === 'orbit');
+      expect(orbit?.pitch).toBe(20);
+      expect(orbit?.bearing).toBe(0);
     });
   });
 });

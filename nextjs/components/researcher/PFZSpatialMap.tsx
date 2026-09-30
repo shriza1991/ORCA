@@ -93,8 +93,8 @@ export default function PFZSpatialMap({
     longitude: mapCenter[0],
     latitude: mapCenter[1],
     zoom: 8.6,
-    pitch: 52,
-    bearing: -18,
+    pitch: 0,
+    bearing: 0,
   }));
 
   // Auto-focus camera on selected candidate

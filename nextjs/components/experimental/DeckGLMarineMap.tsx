@@ -45,8 +45,8 @@ export const INITIAL_DECKGL_VIEW_STATE: MapViewState = {
   longitude: 73.15,
   latitude: 16.85,
   zoom: 8.6,
-  pitch: 52,
-  bearing: -18,
+  pitch: 0,
+  bearing: 0,
   maxZoom: 16,
   minZoom: 4,
 };

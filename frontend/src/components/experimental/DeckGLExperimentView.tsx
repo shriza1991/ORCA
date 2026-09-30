@@ -129,7 +129,7 @@ export default function DeckGLExperimentView({ onBackToPortal }: DeckGLExperimen
     vessel: true,
     boundaries: true,
   });
-  const [enable3D, setEnable3D] = useState(true);
+  const [enable3D, setEnable3D] = useState(false);
   const [viewState, setViewState] = useState<MapViewState>(INITIAL_DECKGL_VIEW_STATE);
   const [selectedFeature, setSelectedFeature] = useState<{ type: string; id: string; properties: any } | null>(null);
 

@@ -2066,3 +2066,21 @@ Impact:
 - Authoritative reference catalogs (landing centres, aquaculture sites, lighthouses) load reliably in all environments.
 Owner: Dev 2 (Backend Platform)
 Date: 2026-09-29
+
+## D062 — Default Map Mode Transition to "2D Flat" Across Authority Command Deck and DeckGL Views
+Status: ACCEPTED
+Decision:
+1. Set "2D Flat" (`pitch: 0`, `bearing: 0`) as the initial default camera perspective and preset in `DeckGLMapFoundation`, `AuthorityDeckGLMap`, `PFZSpatialMap`, `HazardSpatialMap`, and `DeckGLMarineMap` across both `frontend/` and `nextjs/`.
+2. Reorder `CAMERA_PRESETS` in `DeckGLMapFoundation` with `2D Flat` as the primary preset, initializing `localPreset` to `'flat'`.
+3. Add automatic preset synchronization in `DeckGLMapFoundation` to match active viewState pitch/bearing when not controlled, ensuring the "2D Flat" button appears selected on initial mount and when view is reset.
+4. Remove the hardcoded startup pitch override (`pitch: 52`, `bearing: -18`) in `AuthorityDeckGLMap`'s `activeSector` transition hook, preserving user camera pitch (`pitch: prev.pitch ?? 0`) across sector changes.
+5. Retain full manual switching functionality for all three presets ("Tactical 3D", "High Orbit", "2D Flat").
+Reason:
+The previous default "Tactical 3D" (52° pitch) distorted coastal settlements, harbor labels, and geographic typography on initial load. Defaulting to "2D Flat" provides clean, unobstructed readability of coastal geography on startup while retaining 3D tactical perspectives for users who explicitly choose them.
+Impact:
+- Page loads directly in 2D Flat with "2D Flat" preset button active.
+- Coastal place names, harbor labels, bathymetry, vessel tracks, PFZ zones, and hazard polygons remain clear and legible.
+- Manual preset switching (Tactical 3D, High Orbit, 2D Flat) and pitch/bearing controls remain fully functional.
+- Zero regressions: 283/283 frontend Vitest tests passed; 0 TypeScript errors across frontend and nextjs.
+Owner: ORCA Frontend & Geospatial Engineering
+Date: 2026-09-30

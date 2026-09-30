@@ -84,8 +84,8 @@ export default function AuthorityDeckGLMap({
     longitude: activeSector.center[0],
     latitude: activeSector.center[1],
     zoom: activeSector.zoom || 8.8,
-    pitch: 52,
-    bearing: -18,
+    pitch: 0,
+    bearing: 0,
   }));
 
   const [vesselPositionsMap, setVesselPositionsMap] = useState<
@@ -131,8 +131,8 @@ export default function AuthorityDeckGLMap({
       longitude: activeSector.center[0],
       latitude: activeSector.center[1],
       zoom: activeSector.zoom || 8.8,
-      pitch: 52,
-      bearing: -18,
+      pitch: prev.pitch ?? 0,
+      bearing: prev.bearing ?? 0,
       transitionDuration: 1400,
       transitionInterpolator: new FlyToInterpolator(),
     }));

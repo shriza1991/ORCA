@@ -23,17 +23,17 @@ export interface CameraPresetConfig {
 }
 
 export const CAMERA_PRESETS: CameraPresetConfig[] = [
+  { id: 'flat', label: '2D Flat', pitch: 0, bearing: 0 },
   { id: 'tactical', label: 'Tactical 3D', pitch: 52, bearing: -18 },
   { id: 'orbit', label: 'High Orbit', pitch: 20, bearing: 0 },
-  { id: 'flat', label: '2D Flat', pitch: 0, bearing: 0 },
 ];
 
 export const DEFAULT_VIEW_STATE: MapViewState = {
   longitude: 73.28,
   latitude: 16.99,
   zoom: 8.5,
-  pitch: 52,
-  bearing: -18,
+  pitch: 0,
+  bearing: 0,
   maxZoom: 16,
   minZoom: 4,
 };
@@ -99,7 +99,7 @@ export default function DeckGLMapFoundation({
     bearing: initialBearing ?? DEFAULT_VIEW_STATE.bearing,
   }));
 
-  const [localPreset, setLocalPreset] = useState<CameraPreset>('tactical');
+  const [localPreset, setLocalPreset] = useState<CameraPreset>('flat');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const maplibreContainerRef = useRef<HTMLDivElement>(null);
@@ -107,6 +107,19 @@ export default function DeckGLMapFoundation({
 
   const activeViewState = externalViewState || internalViewState;
   const currentPreset = controlledPreset || localPreset;
+
+  // Synchronize localPreset with current viewState pitch/bearing when not controlled
+  useEffect(() => {
+    if (controlledPreset) return;
+    const p = activeViewState.pitch ?? 0;
+    const b = activeViewState.bearing ?? 0;
+    const matched = CAMERA_PRESETS.find(
+      (preset) => Math.abs(preset.pitch - p) < 1 && Math.abs(preset.bearing - b) < 1,
+    );
+    if (matched && matched.id !== localPreset) {
+      setLocalPreset(matched.id);
+    }
+  }, [activeViewState.pitch, activeViewState.bearing, controlledPreset, localPreset]);
 
   // Initialize background MapLibre basemap instance
   useEffect(() => {
@@ -258,6 +271,7 @@ export default function DeckGLMapFoundation({
   );
 
   const resetView = useCallback(() => {
+    setLocalPreset('flat');
     if (onResetView) {
       onResetView();
       return;
@@ -268,7 +282,7 @@ export default function DeckGLMapFoundation({
       latitude: initialCenter ? initialCenter[1] : DEFAULT_VIEW_STATE.latitude,
       zoom: initialZoom ?? DEFAULT_VIEW_STATE.zoom,
     };
-    setCameraPreset('tactical');
+    setCameraPreset('flat');
     if (externalOnViewStateChange) externalOnViewStateChange(defaultVs);
     else setInternalViewState(defaultVs);
   }, [initialCenter, initialZoom, onResetView, externalOnViewStateChange, setCameraPreset]);

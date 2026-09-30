@@ -210,8 +210,8 @@ export default function HazardSpatialMap({
     longitude: initialMapCenter[0],
     latitude: initialMapCenter[1],
     zoom: 8.5,
-    pitch: 48,
-    bearing: -15,
+    pitch: 0,
+    bearing: 0,
   }));
 
   // Pulse ticker for blinking selected hazard
