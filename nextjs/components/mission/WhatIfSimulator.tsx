@@ -47,10 +47,14 @@ export default function WhatIfSimulator({
   const [craftOverride, setCraftOverride] = useState<MissionContext['craft_profile']>(
     currentContext.craft_profile ?? 'motorized_boat'
   );
+  const [vesselSizeOverride, setVesselSizeOverride] = useState<NonNullable<MissionContext['vessel_size']>>(
+    (currentContext.vessel_size as any) || 'medium'
+  );
   const [objective, setObjective] = useState<'pfz' | 'safety' | 'transit'>('pfz');
   const [applied, setApplied] = useState(false);
 
   const craftLabel = CRAFT_OPTIONS.find((c) => c.value === craftOverride)?.label ?? 'Motorized boat';
+  const sizeLabel = vesselSizeOverride.charAt(0).toUpperCase() + vesselSizeOverride.slice(1);
   const harbor = currentContext.origin_harbor ?? 'Ratnagiri';
 
   const handleRunSimulation = () => {
@@ -58,22 +62,23 @@ export default function WhatIfSimulator({
     let query: string;
     if (language === 'hi') {
       query = timeOffset === 0
-        ? `${harbor} से ${craftLabel} के साथ वर्तमान मौसम में निकलना कैसा है?`
-        : `यदि मैं ${harbor} से प्रस्थान ${timeOffset} घंटे विलंबित करूँ (${craftLabel}), तो क्या स्थिति अनुकूल होगी?`;
+        ? `${harbor} से ${sizeLabel} ${craftLabel} के साथ वर्तमान मौसम में निकलना कैसा है?`
+        : `यदि मैं ${harbor} से प्रस्थान ${timeOffset} घंटे विलंबित करूँ (${sizeLabel} ${craftLabel}), तो क्या स्थिति अनुकूल होगी?`;
     } else if (language === 'mr') {
       query = timeOffset === 0
-        ? `${harbor} वरून ${craftLabel} सह सध्या समुद्रात जाणे सुरक्षित आहे का?`
-        : `जर मी ${harbor} वरून प्रस्थान ${timeOffset} तास पुढे ढकलले (${craftLabel}), तर स्थिती कशी असेल?`;
+        ? `${harbor} वरून ${sizeLabel} ${craftLabel} सह सध्या समुद्रात जाणे सुरक्षित आहे का?`
+        : `जर मी ${harbor} वरून प्रस्थान ${timeOffset} तास पुढे ढकलले (${sizeLabel} ${craftLabel}), तर स्थिती कशी असेल?`;
     } else {
       query = timeOffset === 0
-        ? `What is the voyage risk departing from ${harbor} now with a ${craftLabel}?`
-        : `What if I delay departure from ${harbor} by ${timeOffset} hours with a ${craftLabel}?`;
+        ? `What is the voyage risk departing from ${harbor} now with a ${sizeLabel} ${craftLabel}?`
+        : `What if I delay departure from ${harbor} by ${timeOffset} hours with a ${sizeLabel} ${craftLabel}?`;
     }
 
     onSimulate(
       {
         timeOffsetHours: timeOffset,
         craftProfileOverride: craftOverride,
+        vesselSizeOverride,
         objective,
       },
       query
@@ -84,6 +89,7 @@ export default function WhatIfSimulator({
     onApplyContext({
       origin_harbor: currentContext.origin_harbor,
       craft_profile: craftOverride,
+      vessel_size: vesselSizeOverride,
     });
     setApplied(true);
   };
@@ -130,8 +136,8 @@ export default function WhatIfSimulator({
             </div>
           </div>
 
-          {/* Vessel profile & Objective selectors */}
-          <div className="what-if-grid">
+          {/* Vessel profile, Size & Objective selectors */}
+          <div className="what-if-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             <label className="what-if-field">
               <span>{translateText('Vessel profile', language)}</span>
               <select
@@ -143,6 +149,18 @@ export default function WhatIfSimulator({
                     {translateText(c.label, language)}
                   </option>
                 ))}
+              </select>
+            </label>
+
+            <label className="what-if-field">
+              <span>{translateText('Vessel size', language)}</span>
+              <select
+                value={vesselSizeOverride}
+                onChange={(e) => setVesselSizeOverride(e.target.value as NonNullable<MissionContext['vessel_size']>)}
+              >
+                <option value="small">{translateText('Small', language)}</option>
+                <option value="medium">{translateText('Medium', language)}</option>
+                <option value="large">{translateText('Large', language)}</option>
               </select>
             </label>
 
@@ -214,7 +232,7 @@ export default function WhatIfSimulator({
                 <p className="diff-summary">{translateText(activeDiff.summary, language)}</p>
               )}
 
-              {craftOverride !== currentContext.craft_profile && (
+              {(craftOverride !== currentContext.craft_profile || vesselSizeOverride !== (currentContext.vessel_size ?? 'medium')) && (
                 <button
                   type="button"
                   className={`diff-apply-btn ${applied ? 'applied' : ''}`}
@@ -226,7 +244,7 @@ export default function WhatIfSimulator({
                       <Check size={13} /> {translateText('Profile Applied', language)}
                     </>
                   ) : (
-                    translateText('Apply simulated craft to mission context', language)
+                    translateText('Apply simulated craft & size to mission context', language)
                   )}
                 </button>
               )}

@@ -5,6 +5,7 @@ export interface TripAssessmentRequest {
   origin_harbor?: string;
   coordinates?: [number, number];
   craft_profile: string;
+  vessel_size?: string;
   departure_time?: string;
   return_time?: string;
   destination_id?: string;
@@ -40,6 +41,9 @@ export interface MissionBriefPayload {
   negative_factors: string[];
   confidence: string;
   confidence_reasons: string[];
+  vessel_type?: string;
+  vessel_size?: string;
+  capability_notes?: string;
 }
 
 export interface TripAssessmentResponse {

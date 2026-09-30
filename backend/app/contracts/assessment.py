@@ -23,6 +23,7 @@ class TripAssessmentRequest(BaseModel):
     origin_harbor: Optional[str] = Field(None, description="Departure harbor or landing center.")
     coordinates: Optional[List[float]] = Field(None, description="[lon, lat] of the starting point.")
     craft_profile: str = Field("motorized_boat", description="Vessel classification.")
+    vessel_size: Optional[str] = Field("medium", description="Vessel size classification: small | medium | large.")
     departure_time: Optional[str] = Field(None, description="Planned departure time (ISO-8601 UTC).")
     return_time: Optional[str] = Field(None, description="Planned return time (ISO-8601 UTC).")
     destination_id: Optional[str] = Field(None, description="Optional PFZ or target destination ID.")
@@ -87,6 +88,9 @@ class MissionBriefPayload(BaseModel):
     negative_factors: list[str]
     confidence: str
     confidence_reasons: list[str]
+    vessel_type: Optional[str] = None
+    vessel_size: Optional[str] = None
+    capability_notes: Optional[str] = None
 
 
 class DecisionBoundaryItem(BaseModel):

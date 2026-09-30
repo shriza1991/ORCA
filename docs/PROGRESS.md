@@ -144,6 +144,29 @@ extjs/.
 - **IMPLEMENTED**: fixed Vite mode/DB i18n interpolation and removed expected missing-voice warnings.
 - **VERIFIED**: targeted backend resilience/sector tests: 11 passed. Full suites, production deployment, and browser verification remain pending.
 
+### 2026-09-30 Vessel Size Classification for Mission Planning & Risk Engine (main branch)
+
+- Current version: `v0.2.8-main-mission-twin`
+- Active branch: `main`
+- Feature: **Vessel Size Classification in Fisher Mission Flow & Mission Twin Risk Engine (§D059)**
+  - **Status**: **COMPLETE & VERIFIED**
+    - Backend Pytest: 101/101 domain tests passing (`tests/domain/`), including dedicated suite `tests/domain/test_vessel_size_risk.py`.
+    - Frontend Vitest: 283/283 tests passing across 22 test suites (`npx vitest run`).
+    - Frontend TypeScript: 0 errors (`npm run typecheck` - `tsc --noEmit`).
+    - Parity: 100% synchronized across Vite (`frontend/`) and Next.js (`nextjs/`).
+  - **Deliverables**:
+    - **Step 3 Onboarding (Vessel Size)**: Dynamic card selection step based on vessel type:
+      - Traditional Craft: Small (< 6m), Medium (6–9m), Large (9–12m)
+      - Motorized Boat: Small (< 8m), Medium (8–12m), Large (> 12m)
+      - Mechanized Trawler: Small (< 15m), Medium (15–20m), Large (> 20m)
+    - **Persistence**: Selected size stored to `localStorage` key `orca_mission_vessel_size` and synced to MissionContext.
+    - **Deterministic Risk Engine Matrix**: `VESSEL_CAPABILITIES` (9 combinations) with discrete wave height, wind speed, gust tolerances, and cruising speeds. Under 1.5m wave height:
+      - Small Traditional Craft -> **NO GO** (threshold 1.2m)
+      - Large Traditional Craft -> **CAUTION** (threshold 1.8m)
+      - Large Trawler -> **GO** (threshold 2.5m)
+    - **Mission Brief Display**: Explicitly displays Vessel Type, Vessel Size, and capability reasoning (`"Assessment adjusted for {label} operating limitations."`).
+    - **Counterfactual What-If Simulation**: Mission Twin preserves vessel size across departure time offsets, allows counterfactual override of vessel size, recomputes assessment, and produces clear decision deltas.
+
 ### 2026-09-28 M4 Advanced Nautical Map Suite & Tactical Command Surface (main branch)
 
 - Current version: `v0.2.7-main-mission-twin`

@@ -125,6 +125,7 @@ export default function FisherPage({
     assessTrip({
       origin_harbor: chat.missionContext.origin_harbor,
       craft_profile: chat.missionContext.craft_profile || "motorized_boat",
+      vessel_size: chat.missionContext.vessel_size || "medium",
       departure_time: chat.missionContext.departure_time,
       return_time: chat.missionContext.return_time,
       destination_id: chat.missionContext.target_pfz,
@@ -136,6 +137,7 @@ export default function FisherPage({
     registerTrip({
       origin_harbor: chat.missionContext.origin_harbor || "Ratnagiri",
       craft_profile: chat.missionContext.craft_profile || "motorized_boat",
+      vessel_size: chat.missionContext.vessel_size || "medium",
       departure_time: chat.missionContext.departure_time,
       return_time: chat.missionContext.return_time,
       language: chat.language,
@@ -144,6 +146,7 @@ export default function FisherPage({
     sidebarTab,
     chat.missionContext.origin_harbor,
     chat.missionContext.craft_profile,
+    chat.missionContext.vessel_size,
     chat.missionContext.departure_time,
     chat.missionContext.return_time,
     chat.missionContext.target_pfz,

@@ -135,6 +135,7 @@ export function useChat() {
     const effectiveContext: MissionContext = {
       origin_harbor: missionContext.origin_harbor,
       craft_profile: params.craftProfileOverride ?? missionContext.craft_profile,
+      vessel_size: params.vesselSizeOverride ?? missionContext.vessel_size ?? 'medium',
       departure_time: departureDate.toISOString(),
       return_time: returnDate.toISOString()
     };

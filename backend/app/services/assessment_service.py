@@ -25,6 +25,7 @@ from backend.app.domain.risk_engine import (
     compute_decision_boundaries,
     compute_decision_stability,
     compute_safe_window,
+    get_vessel_capability,
 )
 from backend.app.agents.integrations.contracts import ToolInvocationContext
 
@@ -57,6 +58,7 @@ class AssessmentService:
                 origin_harbor=request.origin_harbor,
                 coordinates=request.coordinates,
                 craft_profile=request.craft_profile,
+                vessel_size=getattr(request, "vessel_size", "medium"),
                 departure_time=request.departure_time,
                 return_time=request.return_time,
                 target_pfz=request.destination_id,
@@ -75,6 +77,14 @@ class AssessmentService:
             else request.coordinates
         )
         effective_craft_profile = mission_state.vessel.type or request.craft_profile
+        effective_vessel_size = (
+            getattr(mission_state.vessel, "size_category", None)
+            or getattr(mission_state.vessel, "vessel_size", None)
+            or getattr(request, "vessel_size", None)
+            or "medium"
+        )
+        mission_state.vessel.size_category = effective_vessel_size
+        mission_state.vessel.vessel_size = effective_vessel_size
         effective_departure_time = mission_state.timing.departure or request.departure_time
         effective_return_time = mission_state.timing.return_deadline or request.return_time
         effective_destination_id = mission_state.destination.name or request.destination_id
@@ -96,6 +106,7 @@ class AssessmentService:
             origin_harbor=effective_origin_harbor,
             coordinates=effective_coordinates,
             craft_profile=effective_craft_profile,
+            vessel_size=effective_vessel_size,
             departure_time=effective_departure_time
             # return_time is handled in the risk engine window
         )
@@ -212,6 +223,11 @@ class AssessmentService:
 
                 conf_val = getattr(risk_payload.confidence_level, "value", str(risk_payload.confidence_level))
 
+                v_cap = get_vessel_capability(effective_craft_profile, effective_vessel_size)
+                v_type_label = v_cap.get("type_label") or effective_craft_profile.replace("_", " ").title()
+                v_size_label = v_cap.get("size_label") or effective_vessel_size.title()
+                capability_notes = f"Assessment adjusted for {v_cap.get('label', v_type_label)} operating limitations."
+
                 brief = MissionBriefPayload(
                     summary=risk_payload.summary,
                     recommended_action=risk_payload.recommended_action,
@@ -219,12 +235,16 @@ class AssessmentService:
                     negative_factors=neg_factors,
                     confidence=conf_val,
                     confidence_reasons=list(risk_payload.confidence_reasons),
+                    vessel_type=v_type_label,
+                    vessel_size=v_size_label,
+                    capability_notes=capability_notes,
                 )
 
                 # M1.4 Stability and Nearest Boundary Assessment
                 boundaries = compute_decision_boundaries(
                     risk_payload.threshold_comparisons,
                     effective_craft_profile,
+                    vessel_size=effective_vessel_size,
                 )
                 bulletins_active = bool(
                     hazard
@@ -255,6 +275,7 @@ class AssessmentService:
                     reference_time=ref_time,
                     trip_duration_hours=trip_dur,
                     current_status=risk_payload.status,
+                    vessel_size=effective_vessel_size,
                 )
             except Exception as e:
                 logger.error(f"Risk evaluation failed: {e}")
@@ -566,6 +587,7 @@ class AssessmentService:
                 origin_harbor=request.origin_harbor,
                 coordinates=request.coordinates,
                 craft_profile=request.craft_profile,
+                vessel_size=getattr(request, "vessel_size", "medium"),
                 departure_time=request.departure_time,
                 return_time=request.return_time,
                 target_pfz=request.destination_id,
@@ -586,3 +608,6 @@ class AssessmentService:
             stability=error_stability,
             safe_window=error_safe_window,
         )
+
+    # Alias for API compatibility
+    run_unified_assessment = assess_trip

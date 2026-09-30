@@ -21,6 +21,8 @@ export interface UserContext {
   return_time?: string;
   language_preference?: 'auto' | 'en' | 'hi' | 'mr' | 'ta';
   parent_assessment_id?: string;
+  target_pfz?: string;
+  vessel_size?: 'small' | 'medium' | 'large';
 }
 
 export interface ChatRequest {

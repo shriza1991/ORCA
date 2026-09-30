@@ -8,7 +8,14 @@ export type OperationalRole = 'fisher' | 'authority';
  * ChatRequest.user_context shape. Route/time fields are intentionally absent
  * until their API contract is available.
  */
-export type MissionContext = Pick<UserContext, 'origin_harbor' | 'craft_profile' | 'departure_time' | 'return_time'> & {
+export type VesselSize = 'small' | 'medium' | 'large';
+
+/**
+ * Context collected by the client and sent only through the canonical
+ * ChatRequest.user_context shape. Route/time fields are intentionally absent
+ * until their API contract is available.
+ */
+export type MissionContext = Pick<UserContext, 'origin_harbor' | 'craft_profile' | 'vessel_size' | 'departure_time' | 'return_time'> & {
   target_pfz?: string;
   parent_assessment_id?: string;
 };
@@ -20,6 +27,7 @@ const _defaultRet = new Date(_now.getTime() + 13 * 3600 * 1000).toISOString();
 export const DEFAULT_MISSION_CONTEXT: MissionContext = {
   origin_harbor: 'Ratnagiri',
   craft_profile: 'motorized_boat',
+  vessel_size: 'medium',
   departure_time: _defaultDep,
   return_time: _defaultRet,
 };
@@ -28,12 +36,14 @@ export const DEFAULT_MISSION_CONTEXT: MissionContext = {
 export interface WhatIfParameters {
   timeOffsetHours: number;
   craftProfileOverride: MissionContext['craft_profile'];
+  vesselSizeOverride?: VesselSize;
   objective: 'pfz' | 'safety' | 'transit';
 }
 
 export const DEFAULT_WHAT_IF_PARAMS: WhatIfParameters = {
   timeOffsetHours: 4,
   craftProfileOverride: 'motorized_boat',
+  vesselSizeOverride: 'medium',
   objective: 'pfz',
 };
 
@@ -44,6 +54,7 @@ export interface DecisionDiff {
   summary: string;
   timeOffsetHours: number;
   craftProfile: MissionContext['craft_profile'];
+  vesselSize?: VesselSize;
   timestamp: string;
 }
 
@@ -62,6 +73,8 @@ export interface MissionUser {
 
 export interface MissionVessel {
   type: string;
+  size_category?: VesselSize | string;
+  vessel_size?: VesselSize | string;
   size_m?: number;
   speed_knots?: number;
   range_km?: number;

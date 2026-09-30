@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 class SavedTripRequest(BaseModel):
     origin_harbor: str = Field(..., description="Origin harbor name")
     craft_profile: str = Field(..., description="Vessel craft profile")
+    vessel_size: Optional[str] = Field("medium", description="Vessel size classification: small | medium | large")
     departure_time: Optional[str] = Field(None, description="ISO-8601 departure time")
     return_time: Optional[str] = Field(None, description="ISO-8601 return time")
     language: str = Field("en", description="Preferred language for alerts")
@@ -21,6 +22,7 @@ class SavedTripResponse(BaseModel):
     subscription_id: str
     origin_harbor: str
     craft_profile: str
+    vessel_size: Optional[str] = Field("medium", description="Vessel size classification: small | medium | large")
     is_active: bool
     created_at: datetime
     mission_state: Optional[Any] = Field(None, description="Canonical MissionState context")

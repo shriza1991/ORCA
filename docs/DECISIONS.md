@@ -2084,3 +2084,28 @@ Impact:
 - Zero regressions: 283/283 frontend Vitest tests passed; 0 TypeScript errors across frontend and nextjs.
 Owner: ORCA Frontend & Geospatial Engineering
 Date: 2026-09-30
+
+## D063 — Vessel Size Classification in Fisher Mission Planning Flow & Deterministic Risk Engine
+Status: ACCEPTED
+Decision:
+1. Introduce a mandatory Step 3 "Vessel Size" in the Fisher Onboarding Flow immediately following vessel type selection. Options dynamically depend on the chosen vessel type:
+   - Traditional Craft: Small (< 6m), Medium (6–9m), Large (9–12m)
+   - Motorized Boat: Small (< 8m), Medium (8–12m), Large (> 12m)
+   - Mechanized Trawler: Small (< 15m), Medium (15–20m), Large (> 20m)
+2. Extend `MissionVessel`, `MissionContext`, `TripAssessmentRequest`, `SavedTripRequest`, `SavedTripResponse`, and `UserContext` contracts to carry `vessel_size: small | medium | large` (with fallback to `'medium'`).
+3. Replace the single-threshold `CRAFT_THRESHOLDS` mapping in `risk_engine.py` with an expanded deterministic `VESSEL_CAPABILITIES` matrix keyed by `(craft_profile, vessel_size)`. Maintain `CRAFT_THRESHOLDS` mapped to medium profiles for full backward compatibility.
+4. Calibrate capability thresholds such that under 1.5m significant wave height:
+   - Small Traditional Craft (< 6m) -> NO GO (threshold 1.2m)
+   - Large Traditional Craft (9–12m) -> CAUTION (threshold 1.8m)
+   - Large Trawler (> 20m) -> GO (threshold 2.5m)
+5. Surface vessel classification and capability reasoning in the Mission Brief (`MissionBriefPayload.vessel_type`, `vessel_size`, and `capability_notes`).
+6. Update `WhatIfSimulator` to support counterfactual vessel size overrides without resetting on departure time offsets, recomputing mission risk and displaying decision deltas.
+Reason:
+Vessel capability varies drastically within categories. Treating a 5m dinghy the same as a 12m decked traditional boat or a 14m nearshore trawler the same as an offshore steel trawler produces inappropriate risk verdicts. Differentiating by vessel size enables safe, accurate, and fair maritime safety advice.
+Impact:
+- 100% deterministic safety bounds in Python.
+- Exact parity maintained across Vite (`frontend/`) and Next.js (`nextjs/`).
+- 101/101 domain pytest tests passed; 283/283 frontend Vitest tests passed; 0 TypeScript errors.
+Owner: ORCA Maritime Safety & Full-Stack AI Engineering
+Date: 2026-09-30
+

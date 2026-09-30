@@ -44,11 +44,35 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# Vessel Safety Threshold Matrix
+# Vessel Capability Profiles & Safety Threshold Matrix
 # =============================================================================
 
-CRAFT_THRESHOLDS: Dict[str, Dict[str, float]] = {
-    "traditional_non_motorized": {
+VESSEL_CAPABILITIES: Dict[tuple[str, str], Dict[str, Any]] = {
+    # Traditional Craft (<6m, 6–9m, 9–12m)
+    ("traditional_craft", "small"): {
+        "type_label": "Traditional Craft",
+        "size_label": "Small",
+        "display_name": "Small Traditional Craft (< 6m)",
+        "label": "Small Traditional Craft",
+        "length_desc": "< 6m",
+        "wave_caution_m": 0.8,
+        "wave_nogo_m": 1.2,
+        "wind_caution_knots": 10.0,
+        "wind_nogo_knots": 15.0,
+        "gust_caution_knots": 14.0,
+        "gust_nogo_knots": 18.0,
+        "swell_caution_m": 0.8,
+        "swell_nogo_m": 1.1,
+        "speed_knots": 2.5,
+        "hazard_sensitivity": "high",
+        "description": "Small dugout, kattumaram or canoe (<6m) with minimal freeboard and stability in open water.",
+    },
+    ("traditional_craft", "medium"): {
+        "type_label": "Traditional Craft",
+        "size_label": "Medium",
+        "display_name": "Medium Traditional Craft (6–9m)",
+        "label": "Medium Traditional Craft",
+        "length_desc": "6–9m",
         "wave_caution_m": 1.0,
         "wave_nogo_m": 1.5,
         "wind_caution_knots": 12.0,
@@ -57,8 +81,54 @@ CRAFT_THRESHOLDS: Dict[str, Dict[str, float]] = {
         "gust_nogo_knots": 22.0,
         "swell_caution_m": 1.0,
         "swell_nogo_m": 1.4,
+        "speed_knots": 3.0,
+        "hazard_sensitivity": "moderate_high",
+        "description": "Plank-built boat or medium craft (6-9m) suitable for nearshore coastal fishing.",
     },
-    "motorized_boat": {
+    ("traditional_craft", "large"): {
+        "type_label": "Traditional Craft",
+        "size_label": "Large",
+        "display_name": "Large Traditional Craft (9–12m)",
+        "label": "Large Traditional Craft",
+        "length_desc": "9–12m",
+        "wave_caution_m": 1.2,
+        "wave_nogo_m": 1.8,
+        "wind_caution_knots": 14.0,
+        "wind_nogo_knots": 20.0,
+        "gust_caution_knots": 18.0,
+        "gust_nogo_knots": 24.0,
+        "swell_caution_m": 1.2,
+        "swell_nogo_m": 1.6,
+        "speed_knots": 4.5,
+        "hazard_sensitivity": "moderate",
+        "description": "Large traditional wooden craft (9-12m) with enhanced freeboard and displacement hull.",
+    },
+
+    # Motorized Boat (<8m, 8–12m, >12m)
+    ("motorized_boat", "small"): {
+        "type_label": "Motorized Boat",
+        "size_label": "Small",
+        "display_name": "Small Motorized Boat (< 8m)",
+        "label": "Small Motorized Boat",
+        "length_desc": "< 8m",
+        "wave_caution_m": 1.2,
+        "wave_nogo_m": 2.0,
+        "wind_caution_knots": 15.0,
+        "wind_nogo_knots": 22.0,
+        "gust_caution_knots": 20.0,
+        "gust_nogo_knots": 28.0,
+        "swell_caution_m": 1.3,
+        "swell_nogo_m": 1.8,
+        "speed_knots": 6.5,
+        "hazard_sensitivity": "moderate",
+        "description": "Small FRP boat or skiff with outboard motor (<8m) for inshore day-trips.",
+    },
+    ("motorized_boat", "medium"): {
+        "type_label": "Motorized Boat",
+        "size_label": "Medium",
+        "display_name": "Medium Motorized Boat (8–12m)",
+        "label": "Medium Motorized Boat",
+        "length_desc": "8–12m",
         "wave_caution_m": 1.5,
         "wave_nogo_m": 2.5,
         "wind_caution_knots": 18.0,
@@ -67,8 +137,54 @@ CRAFT_THRESHOLDS: Dict[str, Dict[str, float]] = {
         "gust_nogo_knots": 32.0,
         "swell_caution_m": 1.6,
         "swell_nogo_m": 2.2,
+        "speed_knots": 8.0,
+        "hazard_sensitivity": "normal",
+        "description": "Standard FRP motorized boat (8-12m) with inboard/outboard engine and VHF/GPS.",
     },
-    "mechanized_trawler": {
+    ("motorized_boat", "large"): {
+        "type_label": "Motorized Boat",
+        "size_label": "Large",
+        "display_name": "Large Motorized Boat (> 12m)",
+        "label": "Large Motorized Boat",
+        "length_desc": "> 12m",
+        "wave_caution_m": 1.8,
+        "wave_nogo_m": 2.8,
+        "wind_caution_knots": 20.0,
+        "wind_nogo_knots": 28.0,
+        "gust_caution_knots": 26.0,
+        "gust_nogo_knots": 35.0,
+        "swell_caution_m": 1.8,
+        "swell_nogo_m": 2.5,
+        "speed_knots": 11.0,
+        "hazard_sensitivity": "normal",
+        "description": "High-capacity motorized craft (>12m) with enclosed wheelhouse and extended range.",
+    },
+
+    # Mechanized Trawler (<15m, 15–20m, >20m)
+    ("mechanized_trawler", "small"): {
+        "type_label": "Mechanized Trawler",
+        "size_label": "Small",
+        "display_name": "Small Trawler (< 15m)",
+        "label": "Small Trawler",
+        "length_desc": "< 15m",
+        "wave_caution_m": 1.8,
+        "wave_nogo_m": 2.8,
+        "wind_caution_knots": 20.0,
+        "wind_nogo_knots": 28.0,
+        "gust_caution_knots": 26.0,
+        "gust_nogo_knots": 36.0,
+        "swell_caution_m": 1.8,
+        "swell_nogo_m": 2.6,
+        "speed_knots": 8.0,
+        "hazard_sensitivity": "normal",
+        "description": "Coastal mechanized trawler (<15m) operating within territorial waters.",
+    },
+    ("mechanized_trawler", "medium"): {
+        "type_label": "Mechanized Trawler",
+        "size_label": "Medium",
+        "display_name": "Medium Trawler (15–20m)",
+        "label": "Medium Trawler",
+        "length_desc": "15–20m",
         "wave_caution_m": 2.2,
         "wave_nogo_m": 3.5,
         "wind_caution_knots": 24.0,
@@ -77,10 +193,76 @@ CRAFT_THRESHOLDS: Dict[str, Dict[str, float]] = {
         "gust_nogo_knots": 42.0,
         "swell_caution_m": 2.2,
         "swell_nogo_m": 3.0,
+        "speed_knots": 10.0,
+        "hazard_sensitivity": "resilient",
+        "description": "Standard offshore commercial trawler (15-20m) equipped for multi-day voyages.",
+    },
+    ("mechanized_trawler", "large"): {
+        "type_label": "Mechanized Trawler",
+        "size_label": "Large",
+        "display_name": "Large Trawler (> 20m)",
+        "label": "Large Trawler",
+        "length_desc": "> 20m",
+        "wave_caution_m": 2.5,
+        "wave_nogo_m": 4.0,
+        "wind_caution_knots": 28.0,
+        "wind_nogo_knots": 40.0,
+        "gust_caution_knots": 35.0,
+        "gust_nogo_knots": 48.0,
+        "swell_caution_m": 2.5,
+        "swell_nogo_m": 3.4,
+        "speed_knots": 12.0,
+        "hazard_sensitivity": "resilient",
+        "description": "Deep-sea industrial trawler (>20m) with heavy displacement and all-weather navigation aids.",
     },
 }
 
 DEFAULT_CRAFT_PROFILE = "motorized_boat"
+DEFAULT_VESSEL_SIZE = "medium"
+
+
+def normalize_craft_profile(profile: Optional[str]) -> str:
+    p = (profile or DEFAULT_CRAFT_PROFILE).strip().lower()
+    if p in ("traditional_craft", "traditional_non_motorized", "traditional"):
+        return "traditional_craft"
+    if p in ("mechanized_trawler", "trawler"):
+        return "mechanized_trawler"
+    return "motorized_boat"
+
+
+def normalize_vessel_size(size: Optional[str]) -> str:
+    s = (size or DEFAULT_VESSEL_SIZE).strip().lower()
+    if s in ("small", "medium", "large"):
+        return s
+    return "medium"
+
+
+def get_vessel_capability(craft_profile: Optional[str], vessel_size: Optional[str] = "medium") -> Dict[str, Any]:
+    norm_craft = normalize_craft_profile(craft_profile)
+    norm_size = normalize_vessel_size(vessel_size)
+    cap = VESSEL_CAPABILITIES.get((norm_craft, norm_size))
+    if cap is None:
+        cap = VESSEL_CAPABILITIES.get((norm_craft, "medium"))
+    if cap is None:
+        cap = VESSEL_CAPABILITIES.get(("motorized_boat", "medium"))
+    return cap
+
+
+# Backward-compatible dictionary referencing the canonical medium profile
+CRAFT_THRESHOLDS: Dict[str, Dict[str, float]] = {
+    "traditional_non_motorized": {
+        k: float(v) for k, v in VESSEL_CAPABILITIES[("traditional_craft", "medium")].items() if isinstance(v, (int, float))
+    },
+    "traditional_craft": {
+        k: float(v) for k, v in VESSEL_CAPABILITIES[("traditional_craft", "medium")].items() if isinstance(v, (int, float))
+    },
+    "motorized_boat": {
+        k: float(v) for k, v in VESSEL_CAPABILITIES[("motorized_boat", "medium")].items() if isinstance(v, (int, float))
+    },
+    "mechanized_trawler": {
+        k: float(v) for k, v in VESSEL_CAPABILITIES[("mechanized_trawler", "medium")].items() if isinstance(v, (int, float))
+    },
+}
 
 
 # =============================================================================
@@ -115,7 +297,10 @@ class DeterministicRiskEngine:
                 data_mode = bundle.data_mode
 
         craft_profile = (context.craft_profile or DEFAULT_CRAFT_PROFILE).strip().lower()
-        limits = CRAFT_THRESHOLDS.get(craft_profile, CRAFT_THRESHOLDS[DEFAULT_CRAFT_PROFILE])
+        vessel_size = getattr(context, "vessel_size", None) or DEFAULT_VESSEL_SIZE
+        capability = get_vessel_capability(craft_profile, vessel_size)
+        limits = capability
+        vessel_label = capability.get("label") or craft_profile
 
         threshold_checks: List[ThresholdComparison] = []
         decisive_factors: List[str] = []
@@ -322,13 +507,13 @@ class DeterministicRiskEngine:
                 wave_impact = "NO_GO_TRIGGER"
                 wave_exceeded = True
                 decisive_factors.append(
-                    f"Significant wave height {wave_h:.1f}m exceeds safety ceiling ({limits['wave_nogo_m']:.1f}m for {craft_profile})."
+                    f"Significant wave height {wave_h:.1f}m exceeds safety ceiling ({limits['wave_nogo_m']:.1f}m for {vessel_label})."
                 )
             elif wave_h >= limits["wave_caution_m"]:
                 wave_impact = "CAUTION_TRIGGER"
                 wave_exceeded = True
                 decisive_factors.append(
-                    f"Moderate wave height {wave_h:.1f}m requires caution ({limits['wave_caution_m']:.1f}m - {limits['wave_nogo_m']:.1f}m limit)."
+                    f"Moderate wave height {wave_h:.1f}m requires caution for {vessel_label} ({limits['wave_caution_m']:.1f}m - {limits['wave_nogo_m']:.1f}m limit)."
                 )
             else:
                 non_decisive_factors.append(f"Wave height {wave_h:.1f}m is within safe operating limits (< {limits['wave_caution_m']:.1f}m).")
@@ -342,7 +527,7 @@ class DeterministicRiskEngine:
                     unit="meters",
                     exceeded=wave_exceeded,
                     impact=wave_impact,
-                    description=f"Significant wave height {wave_h:.1f}m compared against {craft_profile} ceiling ({limits['wave_nogo_m']:.1f}m).",
+                    description=f"Significant wave height {wave_h:.1f}m compared against {vessel_label} ceiling ({limits['wave_nogo_m']:.1f}m).",
                 )
             )
 
@@ -378,7 +563,7 @@ class DeterministicRiskEngine:
                     unit="knots",
                     exceeded=wind_exceeded,
                     impact=wind_impact,
-                    description=f"Sustained wind {wind_spd:.1f} kt compared against {craft_profile} limit.",
+                    description=f"Sustained wind {wind_spd:.1f} kt compared against {vessel_label} limit.",
                 )
             )
 
@@ -475,7 +660,7 @@ class DeterministicRiskEngine:
 
         if has_nogo:
             status = RecommendationStatus.NO_GO
-            summary = f"Severe marine conditions or hazards detected exceeding {craft_profile} safety ceiling."
+            summary = f"Severe marine conditions or hazards detected exceeding {vessel_label} safety ceiling."
             action = "Remain moored in port. Do not navigate under any circumstances."
             conf_reasons = ["Deterministic safety ceiling exceeded by official observations"]
             if is_data_degraded:
@@ -488,7 +673,7 @@ class DeterministicRiskEngine:
             confidence_level = ConfidenceLevel.LOW
         elif has_caution:
             status = RecommendationStatus.CAUTION
-            summary = f"Moderate marine conditions require operational caution for {craft_profile}."
+            summary = f"Moderate marine conditions require operational caution for {vessel_label}."
             action = "Operate with caution within 5 nm of coastline. Maintain continuous VHF watch."
             conf_reasons = ["Conditions near threshold boundaries — operational caution enforced"]
             warnings.append("Moderate sea state requires continuous vigilance.")
@@ -560,9 +745,10 @@ def evaluate_deterministic_risk(
 def compute_decision_boundaries(
     threshold_checks: List[ThresholdComparison],
     craft_profile: str = "motorized_boat",
+    vessel_size: Optional[str] = "medium",
 ) -> List[DecisionBoundaryItem]:
     """Pure deterministic helper to calculate boundary proximity and margins (M1.4)."""
-    limits = CRAFT_THRESHOLDS.get(craft_profile, CRAFT_THRESHOLDS[DEFAULT_CRAFT_PROFILE])
+    limits = get_vessel_capability(craft_profile, vessel_size)
     boundaries: List[DecisionBoundaryItem] = []
 
     for tc in threshold_checks:
@@ -894,9 +1080,10 @@ def compute_safe_window(
     reference_time: Optional[Union[datetime, str]] = None,
     trip_duration_hours: int = 4,
     current_status: Optional[Union[RecommendationStatus, str]] = None,
+    vessel_size: Optional[str] = "medium",
 ) -> SafeMissionWindow:
     """Find contiguous safe mission windows from hourly forecast series (M1.4)."""
-    limits = CRAFT_THRESHOLDS.get(craft_profile, CRAFT_THRESHOLDS[DEFAULT_CRAFT_PROFILE])
+    limits = get_vessel_capability(craft_profile, vessel_size)
 
     if hourly_records is None:
         try:

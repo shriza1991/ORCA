@@ -67,7 +67,14 @@ class TrajectoryExposureEngine:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
 
-    def _get_craft_speed(self, craft_profile: str) -> float:
+    def _get_craft_speed(self, craft_profile: str, vessel_size: Optional[str] = "medium") -> float:
+        try:
+            from backend.app.domain.risk_engine import get_vessel_capability
+            cap = get_vessel_capability(craft_profile, vessel_size)
+            if cap and "speed_knots" in cap:
+                return float(cap["speed_knots"])
+        except Exception:
+            pass
         return self.CRAFT_SPEEDS_KNOTS.get(craft_profile, 8.0)
 
     def _match_forecast_for_time(
@@ -115,6 +122,7 @@ class TrajectoryExposureEngine:
         hourly_forecast: Optional[List[MarineConditionsPayload]] = None,
         fallback_wave_height_m: float = 1.0,
         fallback_wind_knots: float = 12.0,
+        vessel_size: Optional[str] = "medium",
     ) -> TrajectoryExposureResult:
         """Evaluates time-indexed marine weather at each waypoint along the vessel's journey."""
         if not waypoints:
@@ -129,7 +137,7 @@ class TrajectoryExposureEngine:
             )
 
         dep_time = departure_time or datetime.now(timezone.utc)
-        speed_knots = self._get_craft_speed(craft_profile)
+        speed_knots = self._get_craft_speed(craft_profile, vessel_size)
         forecast_list = hourly_forecast or []
 
         timeline: List[WaypointTimelineItem] = []

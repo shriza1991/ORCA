@@ -11,7 +11,7 @@ Owned by Backend/Platform (P2) & Decision/Evidence (P5).
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from backend.app.contracts.chat import (
     Confidence,
@@ -38,11 +38,22 @@ class MissionUser(BaseModel):
 class MissionVessel(BaseModel):
     """Vessel specifications and operational limits."""
     type: str = Field("motorized_boat", description="Craft class: traditional_non_motorized | motorized_boat | mechanized_trawler")
+    size_category: Optional[str] = Field("medium", description="Vessel size classification: small | medium | large")
+    vessel_size: Optional[str] = Field("medium", description="Vessel size classification alias: small | medium | large")
     size_m: Optional[float] = Field(None, description="Overall length in meters")
     speed_knots: Optional[float] = Field(None, description="Cruising speed in knots")
     range_km: Optional[float] = Field(None, description="Operational cruising range in kilometers")
     capabilities: List[str] = Field(default_factory=list, description="Vessel equipment: e.g. ['vhf_radio', 'gps', 'navic', 'ais']")
     safety_constraints: Dict[str, Any] = Field(default_factory=dict, description="Vessel-specific threshold overrides")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_vessel_size(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            size = data.get("vessel_size") or data.get("size_category") or "medium"
+            data["vessel_size"] = size
+            data["size_category"] = size
+        return data
 
 
 class ObjectiveType(str, Enum):
@@ -294,8 +305,11 @@ def mission_from_user_context(
     )
 
     # Determine vessel profile
+    v_size = getattr(ctx, "vessel_size", None) or "medium"
     vessel = MissionVessel(
         type=ctx.craft_profile or "motorized_boat",
+        size_category=v_size,
+        vessel_size=v_size,
     )
 
     # Determine user locale

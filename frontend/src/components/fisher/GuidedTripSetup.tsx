@@ -41,6 +41,69 @@ const CRAFT_PROFILES = [
   { value: "mechanized_trawler", label: "Mechanized trawler" },
 ] as const;
 
+export type VesselSize = "small" | "medium" | "large";
+
+export interface VesselSizeOption {
+  value: VesselSize;
+  label: string;
+  rangeLabel: string;
+}
+
+export interface VesselSizeConfig {
+  question: string;
+  options: VesselSizeOption[];
+}
+
+export const VESSEL_SIZE_CONFIGS: Record<string, VesselSizeConfig> = {
+  traditional_non_motorized: {
+    question: "What best describes your craft?",
+    options: [
+      { value: "small", label: "Small Traditional Craft", rangeLabel: "< 6m" },
+      { value: "medium", label: "Medium Traditional Craft", rangeLabel: "6–9m" },
+      { value: "large", label: "Large Traditional Craft", rangeLabel: "9–12m" },
+    ],
+  },
+  motorized_boat: {
+    question: "What best describes your boat?",
+    options: [
+      { value: "small", label: "Small Motorized Boat", rangeLabel: "< 8m" },
+      { value: "medium", label: "Medium Motorized Boat", rangeLabel: "8–12m" },
+      { value: "large", label: "Large Motorized Boat", rangeLabel: "> 12m" },
+    ],
+  },
+  mechanized_trawler: {
+    question: "What best describes your trawler?",
+    options: [
+      { value: "small", label: "Small Trawler", rangeLabel: "< 15m" },
+      { value: "medium", label: "Medium Trawler", rangeLabel: "15–20m" },
+      { value: "large", label: "Large Trawler", rangeLabel: "> 20m" },
+    ],
+  },
+};
+
+export function getVesselSizeConfig(craftProfile?: string): VesselSizeConfig {
+  if (craftProfile && VESSEL_SIZE_CONFIGS[craftProfile]) {
+    return VESSEL_SIZE_CONFIGS[craftProfile];
+  }
+  if (craftProfile && craftProfile.includes("traditional")) {
+    return VESSEL_SIZE_CONFIGS.traditional_non_motorized;
+  }
+  if (craftProfile && craftProfile.includes("trawler")) {
+    return VESSEL_SIZE_CONFIGS.mechanized_trawler;
+  }
+  return VESSEL_SIZE_CONFIGS.motorized_boat;
+}
+
+export function getVesselSizeOptionLabel(craftProfile?: string, size?: string): string {
+  const config = getVesselSizeConfig(craftProfile);
+  const match = config.options.find((o) => o.value === size);
+  if (match) {
+    return `${match.label} (${match.rangeLabel})`;
+  }
+  return size ? size.charAt(0).toUpperCase() + size.slice(1) : "Medium";
+}
+
+
 function formatLocalizedDateTime(
   value: string | undefined,
   language: SupportedLanguage,
@@ -103,9 +166,17 @@ export default function GuidedTripSetup({
     ) {
       ret = new Date(Date.parse(dep) + 12 * 60 * 60 * 1000).toISOString();
     }
+    const savedSize = typeof window !== "undefined"
+      ? (localStorage.getItem("orca_mission_vessel_size") as VesselSize | null)
+      : null;
+    const initialSize: VesselSize =
+      context.vessel_size ||
+      (savedSize && ["small", "medium", "large"].includes(savedSize) ? savedSize : "medium");
+
     return {
       origin_harbor: context.origin_harbor || "Ratnagiri",
       craft_profile: context.craft_profile || "motorized_boat",
+      vessel_size: initialSize,
       departure_time: dep,
       return_time: ret,
       target_pfz:
@@ -138,7 +209,10 @@ export default function GuidedTripSetup({
     isDepartureValid &&
     isReturnValid &&
     !!localContext.origin_harbor &&
-    !!localContext.craft_profile;
+    !!localContext.craft_profile &&
+    !!localContext.vessel_size;
+
+  const sizeConfig = getVesselSizeConfig(localContext.craft_profile);
 
   const steps = [
     {
@@ -148,7 +222,12 @@ export default function GuidedTripSetup({
     },
     {
       id: "boat",
-      title: translateText("Boat vessel size type?", language),
+      title: translateText("Boat vessel type?", language),
+      icon: <ShipWheel size={40} />,
+    },
+    {
+      id: "size",
+      title: translateText(sizeConfig.question, language),
       icon: <ShipWheel size={40} />,
     },
     {
@@ -180,7 +259,7 @@ export default function GuidedTripSetup({
 
   // Spoken guidance on step change
   React.useEffect(() => {
-    if (step === 5) {
+    if (step === 6) {
       const harbor = translateText(
         localContext.origin_harbor || "Ratnagiri",
         language,
@@ -190,12 +269,13 @@ export default function GuidedTripSetup({
           ?.label || "Motorized boat",
         language,
       );
+      const sizeLabel = getVesselSizeOptionLabel(localContext.craft_profile, localContext.vessel_size);
       const portLabel = translateText('Port', language);
       const craftLabel = translateText('Craft', language);
       const durationLabel = translateText('Duration', language);
       const hoursLabel = translateText('hours', language);
-      speak(`${steps[step].title}. ${portLabel}: ${harbor}. ${craftLabel}: ${boat}. ${durationLabel}: ${durationHours.toFixed(0)} ${hoursLabel}.`);
-    } else if (step === 6) {
+      speak(`${steps[step].title}. ${portLabel}: ${harbor}. ${craftLabel}: ${sizeLabel} ${boat}. ${durationLabel}: ${durationHours.toFixed(0)} ${hoursLabel}.`);
+    } else if (step === 7) {
       const confirmNotice = translateText('Confirm your voyage plan to assess safety.', language);
       speak(`${steps[step].title}. ${confirmNotice}`);
     } else {
@@ -329,13 +409,86 @@ export default function GuidedTripSetup({
                 fontWeight: 700,
               }}
             >
+              {translateText("Next: Vessel Size", language)}
+            </button>
+          </div>
+        );
+
+      // Step 2: Vessel Size
+      case 2:
+        return (
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}
+          >
+            <p style={{ color: "#475569", fontSize: "1.1rem", margin: "0 0 4px 0" }}>
+              {translateText(sizeConfig.question, language)}
+            </p>
+            {sizeConfig.options.map((opt) => {
+              const isSelected = localContext.vessel_size === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    setLocalContext((prev) => ({
+                      ...prev,
+                      vessel_size: opt.value,
+                    }));
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem("orca_mission_vessel_size", opt.value);
+                    }
+                  }}
+                  style={{
+                    padding: "22px",
+                    fontSize: "1.35rem",
+                    borderRadius: "12px",
+                    background: isSelected ? "#0284c7" : "#f1f5f9",
+                    color: isSelected ? "white" : "#0f172a",
+                    border: isSelected ? "2px solid #0369a1" : "1px solid #cbd5e1",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    textAlign: "left",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span>📏 {translateText(opt.label, language)}</span>
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      padding: "4px 10px",
+                      borderRadius: "8px",
+                      background: isSelected ? "rgba(255, 255, 255, 0.25)" : "#e2e8f0",
+                      color: isSelected ? "white" : "#475569",
+                    }}
+                  >
+                    {opt.rangeLabel}
+                  </span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!localContext.vessel_size}
+              style={{
+                padding: "18px",
+                fontSize: "1.2rem",
+                borderRadius: "12px",
+                background: localContext.vessel_size ? "#0284c7" : "#94a3b8",
+                color: "white",
+                border: "none",
+                fontWeight: 700,
+              }}
+            >
               {translateText("Next: Departure", language)}
             </button>
           </div>
         );
 
-      // Step 2: Departure DateTime
-      case 2:
+      // Step 3: Departure DateTime
+      case 3:
         return (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "20px" }}
@@ -484,8 +637,8 @@ export default function GuidedTripSetup({
           </div>
         );
 
-      // Step 3: Return DateTime
-      case 3:
+      // Step 4: Return DateTime
+      case 4:
         return (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "20px" }}
@@ -641,8 +794,8 @@ export default function GuidedTripSetup({
           </div>
         );
 
-      // Step 4: Optional PFZ Target
-      case 4:
+      // Step 5: Optional PFZ Target
+      case 5:
         return (
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}
@@ -731,8 +884,8 @@ export default function GuidedTripSetup({
           </div>
         );
 
-      // Step 5: Mission Review
-      case 5:
+      // Step 6: Mission Review
+      case 6:
         return (
           <div
             style={{
@@ -768,6 +921,10 @@ export default function GuidedTripSetup({
                   )?.label || "Motorized boat",
                   language,
                 )}
+              </div>
+              <div>
+                <strong>📏 {translateText("Vessel Size", language)}:</strong>{" "}
+                {getVesselSizeOptionLabel(localContext.craft_profile, localContext.vessel_size)}
               </div>
               <div>
                 <strong>🛫 {translateText("Departure", language)}:</strong>{" "}
@@ -832,8 +989,8 @@ export default function GuidedTripSetup({
           </div>
         );
 
-      // Step 6: Confirm & Assess
-      case 6:
+      // Step 7: Confirm & Assess
+      case 7:
         return (
           <div
             style={{
@@ -896,6 +1053,12 @@ export default function GuidedTripSetup({
                     )?.label || "Motorized boat",
                     language,
                   )}
+                </strong>
+              </div>
+              <div>
+                ✓ {translateText("Size", language)}:{" "}
+                <strong>
+                  {getVesselSizeOptionLabel(localContext.craft_profile, localContext.vessel_size)}
                 </strong>
               </div>
               <div>

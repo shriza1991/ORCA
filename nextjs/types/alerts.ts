@@ -20,6 +20,7 @@ export interface ActiveAlertsResponse {
 export interface SavedTripRequest {
   origin_harbor: string;
   craft_profile: string;
+  vessel_size?: string;
   departure_time?: string;
   return_time?: string;
   language: string;
@@ -29,6 +30,7 @@ export interface SavedTripResponse {
   subscription_id: string;
   origin_harbor: string;
   craft_profile: string;
+  vessel_size?: string;
   is_active: boolean;
   created_at: string;
 }

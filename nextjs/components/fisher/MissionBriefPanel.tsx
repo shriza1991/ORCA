@@ -102,6 +102,57 @@ export default function MissionBriefPanel({
         </div>
       </div>
 
+      {/* Vessel Profile & Capability Context */}
+      {(brief.vessel_type || brief.vessel_size || brief.capability_notes) && (
+        <div
+          data-testid="vessel-capability-section"
+          style={{
+            backgroundColor: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            padding: "10px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "8px",
+              fontSize: "0.92rem",
+            }}
+          >
+            <div>
+              <span style={{ color: "#64748b", fontWeight: 600 }}>{translateText("Vessel Type", language)}: </span>
+              <strong style={{ color: "#0f172a" }}>{brief.vessel_type || "Standard"}</strong>
+            </div>
+            <div>
+              <span style={{ color: "#64748b", fontWeight: 600 }}>{translateText("Vessel Size", language)}: </span>
+              <strong style={{ color: "#0f172a", textTransform: "capitalize" }}>{brief.vessel_size || "Medium"}</strong>
+            </div>
+          </div>
+          {brief.capability_notes && (
+            <div
+              data-testid="capability-notes"
+              style={{
+                fontSize: "0.86rem",
+                color: "#475569",
+                fontStyle: "italic",
+                borderTop: "1px dashed #cbd5e1",
+                paddingTop: "4px",
+                marginTop: "2px",
+              }}
+            >
+              ℹ️ {translateText(brief.capability_notes, language)}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 1. Why ORCA Recommends This */}
       <div data-testid="why-summary-section" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#334155', fontWeight: 700, fontSize: '0.95rem' }}>

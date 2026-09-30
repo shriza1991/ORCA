@@ -99,6 +99,7 @@ class ToolInvocationContext(BaseModel):
     departure_time: Optional[str] = Field(None, description="ISO-8601 UTC departure timestamp or offset")
     duration_hours: float = Field(8.0, description="Voyage duration in hours")
     craft_profile: str = Field("motorized_boat", description="Craft class: traditional_non_motorized | motorized_boat | mechanized_trawler")
+    vessel_size: Optional[str] = Field("medium", description="Vessel size classification: small | medium | large")
     activity: str = Field("fishing", description="Maritime activity: fishing | transport | recreational")
     destination: Optional[str] = Field(None, description="Target destination or fishing ground")
     user_constraints: Dict[str, Any] = Field(default_factory=dict, description="Operational limits (e.g. max distance)")

@@ -54,6 +54,9 @@ class UserContext(BaseModel):
     target_pfz: Optional[str] = Field(
         None, description="Target PFZ candidate preference (auto | custom)"
     )
+    vessel_size: Optional[str] = Field(
+        "medium", description="Vessel size classification: small | medium | large"
+    )
 
 
 class ChatRequest(BaseModel):

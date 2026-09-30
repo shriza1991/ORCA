@@ -27,7 +27,7 @@ export default function OperationalSnapshot({
         <div className="snapshot-icon"><RadioTower size={17} /></div>
         <div>
           <span className="snapshot-eyebrow">Voyage brief</span>
-          <strong>{context.origin_harbor} · {formatCraft(context.craft_profile)}</strong>
+          <strong>{context.origin_harbor} · {context.vessel_size ? `${context.vessel_size.charAt(0).toUpperCase() + context.vessel_size.slice(1)} ` : ''}{formatCraft(context.craft_profile)}</strong>
           <p>{response ? `Latest advisory: ${status.replace('_', '-')}.` : 'Set your context, then ask ORCA before leaving port.'}</p>
         </div>
         {response && evidenceCount > 0 && (
