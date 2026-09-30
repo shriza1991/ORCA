@@ -149,11 +149,8 @@ def create_app() -> FastAPI:
         sachet_live=sachet_live,
     )
     register_dev2_provider_tools(tool_registry, manager)
-    
-    if manager.current_mode in (DataMode.LIVE, DataMode.HYBRID):
-        register_dev4_operational_engines(tool_registry, manager)
-    else:
-        register_m2_contract_mocks(tool_registry, override=False)
+    register_dev4_operational_engines(tool_registry, manager)
+    register_m2_contract_mocks(tool_registry, override=False)
 
     @app.get("/", tags=["System"])
     async def root():

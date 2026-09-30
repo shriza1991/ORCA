@@ -98,6 +98,10 @@ class HazardBulletinPayload(BaseModel):
     valid_to: Optional[str] = Field(None, description="Advisory expiration timestamp (ISO-8601 UTC)")
     source_name: str = Field("IMD Cyclone Warning Division", description="Official issuing authority")
     source_url: Optional[str] = Field(None, description="Direct URL to warning bulletin")
+    freshness_flags: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Structured freshness and coverage metadata for frontend display and verification.",
+    )
 
 
 class PFZSourceDataPayload(BaseModel):

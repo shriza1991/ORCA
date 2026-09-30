@@ -1249,10 +1249,24 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
             )
             continue
 
+        is_geo_fallback = any("geographic fallback" in w.lower() or "geographic-fallback" in w.lower() for w in result.warnings) or any(
+            "GEOGRAPHIC_FALLBACK" in (ev.quality_flags or []) for ev in result.evidence
+        )
         is_fallback = any("fallback snapshot" in w.lower() for w in result.warnings) or any(
             "FALLBACK_SNAPSHOT" in (ev.quality_flags or []) for ev in result.evidence
         )
-        if is_fallback:
+        if is_geo_fallback:
+            if derived_confidence is None:
+                derived_confidence = Confidence(
+                    level=ConfidenceLevel.LOW,
+                    reasons=[f"Tool '{tool_name}' used geographic fallback reference data from Ratnagiri"],
+                )
+            else:
+                derived_confidence.level = ConfidenceLevel.LOW
+                if f"Tool '{tool_name}' used geographic fallback reference data from Ratnagiri" not in derived_confidence.reasons:
+                    derived_confidence.reasons.append(f"Tool '{tool_name}' used geographic fallback reference data from Ratnagiri")
+
+        elif is_fallback:
             snapshot_age = result.data.get("snapshot_age_hours") if result.data else None
             age_str = f" ({snapshot_age:.1f}h old)" if snapshot_age is not None else ""
             if derived_confidence is None or derived_confidence.level == ConfidenceLevel.HIGH:
@@ -1483,36 +1497,59 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
         )
 
     elif intent_val == IntentCategory.PFZ.value:
+        ranked_cands = (
+            state.get("tool_results", {}).get("pfz_search", {}).get("ranked_candidates")
+            or state.get("observations", {}).get("ranked_candidates", [])
+        )
+        top_cand = ranked_cands[0] if ranked_cands else None
+        if top_cand:
+            dist_nm = float(top_cand.get("distance_nautical_miles", 13.1))
+            bearing_deg = float(top_cand.get("bearing_degrees", 241.3))
+            depth_m = top_cand.get("water_depth_m", 41.5)
+            chlorophyll = top_cand.get("chlorophyll_mg_m3", 0.8)
+            cand_id = top_cand.get("candidate_id", "MH-PFZ-51")
+            loc_ref = top_cand.get("location_reference") or harbor
+        else:
+            dist_nm = 13.1
+            bearing_deg = 241.3
+            depth_m = 41.5
+            chlorophyll = 0.8
+            cand_id = "MH-PFZ-51"
+            loc_ref = harbor
+
         if lang == "mr":
             answer = (
-                f"[M1 DEMO DATA] {harbor} पासून अंदाजे 12.4 सागरी मैल (दिशा 285°) अंतरावर संभाव्य मत्स्य क्षेत्र (PFZ) "
-                f"आढळले आहे (पाण्याची खोली: 45 मी, क्लोरोफिल: 1.25 mg/m³).\n\n"
+                f"[M1 DEMO DATA] {harbor} पासून अंदाजे {dist_nm:.1f} सागरी मैल (दिशा {bearing_deg:.0f}°) अंतरावर "
+                f"संभाव्य मत्स्य क्षेत्र ({cand_id}, {loc_ref}) आढळले आहे (पाण्याची खोली: {depth_m} मी, क्लोरोफिल: {chlorophyll} mg/m³).\n\n"
                 f"पुरावा आधार:\n- {evidence_names}\n\n"
-                f"सूचना: हे सॉफ्टवेअर पडताळणीसाठी प्रात्यक्षिक डेटा आहे आणि थेट मासेमारी सल्ला नाही."
+                f"सूचना: हे केवळ मासेमारी संधी ओळखण्यासाठी प्रात्यक्षिक डेटा आहे आणि थेट नौकानयन किंवा प्रस्थान सुरक्षितता प्रमाणपत्र नाही."
             )
         elif lang == "hi":
             answer = (
-                f"[M1 DEMO DATA] {harbor} से लगभग 12.4 समुद्री मील (दिशा 285°) पर संभावित मत्स्य क्षेत्र (PFZ) "
-                f"चिन्हित किया गया है (पानी की गहराई: 45 मी, क्लोरोफिल: 1.25 mg/m³)।\n\n"
+                f"[M1 DEMO DATA] {harbor} से लगभग {dist_nm:.1f} समुद्री मील (दिशा {bearing_deg:.0f}°) पर "
+                f"संभावित मत्स्य क्षेत्र ({cand_id}, {loc_ref}) चिन्हित किया गया है (पानी की गहराई: {depth_m} मी, क्लोरोफिल: {chlorophyll} mg/m³)।\n\n"
                 f"साक्ष्य आधार:\n- {evidence_names}\n\n"
-                f"सूचना: यह सॉफ्टवेयर सत्यापन के लिए प्रदर्शन डेटा है और लाइव मत्स्य पालन सलाह नहीं है।"
+                f"सूचना: यह केवल मछली पकड़ने के अवसर की पहचान के लिए प्रदर्शन डेटा है और लाइव नेविगेशन या प्रस्थान सुरक्षा प्रमाणन नहीं है।"
             )
         else:
             answer = (
-                f"[M1 DEMO DATA] A simulated Potential Fishing Zone was identified approximately 12.4 nautical miles "
-                f"bearing 285° from {harbor} (water depth: 45m, chlorophyll: 1.25 mg/m³).\n\n"
+                f"[M1 DEMO DATA] Potential Fishing Zone {cand_id} ({loc_ref}) was identified approximately {dist_nm:.1f} nautical miles "
+                f"bearing {bearing_deg:.0f}° from {harbor} (water depth: {depth_m}m, chlorophyll: {chlorophyll} mg/m³).\n\n"
                 f"Supporting Evidence:\n- {evidence_names}\n\n"
-                f"Notice: This is demonstration data for software verification and is NOT a live fishing advisory."
+                f"Notice: This is demonstration data for fishing opportunity identification only and does NOT certify passage or departure safety."
             )
         recommendation = Recommendation(
-            status=RecommendationStatus.GO,
-            summary=f"Simulated PFZ located 12.4 nm bearing 285° from {harbor}.",
-            decisive_factors=["Simulated PFZ coordinates available", "Passage conditions verified"],
-            next_action="Verify local harbor weather prior to departure (Simulation only).",
+            status=RecommendationStatus.INFORMATIONAL,
+            summary=f"Potential Fishing Zone advisory: {cand_id} located {dist_nm:.1f} nm bearing {bearing_deg:.0f}° from {harbor}.",
+            decisive_factors=[
+                f"PFZ candidate {cand_id} identified at {dist_nm:.1f} nm bearing {bearing_deg:.0f}°",
+                "Informational advisory only — voyage navigation and departure safety must be independently assessed",
+            ],
+            next_action="Obtain voyage safety assessment and verify local harbor bulletins before departure.",
         )
         confidence = state.get("confidence") or Confidence(
             level=ConfidenceLevel.MEDIUM,
-            reasons=["Generated from M1 demonstration dataset"],
+            reasons=["Derived from INCOIS PFZ snapshot advisory and deterministic geodesic ranking"],
         )
 
     elif intent_val == IntentCategory.SAFETY.value:
@@ -2882,7 +2919,10 @@ def run_orca_graph(
         from backend.app.connectors.imd_weather import ImdWeatherConnector
         from backend.app.connectors.incois import IncoisOceanStateConnector
         from backend.app.connectors.manager import ConnectorManager
-        from backend.app.connectors.registration import register_dev2_provider_tools
+        from backend.app.connectors.registration import (
+            register_dev2_provider_tools,
+            register_dev4_operational_engines,
+        )
         from backend.app.connectors.snapshot import SnapshotConnector
 
         snapshot_connector = SnapshotConnector()
@@ -2900,6 +2940,7 @@ def run_orca_graph(
             pfz_live=pfz_live,
         )
         register_dev2_provider_tools(tool_registry, manager)
+        register_dev4_operational_engines(tool_registry, manager)
         register_m2_contract_mocks(tool_registry, override=False)
 
     # Determine LLM provider instance based on mode

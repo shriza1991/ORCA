@@ -8,6 +8,39 @@
 
 ## Current Release & Workstream State
 
+### 2026-09-30 Task 1 of 6: Diagnosed and Fixed Conversational Pipeline Failing with ConnectorMissingSnapshotError (§D064, §D065)
+
+- **DIAGNOSED DEPLOYED REPRODUCIBILITY & ROOT CAUSE**:
+  - Render deployment was pinned at commit `a660d74` where `render.yaml` had `dockerContext: ./backend` and `backend/Dockerfile` had `COPY . /app`. The repository `data/` directory (`data/source_snapshots/`, `data/fixtures/`) was completely omitted from the image build.
+  - On the active source (`5b68e9c`), `SnapshotConnector` path resolution was brittle: `Path(__file__).resolve().parent.parent.parent.parent` resolved to `/` in container layouts (`/app/app/...`) rather than `/app`, depending entirely on symlink creation (`/data -> /app/data`) and failing when running from `backend/`.
+  - Harbor alias normalization was missing, causing valid aliases (e.g. "Ratnagiri Port", "Mirkarwada") to trigger fallback warnings or missing snapshot errors.
+  - Geographic fallback in weather and hazard snapshots was silent, returning Ratnagiri observations without explicit warnings or provenance tags.
+- **IMPLEMENTED (INITIAL & CORRECTIVE PASS)**:
+  - `backend/app/connectors/snapshot.py`:
+    - Strict custom path authority: `_resolve_candidate_dir()` returns `custom_path` immediately without default fallback if explicitly provided; `_find_snapshot_file()` and `_find_fixture_file()` strictly isolate search to the explicit directory, preventing accidental file borrowing.
+    - Default path discovery across `Path(__file__).resolve().parents`, `Path.cwd()`, `/app/data/`, and `/data/`.
+    - `KNOWN_HARBOR_ALIASES` dictionary mapping coastal variations to canonical targets.
+    - Preserved original source name identities (`Snapshot Fixture`, `ORCA deterministic demo marine fixture`) and appended geographic fallback context `(Ratnagiri GEOGRAPHIC_FALLBACK for {harbor})` instead of creating pseudo-official names.
+  - `backend/app/agents/integrations/dev2.py` & `backend/app/agents/integrations/adapters.py`:
+    - Added `freshness_flags: Optional[Dict[str, Any]]` directly to `HazardBulletinPayload` Pydantic model to guarantee serialization and field preservation.
+    - Propagate `payload.freshness_flags` warnings and `GEOGRAPHIC_FALLBACK` quality flag across marine, weather, and hazard adapters.
+  - `backend/app/domain/risk_engine.py`:
+    - Added deterministic geographic fallback safety gate: when `is_geo_fallback` is True, safety cannot be certified; `status` is forced to `UNKNOWN` (unless a critical hazard forces `NO_GO`), and confidence is forced to `LOW`.
+  - `backend/app/agents/graph.py` & `backend/app/main.py`:
+    - Unconditionally registered `register_dev4_operational_engines(tool_registry, manager)` across `SNAPSHOT`, `HYBRID`, and `LIVE` modes, preventing contract-mock ranking tools from overriding real snapshot feature ranking.
+    - Grounded `response_composer_node` in actual ranked candidates from `tool_results["pfz_search"]["ranked_candidates"]`, outputting candidate `MH-PFZ-51` at distance 13.1 nm, bearing 241.3°, depth 41.5m, chlorophyll 0.8 mg/m³ from `data/source_snapshots/pfz_advisories.json`.
+    - Set PFZ recommendation status to `INFORMATIONAL` (never `GO` or voyage clearance), with explicit notice that PFZ is for fishing opportunity only.
+    - In `specialist_tools_node`, downgraded derived confidence to `LOW` when any tool reports geographic fallback.
+  - `tests/integration/test_task1_snapshot_pipeline.py`:
+    - Added regression tests K through P covering explicit path isolation, missing snapshot error enforcement, geographic fallback safety gates, non-GO/non-HIGH assertion for unsupported locations, and real snapshot PFZ grounding.
+- **TEST VERIFICATION & INTEGRITY**:
+  - `tests/integration/test_task1_snapshot_pipeline.py`: **22/22 passed** in 5.16s.
+  - `tests/domain`: **101/101 passed** in 3.72s.
+  - `tests/api`: **88/88 passed** in 85.14s.
+  - Frontend production build (`tsc && vite build`): **Passed cleanly** in 40.65s.
+- **NEXT RECOMMENDED TASK**:
+  - Task 2: Hazard validity and safety confidence.
+
 ### 2026-09-30 Default Map Mode: 2D Flat Initialization (§D062)
 
 - **IMPLEMENTED 2D Flat as Initial Default Mode**:

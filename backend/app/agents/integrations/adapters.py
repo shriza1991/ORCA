@@ -82,6 +82,10 @@ class ProviderToolAdapter:
         try:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
+            freshness = getattr(payload, "freshness_flags", None)
+            if freshness and isinstance(freshness, dict):
+                if freshness.get("coverage_status") == "GEOGRAPHIC_FALLBACK":
+                    quality_flags.append("GEOGRAPHIC_FALLBACK")
 
             data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
             lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
@@ -124,9 +128,15 @@ class ProviderToolAdapter:
                 )
 
             warnings = []
+            if freshness and isinstance(freshness, dict):
+                ws = freshness.get("warnings")
+                if ws and isinstance(ws, list):
+                    warnings.extend(ws)
+
             if payload.source_name and (
                 "[HYBRID" in payload.source_name
                 or "Fallback" in payload.source_name
+                or "FALLBACK" in payload.source_name
                 or "Transient Error" in payload.source_name
             ):
                 warnings.append(f"Data source degraded: {payload.source_name}")
@@ -168,6 +178,10 @@ class ProviderToolAdapter:
         try:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
+            freshness = getattr(payload, "freshness_flags", None)
+            if freshness and isinstance(freshness, dict):
+                if freshness.get("coverage_status") == "GEOGRAPHIC_FALLBACK":
+                    quality_flags.append("GEOGRAPHIC_FALLBACK")
 
             data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
             lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
@@ -192,9 +206,15 @@ class ProviderToolAdapter:
             ]
 
             warnings = []
+            if freshness and isinstance(freshness, dict):
+                ws = freshness.get("warnings")
+                if ws and isinstance(ws, list):
+                    warnings.extend(ws)
+
             if payload.source_name and (
                 "[HYBRID" in payload.source_name
                 or "Fallback" in payload.source_name
+                or "FALLBACK" in payload.source_name
                 or "Transient Error" in payload.source_name
             ):
                 warnings.append(f"Data source degraded: {payload.source_name}")
@@ -236,6 +256,10 @@ class ProviderToolAdapter:
         try:
             payload = provider_fn(context)
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "OFFICIAL"]
+            freshness = getattr(payload, "freshness_flags", None)
+            if freshness and isinstance(freshness, dict):
+                if freshness.get("coverage_status") == "GEOGRAPHIC_FALLBACK":
+                    quality_flags.append("GEOGRAPHIC_FALLBACK")
 
             data_mode_val = ProviderToolAdapter._resolve_data_mode(is_mock, payload.source_name)
             lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
@@ -258,9 +282,15 @@ class ProviderToolAdapter:
             ]
 
             warnings = []
+            if freshness and isinstance(freshness, dict):
+                ws = freshness.get("warnings")
+                if ws and isinstance(ws, list):
+                    warnings.extend(ws)
+
             if payload.source_name and (
                 "[HYBRID" in payload.source_name
                 or "Fallback" in payload.source_name
+                or "FALLBACK" in payload.source_name
                 or "Transient Error" in payload.source_name
             ):
                 warnings.append(f"Data source degraded: {payload.source_name}")

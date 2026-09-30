@@ -2109,3 +2109,41 @@ Impact:
 Owner: ORCA Maritime Safety & Full-Stack AI Engineering
 Date: 2026-09-30
 
+## D064 — Robust Snapshot Connector Path Resolution and Honest Geographic Fallback Tagging
+Status: ACCEPTED
+Decision:
+1. Implement multi-candidate directory and file resolution in `SnapshotConnector` (`_resolve_candidate_dir` and `_find_snapshot_file`) searching upwards through `Path(__file__).resolve().parents`, `Path.cwd()`, `/app/data/`, and `/data/`. This guarantees reliable location of versioned snapshots (`data/source_snapshots/`) and OSF fixtures (`data/fixtures/synthetic/incois/`) across local repository-root execution, `backend/` execution, and containerized runtime layouts (`/app`).
+2. Add canonical harbor alias normalization (`KNOWN_HARBOR_ALIASES`) for common coastal names (e.g. "Ratnagiri Port", "mirkarwada", "रत्नागिरी", "Malvan Port", "मालवण") mapping them directly to canonical targets without false fallback tagging.
+3. Eliminate silent geographic substitution in `_resolve_fixture`, `get_weather_conditions`, and `get_hazard_bulletin`. When falling back to the Ratnagiri baseline for unsupported locations in snapshot mode, explicitly tag payloads with `coverage_status="GEOGRAPHIC_FALLBACK"`, `[SNAPSHOT-GEOGRAPHIC-FALLBACK]` warning in `freshness_flags`, and label `source_name` accordingly.
+4. Update `ProviderToolAdapter` in `adapters.py` to propagate structured warnings and `GEOGRAPHIC_FALLBACK` quality flags from `payload.freshness_flags` into evidence items and tool results.
+Reason:
+The deployed backend container was failing with `ConnectorMissingSnapshotError` because:
+- The deployed Render commit (`a660d74`) had `dockerContext: ./backend` and omitted `COPY data /app/data`, leaving the container with no `data/` directory.
+- On current source (`5b68e9c`), `SnapshotConnector` brittlely resolved `Path(__file__).resolve().parent.parent.parent.parent` which resolved to `/` in container layouts rather than `/app`, making it entirely dependent on symlink creation and failing when run from `backend/`.
+- Geographic fallbacks in weather and hazard snapshots were silent, masking Ratnagiri data as the requested location.
+Impact:
+- Conversational queries in `SNAPSHOT` and `HYBRID` modes load source fixtures reliably across all execution modes.
+- `POST /api/v1/chat` executes the LangGraph agent pipeline, producing valid evidence and trace steps instead of degraded empty responses.
+- Missing files continue to raise `ConnectorMissingSnapshotError` for graceful degradation.
+- Zero architectural drift; contracts and Vite API compatibility strictly preserved.
+Owner: Dev 2 (Backend Platform) & Dev 3 (Agent Orchestration)
+Date: 2026-09-30
+
+## D065 — Strict Data Path Authority, Simulation Honesty, and Grounded Deterministic PFZ Execution
+Status: ACCEPTED
+Decision:
+1. Authoritative Explicit Data Paths: When an explicit `snapshots_path` or `fixtures_path` is supplied to `SnapshotConnector`, `_resolve_candidate_dir` strictly respects it as authoritative without fallback discovery. Similarly, `_find_snapshot_file`, `_find_fixture_file`, and `_load_osf_fixture` only search within the specified explicit directory, raising `ConnectorMissingSnapshotError` if the requested file is missing.
+2. Geographic & Simulation Honesty: Geographic fallback labels preserve the underlying data provider and demo identity (e.g. `INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture; Ratnagiri GEOGRAPHIC_FALLBACK for Chennai)`). In `DeterministicRiskEngine`, when geographic fallback data is detected for an unsupported harbor, the recommendation status cannot be `GO` (forces `UNKNOWN` unless a severe hazard dictates `NO_GO`) and confidence is forced to `LOW`.
+3. Grounded Deterministic PFZ Execution: Ensure `register_dev4_operational_engines` is unconditionally registered in `main.py` and `run_orca_graph` across all data modes (`LIVE`, `HYBRID`, and `SNAPSHOT`). The deterministic PFZ ranking engine ranks candidates from loaded snapshot features (e.g. `MH-PFZ-51` at 13.1 nm bearing 241.3° from Ratnagiri).
+4. Non-Navigation Clearance for PFZ Advisories: In `response_composer_node`, PFZ queries return `RecommendationStatus.INFORMATIONAL` with an explicit notice that PFZ advisories identify fishing opportunities only and do NOT certify passage or departure safety.
+Reason:
+Corrective pass for Task 1 addressing reviewer findings regarding explicit path isolation, simulation honesty, mock tool survival in snapshot mode, and preventing PFZ responses from masquerading as navigation clearance.
+Impact:
+- 100% deterministic safety invariants preserved.
+- Hermetic test isolation: tests specifying custom mock snapshot directories cannot accidentally borrow files from repository fixtures.
+- 22/22 regression tests passed in `test_task1_snapshot_pipeline.py`.
+- 101/101 domain tests passed; 88/88 API tests passed.
+Owner: Dev 2 (Backend Platform), Dev 3 (Agent Orchestration), Dev 4 (Deterministic Engine)
+Date: 2026-09-30
+
+

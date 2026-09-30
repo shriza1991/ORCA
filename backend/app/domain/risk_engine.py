@@ -456,6 +456,17 @@ class DeterministicRiskEngine:
             or (hazard is not None and "DEGRADED" in (hazard.source_name or "").upper())
         )
 
+        is_geo_fallback = False
+        for p in (marine, weather, hazard):
+            if p is not None:
+                ff = getattr(p, "freshness_flags", None)
+                if isinstance(ff, dict) and ff.get("coverage_status") == "GEOGRAPHIC_FALLBACK":
+                    is_geo_fallback = True
+                    break
+                if "GEOGRAPHIC_FALLBACK" in (getattr(p, "source_name", "") or ""):
+                    is_geo_fallback = True
+                    break
+
         if is_data_degraded:
             threshold_checks.append(
                 ThresholdComparison(
@@ -471,6 +482,30 @@ class DeterministicRiskEngine:
             )
             decisive_factors.append("Missing, degraded, or expired sensor telemetry (validity window exceeded).")
             warnings.append("DEGRADED_DATA: Stale, degraded, or incomplete telemetry received.")
+
+        if is_geo_fallback:
+            threshold_checks.append(
+                ThresholdComparison(
+                    metric_name="geographic_coverage",
+                    observed_value="GEOGRAPHIC_FALLBACK",
+                    threshold_value="LOCAL_HARBOR_COVERAGE",
+                    operator="==",
+                    unit="status",
+                    exceeded=True,
+                    impact="UNKNOWN_TRIGGER",
+                    description=(
+                        f"Authoritative marine/weather coverage is unavailable for '{context.origin_harbor or 'the requested harbor'}'. "
+                        f"Reference data from Ratnagiri cannot certify voyage safety."
+                    ),
+                )
+            )
+            decisive_factors.append(
+                f"No authoritative local observations for {context.origin_harbor or 'harbor'} (Ratnagiri fallback)."
+            )
+            warnings.append(
+                f"GEOGRAPHIC_FALLBACK: Local station observations unavailable for '{context.origin_harbor or 'harbor'}'. "
+                f"Ratnagiri baseline data cannot certify departure safety."
+            )
 
         # ---------------------------------------------------------------------
         # 2. Severe Hazard / Cyclone Bulletin Check
@@ -663,13 +698,22 @@ class DeterministicRiskEngine:
             summary = f"Severe marine conditions or hazards detected exceeding {vessel_label} safety ceiling."
             action = "Remain moored in port. Do not navigate under any circumstances."
             conf_reasons = ["Deterministic safety ceiling exceeded by official observations"]
-            if is_data_degraded:
-                warnings.append("Note: Secondary telemetry is also missing or degraded, but NO_GO prohibition takes precedence.")
+            if is_data_degraded or is_geo_fallback:
+                warnings.append("Note: Secondary telemetry is missing, degraded, or from geographic fallback, but NO_GO prohibition takes precedence.")
         elif is_data_degraded or forecast_coverage_incomplete:
             status = RecommendationStatus.UNKNOWN
             summary = "Sensor, forecast, or hazard bulletin data are expired, degraded, or incomplete. Safe departure evaluation cannot be completed."
             action = "Hold departure. Verify with port authorities before navigating."
             conf_reasons = ["Sensor telemetry validity window expired, degraded, or data feed missing"]
+            confidence_level = ConfidenceLevel.LOW
+        elif is_geo_fallback:
+            status = RecommendationStatus.UNKNOWN
+            summary = (
+                f"No authoritative marine or weather observations are available for "
+                f"{context.origin_harbor or 'the requested harbor'}. Fallback data from Ratnagiri cannot certify departure safety."
+            )
+            action = f"Hold departure. Obtain verified local port authority clearance for {context.origin_harbor or 'the harbor'}."
+            conf_reasons = [f"Geographic fallback in use — no verified station data for {context.origin_harbor or 'requested harbor'}"]
             confidence_level = ConfidenceLevel.LOW
         elif has_caution:
             status = RecommendationStatus.CAUTION
@@ -690,7 +734,7 @@ class DeterministicRiskEngine:
             decisive_factors.append("No active severe weather bulletins.")
             conf_reasons = ["All environmental parameters strictly within safe operating envelope"]
 
-        if is_data_degraded:
+        if is_data_degraded or is_geo_fallback:
             confidence_level = ConfidenceLevel.LOW
         elif is_fallback_source:
             confidence_level = ConfidenceLevel.MEDIUM

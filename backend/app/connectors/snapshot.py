@@ -151,33 +151,155 @@ def _select_record(
     return None
 
 
+KNOWN_HARBOR_ALIASES: dict[str, str] = {
+    # Ratnagiri & South Konkan aliases
+    "ratnagiri": "ratnagiri",
+    "ratnagiri port": "ratnagiri",
+    "ratnagiri_port": "ratnagiri",
+    "ratnagiri harbour": "ratnagiri",
+    "ratnagiri harbor": "ratnagiri",
+    "mirkarwada": "ratnagiri",
+    "mirkarwada port": "ratnagiri",
+    "mirkarwada_port": "ratnagiri",
+    "mirkarwada harbour": "ratnagiri",
+    "mirkarwada harbor": "ratnagiri",
+    "रत्नागिरी": "ratnagiri",
+    "रत्नागिरीहून": "ratnagiri",
+    "रत्नागिरीत": "ratnagiri",
+    # Malvan aliases
+    "malvan": "malvan",
+    "malvan port": "malvan",
+    "malvan_port": "malvan",
+    "malvan harbour": "malvan",
+    "malvan harbor": "malvan",
+    "मालवण": "malvan",
+    "मालवणातून": "malvan",
+    "मालवणहून": "malvan",
+    # Mumbai aliases
+    "mumbai": "mumbai",
+    "mumbai port": "mumbai",
+    "mumbai coastal": "mumbai",
+    "mumbai-coastal": "mumbai",
+    "bombay": "mumbai",
+    "मुंबई": "mumbai",
+    # Goa aliases
+    "goa": "goa",
+    "panaji": "panaji",
+    "पणजी": "panaji",
+    "गोवा": "goa",
+}
+
+
+def _resolve_candidate_dir(custom_path: str | Path | None, relative_subpath: str) -> Path:
+    """Resolve a directory across custom paths, parent search, CWD, and container layouts (/app/data, /data).
+
+    When an explicit custom_path is provided, it is authoritative: return it directly
+    without candidate discovery or fallback.
+    """
+    if custom_path is not None:
+        return Path(custom_path)
+
+    sub = Path(relative_subpath)
+    candidates: list[Path] = []
+    # Search all parent levels of __file__ (handles repo root, backend, /app, etc.)
+    for parent in Path(__file__).resolve().parents:
+        candidates.append(parent / sub)
+    # Search relative to current working directory
+    candidates.append(Path.cwd() / sub)
+    # Container absolute layouts
+    candidates.append(Path("/app") / sub)
+    candidates.append(Path("/") / sub)
+
+    for cand in candidates:
+        if cand.exists() and cand.is_dir():
+            return cand
+
+    # Default fallback to 4 parents up or CWD
+    return Path(__file__).resolve().parent.parent.parent.parent / sub
+
+
 class SnapshotConnector:
     """Offline snapshot connector — reads versioned JSON files from disk."""
 
     def __init__(self, snapshots_path: str | None = None, fixtures_path: str | None = None) -> None:
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
-        self._snapshots_dir = Path(snapshots_path) if snapshots_path else project_root / "data" / "source_snapshots"
-        self._fixtures_dir = Path(fixtures_path) if fixtures_path else project_root / "data" / "fixtures" / "synthetic" / "incois"
+        self._snapshots_dir = _resolve_candidate_dir(snapshots_path, "data/source_snapshots")
+        self._fixtures_dir = _resolve_candidate_dir(fixtures_path, "data/fixtures/synthetic/incois")
         self._custom_snapshots_path = snapshots_path is not None
+        self._custom_fixtures_path = fixtures_path is not None
         self._osf_cache: list[dict[str, Any]] | None = None
 
-    @staticmethod
-    def _normalize_harbor(harbor: str | None) -> str:
-        return (harbor or "ratnagiri").strip().lower().replace(" ", "_")
+    @classmethod
+    def _normalize_harbor(cls, harbor: str | None) -> str:
+        clean = (harbor or "ratnagiri").strip().lower()
+        if clean in KNOWN_HARBOR_ALIASES:
+            return KNOWN_HARBOR_ALIASES[clean]
+        normalized = clean.replace("-", "_").replace(" ", "_")
+        if normalized in KNOWN_HARBOR_ALIASES:
+            return KNOWN_HARBOR_ALIASES[normalized]
+        for suffix in ("_port", "_harbour", "_harbor", " port", " harbour", " harbor"):
+            if clean.endswith(suffix):
+                stem = clean[:-len(suffix)].strip()
+                if stem in KNOWN_HARBOR_ALIASES:
+                    return KNOWN_HARBOR_ALIASES[stem]
+        return normalized
 
     def _generate_checksum(self, payload: dict[str, Any]) -> str:
         data_str = json.dumps(payload, sort_keys=True).encode("utf-8")
         return hashlib.sha256(data_str).hexdigest()
 
-    def _find_fixture_file(self, filename: str) -> Path | None:
-        candidates = [
+    def _find_snapshot_file(self, filename: str) -> Path | None:
+        """Find a snapshot file across candidate directories.
+
+        When an explicit snapshots_path was provided, search ONLY that directory.
+        Do not silently fall back to repository or container directories.
+        """
+        if self._custom_snapshots_path:
+            target = self._snapshots_dir / filename
+            return target if target.exists() and target.is_file() else None
+
+        candidates: list[Path] = [
             self._snapshots_dir / filename,
-            self._fixtures_dir / filename,
-            Path("data/fixtures/synthetic/incois") / filename,
-            Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "incois" / filename,
         ]
+        for parent in Path(__file__).resolve().parents:
+            candidates.append(parent / "data" / "source_snapshots" / filename)
+            candidates.append(parent / "source_snapshots" / filename)
+        candidates.extend([
+            Path("/app/data/source_snapshots") / filename,
+            Path("/data/source_snapshots") / filename,
+            Path.cwd() / "data" / "source_snapshots" / filename,
+            Path.cwd() / "source_snapshots" / filename,
+            Path(__file__).resolve().parent.parent.parent.parent / "data" / "source_snapshots" / filename,
+        ])
         for p in candidates:
-            if p.exists():
+            if p.exists() and p.is_file():
+                return p
+        return None
+
+    def _find_fixture_file(self, filename: str) -> Path | None:
+        """Find a fixture file across candidate directories.
+
+        When an explicit fixtures_path was provided, search ONLY that directory.
+        """
+        if self._custom_fixtures_path:
+            target = self._fixtures_dir / filename
+            return target if target.exists() and target.is_file() else None
+
+        candidates = [
+            self._fixtures_dir / filename,
+            self._snapshots_dir / filename,
+        ]
+        for parent in Path(__file__).resolve().parents:
+            candidates.append(parent / "data" / "fixtures" / "synthetic" / "incois" / filename)
+            candidates.append(parent / "data" / "source_snapshots" / filename)
+        candidates.extend([
+            Path("data/fixtures/synthetic/incois") / filename,
+            Path("/app/data/fixtures/synthetic/incois") / filename,
+            Path("/data/fixtures/synthetic/incois") / filename,
+            Path.cwd() / "data" / "fixtures" / "synthetic" / "incois" / filename,
+            Path(__file__).resolve().parent.parent.parent.parent / "data" / "fixtures" / "synthetic" / "incois" / filename,
+        ])
+        for p in candidates:
+            if p.exists() and p.is_file():
                 return p
         return None
 
@@ -185,9 +307,17 @@ class SnapshotConnector:
         if self._osf_cache is not None:
             return self._osf_cache
 
+        if self._custom_fixtures_path:
+            p = self._fixtures_dir / "osf_hourly_observations.json"
+            if p.exists() and p.is_file():
+                with open(p, "r", encoding="utf-8") as fh:
+                    self._osf_cache = json.load(fh)
+                    return self._osf_cache
+            return []
+
         if self._custom_snapshots_path:
             p = self._snapshots_dir / "osf_hourly_observations.json"
-            if p.exists():
+            if p.exists() and p.is_file():
                 with open(p, "r", encoding="utf-8") as fh:
                     self._osf_cache = json.load(fh)
                     return self._osf_cache
@@ -223,11 +353,11 @@ class SnapshotConnector:
             except Exception as exc:
                 logger.debug(f"DB snapshot lookup failed for {source_name}: {exc}")
 
-        # Fallback to file
+        # Fallback to file across candidate locations
         if not data:
-            path = self._snapshots_dir / filename
-            if not path.exists():
-                raise ConnectorMissingSnapshotError(f"Snapshot not found: {path}")
+            path = self._find_snapshot_file(filename)
+            if not path or not path.exists():
+                raise ConnectorMissingSnapshotError(f"Snapshot not found: {self._snapshots_dir / filename}")
 
             try:
                 with open(path, encoding="utf-8") as fh:
@@ -260,15 +390,20 @@ class SnapshotConnector:
 
         return payload
 
-    def _resolve_fixture(self, prefix: str, harbor: str | None) -> dict[str, Any]:
-        """Try harbor-specific fixture first, then default harbor fixture."""
+    def _resolve_fixture(self, prefix: str, harbor: str | None) -> tuple[dict[str, Any], bool]:
+        """Try harbor-specific fixture first, then fallback to Ratnagiri baseline.
+
+        Returns:
+            (payload_dict, is_fallback)
+        """
         key = self._normalize_harbor(harbor)
-        try:
-            return self._load_snapshot(f"{prefix}_{key}.json")
-        except ConnectorMissingSnapshotError:
-            if key != "ratnagiri":
-                return self._load_snapshot(f"{prefix}_ratnagiri.json")
-            raise
+        harbor_file = f"{prefix}_{key}.json"
+        if self._find_snapshot_file(harbor_file):
+            return self._load_snapshot(harbor_file), False
+        if key != "ratnagiri":
+            data = self._load_snapshot(f"{prefix}_ratnagiri.json")
+            return data, True
+        return self._load_snapshot(f"{prefix}_ratnagiri.json"), False
 
     # ------------------------------------------------------------------
     # Payload builders
@@ -355,7 +490,10 @@ class SnapshotConnector:
 
                 # Normalize the selected record; preserve its original timestamps
                 payload = IncoisOSFNormalizer.normalize(chosen)
-                payload.source_name = "INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture)"
+                if geographic_fallback:
+                    payload.source_name = f"INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture; Ratnagiri GEOGRAPHIC_FALLBACK for {harbor})"
+                else:
+                    payload.source_name = "INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture)"
                 payload.source_url = None
                 # Always use the requested harbor name (do not silently relabel as Ratnagiri)
                 payload.harbor = harbor
@@ -376,20 +514,56 @@ class SnapshotConnector:
                 return payload
 
         # Fallback to versioned snapshot files (not OSF fixture path)
-        raw = self._resolve_fixture("marine", harbor)
+        raw, is_fallback = self._resolve_fixture("marine", harbor)
         raw["harbor"] = harbor
+        if is_fallback:
+            freshness = raw.get("freshness_flags") or {}
+            freshness["coverage_status"] = "GEOGRAPHIC_FALLBACK"
+            warnings = list(freshness.get("warnings") or [])
+            warnings.append(
+                f"[SNAPSHOT-GEOGRAPHIC-FALLBACK] No marine snapshot fixture for harbor '{harbor}'. "
+                f"Returning Ratnagiri reference data. Marine conditions do not represent the actual location."
+            )
+            freshness["warnings"] = warnings
+            raw["freshness_flags"] = freshness
+            orig_src = raw.get("source_name", "INCOIS OSF Snapshot Fixture")
+            raw["source_name"] = f"{orig_src} (Ratnagiri GEOGRAPHIC_FALLBACK for {harbor})"
         return MarineConditionsPayload(**raw)
 
     def get_weather_conditions(self, context: "ToolInvocationContext") -> WeatherConditionsPayload:
         harbor = context.origin_harbor or "Ratnagiri"
-        raw = self._resolve_fixture("weather", harbor)
+        raw, is_fallback = self._resolve_fixture("weather", harbor)
         raw["harbor"] = harbor
+        if is_fallback:
+            freshness = raw.get("freshness_flags") or {}
+            freshness["coverage_status"] = "GEOGRAPHIC_FALLBACK"
+            warnings = list(freshness.get("warnings") or [])
+            warnings.append(
+                f"[SNAPSHOT-GEOGRAPHIC-FALLBACK] No weather snapshot fixture for harbor '{harbor}'. "
+                f"Returning Ratnagiri reference data. Weather conditions do not represent the actual location."
+            )
+            freshness["warnings"] = warnings
+            raw["freshness_flags"] = freshness
+            orig_src = raw.get("source_name", "IMD Coastal Weather Snapshot Fixture")
+            raw["source_name"] = f"{orig_src} (Ratnagiri GEOGRAPHIC_FALLBACK for {harbor})"
         return WeatherConditionsPayload(**raw)
 
     def get_hazard_bulletin(self, context: "ToolInvocationContext") -> HazardBulletinPayload:
         harbor = context.origin_harbor or "Ratnagiri"
-        raw = self._resolve_fixture("hazard", harbor)
+        raw, is_fallback = self._resolve_fixture("hazard", harbor)
         raw["harbor"] = harbor
+        if is_fallback:
+            freshness = raw.get("freshness_flags") or {}
+            freshness["coverage_status"] = "GEOGRAPHIC_FALLBACK"
+            warnings = list(freshness.get("warnings") or [])
+            warnings.append(
+                f"[SNAPSHOT-GEOGRAPHIC-FALLBACK] No hazard snapshot fixture for harbor '{harbor}'. "
+                f"Returning Ratnagiri reference data. Hazard conditions do not represent the actual location."
+            )
+            freshness["warnings"] = warnings
+            raw["freshness_flags"] = freshness
+            orig_src = raw.get("source_name", "IMD Cyclone Warning Division Snapshot Fixture")
+            raw["source_name"] = f"{orig_src} (Ratnagiri GEOGRAPHIC_FALLBACK for {harbor})"
         return HazardBulletinPayload(**raw)
 
     def get_pfz_raw_advisories(self, context: "ToolInvocationContext") -> PFZSourceDataPayload:
