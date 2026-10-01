@@ -1,15 +1,37 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
-import maplibregl from 'maplibre-gl';
-import * as Popover from '@radix-ui/react-popover';
-import * as turf from '@turf/turf';
-import type { MapLayer } from '../../types/contracts';
-import type { OperationalMode } from '../../types/mission';
-import LayerManager from './LayerManager';
-import MissionMapBrief from './MissionMapBrief';
-import { Layers, Navigation, Play, Square, Ship, Sailboat, Clock, Waves, X, Bookmark, RefreshCw, Ruler, Wind } from 'lucide-react';
-import { translateText, type SupportedLanguage } from '../../i18n/translations';
-import { executeSpatialQuery, type UnifiedSpatialQueryResponse } from '../../api/marinewatch-client';
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import maplibregl from "maplibre-gl";
+import * as Popover from "@radix-ui/react-popover";
+import * as turf from "@turf/turf";
+import type { MapLayer } from "../../types/contracts";
+import type { TripAssessmentResponse } from "../../types/assessment";
+import type { OperationalMode } from "../../types/mission";
+import LayerManager from "./LayerManager";
+import MissionMapBrief from "./MissionMapBrief";
+import {
+  Layers,
+  Navigation,
+  Play,
+  Square,
+  Ship,
+  Sailboat,
+  Clock,
+  Waves,
+  X,
+  Bookmark,
+  RefreshCw,
+  Ruler,
+  Wind,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  HelpCircle,
+} from "lucide-react";
+import { translateText, type SupportedLanguage } from "../../i18n/translations";
+import {
+  executeSpatialQuery,
+  type UnifiedSpatialQueryResponse,
+} from "../../api/marinewatch-client";
 import {
   NATIONAL_COASTAL_BOOKMARKS,
   haversineDistanceNm,
@@ -17,7 +39,7 @@ import {
   compassDirection,
   calculateTransitTime,
   generateWindVectorGrid,
-} from '../../utils/geo';
+} from "../../utils/geo";
 
 const TIME_STEPS = [
   { label: "Now", hours: 0 },
@@ -29,8 +51,8 @@ const TIME_STEPS = [
 ];
 
 /** Initial fallback center (Indian coastal waters) */
-const INITIAL_CENTER: [number, number] = [73.45, 16.5];
-const INITIAL_ZOOM = 8.8;
+const INITIAL_CENTER: [number, number] = [73.28, 16.99];
+const INITIAL_ZOOM = 7;
 
 /** CartoDB Vector Basemap Styles */
 const MAP_STYLE_LIGHT =
@@ -60,6 +82,16 @@ interface MapViewProps {
   craftProfile?: string;
   timeOffsetHours?: number;
   onTimeOffsetChange?: (hours: number) => void;
+  /**
+   * Canonical assessment conditions bundle from AssessmentService.
+   * When provided and time offset is 0 ("Now"), the telemetry card uses
+   * these values instead of a separate executeSpatialQuery fetch, ensuring
+   * the Map and Brief/Agent Panel always display the same observation data.
+   */
+  canonicalConditions?: any;
+  /** Canonical deterministic decision corresponding to canonicalConditions. */
+  canonicalDecision?: "GO" | "CAUTION" | "NO_GO" | "UNKNOWN" | string | { status?: string };
+  assessment?: TripAssessmentResponse | null;
 }
 
 export default function MapView({
@@ -80,7 +112,11 @@ export default function MapView({
   craftProfile = "motorized_boat",
   timeOffsetHours,
   onTimeOffsetChange,
+  canonicalConditions,
+  canonicalDecision = "UNKNOWN",
+  assessment = null,
 }: MapViewProps) {
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const activeLayersRef = useRef<{ layers: string[]; sources: string[] }>({
@@ -120,7 +156,7 @@ export default function MapView({
     sst_c: number;
     tide_height_m: number;
     tide_phase: string;
-    status: "GO" | "CAUTION" | "NO_GO";
+    status: "GO" | "CAUTION" | "NO_GO" | "UNKNOWN";
   } | null>(null);
 
   const [inspectedPoint, setInspectedPoint] = useState<{
@@ -130,6 +166,45 @@ export default function MapView({
     loading: boolean;
   } | null>(null);
   const [showBookmarks, setShowBookmarks] = useState(false);
+
+  // Canonical Decision Snapshot: seed telemetry card from assessment conditions when at t=0.
+  // This ensures the Map always shows the same wave/wind values as the Brief and Agent Panel,
+  // which also read from the same assessment bundle. The spatial query still runs for time offsets
+  // (future forecast scrubbing) and for point inspection clicks.
+  useEffect(() => {
+    if (!canonicalConditions || selectedTimeStep !== 0) return;
+    const marine = canonicalConditions.marine;
+    const weather = canonicalConditions.weather;
+    if (!marine && !weather) return;
+
+    const waveM: number = marine?.significant_wave_height_m ?? 0;
+    const windKn: number = weather?.wind_speed_knots ?? marine?.wind_speed_knots ?? 0;
+    const windDir: number = weather?.wind_direction_deg ?? marine?.wind_direction_deg ?? 0;
+    const swellM: number = marine?.swell_wave_height_m ?? marine?.swell_height_m ?? 0;
+    const swellP: number = marine?.swell_period_seconds ?? marine?.wave_period_seconds ?? 0;
+    const sstC: number = marine?.sea_surface_temp_c ?? marine?.sea_surface_temperature_c ?? 0;
+
+    let canonStatus: 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN' = 'UNKNOWN';
+    const decisionStatus = typeof canonicalDecision === 'string'
+      ? canonicalDecision
+      : canonicalDecision?.status;
+    if (decisionStatus === 'NO_GO') canonStatus = 'NO_GO';
+    else if (decisionStatus === 'CAUTION') canonStatus = 'CAUTION';
+    else if (decisionStatus === 'GO') canonStatus = 'GO';
+
+    setMapForecast({
+      loading: false,
+      wave_height_m: waveM,
+      wind_speed_kn: windKn,
+      wind_direction_deg: windDir,
+      swell_height_m: swellM,
+      swell_period_s: swellP,
+      sst_c: sstC,
+      tide_height_m: marine?.tide_level_m ?? 0,
+      tide_phase: marine?.tide_phase ?? '—',
+      status: canonStatus,
+    });
+  }, [canonicalConditions, canonicalDecision, selectedTimeStep, craftProfile]);
 
   // Nautical Measure Tool State
   const [isRulerActive, setIsRulerActive] = useState(false);
@@ -182,6 +257,43 @@ export default function MapView({
   }, [rulerPoints]);
 
   useEffect(() => {
+    if (assessment) {
+      const marine = assessment.conditions?.marine;
+      const weather = assessment.conditions?.weather;
+      // The parent recomputes the mission for a changed time. Display that
+      // exact snapshot; array indices are not forecast timestamps.
+      const selected: Record<string, any> = {};
+      setMapForecast({
+        loading: false,
+        wave_height_m: Number(
+          selected.wave_height_m ??
+            selected.swh ??
+            marine?.significant_wave_height_m ??
+            0,
+        ),
+        wind_speed_kn: Number(
+          selected.wind_speed_knots ?? weather?.wind_speed_knots ?? 0,
+        ),
+        wind_direction_deg: Number(
+          selected.wind_direction_deg ?? weather?.wind_direction_deg ?? 0,
+        ),
+        swell_height_m: Number(marine?.swell_height_m ?? 0),
+        swell_period_s: Number(marine?.swell_period_sec ?? 0),
+        sst_c: Number(
+          selected.sea_surface_temp_c ?? marine?.sea_surface_temp_c ?? 0,
+        ),
+        tide_height_m: Number(
+          selected.sea_level_height_m ?? marine?.tide_level_m ?? marine?.sea_level_height_m ?? 0,
+        ),
+        tide_phase: marine?.tide_phase
+          ? `${marine.tide_phase} estimated`
+          : "estimated",
+        status: (['GO', 'CAUTION', 'NO_GO', 'UNKNOWN'].includes(String(typeof canonicalDecision === 'object' ? canonicalDecision?.status : canonicalDecision))
+          ? (typeof canonicalDecision === 'object' ? canonicalDecision?.status : canonicalDecision)
+          : 'UNKNOWN') as 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN',
+      });
+      return;
+    }
     let isCancelled = false;
     const targetLat = inspectedPoint
       ? inspectedPoint.lat
@@ -194,29 +306,17 @@ export default function MapView({
         ? center[0]
         : 73.28;
 
+    // Skip the spatial query for "Now" (offset=0) if canonical conditions are already seeded.
+    // Still run it if the user has scrolled to a future time step or clicked an inspection point.
+    if (selectedTimeStep === 0 && canonicalConditions && !inspectedPoint) {
+      return;
+    }
+
     setMapForecast((prev) => (prev ? { ...prev, loading: true } : null));
 
     executeSpatialQuery(targetLat, targetLon, 50, selectedTimeStep)
       .then((res) => {
         if (isCancelled) return;
-        const wave = res.ocean_state.wave_height_m;
-        const craftUpper = (craftProfile || "motorized_boat").toUpperCase();
-        let limit = 2.2;
-        if (
-          craftUpper.includes("NON_MOTORIZED") ||
-          craftUpper.includes("CANOE")
-        )
-          limit = 1.4;
-        else if (
-          craftUpper.includes("MECHANIZED") ||
-          craftUpper.includes("TRAWLER")
-        )
-          limit = 3.5;
-
-        let status: "GO" | "CAUTION" | "NO_GO" = "GO";
-        if (wave > limit) status = "NO_GO";
-        else if (wave > limit * 0.8) status = "CAUTION";
-
         setMapForecast({
           loading: false,
           wave_height_m: res.ocean_state.wave_height_m,
@@ -227,7 +327,17 @@ export default function MapView({
           sst_c: res.ocean_state.sst_c,
           tide_height_m: res.astronomical_tide.current_height_m,
           tide_phase: res.astronomical_tide.phase,
-          status,
+          status:
+            (typeof canonicalDecision === "string" &&
+            ["GO", "CAUTION", "NO_GO", "UNKNOWN"].includes(canonicalDecision)
+              ? (canonicalDecision as "GO" | "CAUTION" | "NO_GO" | "UNKNOWN")
+              : (canonicalDecision as any)?.status === "SAFE_TO_GO"
+                ? "GO"
+                : (canonicalDecision as any)?.status === "DO_NOT_GO"
+                  ? "NO_GO"
+                  : (canonicalDecision as any)?.status === "CAUTION"
+                    ? "CAUTION"
+                    : "UNKNOWN"),
         });
 
         if (inspectedPoint) {
@@ -246,7 +356,15 @@ export default function MapView({
     return () => {
       isCancelled = true;
     };
-  }, [selectedTimeStep, center?.[0], center?.[1], craftProfile]);
+  }, [
+    assessment,
+    selectedTimeStep,
+    center?.[0],
+    center?.[1],
+    craftProfile,
+    canonicalConditions,
+    canonicalDecision,
+  ]);
 
   const activeStyle = theme === "dark" ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
   const currentStyleRef = useRef(activeStyle);
@@ -633,39 +751,39 @@ export default function MapView({
       "bottom-right",
     );
 
-    map.on('style.load', () => {
-      if (!map.hasImage('icon-anchor')) {
+    map.on("style.load", () => {
+      if (!map.hasImage("icon-anchor")) {
         const createEmojiImg = (char: string) => {
-          const c = document.createElement('canvas');
+          const c = document.createElement("canvas");
           c.width = 40;
           c.height = 40;
-          const ctx = c.getContext('2d', { willReadFrequently: true });
+          const ctx = c.getContext("2d", { willReadFrequently: true });
           if (ctx) {
-            ctx.font = '28px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.font = "28px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
             ctx.fillText(char, 20, 22);
             return ctx.getImageData(0, 0, 40, 40);
           }
           return null;
         };
-        const anchorImg = createEmojiImg('⚓');
-        if (anchorImg) map.addImage('icon-anchor', anchorImg);
-        const fishImg = createEmojiImg('🐟');
-        if (fishImg) map.addImage('icon-fish', fishImg);
+        const anchorImg = createEmojiImg("⚓");
+        if (anchorImg) map.addImage("icon-anchor", anchorImg);
+        const fishImg = createEmojiImg("🐟");
+        if (fishImg) map.addImage("icon-fish", fishImg);
 
         // Register directional nautical wind flow arrow
         const createWindArrowImg = () => {
-          const c = document.createElement('canvas');
+          const c = document.createElement("canvas");
           c.width = 28;
           c.height = 28;
-          const ctx = c.getContext('2d', { willReadFrequently: true });
+          const ctx = c.getContext("2d", { willReadFrequently: true });
           if (ctx) {
-            ctx.strokeStyle = '#0284c7';
-            ctx.fillStyle = '#0284c7';
+            ctx.strokeStyle = "#0284c7";
+            ctx.fillStyle = "#0284c7";
             ctx.lineWidth = 2.5;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
             ctx.beginPath();
             ctx.moveTo(14, 4);
             ctx.lineTo(14, 24);
@@ -678,11 +796,11 @@ export default function MapView({
           return null;
         };
         const windImg = createWindArrowImg();
-        if (windImg) map.addImage('icon-wind-arrow', windImg);
+        if (windImg) map.addImage("icon-wind-arrow", windImg);
       }
     });
 
-    map.on('click', async (e) => {
+    map.on("click", async (e) => {
       // If nautical ruler is active, capture waypoint instead of opening spatial inspection popup
       if (isRulerActiveRef.current) {
         const pt: [number, number] = [
@@ -1423,7 +1541,12 @@ export default function MapView({
           const hasRoute = operationalLayers.some(
             (l) => l.style?.layer_category === "route",
           );
-          for (const l of operationalLayers) {
+          const layersToFit = hasRoute
+            ? operationalLayers.filter(
+                (l) => l.style?.layer_category === "route",
+              )
+            : operationalLayers;
+          for (const l of layersToFit) {
             collectBounds(l.geojson, bounds, () => {
               hasOperationalCoords = true;
             });
@@ -1490,7 +1613,13 @@ export default function MapView({
 
     const bounds = new maplibregl.LngLatBounds();
     let hasOperationalCoords = false;
-    for (const l of operationalLayers) {
+    const hasRoute = operationalLayers.some(
+      (l) => l.style?.layer_category === "route",
+    );
+    const layersToFit = hasRoute
+      ? operationalLayers.filter((l) => l.style?.layer_category === "route")
+      : operationalLayers;
+    for (const l of layersToFit) {
       collectBounds(l.geojson, bounds, () => {
         hasOperationalCoords = true;
       });
@@ -1498,7 +1627,11 @@ export default function MapView({
 
     if (hasOperationalCoords && !bounds.isEmpty()) {
       try {
-        map.fitBounds(bounds, { padding: 70, maxZoom: 12, duration: 900 });
+        map.fitBounds(bounds, {
+          padding: hasRoute ? 44 : 70,
+          maxZoom: hasRoute ? 13 : 12,
+          duration: 900,
+        });
       } catch {
         if (center) map.flyTo({ center, zoom: zoom ?? 9.5, duration: 900 });
       }
@@ -1710,7 +1843,7 @@ export default function MapView({
                 size={24}
                 fill={isTrackingLocation ? "#2563eb" : "none"}
               />
-              {translateText("My Location", language) || "My Location"}
+              {translateText("My Location", language)}
             </button>
           )}
           <button
@@ -1729,7 +1862,7 @@ export default function MapView({
             }}
           >
             <Layers size={24} />
-            {translateText("Fit Trip", language) || "Fit Trip"}
+            {translateText("Fit Trip", language)}
           </button>
           {layerAvailability?.routes === "AVAILABLE" && (
             <button
@@ -1753,7 +1886,9 @@ export default function MapView({
               ) : (
                 <Play size={24} fill="currentColor" />
               )}
-              {isSimulating ? "Stop" : "Simulate"}
+              {isSimulating
+                ? "Stop"
+                : "Simulate"}
             </button>
           )}
           <button
@@ -1858,7 +1993,7 @@ export default function MapView({
           aria-label="Toggle coastal landmarks"
         >
           <Bookmark size={14} style={{ color: "#0ea5e9" }} />
-          <span>Coastal Bookmarks</span>
+          <span>{translateText("Coastal Bookmarks", language)}</span>
         </button>
 
         <button
@@ -2042,7 +2177,25 @@ export default function MapView({
                       : "#991b1b",
               }}
             >
-              {mapForecast.status}
+              {mapForecast.status === "GO" ? (
+                <ShieldCheck size={13} aria-label="Safe" />
+              ) : mapForecast.status === "CAUTION" ? (
+                <ShieldAlert size={13} aria-label="Caution" />
+              ) : mapForecast.status === "NO_GO" ? (
+                <ShieldX size={13} aria-label="Do not go" />
+              ) : (
+                <HelpCircle size={13} aria-label="Unknown" />
+              )}
+              {translateText(
+                mapForecast.status === "GO"
+                  ? "GO"
+                  : mapForecast.status === "CAUTION"
+                    ? "CAUTION"
+                    : mapForecast.status === "NO_GO"
+                      ? "DO_NOT_GO"
+                      : "UNKNOWN",
+                language,
+              )}
             </span>
             <span
               style={{
@@ -2059,7 +2212,7 @@ export default function MapView({
                   fontWeight: 400,
                 }}
               >
-                Wave
+                {translateText("Wave", language)}
               </span>
             </span>
             <span
@@ -2070,7 +2223,7 @@ export default function MapView({
                 fontWeight: 600,
               }}
             >
-              💨 {mapForecast.wind_speed_kn}kn{" "}
+              💨 {mapForecast.wind_speed_kn} {translateText("knots", language)}{" "}
               <span
                 style={{
                   color: "var(--muted-foreground, #94a3b8)",
@@ -2095,7 +2248,7 @@ export default function MapView({
                   fontWeight: 400,
                 }}
               >
-                ({mapForecast.tide_phase})
+                ({translateText(mapForecast.tide_phase, language)})
               </span>
             </span>
             <span
@@ -2106,7 +2259,15 @@ export default function MapView({
                 fontWeight: 600,
               }}
             >
-              🌡️ {mapForecast.sst_c}°C
+              🌡️ {mapForecast.sst_c}°C{" "}
+              <span
+                style={{
+                  color: "var(--muted-foreground, #94a3b8)",
+                  fontWeight: 400,
+                }}
+              >
+                {translateText("Sea temperature", language)}
+              </span>
             </span>
           </>
         ) : (
@@ -2151,7 +2312,7 @@ export default function MapView({
           }}
         >
           <Clock size={13} />
-          <span>Forecast:</span>
+          <span>{translateText("Forecast", language)}:</span>
         </span>
         {TIME_STEPS.map((step) => (
           <button
@@ -2177,7 +2338,7 @@ export default function MapView({
               transition: "all 0.15s ease",
             }}
           >
-            {step.label}
+            {translateText(step.label, language)}
           </button>
         ))}
       </div>

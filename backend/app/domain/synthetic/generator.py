@@ -21,6 +21,61 @@ REFERENCE_TIME = datetime(2026, 9, 28, 6, 0, 0, tzinfo=timezone.utc)
 SYNTHETIC_NAMESPACE = "ORCA_DEMO_V1"
 DATASET_VERSION = "synthetic_demo_v1"
 
+
+def current_demo_reference() -> datetime:
+    """Daily scenario clock, never an observation timestamp from a live source."""
+    return datetime.now(timezone.utc).replace(hour=6, minute=0, second=0, microsecond=0)
+
+
+def current_demo_dataset() -> Dict[str, Any]:
+    """Project the existing scenario onto today's UTC clock without changing values.
+
+    Original generator functions remain the historical/benchmark authority.
+    Every timestamp (including validity and operational events) receives the
+    same offset, preserving temporal relationships across role views.
+    """
+    return _dated_demo_dataset(current_demo_reference().isoformat())
+
+
+from functools import lru_cache
+
+
+@lru_cache(maxsize=2)
+def _dated_demo_dataset(reference: str) -> Dict[str, Any]:
+    shift = datetime.fromisoformat(reference) - REFERENCE_TIME
+
+    def project(value: Any) -> Any:
+        if isinstance(value, datetime):
+            return value + shift
+        if isinstance(value, dict):
+            return {key: project(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [project(item) for item in value]
+        if isinstance(value, str) and len(value) >= 19 and value[4:5] == '-' and 'T' in value:
+            try:
+                return (datetime.fromisoformat(value.replace('Z', '+00:00')) + shift).isoformat()
+            except ValueError:
+                pass
+        return value
+
+    result = project(generate_synthetic_demo_dataset())
+    # The controlled scenario uses the same offshore cycle at the additional
+    # demo stations. These are synthetic scenario records, never measurements.
+    covered = {r['harbor_id'] for r in result['marine_observations']}
+    template = [r for r in result['marine_observations'] if r['harbor_id'] == 'harbor-ratnagiri']
+    for harbor in result['harbors']:
+        if harbor['public_id'] not in covered:
+            for record in template:
+                result['marine_observations'].append({
+                    **record, 'harbor_id': harbor['public_id'],
+                    'public_id': record['public_id'].replace('ratnagiri', harbor['name'].lower()),
+                    'coverage_metadata': {**record['coverage_metadata'], 'station': harbor['name']},
+                    'provenance_json': {**record['provenance_json'], 'harbor': harbor['name'], 'note': 'Shared controlled offshore scenario cycle'},
+                })
+    result['snapshot_id'] = f"coastal-demo-{reference[:10]}"
+    result['reference_time'] = reference
+    return result
+
 PROVENANCE_BASE = {
     "mode": "SYNTHETIC",
     "source": "synthetic-demo",

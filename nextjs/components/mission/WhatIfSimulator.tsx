@@ -1,9 +1,15 @@
+"use client";
+import AssessmentSimulator from './AssessmentSimulator';
+import type { TripAssessmentResponse } from '../../types/assessment';
 import { useState } from 'react';
 import { ArrowRight, Check, Clock, Cpu, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import type { DecisionDiff, MissionContext, WhatIfParameters } from '../../types/mission';
 import { translateText, type SupportedLanguage } from '../../i18n/translations';
+import DecisionDeltaPanel from '../fisher/DecisionDeltaPanel';
 
 interface WhatIfSimulatorProps {
+  assessment?: TripAssessmentResponse | null;
+  onApplyAssessment?: (assessment: TripAssessmentResponse) => void;
   currentContext: MissionContext;
   currentStatus?: string;
   language?: SupportedLanguage;
@@ -33,7 +39,7 @@ const OBJECTIVES = [
   { value: 'transit', label: '🧭 Safe Passage' },
 ] as const;
 
-export default function WhatIfSimulator({
+function LegacyWhatIfSimulator({
   currentContext,
   currentStatus = 'READY',
   language = 'en',
@@ -86,10 +92,31 @@ export default function WhatIfSimulator({
   };
 
   const handleApply = () => {
+    let updatedDeparture = currentContext.departure_time;
+    let updatedReturn = currentContext.return_time;
+
+    if (timeOffset > 0 && currentContext.departure_time) {
+      const depParsed = Date.parse(currentContext.departure_time);
+      if (!isNaN(depParsed)) {
+        updatedDeparture = new Date(depParsed + timeOffset * 60 * 60 * 1000).toISOString();
+      }
+    }
+    if (timeOffset > 0 && currentContext.return_time) {
+      const retParsed = Date.parse(currentContext.return_time);
+      if (!isNaN(retParsed)) {
+        updatedReturn = new Date(retParsed + timeOffset * 60 * 60 * 1000).toISOString();
+      }
+    }
+
     onApplyContext({
+      ...currentContext,
       origin_harbor: currentContext.origin_harbor,
       craft_profile: craftOverride,
       vessel_size: vesselSizeOverride,
+      departure_time: updatedDeparture,
+      return_time: updatedReturn,
+      target_pfz: currentContext.target_pfz,
+      parent_assessment_id: currentContext.parent_assessment_id,
     });
     setApplied(true);
   };
@@ -232,6 +259,9 @@ export default function WhatIfSimulator({
                 <p className="diff-summary">{translateText(activeDiff.summary, language)}</p>
               )}
 
+              {/* M1.4 Decision Delta Panel */}
+              <DecisionDeltaPanel diff={activeDiff} language={language} />
+
               {(craftOverride !== currentContext.craft_profile || vesselSizeOverride !== (currentContext.vessel_size ?? 'medium')) && (
                 <button
                   type="button"
@@ -254,4 +284,9 @@ export default function WhatIfSimulator({
       )}
     </div>
   );
+}
+
+export default function WhatIfSimulator(props: WhatIfSimulatorProps) {
+  if (props.assessment && props.onApplyAssessment) return <AssessmentSimulator assessment={props.assessment} onApply={props.onApplyAssessment} />;
+  return <LegacyWhatIfSimulator {...props} />;
 }

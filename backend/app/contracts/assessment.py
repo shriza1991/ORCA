@@ -14,7 +14,7 @@ from backend.app.contracts.chat import (
     AgentCollaborationPayload,
 )
 from backend.app.contracts.observation import ObservationBundle
-from backend.app.contracts.mission import MissionState
+from backend.app.contracts.mission import MissionState, DecisionDelta
 
 
 class TripAssessmentRequest(BaseModel):
@@ -180,4 +180,15 @@ class TripAssessmentResponse(BaseModel):
     safe_window: Optional[SafeMissionWindow] = Field(
         None, description="Earliest safe mission departure window (M1.4)."
     )
+
+
+class TripSimulationRequest(BaseModel):
+    baseline: TripAssessmentRequest
+    simulated: TripAssessmentRequest
+
+
+class TripSimulationResponse(BaseModel):
+    baseline: TripAssessmentResponse
+    simulated: TripAssessmentResponse
+    delta: DecisionDelta
 

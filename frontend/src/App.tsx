@@ -79,7 +79,7 @@ export default function App() {
       />
 
       {/* Mobile Segmented View Tabs (Visible only on <= 768px viewports when in a role console) */}
-      {portal !== "selection" && portal !== "settings" && (
+      {portal === "authority" && (
         <nav
           className="mobile-view-tabs"
           role="tablist"
@@ -92,7 +92,7 @@ export default function App() {
             aria-selected={mobileView === "chat"}
           >
             <MessageSquare size={16} />
-            <span>{portal === "fisher" ? "Decision" : "Chat"}</span>
+            <span>Chat</span>
           </button>
           <button
             className={`mobile-tab-btn ${mobileView === "map" ? "active" : ""}`}

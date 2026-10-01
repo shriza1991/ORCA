@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import '../styles/product.css';
 
 export const metadata: Metadata = {
   title: 'ORCA | Marine Mission Intelligence & Risk Assistant',

@@ -379,7 +379,10 @@ class ProviderToolAdapter:
                 weather=weather, 
                 hazard=hazard, 
                 bundle=bundle,
-                data_mode=data_mode_val
+                data_mode=context.data_mode or data_mode_val,
+                reference_time=context.departure_time,
+                return_time=context.return_time,
+                hourly_records=(marine.hourly_forecast if marine else []),
             )
             quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"] if is_mock else ["REAL_SOURCE", "DETERMINISTIC_EVAL"]
 

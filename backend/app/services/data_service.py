@@ -78,6 +78,65 @@ class DataService:
         self._snapshot = SnapshotConnector()
 
     @staticmethod
+    def is_archived_demo(context: ToolInvocationContext) -> bool:
+        """The original dated Fisher recording remains an explicit replay."""
+        if not context.departure_time:
+            return False
+        return context.departure_time[:10] in {"2026-09-28", "2026-09-29"}
+
+    def _current_demo_payload(self, kind: str, context: ToolInvocationContext):
+        from backend.app.domain.synthetic.generator import current_demo_dataset
+        from backend.app.connectors.normalizers.incois import IncoisOSFNormalizer
+        dataset = current_demo_dataset()
+        harbor = (context.origin_harbor or "Ratnagiri").replace(" harbour", "").strip()
+        harbor_id = "harbor-" + harbor.lower()
+        target = datetime.fromisoformat((context.departure_time or datetime.now(timezone.utc).isoformat()).replace("Z", "+00:00"))
+        if target.tzinfo is None:
+            target = target.replace(tzinfo=timezone.utc)
+        records = [r for r in dataset["marine_observations"] if r["harbor_id"] == harbor_id]
+        eligible = [r for r in records if r["observation_time"] <= target]
+        if not eligible or target > max(r["observation_time"] for r in records):
+            raise ValueError("This harbor or departure is outside the controlled scenario coverage.")
+        record = max(eligible, key=lambda r: r["observation_time"])
+        hourly = [{**r, "observation_time": r["observation_time"].isoformat()} for r in records]
+        observed = record["observation_time"].isoformat()
+        valid_to = max(r["observation_time"] for r in records).isoformat()
+        source = "ORCA controlled marine scenario (DEMO)"
+        if kind == "marine":
+            result = IncoisOSFNormalizer.normalize(record)
+            result.harbor = harbor
+            result.source_name = source
+            result.source_url = None
+            result.valid_to = valid_to
+            result.hourly_forecast = hourly
+            result.freshness_flags = {"provenance_mode": "DEMO", "snapshot_id": dataset["snapshot_id"], "reference_time": dataset["reference_time"]}
+            return result
+        if kind == "weather":
+            return WeatherConditionsPayload(harbor=harbor, wind_speed_knots=record["wind_speed_knots"], wind_gust_knots=record["wind_gust_knots"], wind_direction_deg=record["wind_direction_deg"], visibility_km=record["visibility_km"], observed_at=observed, valid_to=valid_to, source_name=source, hourly_forecast=hourly)
+        if kind == "hazard":
+            # Only active, applicable scenario bulletins affect the mission.
+            from shapely.geometry import Point, shape
+            from backend.app.connectors.harbors import resolve_coordinates
+            coords = context.coordinates
+            if not coords:
+                lat, lon = resolve_coordinates(context)
+                coords = [lon, lat]
+            active = []
+            for hazard in dataset["hazards"]:
+                geometry = hazard.get("geometry_geojson") or hazard.get("geometry")
+                start = hazard.get("issued_at") or hazard.get("valid_from") or hazard.get("effective_from") or hazard.get("start_time")
+                end = hazard.get("valid_until") or hazard.get("valid_to") or hazard.get("expires_at") or hazard.get("end_time")
+                if not geometry or not coords or not start or not end:
+                    continue
+                start = datetime.fromisoformat(start.replace("Z", "+00:00")) if isinstance(start, str) else start
+                end = datetime.fromisoformat(end.replace("Z", "+00:00")) if isinstance(end, str) else end
+                if start <= target <= end and shape(geometry).intersects(Point(coords)):
+                    active.append(hazard)
+            return HazardBulletinPayload(harbor=harbor, cyclone_warning_active=any("CYCLONE" in str(h.get("event_type", "")).upper() for h in active), squall_alert=any("SQUALL" in str(h.get("event_type", "")).upper() for h in active), severity="WARNING" if active else "NORMAL", headline="; ".join(h["headline"] for h in active) or "No active atmospheric warning at this origin in the controlled scenario.", valid_from=observed, valid_to=valid_to, source_name=source)
+        features = [{"id": r["public_id"], "lat": r["latitude"], "lon": r["longitude"], "sst_grad": r["sst_gradient"], "chlorophyll": r["chlorophyll_value"], "depth_m": r["depth_m"]} for r in dataset["pfz_candidates"] if r.get("qc_status") == "VALID" and r["detected_at"] <= target <= r["valid_to"]]
+        return PFZSourceDataPayload(features=features, bulletin_date=observed, valid_to=valid_to, source_name=source)
+
+    @staticmethod
     @lru_cache(maxsize=1)
     def _synthetic_osf_records() -> tuple[dict, ...]:
         """Load the canonical deterministic hourly demo records once per process."""
@@ -138,6 +197,8 @@ class DataService:
         """
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode == "DEMO":
+            if not self.is_archived_demo(context):
+                return self._current_demo_payload("marine", context)
             from backend.app.scenarios.fisher_demo import marine
             return marine()
         if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
@@ -176,6 +237,8 @@ class DataService:
         """
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode == "DEMO":
+            if not self.is_archived_demo(context):
+                return self._current_demo_payload("weather", context)
             from backend.app.scenarios.fisher_demo import weather
             return weather()
         if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
@@ -272,6 +335,8 @@ class DataService:
         """
         harbor = context.origin_harbor or "Ratnagiri"
         if self.data_mode == "DEMO":
+            if not self.is_archived_demo(context):
+                return self._current_demo_payload("hazard", context)
             from backend.app.scenarios.fisher_demo import hazard
             return hazard()
         if self.data_mode in ("SNAPSHOT", "SYNTHETIC"):
@@ -374,6 +439,8 @@ class DataService:
     def get_pfz_raw_advisories(self, context: ToolInvocationContext) -> PFZSourceDataPayload:
         """Route to the appropriate PFZ connector based on DATA_MODE."""
         if self.data_mode == "DEMO":
+            if not self.is_archived_demo(context):
+                return self._current_demo_payload("pfz", context)
             from backend.app.scenarios.fisher_demo import DEMO_DEPARTURE, pfz_features
             return PFZSourceDataPayload(
                 features=pfz_features(),

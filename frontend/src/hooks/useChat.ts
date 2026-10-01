@@ -32,7 +32,11 @@ export function useChat() {
       module.default.changeLanguage(language);
     });
   }, [language]);
-  const [missionContext, setMissionContext] = useState<MissionContext>(DEFAULT_MISSION_CONTEXT);
+  const [missionContext, setMissionContext] = useState<MissionContext>(() => {
+    try { return JSON.parse(localStorage.getItem('orca.mission') || 'null') || DEFAULT_MISSION_CONTEXT; }
+    catch { return DEFAULT_MISSION_CONTEXT; }
+  });
+  useEffect(() => { try { localStorage.setItem('orca.mission', JSON.stringify(missionContext)); } catch {} }, [missionContext]);
   const [missionState, setMissionState] = useState<MissionState | null>(null);
   const [activeDiff, setActiveDiff] = useState<DecisionDiff | null>(null);
 
@@ -68,6 +72,7 @@ export function useChat() {
 
     try {
       const req: ChatRequest = {
+        data_mode: (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
         conversation_id: conversationId ?? undefined,
         message: text,
         user_context: {
@@ -160,6 +165,7 @@ export function useChat() {
 
     try {
       const req: ChatRequest = {
+        data_mode: (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
         conversation_id: conversationId ?? undefined,
         message: queryText,
         user_context: {

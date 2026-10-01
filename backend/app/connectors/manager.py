@@ -153,6 +153,11 @@ class ConnectorManager:
         import time
         start_time = time.perf_counter()
         mode = self.current_mode
+        if context.data_mode == "DEMO" or settings.DATA_MODE == "DEMO":
+            from backend.app.services.data_service import DataService
+            service = DataService("DEMO")
+            if hasattr(service, snapshot_method):
+                return getattr(service, snapshot_method)(context)
         
         providers = live_provider if isinstance(live_provider, list) else ([live_provider] if live_provider else [])
         

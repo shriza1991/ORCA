@@ -185,19 +185,13 @@ export default function MapView({
     const swellP: number = marine?.swell_period_seconds ?? marine?.wave_period_seconds ?? 0;
     const sstC: number = marine?.sea_surface_temp_c ?? marine?.sea_surface_temperature_c ?? 0;
 
-    const craftUpper = (craftProfile || 'motorized_boat').toUpperCase();
-    let limit = 2.2;
-    if (craftUpper.includes('NON_MOTORIZED') || craftUpper.includes('CANOE')) limit = 1.4;
-    else if (craftUpper.includes('MECHANIZED') || craftUpper.includes('TRAWLER')) limit = 3.5;
-    let canonStatus: 'GO' | 'CAUTION' | 'NO_GO' = 'GO';
+    let canonStatus: 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN' = 'UNKNOWN';
     const decisionStatus = typeof canonicalDecision === 'string'
       ? canonicalDecision
       : canonicalDecision?.status;
     if (decisionStatus === 'NO_GO') canonStatus = 'NO_GO';
     else if (decisionStatus === 'CAUTION') canonStatus = 'CAUTION';
     else if (decisionStatus === 'GO') canonStatus = 'GO';
-    else if (waveM > limit) canonStatus = 'NO_GO';
-    else if (waveM > limit * 0.8) canonStatus = 'CAUTION';
 
     setMapForecast({
       loading: false,
@@ -265,16 +259,11 @@ export default function MapView({
 
   useEffect(() => {
     if (assessment) {
-      const records = assessment.conditions?.hourly_forecast || [];
       const marine = assessment.conditions?.marine;
       const weather = assessment.conditions?.weather;
-      const selected =
-        records[
-          Math.min(
-            Math.round(selectedTimeStep / 2),
-            Math.max(records.length - 1, 0),
-          )
-        ] || {};
+      // The parent recomputes the mission for a changed time. Display that
+      // exact snapshot; array indices are not forecast timestamps.
+      const selected: Record<string, any> = {};
       setMapForecast({
         loading: false,
         wave_height_m: Number(
@@ -295,7 +284,7 @@ export default function MapView({
           selected.sea_surface_temp_c ?? marine?.sea_surface_temp_c ?? 0,
         ),
         tide_height_m: Number(
-          selected.sea_level_height_m ?? marine?.sea_level_height_m ?? 0,
+          selected.sea_level_height_m ?? marine?.tide_level_m ?? marine?.sea_level_height_m ?? 0,
         ),
         tide_phase: marine?.tide_phase
           ? `${marine.tide_phase} estimated`

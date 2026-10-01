@@ -26,6 +26,7 @@ export interface UserContext {
 }
 
 export interface ChatRequest {
+  data_mode?: string;
   conversation_id?: string;
   message: string;
   user_context?: UserContext;
