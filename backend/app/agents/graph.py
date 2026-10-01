@@ -1131,11 +1131,17 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
                     # Determine whether this assessment is an operational request or an explicit demo scenario
                     # independently from its individual source origins.
                     configured_mode = str(
-                        state.get("data_mode") or getattr(settings, "DATA_MODE", "SYNTHETIC")
+                        state.get("data_mode") or (getattr(settings, "DATA_MODE", "SYNTHETIC") if state.get("tool_mode") == "provider" else "SYNTHETIC")
                     ).upper()
                     is_operational = bool(
                         state.get("is_operational")
-                        or (configured_mode in ("LIVE", "HYBRID") and not state.get("is_demo") and not state.get("scenario_id") and not state.get("is_scenario"))
+                        or (
+                            state.get("tool_mode", "provider") == "provider"
+                            and configured_mode in ("LIVE", "HYBRID")
+                            and not state.get("is_demo")
+                            and not state.get("scenario_id")
+                            and not state.get("is_scenario")
+                        )
                     )
 
                     if not is_operational:

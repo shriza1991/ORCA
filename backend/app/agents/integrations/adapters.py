@@ -598,17 +598,21 @@ class ProviderToolAdapter:
             else:
                 data_mode_val = "MOCK" if is_mock else (getattr(context, "data_mode", None) or getattr(settings, "DATA_MODE", "LIVE").upper())
 
-            payload = engine_fn(
-                context, 
-                marine=marine, 
-                weather=weather, 
-                hazard=hazard, 
-                bundle=bundle,
-                data_mode=context.data_mode or data_mode_val,
-                reference_time=context.departure_time,
-                return_time=context.return_time,
-                hourly_records=(marine.hourly_forecast if marine else []),
-            )
+            eval_kwargs: Dict[str, Any] = {
+                "marine": marine,
+                "weather": weather,
+                "hazard": hazard,
+                "bundle": bundle,
+                "data_mode": context.data_mode or data_mode_val,
+            }
+            if getattr(context, "departure_time", None) is not None:
+                eval_kwargs["reference_time"] = context.departure_time
+            if getattr(context, "return_time", None) is not None:
+                eval_kwargs["return_time"] = context.return_time
+            if marine and getattr(marine, "hourly_forecast", None):
+                eval_kwargs["hourly_records"] = marine.hourly_forecast
+
+            payload = engine_fn(context, **eval_kwargs)
             if is_mock:
                 quality_flags = ["M2_CONTRACT_MOCK", "SIMULATED"]
             else:
