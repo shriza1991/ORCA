@@ -553,8 +553,21 @@ export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
   { en: "MEDIUM", hi: "मध्यम", mr: "मध्यम" },
   { en: "LOW", hi: "कम", mr: "कमी" },
   { en: "CAUTION", hi: "सावधानी", mr: "सावधान" },
+  { en: "GO", hi: "सुरक्षित", mr: "सुरक्षित" },
   { en: "NO_GO", hi: "प्रस्थान न करें", mr: "प्रस्थान करू नका" },
+  { en: "DO_NOT_GO", hi: "प्रस्थान न करें", mr: "प्रस्थान करू नका" },
+  { en: "INFORMATIONAL", hi: "सूचनात्मक", mr: "माहितीपूर्ण" },
   { en: "UNKNOWN", hi: "अज्ञात", mr: "अज्ञात" },
+  {
+    en: "Conditions in this demonstration scenario are within modeled safe limits (Scenario Evaluation — Not Clearance for Current Voyage).",
+    hi: "इस प्रदर्शन परिदृश्य में स्थितियां मॉडल सुरक्षित सीमाओं के भीतर हैं (परिदृश्य मूल्यांकन — वर्तमान यात्रा के लिए प्रस्थान मंजूरी नहीं)।",
+    mr: "या प्रात्यक्षिक परिदृश्यात परिस्थिती मॉडेल केलेल्या सुरक्षित मर्यादेत आहे (परिदृश्य मूल्यमापन — थेट प्रवासासाठी मंजुरी नाही).",
+  },
+  {
+    en: "Demonstration scenario evaluation only. Does not grant operational clearance for current vessel departure. Always obtain verified live official bulletins before sailing.",
+    hi: "केवल प्रदर्शन परिदृश्य मूल्यांकन। यह वर्तमान पोत प्रस्थान के लिए परिचालन मंजूरी प्रदान नहीं करता है। नौकायन से पहले हमेशा सत्यापित लाइव आधिकारिक बुलेटिन प्राप्त करें।",
+    mr: "केवळ प्रात्यक्षिक परिदृश्य मूल्यमापन. हे प्रत्यक्ष नौका प्रस्थानासाठी मंजुरी देत नाही. समुद्रात जाण्यापूर्वी नेहमी सत्यापित थेट अधिकृत बुलेटिन मिळवा.",
+  },
   {
     en: "Conditions are calm and safe for coastal voyage departure.",
     hi: "तटीय यात्रा प्रस्थान के लिए स्थितियां शांत और पूरी तरह सुरक्षित हैं।",

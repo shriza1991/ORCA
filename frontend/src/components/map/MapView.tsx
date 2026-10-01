@@ -27,6 +27,7 @@ import {
   ShieldAlert,
   ShieldX,
   HelpCircle,
+  Info,
 } from "lucide-react";
 import { translateText, type SupportedLanguage } from "../../i18n/translations";
 import {
@@ -157,7 +158,7 @@ export default function MapView({
     sst_c: number;
     tide_height_m: number;
     tide_phase: string;
-    status: "GO" | "CAUTION" | "NO_GO" | "UNKNOWN";
+    status: "GO" | "CAUTION" | "NO_GO" | "UNKNOWN" | "INFORMATIONAL";
   } | null>(null);
 
   const [inspectedPoint, setInspectedPoint] = useState<{
@@ -185,19 +186,16 @@ export default function MapView({
     const swellP: number = marine?.swell_period_seconds ?? marine?.wave_period_seconds ?? 0;
     const sstC: number = marine?.sea_surface_temp_c ?? marine?.sea_surface_temperature_c ?? 0;
 
-    const craftUpper = (craftProfile || 'motorized_boat').toUpperCase();
-    let limit = 2.2;
-    if (craftUpper.includes('NON_MOTORIZED') || craftUpper.includes('CANOE')) limit = 1.4;
-    else if (craftUpper.includes('MECHANIZED') || craftUpper.includes('TRAWLER')) limit = 3.5;
-    let canonStatus: 'GO' | 'CAUTION' | 'NO_GO' = 'GO';
+    let canonStatus: 'GO' | 'CAUTION' | 'NO_GO' | 'UNKNOWN' | 'INFORMATIONAL' = 'UNKNOWN';
     const decisionStatus = typeof canonicalDecision === 'string'
       ? canonicalDecision
       : canonicalDecision?.status;
-    if (decisionStatus === 'NO_GO') canonStatus = 'NO_GO';
-    else if (decisionStatus === 'CAUTION') canonStatus = 'CAUTION';
-    else if (decisionStatus === 'GO') canonStatus = 'GO';
-    else if (waveM > limit) canonStatus = 'NO_GO';
-    else if (waveM > limit * 0.8) canonStatus = 'CAUTION';
+    const normDecision = (decisionStatus || '').toUpperCase().trim();
+    if (normDecision === 'NO_GO') canonStatus = 'NO_GO';
+    else if (normDecision === 'CAUTION') canonStatus = 'CAUTION';
+    else if (normDecision === 'GO') canonStatus = 'GO';
+    else if (normDecision === 'INFORMATIONAL') canonStatus = 'INFORMATIONAL';
+    else canonStatus = 'UNKNOWN';
 
     setMapForecast({
       loading: false,
@@ -459,9 +457,12 @@ export default function MapView({
         routeColor = '#f59e0b';
         routeWidth = 4.5;
         forecastTag = `(+${selectedTimeStep}h Forecast: CAUTION - Wave ${mapForecast.wave_height_m}m)`;
-      } else {
+      } else if (mapForecast.status === 'GO') {
         routeColor = '#10b981';
         forecastTag = `(+${selectedTimeStep}h Forecast: SAFE - Wave ${mapForecast.wave_height_m}m)`;
+      } else {
+        routeColor = '#64748b';
+        forecastTag = `(+${selectedTimeStep}h Forecast: UNVERIFIED - Wave ${mapForecast.wave_height_m}m)`;
       }
     }
 
@@ -2180,13 +2181,21 @@ export default function MapView({
                     ? "#dcfce7"
                     : mapForecast.status === "CAUTION"
                       ? "#fef3c7"
-                      : "#fee2e2",
+                      : mapForecast.status === "INFORMATIONAL"
+                        ? "#e0f2fe"
+                        : mapForecast.status === "UNKNOWN"
+                          ? "#f1f5f9"
+                          : "#fee2e2",
                 color:
                   mapForecast.status === "GO"
                     ? "#166534"
                     : mapForecast.status === "CAUTION"
                       ? "#92400e"
-                      : "#991b1b",
+                      : mapForecast.status === "INFORMATIONAL"
+                        ? "#0369a1"
+                        : mapForecast.status === "UNKNOWN"
+                          ? "#475569"
+                          : "#991b1b",
               }}
             >
               {mapForecast.status === "GO" ? (
@@ -2195,6 +2204,8 @@ export default function MapView({
                 <ShieldAlert size={13} aria-label="Caution" />
               ) : mapForecast.status === "NO_GO" ? (
                 <ShieldX size={13} aria-label="Do not go" />
+              ) : mapForecast.status === "INFORMATIONAL" ? (
+                <Info size={13} aria-label="Informational" />
               ) : (
                 <HelpCircle size={13} aria-label="Unknown" />
               )}
@@ -2205,7 +2216,9 @@ export default function MapView({
                     ? "CAUTION"
                     : mapForecast.status === "NO_GO"
                       ? "DO_NOT_GO"
-                      : "UNKNOWN",
+                      : mapForecast.status === "INFORMATIONAL"
+                        ? "INFORMATIONAL"
+                        : "UNKNOWN",
                 language,
               )}
             </span>

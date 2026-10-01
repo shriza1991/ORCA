@@ -109,13 +109,13 @@ class ImdHazardNormalizer:
         if isinstance(valid_from, datetime):
             valid_from = valid_from.isoformat()
         elif not valid_from:
-            valid_from = datetime.now(timezone.utc).isoformat()
+            valid_from = None
 
         valid_to = source_bulletin.get("valid_to") or source_bulletin.get("end_time")
         if isinstance(valid_to, datetime):
             valid_to = valid_to.isoformat()
         elif not valid_to:
-            valid_to = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+            valid_to = None
 
         # Distinguish file-import from synthetic
         _bulletin_id = source_bulletin.get("bulletin_id") or source_bulletin.get("public_id")

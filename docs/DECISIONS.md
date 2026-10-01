@@ -2143,7 +2143,75 @@ Impact:
 - Hermetic test isolation: tests specifying custom mock snapshot directories cannot accidentally borrow files from repository fixtures.
 - 22/22 regression tests passed in `test_task1_snapshot_pipeline.py`.
 - 101/101 domain tests passed; 88/88 API tests passed.
+## D066 — Deterministic Hazard Validity, Epistemic Data Honesty, and Safety Confidence Bounds (Task 2)
+Status: ACCEPTED
+Decision:
+1. Authentic Bulletin Validity Preservation: Removed all artificial timestamp manipulation in `ImdHazardConnector` (e.g. rewriting dates to `now - 24h` / `now + 7d`). Source issue time (`issued_at`), validity interval (`valid_from` to `valid_to`), retrieval time, and voyage departure/assessment time are kept strictly separate. Missing or malformed validity remains explicitly unknown.
+2. Fail-Closed on Missing Credentials & Provider Failure: In `LIVE` mode, `ImdHazardConnector` raises `ConnectorAuthenticationError` when `IMD_API_KEY` is missing. On provider failures, it returns an explicit `UNAVAILABLE` payload with `severity="UNKNOWN"`, `coverage_status="UNAVAILABLE"`, and `valid_from=None`/`valid_to=None` rather than fabricating a "NORMAL" condition or empty warning.
+3. Fail-Closed Safety Bounds in Deterministic Risk Engine:
+   - In operational modes (`LIVE`, `HYBRID`), missing, degraded, unsupported, or simulated hazard data cannot produce an affirmative `GO` recommendation; status is held at `UNKNOWN` with `LOW` confidence.
+   - Historical Severe Hazards: Expired bulletins with severe cyclone ratings are flagged as historical context (`HISTORICAL_HAZARD_CONTEXT`) and do not trigger a false current `NO_GO`. However, the lack of current unexpired bulletin prevents a `GO`, returning `UNKNOWN` and `LOW` confidence.
+   - Active Severe Hazards: Valid, geographically applicable severe hazards within their validity window strictly trigger `NO_GO` with `HIGH` confidence.
+4. Structured Provenance & Quality Flags: `ProviderToolAdapter` attaches structured `data_mode`, `quality_flags`, `valid_from`, and `valid_to` to all tool outputs. `DeterministicRiskEngine` inspects both structured flags and source classifications, resolving previous mismatches between `fallback_model` and `fallback`.
+5. User-Facing Presentation Consistency: Vite map HUD and badge styling updated to ensure `UNKNOWN` status is rendered in neutral slate/gray (`#f1f5f9` / `#475569`), never green "safe to sail". Regional-language responses preserve native terminology without injecting English-only disclaimers.
+Reason:
+Ensure sailing recommendations reflect the actual validity, geographic coverage, and origin of their supporting data without manufacturing `NORMAL` conditions, active warnings from historical bulletins, or unearned `GO`/`HIGH` confidence.
+Impact:
+- 14/14 regression tests passed in `tests/integration/test_task2_hazard_validity.py`.
+- 22/22 regression tests passed in `tests/integration/test_task1_snapshot_pipeline.py`.
+- 101/101 domain tests passed; 91/91 API tests passed.
+- Frontend production build (`tsc && vite build`) passed cleanly.
 Owner: Dev 2 (Backend Platform), Dev 3 (Agent Orchestration), Dev 4 (Deterministic Engine)
 Date: 2026-09-30
 
+## D067 — Task 2 Corrective Pass: Authoritative Structured Provenance, Fail-Closed Mixed-Source Invariants, and Client Map Independence
+Status: ACCEPTED
+Decision:
+1. Authoritative Structured Provenance:
+   - `ProviderToolAdapter._resolve_data_mode` and `_resolve_provenance` read structured payload `freshness_flags`, `coverage_status`, `is_cached`, and `quality_flags` as primary authority. Source-name string inspection is strictly a compatibility fallback.
+   - An `observed_at` timestamp alone never certifies a payload as live or verified; freshness flags and validity windows are required.
+2. Removal of First-Payload Mode Bypass:
+   - In `graph.py` (`specialist_tools_node`), the operational status of a request is determined independently from individual source origins. An operational `LIVE` or `HYBRID` request remains operational even when a specialist tool falls back or consumes a simulated source.
+3. Mixed-Source Operational Fail-Closed Invariant:
+   - In operational mode (`LIVE` or `HYBRID`), if any essential safety evidence (marine, weather, or hazard) relies on simulated or demonstration data, `DeterministicRiskEngine.evaluate` fails closed to `status = RecommendationStatus.UNKNOWN` with `confidence_level = ConfidenceLevel.LOW`.
+   - Clear decisive factor is added: `"Essential safety evidence relies on simulated or demonstration data; operational clearance denied."` with directive `"Hold departure. Obtain verified official live marine and hazard forecasts."`.
+4. Demonstration Scenario Evaluation Wording:
+   - When calm conditions occur in a demonstration scenario (`SNAPSHOT` or `is_simulated_source`), recommendation summaries and actionable directives explicitly state that the evaluation is a demonstration scenario modeled result and does NOT grant operational departure clearance for a real-world voyage.
+   - Regional language templates (`mr`, `hi`) fully localize these directives without English disclaimer leaks.
+5. Client Map Independence from Inferred Wave Fallback:
+   - `MapView.tsx` strictly relies on canonical backend status. Deleted all legacy code inferring `GO` or `CAUTION` from calm wave height metrics when status is missing, loading, failed, `UNKNOWN`, or `INFORMATIONAL`.
+   - Added explicit badge styling for `INFORMATIONAL` status.
+6. Departure Time Propagation Integrity:
+   - In `graph.py`, explicit ISO departure timestamps in `user_context` are preserved through `intent_locale_node`, `specialist_tools_node`, and `evidence_validation_node`, preventing ambiguous relative words (like `"tomorrow"`) from overwriting calibrated request windows.
+Reason:
+Address all concrete reviewer findings on Task 2 to ensure epistemic honesty, hermetic provenance, fail-closed safety on mixed sources, and client presentation integrity.
+Impact:
+- 46/46 regression tests pass in `tests/integration/test_task1_snapshot_pipeline.py` and `tests/integration/test_task2_hazard_validity.py`.
+- Clean Vite production build (`tsc && vite build`).
+Owner: Dev 2 (Backend Platform), Dev 3 (Agent Orchestration), Dev 4 (Deterministic Engine)
+Date: 2026-09-30
 
+## D068 — Task 2 Final Focused Correction: Snapshot Provenance Normalization, Epistemic Honesty in Verified Status, and Independently Justified Restrictions
+Status: ACCEPTED
+Decision:
+1. Snapshot Classification Gap Closed:
+   - Normalized `SNAPSHOT`, `DEMO`, `MOCK`, `SYNTHETIC`, and `SIMULATED` consistently across `ObservationBundle.provenance_mode`, `ProviderToolAdapter._resolve_data_mode`, and `DeterministicRiskEngine._is_prov_simulated`.
+   - Operational `LIVE`/`HYBRID` assessments containing essential `SNAPSHOT` evidence fail closed to `UNKNOWN`/`LOW` unless independently justified by a verified severe hazard.
+   - Real `SnapshotConnector` fixtures are distinguishable from contract mocks (`SNAPSHOT_SOURCE` attached, `M2_CONTRACT_MOCK` excluded).
+2. Epistemic Data Honesty for Verified Status:
+   - Prohibited adding `official_source` or `verified_live` merely because `data_mode` is not MOCK/DEMO or settings specify LIVE.
+   - Cached official telemetry retains official origin but explicitly omits `verified_live`.
+   - Fallback providers (Open-Meteo) retain provider and fallback model classification without fabricated `official_source`.
+   - PFZ calculations over snapshot features record geodesic calculation lineage (`pfz_ranking_eval:snapshot_inputs`) and `SNAPSHOT` data mode, never masquerading as live observations or contract mocks.
+3. Preservation of Independently Justified Restrictions:
+   - When a valid, verified, active severe hazard independently justifies `NO_GO`, `DeterministicRiskEngine` preserves `NO_GO`/`HIGH` even if auxiliary telemetry is simulated or unavailable, logging the auxiliary limitation separately.
+   - A simulated or expired severe hazard bulletin cannot independently justify an operational `NO_GO`/`HIGH`.
+4. Chat Endpoint Regressions (A through G):
+   - Added automated regression suite in `tests/integration/test_task2_hazard_validity.py` directly exercising `/api/v1/chat` with dynamic payload injections, and restored all settings and registry states using `monkeypatch.setattr`.
+Reason:
+Eliminate classification gaps, prevent unearned verification assertions, uphold epistemic honesty, and verify end-to-end chat graph behavior with 53 comprehensive regression tests.
+Impact:
+- 53/53 tests pass in `tests/integration/test_task1_snapshot_pipeline.py` and `tests/integration/test_task2_hazard_validity.py`.
+- Clean Vite production build (`tsc && vite build`).
+Owner: Dev 2 (Backend Platform), Dev 3 (Agent Orchestration), Dev 4 (Deterministic Engine)
+Date: 2026-10-01

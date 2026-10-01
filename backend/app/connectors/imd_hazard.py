@@ -74,15 +74,21 @@ class ImdHazardConnector(BaseLiveConnector):
         harbor = context.origin_harbor or "Ratnagiri"
 
         if self.data_mode == "SNAPSHOT":
-            return self._make_normal_payload(harbor, "SNAPSHOT_REDIRECT")
+            from backend.app.connectors.snapshot import SnapshotConnector
+            return SnapshotConnector().get_hazard_bulletin(context)
 
         if self.data_mode in ("LIVE", "HYBRID") and settings.IMD_API_KEY and "placeholder" not in settings.IMD_API_BASE_URL.lower():
             try:
                 return self._fetch_imd_hazard(harbor, context)
             except Exception as exc:
                 logger.warning("IMD Hazard live fetch failed (%s).", exc)
+                if self.data_mode == "LIVE":
+                    raise
         else:
-            logger.debug("IMD Hazard API is unconfigured (placeholder or missing key). Skipping live fetch.")
+            logger.debug("IMD Hazard API is unconfigured (placeholder or missing key).")
+            if self.data_mode == "LIVE":
+                from backend.app.connectors.errors import ConnectorAuthenticationError
+                raise ConnectorAuthenticationError("IMD_API_KEY is not configured for LIVE mode.")
 
         # Import from genuine dated IMD marine hazard bulletin file or fallback snapshot
         from pathlib import Path
@@ -96,25 +102,32 @@ class ImdHazardConnector(BaseLiveConnector):
         if import_path:
             try:
                 from backend.app.importers.hazard_importer import HazardImporter
-                from backend.app.connectors.dataset_registry import (
-                    DatasetMetadata, GeographicCoverage, dataset_registry
-                )
-                import json as _json
-                with open(import_path, "r", encoding="utf-8") as _f:
-                    _raw = _json.load(_f)
                 importer = HazardImporter(str(import_path))
                 res = importer.process()
                 payload = res["payload"]
-                now_utc = datetime.now(UTC)
-                payload.valid_from = (now_utc - timedelta(hours=24)).isoformat()
-                payload.valid_to = (now_utc + timedelta(days=7)).isoformat()
-                payload.source_name = "IMD Cyclone Warning Division (DEMO/CACHED)"
+                meta = res.get("metadata", {})
+                # PRESERVE ORIGINAL VALIDITY: Do NOT rewrite historical valid_from/valid_to to now_utc
+                bid = payload.bulletin_id or meta.get("bulletin_id")
+                payload.source_name = f"IMD Cyclone Warning Division (CACHED_REAL — {bid or 'dated bulletin'})"
+                payload.freshness_flags = {
+                    "coverage_status": "CACHED",
+                    "retrieved_at": datetime.now(UTC).isoformat(),
+                    "source_issue_time": meta.get("acquired_at"),
+                    "valid_from": payload.valid_from,
+                    "valid_to": payload.valid_to,
+                    "warnings": [
+                        "Live IMD Hazard API unconfigured or offline; loaded cached bulletin.",
+                    ],
+                }
                 return payload
             except Exception as exc:
                 logger.warning("Failed to load Hazard from file importer: %s", exc)
 
-        # Key absent or HYBRID fallback: return NORMAL (deterministic conservative demo default)
-        return self._make_normal_payload(harbor, "DEMO_FALLBACK")
+        # When credentials or bulletins are unavailable, FAIL CLOSED with UNKNOWN
+        return self._make_unavailable_payload(
+            harbor,
+            reason="MISSING_CREDENTIALS" if not settings.IMD_API_KEY else "UPSTREAM_UNAVAILABLE",
+        )
 
     def _fetch_imd_hazard(
         self, harbor: str, context: ToolInvocationContext
@@ -132,7 +145,6 @@ class ImdHazardConnector(BaseLiveConnector):
         except httpx.HTTPStatusError as exc:
             raise RuntimeError(f"IMD hazard HTTP {exc.response.status_code}") from exc
 
-        now_utc = datetime.now(UTC)
         return HazardBulletinPayload(
             harbor=harbor,
             cyclone_warning_active=bool(raw.get("cyclone_alert", False)),
@@ -140,25 +152,40 @@ class ImdHazardConnector(BaseLiveConnector):
             bulletin_id=raw.get("bulletin_id"),
             severity=raw.get("severity", "NORMAL"),
             headline=raw.get("headline") or "No active severe weather or cyclone warning.",
-            valid_from=raw.get("valid_from", now_utc.isoformat()),
-            valid_to=raw.get("valid_to", (now_utc + timedelta(days=7)).isoformat()),
+            valid_from=raw.get("valid_from"),
+            valid_to=raw.get("valid_to"),
             source_name="IMD Cyclone Warning Division",
             source_url=self.SOURCE_URL,
+            freshness_flags={
+                "coverage_status": "LIVE",
+                "retrieved_at": datetime.now(UTC).isoformat(),
+            },
         )
 
     @staticmethod
-    def _make_normal_payload(harbor: str, reason: str) -> HazardBulletinPayload:
-        """Return NORMAL hazard bulletin payload with valid coverage for demo mode."""
+    def _make_unavailable_payload(harbor: str, reason: str) -> HazardBulletinPayload:
+        """Return UNKNOWN hazard bulletin payload when data is missing or unconfigured.
+
+        Never manufactures NORMAL conditions or safe clearances without data.
+        """
         now_utc = datetime.now(UTC)
         return HazardBulletinPayload(
             harbor=harbor,
             cyclone_warning_active=False,
             squall_alert=False,
-            bulletin_id="IMD-HAZ-DEMO-01",
-            severity="NORMAL",
-            headline="No active severe weather or cyclone warnings in coastal sector.",
-            valid_from=(now_utc - timedelta(hours=24)).isoformat(),
-            valid_to=(now_utc + timedelta(days=7)).isoformat(),
-            source_name="IMD Cyclone Warning Division (DEMO/SIMULATION)",
+            bulletin_id=None,
+            severity="UNKNOWN",
+            headline="Hazard bulletin unavailable (IMD service unconfigured or offline).",
+            valid_from=None,
+            valid_to=None,
+            source_name="IMD Cyclone Warning Division (UNAVAILABLE)",
             source_url="https://mausam.imd.gov.in",
+            freshness_flags={
+                "coverage_status": "UNAVAILABLE",
+                "retrieved_at": now_utc.isoformat(),
+                "warnings": [
+                    f"[HAZARD-UNAVAILABLE] Official IMD hazard advisory feed is unavailable ({reason}). "
+                    "Departure safety cannot be certified without active hazard bulletins."
+                ],
+            },
         )

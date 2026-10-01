@@ -568,6 +568,8 @@ class SnapshotConnector:
 
     def get_pfz_raw_advisories(self, context: "ToolInvocationContext") -> PFZSourceDataPayload:
         raw = self._load_snapshot("pfz_advisories.json")
+        raw["source_data_mode"] = "SNAPSHOT"
+        raw["data_mode"] = "SNAPSHOT"
         return PFZSourceDataPayload(**raw)
 
     def get_svas_advisories(self, context: "ToolInvocationContext") -> SVASAdvisoryPayload:

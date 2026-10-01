@@ -50,14 +50,27 @@ class ObservationBundle(BaseModel):
         description="Single merged marine/weather forecast series for this assessment",
     )
 
+    provenance: List[Any] = Field(
+        default_factory=list, description="Preserved source DataProvenance records"
+    )
+
     @property
     def provenance_mode(self) -> str:
-        """Return the display mode derived from the underlying source labels."""
-        if self.data_mode.upper() == "DEMO":
+        """Return the display mode derived from structured provenance or underlying source labels."""
+        if self.data_mode.upper() in ("DEMO", "SYNTHETIC", "MOCK", "SNAPSHOT", "SIMULATED"):
             return "DEMO"
+        for payload in (self.marine, self.weather, self.hazard):
+            if payload is not None:
+                ff = getattr(payload, "freshness_flags", None)
+                if isinstance(ff, dict):
+                    dm = str(ff.get("data_mode") or "").upper()
+                    if dm in ("DEMO", "SYNTHETIC", "MOCK", "SNAPSHOT", "SIMULATED"):
+                        return "DEMO"
         sources = " ".join(
             str(getattr(payload, "source_name", ""))
             for payload in (self.marine, self.weather, self.hazard)
             if payload is not None
         ).upper()
-        return "SAVED" if any(token in sources for token in ("SNAPSHOT", "SAVED", "DEGRADED")) else "LIVE"
+        if any(token in sources for token in ("DEMO", "SYNTHETIC", "MOCK", "SNAPSHOT", "SIMULATED")):
+            return "DEMO"
+        return "SAVED" if any(token in sources for token in ("SAVED", "DEGRADED")) else "LIVE"

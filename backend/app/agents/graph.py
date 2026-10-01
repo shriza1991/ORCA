@@ -68,6 +68,7 @@ from backend.app.agents.integrations.dev2 import (
 from backend.app.contracts.observation import ObservationBundle
 from backend.app.contracts.mission import DecisionDelta, DecisionObject
 from backend.app.agents.memory import memory_manager
+from backend.app.core.config import settings
 from backend.app.agents.response import ResponseComposer, ResponseCompositionInput
 from backend.app.agents.security import PromptInjectionGuard
 from backend.app.agents.state import ORCAState
@@ -543,9 +544,9 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
     msg_lower = raw_msg.lower()
 
     explicit_harbor = request_harbor or norm.origin_harbor
-    explicit_dest = norm.destination
-    craft_type = norm.craft_type
-    dep_time = norm.departure_time
+    explicit_dest = (state.get("user_profile") or {}).get("target_destination") or norm.destination
+    craft_type = (state.get("user_profile") or {}).get("craft_profile") or (state.get("user_profile") or {}).get("craft_type") or norm.craft_type
+    dep_time = (state.get("user_profile") or {}).get("departure_time") or norm.departure_time
 
     if not dep_time:
         if any(w in msg_lower for w in ["tomorrow", "udya", "kal"]):
@@ -684,7 +685,9 @@ def intent_locale_node(state: ORCAState) -> Dict[str, Any]:
     else:
         location = None
 
-    time_window = state.get("time_window") or updated_ctx.time_window or {"departure_time": "tomorrow_morning", "duration_hours": 8.0}
+    time_window = state.get("time_window") or updated_ctx.time_window or {"departure_time": dep_time or "tomorrow_morning", "duration_hours": 8.0}
+    if dep_time and isinstance(time_window, dict):
+        time_window["departure_time"] = dep_time
 
     carried_str = ", ".join(audit_summary["carried_fields"]) or "none"
     overwritten_str = ", ".join(audit_summary["overwritten_fields"]) or "none"
@@ -1035,10 +1038,13 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
             if coords:
                 params["coordinates"] = coords
         elif tool_name == "trip_assessment":
+            up_dep = (state.get("user_profile") or {}).get("departure_time")
+            tw_dep = (state.get("time_window") or {}).get("departure_time")
+            dep_time_arg = up_dep or tw_dep
             params = {
                 "origin_harbor": harbor,
                 "craft_profile": craft_type,
-                "departure_time": state.get("time_window", {}).get("departure_time") or state.get("user_profile", {}).get("departure_time"),
+                "departure_time": dep_time_arg,
                 "return_time": state.get("user_profile", {}).get("return_time"),
                 "coordinates": state.get("location", {}).get("coordinates"),
                 "destination_id": destination,
@@ -1057,9 +1063,15 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
                 "craft_type": craft_type,
             }
         elif tool_name == "risk_evaluation":
+            up_dep = (state.get("user_profile") or {}).get("departure_time")
+            tw_dep = (state.get("time_window") or {}).get("departure_time")
+            dep_time = up_dep or tw_dep
+            ret_time = state.get("user_profile", {}).get("return_time")
             params = {
                 "origin_harbor": harbor,
                 "craft_profile": craft_type,
+                "departure_time": dep_time,
+                "return_time": ret_time,
             }
             if observation_bundle is not None:
                 params["observation_bundle"] = observation_bundle
@@ -1115,11 +1127,28 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
                             hazard_payload = None
 
                 if marine_payload or weather_payload or hazard_payload:
+                    # Determine whether this assessment is an operational request or an explicit demo scenario
+                    # Determine whether this assessment is an operational request or an explicit demo scenario
+                    # independently from its individual source origins.
+                    configured_mode = str(
+                        state.get("data_mode") or getattr(settings, "DATA_MODE", "SYNTHETIC")
+                    ).upper()
+                    is_operational = bool(
+                        state.get("is_operational")
+                        or (configured_mode in ("LIVE", "HYBRID") and not state.get("is_demo") and not state.get("scenario_id") and not state.get("is_scenario"))
+                    )
+
+                    if not is_operational:
+                        # Explicit scenario or demo/snapshot execution
+                        active_mode = "SYNTHETIC" if configured_mode in ("SYNTHETIC", "MOCK") else "SNAPSHOT"
+                    else:
+                        # Operational request: preserve LIVE or HYBRID
+                        active_mode = configured_mode if configured_mode in ("LIVE", "HYBRID") else "HYBRID"
                     observation_bundle = ObservationBundle(
                         marine=marine_payload,
                         weather=weather_payload,
                         hazard=hazard_payload,
-                        data_mode="SYNTHETIC",
+                        data_mode=active_mode,
                         source_metadata={"harbor": harbor, "craft_profile": craft_type},
                     )
                     params["observation_bundle"] = observation_bundle
@@ -1216,7 +1245,15 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
             collected_warnings.extend(result.warnings)
             if tool_name in ["risk_stub", "risk_evaluation", "trip_assessment"] or (
                 state.get("intent") == IntentCategory.SAFETY.value
-                and tool_name in ["marine_conditions", "weather_conditions", "marine_stub", "weather_stub"]
+                and tool_name in [
+                    "marine_conditions",
+                    "weather_conditions",
+                    "marine_stub",
+                    "weather_stub",
+                    "hazard_bulletin",
+                    "hazard_search",
+                    "hazard_stub",
+                ]
             ):
                 risk_assessment = Recommendation(
                     status=RecommendationStatus.UNKNOWN,
@@ -1249,8 +1286,8 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
             )
             continue
 
-        is_geo_fallback = any("geographic fallback" in w.lower() or "geographic-fallback" in w.lower() for w in result.warnings) or any(
-            "GEOGRAPHIC_FALLBACK" in (ev.quality_flags or []) for ev in result.evidence
+        is_geo_fallback = any("geographic fallback" in w.lower() or "geographic-fallback" in w.lower() or "fallback_model" in w.lower() for w in result.warnings) or any(
+            "GEOGRAPHIC_FALLBACK" in (ev.quality_flags or []) or "FALLBACK_MODEL" in (ev.quality_flags or []) for ev in result.evidence
         )
         is_fallback = any("fallback snapshot" in w.lower() for w in result.warnings) or any(
             "FALLBACK_SNAPSHOT" in (ev.quality_flags or []) for ev in result.evidence
@@ -1387,7 +1424,8 @@ def evidence_validator_node(state: ORCAState) -> Dict[str, Any]:
         if not critical_metrics and not failed_tools:
             critical_metrics = ["cyclone_warning_active"]
 
-    report = EvidenceValidator.audit_evidence(evidence, critical_metrics)
+    dep_target = (state.get("user_profile") or {}).get("departure_time") or (state.get("time_window") or {}).get("departure_time")
+    report = EvidenceValidator.audit_evidence(evidence, critical_metrics, now_iso=dep_target)
     warnings = list(state.get("warnings", []))
 
     if not report.is_valid:
@@ -1579,6 +1617,29 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
         harbor_display = "रत्नागिरी" if harbor == "Ratnagiri" and lang in ("hi", "mr") else ("मुंबई" if harbor == "Mumbai" and lang in ("hi", "mr") else harbor)
         evidence_display = "कोणत्याही बाह्य पुराव्याची आवश्यकता नाही" if lang == "mr" and evidence_names == "No external evidence required" else ("किसी बाहरी साक्ष्य की आवश्यकता नहीं है" if lang == "hi" and evidence_names == "No external evidence required" else evidence_names)
 
+        is_demo_mode = (
+            getattr(settings, "DATA_MODE", "SYNTHETIC").upper() in ("SNAPSHOT", "HISTORICAL", "SYNTHETIC", "MOCK")
+            or bool(state.get("is_demo") or state.get("scenario_id") or state.get("is_scenario"))
+            or any(
+                any(marker in str(qf).lower() for marker in ("demo", "synthetic", "mock", "simulated", "fixture", "snapshot_source"))
+                for prov in (rec.provenance or [])
+                for qf in getattr(prov, "quality_flags", [])
+            )
+        )
+
+        if rec.status == RecommendationStatus.UNKNOWN:
+            notice_en = "Notice: Essential safety observations are unavailable, expired, or outside coverage. Voyage clearance cannot be granted."
+            notice_mr = "सूचना: आवश्यक सुरक्षा निरीक्षणे अनुपलब्ध, कालबाह्य किंवा कव्हरेजबाहेर आहेत. प्रवासाची मंजुरी दिली जाऊ शकत नाही."
+            notice_hi = "सूचना: आवश्यक सुरक्षा अवलोकन अनुपलब्ध, समाप्त, या कवरेज से बाहर हैं। यात्रा मंजूरी नहीं दी जा सकती।"
+        elif is_demo_mode:
+            notice_en = "Notice: This is a scenario evaluation based on snapshot/demonstration data and does not constitute live clearance for a current voyage."
+            notice_mr = "सूचना: हे मूल्यमापन प्रात्यक्षिक परिदृश्य डेटावर आधारित आहे आणि थेट प्रवासासाठी मंजुरी नाही."
+            notice_hi = "सूचना: यह मूल्यांकन प्रदर्शन परिदृश्य डेटा पर आधारित है और लाइव यात्रा के लिए मंजूरी नहीं है।"
+        else:
+            notice_en = "Notice: Operational advisory based on official coastal and marine observations."
+            notice_mr = "सूचना: अधिकृत किनारपट्टी आणि सागरी निरीक्षणांवर आधारित परिचालन सल्ला."
+            notice_hi = "सूचना: आधिकारिक तटीय और समुद्री अवलोकनों पर आधारित परिचालन सलाह।"
+
         if lang == "mr":
             answer = (
                 f"[{rec.status.value}] {harbor_display} साठी सागरी सुरक्षा सल्ला:\n\n"
@@ -1586,7 +1647,7 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                 f"महत्त्वाचे घटक:\n{factors_text}\n\n"
                 f"कृती सल्ला: {recommendation.next_action}\n\n"
                 f"पुरावा आधार:\n- {evidence_display}\n\n"
-                f"सूचना: हे मूल्यमापन सागरी व हवामान माहितीवर आधारित सल्लागार विश्लेषण आहे."
+                f"{notice_mr}"
             )
         elif lang == "hi":
             answer = (
@@ -1595,7 +1656,7 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                 f"प्रमुख निर्णायक कारक:\n{factors_text}\n\n"
                 f"कार्रवाई योग्य निर्देश: {recommendation.next_action}\n\n"
                 f"साक्ष्य आधार:\n- {evidence_display}\n\n"
-                f"सूचना: यह मूल्यांकन समुद्री और मौसम संबंधी इनपुट पर आधारित सलाह है।"
+                f"{notice_hi}"
             )
         else:
             answer = (
@@ -1604,8 +1665,7 @@ def response_composer_node(state: ORCAState) -> Dict[str, Any]:
                 f"Key Decisive Factors:\n{factors_text}\n\n"
                 f"Actionable Directive: {rec.next_action}\n\n"
                 f"Supporting Evidence:\n- {evidence_names}\n\n"
-                f"Notice: This is an M1 demonstration response generated from simulated marine, weather, and risk inputs. "
-                f"Live safety decisions are not available in M1."
+                f"{notice_en}"
             )
 
         baseline = state.get("observations", {}).get("baseline_recommendation")

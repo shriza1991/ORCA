@@ -317,20 +317,36 @@ class DeterministicRiskEngine:
                     ref_dt = reference_time
                 now_utc = ref_dt if ref_dt.tzinfo is not None else ref_dt.replace(tzinfo=timezone.utc)
             except (ValueError, TypeError):
-                now_utc = datetime.now(UTC)
+                now_utc = datetime.now(timezone.utc)
         else:
-            now_utc = datetime.now(UTC)
+            now_utc = datetime.now(timezone.utc)
 
-        window_end_utc = now_utc
-        if return_time is not None:
+        def parse_to_utc(dt_val: Any) -> Optional[datetime]:
+            if not dt_val:
+                return None
             try:
-                if isinstance(return_time, str):
-                    ret_dt = datetime.fromisoformat(return_time.replace("Z", "+00:00"))
-                else:
-                    ret_dt = return_time
-                window_end_utc = ret_dt if ret_dt.tzinfo is not None else ret_dt.replace(tzinfo=timezone.utc)
-            except (ValueError, TypeError):
-                window_end_utc = now_utc
+                if isinstance(dt_val, datetime):
+                    return dt_val.astimezone(timezone.utc) if dt_val.tzinfo else dt_val.replace(tzinfo=timezone.utc)
+                if isinstance(dt_val, str):
+                    s = dt_val.strip()
+                    if s.endswith("Z"):
+                        s = s[:-1] + "+00:00"
+                    dt = datetime.fromisoformat(s)
+                    return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+            except Exception:
+                return None
+            return None
+
+        # Assessment / departure target time for validity checks
+        eval_time_utc = parse_to_utc(context.departure_time) if hasattr(context, "departure_time") else None
+        if eval_time_utc is None:
+            eval_time_utc = now_utc
+
+        window_end_utc = eval_time_utc
+        if return_time is not None:
+            ret_parsed = parse_to_utc(return_time)
+            if ret_parsed is not None:
+                window_end_utc = ret_parsed
 
         # ---------------------------------------------------------------------
         # 1. Provenance & Stale / Missing Data Validation
@@ -341,102 +357,122 @@ class DeterministicRiskEngine:
         forecast_coverage_incomplete = False
 
         def provenance_quality(source_name: str, degraded: bool, official: bool) -> list[str]:
-            normalized_source = source_name.upper()
-            if any(marker in normalized_source for marker in ("ORCA", "DEMO", "SYNTHETIC", "MOCK")):
+            normalized_source = (source_name or "").upper()
+            if any(marker in normalized_source for marker in ("ORCA", "DEMO", "SYNTHETIC", "MOCK", "FIXTURE", "SIMULATION")):
                 return ["deterministic_demo"] if not degraded else ["degraded", "stale_demo_data"]
             if degraded:
                 return ["degraded", "stale_telemetry"]
             return ["official_source"] if official else ["fallback_model"]
 
+        is_operational = data_mode.upper() in ("LIVE", "HYBRID")
+
+        prov_marine: Optional[DataProvenance] = None
+        prov_weather: Optional[DataProvenance] = None
+        prov_hazard: Optional[DataProvenance] = None
+
         if marine is not None:
-            if marine.valid_to:
-                try:
-                    vt_str = marine.valid_to.replace("Z", "+00:00")
-                    marine_vt = datetime.fromisoformat(vt_str)
-                    if marine_vt.tzinfo is None:
-                        marine_vt = marine_vt.replace(tzinfo=timezone.utc)
-                    if marine_vt < now_utc:
-                        marine_stale = True
-                    elif marine_vt < window_end_utc:
-                        warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Marine forecast expires before planned return.")
-                        marine_stale = True
-                except Exception:
-                    pass
+            marine_vt = parse_to_utc(marine.valid_to)
+            marine_vf = parse_to_utc(getattr(marine, "valid_from", None)) or parse_to_utc(marine.observed_at)
+            if marine_vt is None:
+                if is_operational:
+                    marine_stale = True
+            elif marine_vt < eval_time_utc:
+                marine_stale = True
+            elif is_operational and marine_vf and marine_vf > eval_time_utc:
+                marine_stale = True
+            elif marine_vt < window_end_utc:
+                warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Marine forecast expires before planned return.")
+                marine_stale = True
 
             is_marine_degraded = marine_stale or "DEGRADED" in (marine.source_name or "").upper()
             marine_source = marine.source_name or "INCOIS Ocean State Forecast"
             marine_provider = "Open-Meteo" if "open-meteo" in marine_source.lower() else "INCOIS"
+            from backend.app.agents.integrations.adapters import ProviderToolAdapter
+            marine_mode, marine_flags = ProviderToolAdapter._resolve_provenance(
+                marine, is_mock=(data_mode == "MOCK"), eval_time_iso=eval_time_utc.isoformat() if eval_time_utc else None
+            )
             prov_marine = DataProvenance(
                 provider_name=marine_provider,
                 source_name=marine_source,
                 source_url=marine.source_url,
                 observed_time=marine.observed_at,
+                valid_from=getattr(marine, "valid_from", None),
                 valid_to=marine.valid_to,
-                data_mode=data_mode,
-                is_stale=marine_stale,
-                quality_flags=provenance_quality(marine_source, is_marine_degraded, marine_provider == "INCOIS"),
+                data_mode=marine_mode,
+                is_stale=marine_stale or ("stale" in marine_flags or "EXPIRED" in marine_flags),
+                quality_flags=marine_flags,
             )
             provenance_list.append(prov_marine)
             evidence_ids.append(f"EV-{marine_provider.upper()}-OSF-01")
 
         if weather is not None:
-            if weather.valid_to:
-                try:
-                    vt_str = weather.valid_to.replace("Z", "+00:00")
-                    weather_vt = datetime.fromisoformat(vt_str)
-                    if weather_vt.tzinfo is None:
-                        weather_vt = weather_vt.replace(tzinfo=timezone.utc)
-                    if weather_vt < now_utc:
-                        weather_stale = True
-                    elif weather_vt < window_end_utc:
-                        warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Weather forecast expires before planned return.")
-                        weather_stale = True
-                except Exception:
-                    pass
+            weather_vt = parse_to_utc(weather.valid_to)
+            weather_vf = parse_to_utc(getattr(weather, "valid_from", None)) or parse_to_utc(weather.observed_at)
+            if weather_vt is None:
+                if is_operational:
+                    weather_stale = True
+            elif weather_vt < eval_time_utc:
+                weather_stale = True
+            elif is_operational and weather_vf and weather_vf > eval_time_utc:
+                weather_stale = True
+            elif weather_vt < window_end_utc:
+                warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Weather forecast expires before planned return.")
+                weather_stale = True
 
             is_weather_degraded = weather_stale or "DEGRADED" in (weather.source_name or "").upper()
             weather_source = weather.source_name or "IMD Coastal Weather Bulletin"
             weather_provider = "Open-Meteo" if "open-meteo" in weather_source.lower() else "IMD"
+            from backend.app.agents.integrations.adapters import ProviderToolAdapter
+            weather_mode, weather_flags = ProviderToolAdapter._resolve_provenance(
+                weather, is_mock=(data_mode == "MOCK"), eval_time_iso=eval_time_utc.isoformat() if eval_time_utc else None
+            )
             prov_weather = DataProvenance(
                 provider_name=weather_provider,
                 source_name=weather_source,
                 source_url=weather.source_url,
                 observed_time=weather.observed_at,
+                valid_from=getattr(weather, "valid_from", None),
                 valid_to=weather.valid_to,
-                data_mode=data_mode,
-                is_stale=weather_stale,
-                quality_flags=provenance_quality(weather_source, is_weather_degraded, weather_provider == "IMD"),
+                data_mode=weather_mode,
+                is_stale=weather_stale or ("stale" in weather_flags or "EXPIRED" in weather_flags),
+                quality_flags=weather_flags,
             )
             provenance_list.append(prov_weather)
             evidence_ids.append(f"EV-{weather_provider.upper()}-WEATHER-01")
 
         if hazard is not None:
-            if hazard.valid_to:
-                try:
-                    vt_str = hazard.valid_to.replace("Z", "+00:00")
-                    hazard_vt = datetime.fromisoformat(vt_str)
-                    if hazard_vt.tzinfo is None:
-                        hazard_vt = hazard_vt.replace(tzinfo=timezone.utc)
-                    if hazard_vt < now_utc:
-                        hazard_stale = True
-                    elif hazard_vt < window_end_utc:
-                        warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Hazard bulletin expires before planned return.")
-                        hazard_stale = True
-                except Exception:
-                    pass
+            hazard_vt = parse_to_utc(hazard.valid_to)
+            hazard_vf = parse_to_utc(hazard.valid_from)
+            if hazard_vt is None:
+                if is_operational or (hazard.severity in (None, "UNKNOWN")) or ("UNAVAILABLE" in (hazard.source_name or "").upper()):
+                    hazard_stale = True
+            elif hazard_vt < eval_time_utc:
+                hazard_stale = True
+            elif is_operational and hazard_vf and hazard_vf > eval_time_utc:
+                hazard_stale = True
+            elif hazard_vt < window_end_utc:
+                warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Hazard bulletin expires before planned return.")
+                hazard_stale = True
 
-            is_hazard_degraded = hazard_stale or "DEGRADED" in (hazard.source_name or "").upper()
+            if is_operational and hazard.severity in (None, "UNKNOWN"):
+                hazard_stale = True
+
+            is_hazard_degraded = hazard_stale or "DEGRADED" in (hazard.source_name or "").upper() or "UNAVAILABLE" in (hazard.source_name or "").upper()
             hazard_source = hazard.source_name or "IMD Hazard Division"
             hazard_provider = "IMD"
+            from backend.app.agents.integrations.adapters import ProviderToolAdapter
+            hazard_mode, hazard_flags = ProviderToolAdapter._resolve_provenance(
+                hazard, is_mock=(data_mode == "MOCK"), eval_time_iso=eval_time_utc.isoformat() if eval_time_utc else None
+            )
             prov_hazard = DataProvenance(
                 provider_name=hazard_provider,
                 source_name=hazard_source,
                 source_url=hazard.source_url,
                 valid_from=hazard.valid_from,
                 valid_to=hazard.valid_to,
-                data_mode=data_mode,
-                is_stale=hazard_stale,
-                quality_flags=provenance_quality(hazard_source, is_hazard_degraded, True),
+                data_mode=hazard_mode,
+                is_stale=hazard_stale or ("stale" in hazard_flags or "EXPIRED" in hazard_flags),
+                quality_flags=hazard_flags,
             )
             provenance_list.append(prov_hazard)
             evidence_ids.append(f"EV-{hazard_provider.upper()}-HAZARD-01")
@@ -453,7 +489,7 @@ class DeterministicRiskEngine:
             or hazard_stale
             or (marine is not None and "DEGRADED" in (marine.source_name or "").upper())
             or (weather is not None and "DEGRADED" in (weather.source_name or "").upper())
-            or (hazard is not None and "DEGRADED" in (hazard.source_name or "").upper())
+            or (hazard is not None and ("DEGRADED" in (hazard.source_name or "").upper() or "UNAVAILABLE" in (hazard.source_name or "").upper()))
         )
 
         is_geo_fallback = False
@@ -508,11 +544,80 @@ class DeterministicRiskEngine:
             )
 
         # ---------------------------------------------------------------------
-        # 2. Severe Hazard / Cyclone Bulletin Check
+        # 2. Severe Hazard / Cyclone Bulletin Check (Deterministic Verification)
         # ---------------------------------------------------------------------
-        hazard_is_above_normal = bool(hazard and str(hazard.severity).upper() != "NORMAL")
-        cyclone_active = bool(hazard and hazard_is_above_normal and hazard.cyclone_warning_active)
-        squall_alert = bool(hazard and hazard_is_above_normal and hazard.squall_alert)
+        hazard_is_above_normal = bool(hazard and str(hazard.severity).upper() not in ("NORMAL", "UNKNOWN"))
+
+        # Geographic applicability check
+        is_geo_applicable = True
+        if hazard and hazard.harbor and hasattr(context, "origin_harbor") and context.origin_harbor:
+            h_harbor = hazard.harbor.strip().lower()
+            c_harbor = context.origin_harbor.strip().lower()
+            if h_harbor and c_harbor and h_harbor != c_harbor:
+                if h_harbor not in ("all", "coastal", "regional", "west_coast", "maharashtra", "india", "arabian_sea"):
+                    is_geo_applicable = False
+                    warnings.append(
+                        f"HAZARD_GEO_MISMATCH: Hazard bulletin issued for '{hazard.harbor}' does not apply to voyage harbor '{context.origin_harbor}'."
+                    )
+
+        # Validity window check
+        hazard_vf_dt = parse_to_utc(hazard.valid_from) if hazard else None
+        hazard_vt_dt = parse_to_utc(hazard.valid_to) if hazard else None
+        has_valid_window = bool(hazard and hazard_vf_dt is not None and hazard_vt_dt is not None)
+        is_within_window = bool(has_valid_window and hazard_vf_dt <= eval_time_utc <= hazard_vt_dt)
+        is_future_bulletin = bool(has_valid_window and hazard_vf_dt > eval_time_utc)
+        is_expired_bulletin = bool(has_valid_window and hazard_vt_dt < eval_time_utc)
+
+        # Verified active hazard requires:
+        # - Geographic applicability
+        # - Well-formed validity window (both valid_from and valid_to parseable)
+        # - Current evaluation time within validity window
+        # - Not stale or degraded
+        is_active_verified_hazard = bool(
+            hazard
+            and is_geo_applicable
+            and is_within_window
+            and not hazard_stale
+            and hazard_is_above_normal
+        )
+
+        cyclone_active = bool(is_active_verified_hazard and hazard.cyclone_warning_active)
+        squall_alert = bool(is_active_verified_hazard and hazard.squall_alert)
+        severe_hazard_active = bool(is_active_verified_hazard and str(hazard.severity).upper() in ("WARNING", "DANGER"))
+
+        # Informative transparency for non-active hazard bulletins:
+        if hazard and hazard_is_above_normal:
+            if not is_geo_applicable:
+                non_decisive_factors.append(
+                    f"Geographically inapplicable hazard bulletin noted ({hazard.headline or 'Advisory'}; "
+                    f"issued for '{hazard.harbor}', voyage is from '{context.origin_harbor}'); not active for this mission sector."
+                )
+            elif is_expired_bulletin or hazard_stale:
+                non_decisive_factors.append(
+                    f"Historical hazard bulletin noted ({hazard.headline or 'Past Cyclone/Severe Weather Alert'}; "
+                    f"valid {hazard.valid_from} to {hazard.valid_to}); not an active warning for planned departure."
+                )
+                warnings.append(
+                    f"HISTORICAL_HAZARD_CONTEXT: Past advisory from expired bulletin {hazard.bulletin_id or ''} "
+                    f"({hazard.valid_from} to {hazard.valid_to}) was severe but has expired."
+                )
+            elif is_future_bulletin:
+                non_decisive_factors.append(
+                    f"Future hazard bulletin noted ({hazard.headline or 'Scheduled Advisory'}; "
+                    f"valid from {hazard.valid_from} to {hazard.valid_to}); not an active warning for departure at {eval_time_utc.isoformat()}."
+                )
+                warnings.append(
+                    f"FUTURE_HAZARD_CONTEXT: Advisory from bulletin {hazard.bulletin_id or ''} "
+                    f"commences in the future ({hazard.valid_from}) and is not yet in effect."
+                )
+            elif not has_valid_window:
+                non_decisive_factors.append(
+                    f"Hazard bulletin noted ({hazard.headline or 'Advisory'}) with missing or unverified validity window; "
+                    "cannot be treated as an active verified hazard."
+                )
+                warnings.append(
+                    f"HAZARD_VALIDITY_UNKNOWN: Bulletin {hazard.bulletin_id or ''} lacks verified validity window."
+                )
 
         threshold_checks.append(
             ThresholdComparison(
@@ -523,12 +628,27 @@ class DeterministicRiskEngine:
                 unit="boolean",
                 exceeded=cyclone_active,
                 impact="NO_GO_TRIGGER" if cyclone_active else "SAFE",
-                description=f"Cyclone warning active: {cyclone_active} ({hazard.headline if hazard else 'Normal'})",
+                description=f"Cyclone warning active: {cyclone_active} ({hazard.headline if is_active_verified_hazard else ('Historical/Expired/Inactive' if hazard and hazard_is_above_normal else 'Normal')})",
             )
         )
 
         if cyclone_active:
             decisive_factors.append(f"Active IMD cyclone warning: {hazard.headline or 'Cyclonic Storm Alert'}")
+
+        if severe_hazard_active and not cyclone_active:
+            decisive_factors.append(f"Active IMD severe hazard warning: {hazard.headline or 'Severe Weather Warning'}")
+            threshold_checks.append(
+                ThresholdComparison(
+                    metric_name="severe_hazard_warning",
+                    observed_value=True,
+                    threshold_value=False,
+                    operator="==",
+                    unit="boolean",
+                    exceeded=True,
+                    impact="NO_GO_TRIGGER",
+                    description=f"Severe weather warning active: {hazard.headline or 'Warning issued by IMD'}",
+                )
+            )
 
         # ---------------------------------------------------------------------
         # 3. Wave Height Check
@@ -691,7 +811,59 @@ class DeterministicRiskEngine:
         has_caution = any(tc.impact == "CAUTION_TRIGGER" for tc in threshold_checks)
 
         # Check if fallback sources (e.g. Open-Meteo or snapshot) were used for complete valid data
-        is_fallback_source = any("fallback" in prov.quality_flags for prov in provenance_list)
+        is_fallback_source = any(
+            any("fallback" in flag.lower() for flag in prov.quality_flags)
+            or "fallback" in (prov.source_name or "").lower()
+            for prov in provenance_list
+        )
+
+        def _is_prov_simulated(prov: DataProvenance) -> bool:
+            mode = str(getattr(prov, "data_mode", "") or "").upper()
+            if mode in ("MOCK", "SIMULATED", "SNAPSHOT", "SYNTHETIC", "DEMO"):
+                return True
+            s_name = str(getattr(prov, "source_name", "") or "").lower()
+            if any(marker in s_name for marker in ("demo", "synthetic", "mock", "fixture", "simulation", "snapshot")):
+                return True
+            for flag in getattr(prov, "quality_flags", []) or []:
+                f_lower = str(flag).lower()
+                if any(marker in f_lower for marker in ("demo", "synthetic", "mock", "simulated", "fixture", "snapshot_source", "m1_demo_data", "m2_contract_mock")):
+                    return True
+            return False
+
+        is_simulated_source = any(_is_prov_simulated(p) for p in provenance_list)
+
+        hazard_is_simulated = bool(prov_hazard and _is_prov_simulated(prov_hazard))
+        marine_is_simulated = bool(prov_marine and _is_prov_simulated(prov_marine))
+        weather_is_simulated = bool(prov_weather and _is_prov_simulated(prov_weather))
+
+        is_verified_live_hazard = bool(
+            hazard
+            and not hazard_is_simulated
+            and is_geo_applicable
+            and is_within_window
+            and not hazard_stale
+        )
+        is_verified_severe_hazard = bool(
+            is_verified_live_hazard
+            and (cyclone_active or severe_hazard_active)
+        )
+        is_verified_severe_marine = bool(
+            marine
+            and not marine_is_simulated
+            and not marine_stale
+            and marine.significant_wave_height_m is not None
+            and marine.significant_wave_height_m > limits["wave_nogo_m"]
+        )
+        is_verified_severe_wind = bool(
+            weather
+            and not weather_is_simulated
+            and not weather_stale
+            and weather.wind_speed_knots is not None
+            and weather.wind_speed_knots > limits["wind_nogo_knots"]
+        )
+        has_verified_severe_nogo = bool(
+            is_verified_severe_hazard or is_verified_severe_marine or is_verified_severe_wind
+        )
 
         if has_nogo:
             status = RecommendationStatus.NO_GO
@@ -734,8 +906,41 @@ class DeterministicRiskEngine:
             decisive_factors.append("No active severe weather bulletins.")
             conf_reasons = ["All environmental parameters strictly within safe operating envelope"]
 
-        if is_data_degraded or is_geo_fallback:
+        # Mixed-source and simulation handling:
+        # In LIVE or HYBRID mode, simulated inputs cannot clear real-world departure
+        if is_operational and is_simulated_source:
+            if has_verified_severe_nogo:
+                # Valid verified severe hazard/conditions independently justify NO_GO
+                status = RecommendationStatus.NO_GO
+                summary = f"Severe marine conditions or hazards detected exceeding {vessel_label} safety ceiling."
+                action = "Remain moored in port. Do not navigate under any circumstances."
+                confidence_level = ConfidenceLevel.HIGH
+                conf_reasons = ["Deterministic safety ceiling exceeded by verified official observations"]
+                warnings.append("Note: Auxiliary telemetry relies on simulated or fallback data, but verified severe hazard independently requires NO_GO.")
+                if is_verified_severe_hazard:
+                    decisive_factors.insert(0, f"Verified severe hazard warning ({hazard.headline or 'IMD Alert'}) active over sector.")
+            else:
+                # Fail closed: In LIVE or HYBRID mode, simulated inputs cannot clear real-world departure.
+                # Conversely, a simulated or expired severe hazard must not independently justify an operational NO_GO/HIGH.
+                status = RecommendationStatus.UNKNOWN
+                summary = "Essential safety evidence relies on simulated or demonstration data. Real-world departure cannot be certified."
+                action = "Hold departure. Obtain verified official live marine and hazard forecasts."
+                confidence_level = ConfidenceLevel.LOW
+                conf_reasons = ["Simulated data cannot support real-world departure clearance"]
+                decisive_factors.insert(0, "Essential safety evidence relies on simulated or demonstration data; operational clearance denied.")
+
+        # If demonstration scenario in SNAPSHOT/DEMO/MOCK mode, label summary and action accordingly
+        elif status == RecommendationStatus.GO and (data_mode.upper() in ("SNAPSHOT", "DEMO", "MOCK") or getattr(context, "is_demo", False)):
+            summary = "Conditions in this demonstration scenario are within modeled safe limits (Scenario Evaluation — Not Clearance for Current Voyage)."
+            action = "Demonstration scenario evaluation only. Does not grant operational clearance for current vessel departure. Always obtain verified live official bulletins before sailing."
+
+        if has_verified_severe_nogo:
+            confidence_level = ConfidenceLevel.HIGH
+        elif is_data_degraded or is_geo_fallback or status == RecommendationStatus.UNKNOWN:
             confidence_level = ConfidenceLevel.LOW
+        elif is_simulated_source:
+            confidence_level = ConfidenceLevel.MEDIUM
+            conf_reasons = ["Evaluated using demonstration scenario reference data"]
         elif is_fallback_source:
             confidence_level = ConfidenceLevel.MEDIUM
             conf_reasons.append("Evaluated using verified fallback marine model observations")

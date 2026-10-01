@@ -208,11 +208,15 @@ def register_dev4_operational_engines(
     def handle_pfz(**kwargs: Any) -> Any:
         context = ToolInvocationContext(**kwargs)
         raw_advisories = connector_manager.get_pfz_raw_advisories(context)
+        source_mode = getattr(raw_advisories, "source_data_mode", None) or getattr(connector_manager, "current_mode", None)
+        if hasattr(source_mode, "value"):
+            source_mode = source_mode.value
         return ProviderToolAdapter.adapt_pfz_ranking(
             pfz_engine.rank_pfz_candidates,
             context,
             raw_features=raw_advisories.features,
             is_mock=is_mock,
+            source_data_mode=str(source_mode).upper() if source_mode else None,
         )
     registry.register_tool(pfz_def, handle_pfz, override=True)
     registry.set_capability_availability("pfz_search", True)

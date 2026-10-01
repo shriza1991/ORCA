@@ -8,6 +8,72 @@
 
 ## Current Release & Workstream State
 
+### 2026-10-01 Task 2 Final Focused Correction: Snapshot Classification Gap, Epistemic Honesty, and Chat Endpoint Regressions (§D068)
+
+- **DIAGNOSED DEFECTS & CORRECTIONS**:
+  1. *Snapshot Classification Gap*: `_resolve_data_mode` normalized `SNAPSHOT`, but `_resolve_provenance` and the risk engine simulated-source check omitted it. Normalized `SNAPSHOT`, `DEMO`, `MOCK`, `SYNTHETIC`, and `SIMULATED` consistently across all models and evaluation layers. Operational `LIVE`/`HYBRID` assessments containing essential `SNAPSHOT` evidence fail closed to `UNKNOWN`/`LOW`.
+  2. *Real Snapshot Fixtures vs Contract Mocks*: Distinguished genuine snapshot fixtures from contract mocks (`SNAPSHOT_SOURCE` attached, `M2_CONTRACT_MOCK` strictly omitted).
+  3. *Eliminated Fabricated Verified/Official Assertions*: Removed automatic assertions of `official_source` or `verified_live` merely because data mode was not `MOCK/DEMO` or settings specified `LIVE`. Preserved structured `quality_flags`. Cached official data retains official origin without claiming `verified_live`; fallback models (Open-Meteo) retain actual fallback provider classification; PFZ ranking captures geodesic calculation lineage (`pfz_ranking_eval:snapshot_inputs`).
+  4. *Preserved Independently Justified Severe Restrictions*: When a valid, verified, active severe hazard independently justifies `NO_GO`, `DeterministicRiskEngine` preserves `NO_GO`/`HIGH` even if auxiliary marine telemetry is simulated or fallback. Conversely, a simulated or expired severe hazard bulletin cannot independently justify an operational `NO_GO`/`HIGH`.
+  5. *Chat Endpoint Regressions (A-G)*: Added 7 comprehensive regression tests directly exercising `/api/v1/chat` and verified via `TestClient`. Restored settings and registry states using `monkeypatch.setattr`.
+- **TEST VERIFICATION & INTEGRITY**:
+  - `tests/integration/test_task2_hazard_validity.py`: **31/31 passed** in 17.92s.
+  - `tests/integration/test_task1_snapshot_pipeline.py` & `test_task2_hazard_validity.py`: **53/53 passed** in 15.53s.
+  - `tests/domain/test_f02_f03_safety.py`, `test_observation_bundle.py`, `test_pfz_data_semantics.py`: **22/22 passed** in 1.32s.
+  - Frontend production build (`tsc && vite build`): **Passed cleanly** in 3m 49s.
+- **NEXT RECOMMENDED TASK**:
+  - Proceed to Task 3: Full provenance-card cleanup and UI alignment.
+
+### 2026-09-30 Task 2 of 6: Fixed Hazard Validity, Epistemic Data Honesty, and Safety Confidence Bounds (§D066)
+
+- **DIAGNOSED SAFETY PIPELINE & ROOT CAUSE**:
+  - `ImdHazardConnector` artificially synthesized bulletin validity (`valid_from = now - 24h`, `valid_to = now + 7d`) when loading cached or fallback bulletins, erasing original bulletin expiration and turning stale warnings into fresh observations.
+  - Missing provider credentials (`IMD_API_KEY`) or provider failures defaulted to an artificial `NORMAL` payload (`severity="NORMAL"`), falsely manufacturing safe observations from absent evidence.
+  - In `DeterministicRiskEngine`, expired severe hazard bulletins triggered an active `NO_GO` even when long expired, or conversely, simulated data in live operational modes could produce a real-world `GO` with `HIGH` confidence.
+  - Marker mismatch between `fallback_model` quality flag and `fallback` search string in confidence checks caused fallback telemetry to skip confidence downgrades.
+  - In the Vite frontend, `MapView.tsx` overrode `UNKNOWN` recommendation status with wave-height heuristic checks and displayed green "safe to sail" styling.
+- **IMPLEMENTED CHANGES**:
+  - `backend/app/connectors/imd_hazard.py` & `backend/app/connectors/normalizers/imd.py`:
+    - Eliminated synthetic validity rewriting; authentic file validity (`issued_at`, `valid_from`, `valid_to`, `bulletin_id`) is strictly preserved across repeated reloads.
+    - In `LIVE` mode without `IMD_API_KEY`, raises `ConnectorAuthenticationError`. On provider failures, returns explicit `UNAVAILABLE` payload (`severity="UNKNOWN"`, `coverage_status="UNAVAILABLE"`, `valid_from=None`, `valid_to=None`).
+  - `backend/app/domain/risk_engine.py`:
+    - Added timezone-aware datetime parsing (`parse_to_utc()`) for ISO strings with `Z` or `+HH:MM` offsets.
+    - Evaluates validity against `eval_time_utc` and `window_end_utc`. In operational modes (`LIVE`, `HYBRID`), missing/expired validity marks telemetry stale/degraded, failing closed to `UNKNOWN` and `LOW` confidence.
+    - Historical Severe Hazards: Expired bulletins with severe cyclone ratings are flagged as historical context (`HISTORICAL_HAZARD_CONTEXT`) and do not trigger a false current `NO_GO`. Lack of current valid bulletin prevents `GO`, returning `UNKNOWN` and `LOW` confidence.
+    - Active Severe Hazards: Valid, geographically applicable severe hazards within their validity window strictly trigger `NO_GO` with `HIGH` confidence.
+    - Mismatch Resolution: Both `fallback_model` and `fallback` normalized and recognized; simulated/mock/demo sources explicitly detected and blocked from real-world departure clearance.
+    - Ensured any `status == RecommendationStatus.UNKNOWN` is accompanied by `confidence_level = ConfidenceLevel.LOW`.
+  - `backend/app/agents/integrations/adapters.py` & `backend/app/agents/graph.py`:
+    - `_resolve_provenance` and adapters attach structured `data_mode`, `quality_flags`, `valid_from`, and `valid_to` across marine, weather, hazard, and SVAS payloads.
+    - `specialist_tools_node` dynamically detects active data mode from payloads, safely handling mock test dicts and live operational feeds.
+    - `response_composer_node` adds explicit notice text when recommendations are `UNKNOWN` due to expired or unavailable telemetry.
+  - `frontend/src/components/map/MapView.tsx`:
+    - Fixed `canonStatus` resolution so `UNKNOWN` and `INFORMATIONAL` statuses are preserved and never overridden by wave height checks.
+    - Styled `UNKNOWN` status badge in neutral slate/gray (`#f1f5f9` / `#475569`), preventing misleading green presentation.
+  - `tests/integration/test_task2_hazard_validity.py`:
+    - 14 comprehensive regression tests covering A through L:
+      - A: Expired cached IMD bulletin retains original validity.
+      - B: Repeated retrieval does not extend validity.
+      - C: Missing credentials fail closed in LIVE; unavailable payload produces UNKNOWN/LOW.
+      - D: Calm inputs + expired or simulated hazard cannot produce live GO/HIGH.
+      - E: Valid active severe hazard produces NO_GO.
+      - F: Historical severe hazard not treated as active warning.
+      - G: Timezone offsets evaluated correctly inside vs outside validity.
+      - H: Geographic fallback metadata survives and blocks GO/HIGH.
+      - I: PFZ-only requests remain INFORMATIONAL and grant no clearance.
+      - J: Demo/simulation identity survives every layer.
+      - K: Real snapshot PFZ request in `/api/v1/chat` returns candidate MH-PFZ-51 (~13.1 nm, ~241.3°).
+      - L: Container-equivalent isolated filesystem layout verifies snapshot discovery without repository borrowing.
+- **TEST VERIFICATION & INTEGRITY**:
+  - `tests/integration/test_task2_hazard_validity.py`: **14/14 passed** in 3.42s.
+  - `tests/integration/test_task1_snapshot_pipeline.py`: **22/22 passed** in 5.16s.
+  - Total focused integration suite: **36/36 passed** in 11.69s.
+  - `tests/domain`: **101/101 passed** in 5.95s.
+  - `tests/api` & `test_fisher_demo_scenario.py`: **91/91 passed** in 269s.
+  - Frontend production build (`tsc && vite build`): **Passed cleanly** in 1m 36s.
+- **NEXT RECOMMENDED TASK**:
+  - Task 3: Full provenance-card cleanup and UI alignment.
+
 ### 2026-09-30 Task 1 of 6: Diagnosed and Fixed Conversational Pipeline Failing with ConnectorMissingSnapshotError (§D064, §D065)
 
 - **DIAGNOSED DEPLOYED REPRODUCIBILITY & ROOT CAUSE**:
@@ -2017,3 +2083,18 @@ egister_trip_monitoring to correct UI timestamp gaps causing departure_time == r
 - **Verification:**
   - Evaluated trip 2026-09-27 02:30 - 14:30 now correctly returns RecommendationStatus.GO with no TRIP_WINDOW_EXCEEDS_FORECAST alerts.
   - Successfully seeded 194 marine observation records matching the extended timeline.
+
+## 2026-09-30 - Task 2 Corrective Pass: Authoritative Provenance, Mixed-Source Invariants, Map Independence
+- Status: **COMPLETE & VERIFIED**
+- Addressed all 7 concrete reviewer findings on Task 2:
+  1. Authoritative Structured Provenance: `ProviderToolAdapter._resolve_data_mode` and `_resolve_provenance` inspect structured payload `freshness_flags`, `coverage_status`, and `quality_flags` as primary authority. String parsing is strictly a fallback.
+  2. Removal of First-Payload Mode Bypass: `specialist_tools_node` determines operational context independently from individual source origins.
+  3. Mixed-Source Operational Assessments Fail Closed: If any essential safety input is simulated during an operational `LIVE`/`HYBRID` evaluation, `status` fails closed to `UNKNOWN` with `LOW` confidence and explicit directives.
+  4. Demo Recommended Actions: Calm scenario evaluations explain modeled results and explicitly state they are not clearance for current vessel departure. Regional languages (`mr`, `hi`) fully localized without English leaks.
+  5. Removal of Map Missing-Status GO Fallback: `MapView.tsx` strictly relies on canonical backend status. Inferred GO from calm wave height removed. Added `INFORMATIONAL` badge styling.
+  6. Verified All Hazard Decision Paths: Tested active squall (`CAUTION`), severe cyclone (`NO_GO`), future/expired/inapplicable bulletins (non-active).
+  7. Deployment Claim Corrected: Documented that local code defines only local/preview endpoints, client proxies to `http://127.0.0.1:8000`, and active production Render service resolution requires hosting provider dashboard access.
+- Verification:
+  - 46/46 passed in `tests/integration/test_task1_snapshot_pipeline.py` and `tests/integration/test_task2_hazard_validity.py`.
+  - Frontend production build (`npm --prefix frontend run build` -> `tsc && vite build`) passed cleanly (`✓ built in 43.04s`).
+
