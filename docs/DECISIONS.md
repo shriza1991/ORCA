@@ -2222,3 +2222,11 @@ Date: 2026-10-01
 Decision: Retain both existing Vite and Next.js clients and the FastAPI/domain core. Reuse the synthetic generator through a timestamped daily DEMO view, shared by assessments, chat tools and institutional demo APIs. Preserve the original dated Fisher scenario as explicit historical replay. Add a deterministic assessment comparison endpoint: both sides are evaluated by AssessmentService, and the returned simulated mission is the only mission applied by the UI. Role selection remains workspace navigation, not authentication. Compact summaries progressively disclose existing evidence and analysis.
 Reason: Current screens mix data modes and What-If baselines, and the Fisher entry begins with a form rather than operational context. The previous audit missed the existing Next.js tree; both clients must remain usable.
 Safety: No frontend safety verdicts, no suppression of genuinely unavailable evidence, no change to vessel safety limits, no claim that synthetic data is live.
+
+
+## D069 ? Vite mission continuity and immutable comparison inputs
+Status: ACCEPTED
+Date: 2026-10-02
+Decision: For the explicitly requested roadmap implementation, target the existing Vite frontend only; do not modify Next.js. This task-specific scope supersedes client-parity work in D064. Preserve all domain engines and existing contracts with additive evidence-bundle IDs, retained assessment replay, and explicit refresh versus parameter comparison. Reuse AssessmentService for recomputation and LangGraph for intent/tool coordination. Retain up to 256 evidence bundles and assessments per process under a lock; lost/evicted IDs require explicit reassessment, never silent refetch. This is not durable multi-worker persistence. Route rankings expose outbound assumptions and cannot authorize departure against a NO_GO/UNKNOWN mission.
+Reason: Existing comparison independently retrieved both sides and chat context could differ from the Fisher baseline. Same-evidence comparisons need immutable normalized inputs and honest execution/provenance presentation. User expressly prohibits Next.js changes.
+Safety: Python remains the decision authority. Preserve synthetic provenance, validity and hard-stop precedence; distinguish derived domain explanation from executed agent traces.

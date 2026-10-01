@@ -448,7 +448,7 @@ class DeterministicRiskEngine:
                     hazard_stale = True
             elif hazard_vt < eval_time_utc:
                 hazard_stale = True
-            elif is_operational and hazard_vf and hazard_vf > eval_time_utc:
+            elif is_operational and hazard_vf and hazard_vf > window_end_utc:
                 hazard_stale = True
             elif hazard_vt < window_end_utc:
                 warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Hazard bulletin expires before planned return.")
@@ -564,7 +564,7 @@ class DeterministicRiskEngine:
         hazard_vf_dt = parse_to_utc(hazard.valid_from) if hazard else None
         hazard_vt_dt = parse_to_utc(hazard.valid_to) if hazard else None
         has_valid_window = bool(hazard and hazard_vf_dt is not None and hazard_vt_dt is not None)
-        is_within_window = bool(has_valid_window and hazard_vf_dt <= eval_time_utc <= hazard_vt_dt)
+        is_within_window = bool(has_valid_window and hazard_vf_dt <= window_end_utc and hazard_vt_dt >= eval_time_utc)
         is_future_bulletin = bool(has_valid_window and hazard_vf_dt > eval_time_utc)
         is_expired_bulletin = bool(has_valid_window and hazard_vt_dt < eval_time_utc)
 
@@ -577,7 +577,8 @@ class DeterministicRiskEngine:
             hazard
             and is_geo_applicable
             and is_within_window
-            and not hazard_stale
+            and hazard_vf_dt <= hazard_vt_dt
+            and not any(x in (hazard.source_name or "").upper() for x in ("DEGRADED", "UNAVAILABLE"))
             and hazard_is_above_normal
         )
 
@@ -840,8 +841,7 @@ class DeterministicRiskEngine:
             hazard
             and not hazard_is_simulated
             and is_geo_applicable
-            and is_within_window
-            and not hazard_stale
+            and is_active_verified_hazard
         )
         is_verified_severe_hazard = bool(
             is_verified_live_hazard

@@ -13,6 +13,7 @@ Models official source structures for:
 from __future__ import annotations
 
 import math
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
@@ -24,6 +25,12 @@ DATASET_VERSION = "synthetic_demo_v1"
 
 def current_demo_reference() -> datetime:
     """Daily scenario clock, never an observation timestamp from a live source."""
+    frozen = os.getenv("ORCA_DEMO_REFERENCE")
+    if frozen:
+        value = datetime.fromisoformat(frozen.replace("Z", "+00:00"))
+        if value.tzinfo is None:
+            raise ValueError("ORCA_DEMO_REFERENCE must include a timezone")
+        return value.astimezone(timezone.utc)
     return datetime.now(timezone.utc).replace(hour=6, minute=0, second=0, microsecond=0)
 
 

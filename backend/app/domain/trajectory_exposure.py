@@ -92,7 +92,7 @@ class TrajectoryExposureEngine:
         best_payload: Optional[MarineConditionsPayload] = None
 
         for item in hourly_forecast:
-            observed_at = item.get("observation_time") if isinstance(item, dict) else item.observed_at
+            observed_at = (item.get("observation_time") or item.get("observed_at") or item.get("timestamp_utc")) if isinstance(item, dict) else item.observed_at
             if not observed_at:
                 continue
             try:
@@ -106,9 +106,9 @@ class TrajectoryExposureEngine:
 
         # If matched within 3 hours, use it; otherwise fallback
         if best_payload and best_diff_seconds <= 10800:
-            wave = best_payload.get("wave_height_m", best_payload.get("swh")) if isinstance(best_payload, dict) else best_payload.significant_wave_height_m
+            wave = best_payload.get("significant_wave_height_m", best_payload.get("swh_m", best_payload.get("wave_height_m", best_payload.get("swh")))) if isinstance(best_payload, dict) else best_payload.significant_wave_height_m
             wave = wave if wave is not None else fallback_wave_m
-            wind = best_payload.get("wind_speed_knots") if isinstance(best_payload, dict) else getattr(best_payload, "wind_speed_knots", None)
+            wind = best_payload.get("wind_speed_knots", best_payload.get("wind_speed_kn")) if isinstance(best_payload, dict) else getattr(best_payload, "wind_speed_knots", None)
             wind = wind if wind is not None else fallback_wind_kn
             return wave, wind, True
 
@@ -146,6 +146,7 @@ class TrajectoryExposureEngine:
         peak_point: Optional[Dict[str, Any]] = None
         peak_exposure = 0.0
         has_matched_forecast = False
+        unmatched_waypoints = 0
 
         for i, pt in enumerate(waypoints):
             if i > 0:
@@ -165,6 +166,8 @@ class TrajectoryExposureEngine:
             )
             if matched:
                 has_matched_forecast = True
+            else:
+                unmatched_waypoints += 1
 
             # Local exposure formula: wave penalty + progressive distance penalty
             seg_exposure = round(wave_m * 1.5 + (cumulative_dist_km / 10.0), 2)
@@ -209,7 +212,7 @@ class TrajectoryExposureEngine:
 
         total_hours = timeline[-1].eta_hours if timeline else 0.0
         missing_state = None
-        if not forecast_list or not has_matched_forecast:
+        if unmatched_waypoints or not forecast_list or not has_matched_forecast:
             missing_state = (
                 f"Missing hourly forecast data; evaluated using baseline wave height {fallback_wave_height_m}m."
             )

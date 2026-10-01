@@ -354,6 +354,8 @@ class AgentRunService:
 
         # Map state to response
         response = state_mapper.map_state_to_response(final_state, run_id, conversation_id)
+        from backend.app.services.mission_conversation import bind_mission_response
+        response = bind_mission_response(response, user_context or {}, user_message)
         if response.run_id != run_id:
             response.run_id = run_id
         response.data_mode = self._response_data_mode(response)

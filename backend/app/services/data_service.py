@@ -122,6 +122,11 @@ class DataService:
                 lat, lon = resolve_coordinates(context)
                 coords = [lon, lat]
             active = []
+            hazard_windows = []
+            retained_hazards = []
+            mission_end = datetime.fromisoformat((context.return_time or target.isoformat()).replace("Z", "+00:00"))
+            if mission_end.tzinfo is None:
+                mission_end = mission_end.replace(tzinfo=timezone.utc)
             for hazard in dataset["hazards"]:
                 geometry = hazard.get("geometry_geojson") or hazard.get("geometry")
                 start = hazard.get("issued_at") or hazard.get("valid_from") or hazard.get("effective_from") or hazard.get("start_time")
@@ -130,9 +135,12 @@ class DataService:
                     continue
                 start = datetime.fromisoformat(start.replace("Z", "+00:00")) if isinstance(start, str) else start
                 end = datetime.fromisoformat(end.replace("Z", "+00:00")) if isinstance(end, str) else end
-                if start <= target <= end and shape(geometry).intersects(Point(coords)):
+                if shape(geometry).intersects(Point(coords)):
+                    retained_hazards.append({"start": start.isoformat(), "end": end.isoformat(), "event_type": hazard.get("event_type"), "headline": hazard.get("headline", "Scenario warning")})
+                if start <= mission_end and end >= target and shape(geometry).intersects(Point(coords)):
                     active.append(hazard)
-            return HazardBulletinPayload(harbor=harbor, cyclone_warning_active=any("CYCLONE" in str(h.get("event_type", "")).upper() for h in active), squall_alert=any("SQUALL" in str(h.get("event_type", "")).upper() for h in active), severity="WARNING" if active else "NORMAL", headline="; ".join(h["headline"] for h in active) or "No active atmospheric warning at this origin in the controlled scenario.", valid_from=observed, valid_to=valid_to, source_name=source)
+                    hazard_windows.append((start, end))
+            return HazardBulletinPayload(harbor=harbor, cyclone_warning_active=any("CYCLONE" in str(h.get("event_type", "")).upper() for h in active), squall_alert=any("SQUALL" in str(h.get("event_type", "")).upper() for h in active), severity="WARNING" if active else "NORMAL", headline="; ".join(h["headline"] for h in active) or "No active atmospheric warning at this origin in the controlled scenario.", valid_from=min(w[0] for w in hazard_windows).isoformat() if hazard_windows else min(r["observation_time"] for r in records).isoformat(), valid_to=max(w[1] for w in hazard_windows).isoformat() if hazard_windows else valid_to, source_name=source, freshness_flags={"hazard_records": retained_hazards, "coverage_start": min(r["observation_time"] for r in records).isoformat(), "coverage_end": valid_to})
         features = [{"id": r["public_id"], "lat": r["latitude"], "lon": r["longitude"], "sst_grad": r["sst_gradient"], "chlorophyll": r["chlorophyll_value"], "depth_m": r["depth_m"]} for r in dataset["pfz_candidates"] if r.get("qc_status") == "VALID" and r["detected_at"] <= target <= r["valid_to"]]
         return PFZSourceDataPayload(features=features, bulletin_date=observed, valid_to=valid_to, source_name=source)
 

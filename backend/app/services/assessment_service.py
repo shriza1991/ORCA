@@ -52,7 +52,7 @@ class AssessmentService:
 
         # Resolve canonical MissionState as source-of-truth (M1.1)
         if request.mission_state:
-            mission_state = request.mission_state
+            mission_state = request.mission_state.model_copy(deep=True)
         else:
             u_ctx = UserContext(
                 origin_harbor=request.origin_harbor,
@@ -107,9 +107,14 @@ class AssessmentService:
             coordinates=effective_coordinates,
             craft_profile=effective_craft_profile,
             vessel_size=effective_vessel_size,
+            return_time=effective_return_time,
             departure_time=effective_departure_time
             # return_time is handled in the risk engine window
         )
+
+        from backend.app.services.mission_evidence import FrozenDataService, retain_bundle, retain_assessment
+        if request.evidence_bundle_id:
+            data_service = FrozenDataService(request.evidence_bundle_id, ctx, request.data_mode)
 
         source_status: List[AssessmentSourceStatus] = []
         
@@ -140,6 +145,12 @@ class AssessmentService:
             logger.error(f"Hazard data retrieval failed: {e}")
             source_status.append(AssessmentSourceStatus(provider_name="Hazard", status="FAILED", error_message=str(e)))
 
+        pfz_raw = None
+        try:
+            pfz_raw = data_service.get_pfz_raw_advisories(ctx)
+        except Exception as exc:
+            source_status.append(AssessmentSourceStatus(provider_name="PFZ", status="FAILED", error_message=str(exc)))
+
         # 3. Assemble Bundle
         hourly_by_time = {}
         for record in (marine.hourly_forecast if marine else []):
@@ -155,7 +166,7 @@ class AssessmentService:
             marine=marine,
             weather=weather,
             hazard=hazard,
-            captured_at=now_iso,
+            captured_at=data_service.bundle.captured_at if request.evidence_bundle_id else now_iso,
             data_mode=request.data_mode,
             source_metadata={
                 "provenance_mode": (
@@ -170,6 +181,12 @@ class AssessmentService:
             hourly_forecast=list(hourly_by_time.values()),
         )
         
+        bundle.source_metadata["provenance_mode"] = bundle.provenance_mode
+        evidence_bundle_id = request.evidence_bundle_id or retain_bundle(ctx, request.data_mode, bundle, pfz_raw)
+        if not request.evidence_bundle_id:
+            bundle.captured_at = FrozenDataService(evidence_bundle_id, ctx, request.data_mode).bundle.captured_at
+        bundle.source_metadata.update({"evidence_bundle_id": evidence_bundle_id, "spatial_basis": "Origin forecast applied along corridor; not a spatial forecast grid"})
+
         # 4. Evaluate Risk
         # Ensure hard-stop precedence and incomplete evidence handling
         brief = None
@@ -306,7 +323,6 @@ class AssessmentService:
         pfz_ranking = None  # Initialize before try so routes evaluation can safely check it
         if effective_destination_id or True: # Evaluate if we can
             try:
-                pfz_raw = data_service.get_pfz_raw_advisories(ctx)
                 if pfz_raw and pfz_raw.features:
                     from backend.app.domain.pfz import DeterministicPFZRankingEngine
                     pfz_engine = DeterministicPFZRankingEngine()
@@ -398,6 +414,34 @@ class AssessmentService:
             except Exception as e:
                 logger.warning(f"Failed to evaluate route candidates: {e}")
                 
+        # A route ranking is not a departure clearance. Preserve trip restrictions.
+        for route in route_candidates:
+            reasons = list(route.get("infeasibility_reasons") or [])
+            if decision in (RecommendationStatus.NO_GO, RecommendationStatus.UNKNOWN):
+                reasons.append(brief.recommended_action if brief else "Mission clearance unavailable.")
+            if route.get("missing_data_state"):
+                reasons.append(str(route["missing_data_state"]))
+            route["departure_supported"] = bool(route.get("is_feasible", False) and not reasons)
+            route["rejection_reasons"] = list(dict.fromkeys(reasons))
+            route["evaluation_scope"] = "Outbound transit exposure; whole mission conditions evaluated separately"
+            route["spatial_basis"] = bundle.source_metadata["spatial_basis"]
+            if not route["departure_supported"]:
+                route["is_recommended"] = False
+        if request.selected_route_id:
+            selected = next((r for r in route_candidates if r.get("route_id") == request.selected_route_id), None)
+            if selected is None or not selected.get("departure_supported"):
+                from backend.app.services.mission_evidence import EvidenceUnavailable
+                raise EvidenceUnavailable("Selected corridor is not supported for this mission window.")
+            for route in route_candidates:
+                route["is_recommended"] = route is selected
+            from backend.app.contracts.mission import MissionRoute
+            mission_state.route = MissionRoute(corridor_name=selected.get("name"), waypoints=selected.get("waypoints", []), distance_km=selected.get("distance_km"), exposure_score=selected.get("exposure_score"))
+        if safe_window and decision in (RecommendationStatus.NO_GO, RecommendationStatus.UNKNOWN):
+            safe_window.earliest_safer_departure = None
+            safe_window.recommended_window_start = None
+            safe_window.recommended_window_end = None
+            safe_window.window_summary = "No departure alternative is cleared by the current mission evidence. Compare a complete proposed plan."
+
         # 5. Derive Deterministic Agent Collaboration Payload (M1.3)
         agent_collaboration = None
         try:
@@ -525,7 +569,9 @@ class AssessmentService:
                     logger.warning(f"Failed to persist assessment: {e}")
 
         # 7. Format Response
-        return TripAssessmentResponse(
+        response = TripAssessmentResponse(
+            evidence_bundle_id=evidence_bundle_id,
+            evaluation_events=[{"component": x.provider_name, "status": x.status, "details": x.error_message} for x in source_status] + [{"component": "DeterministicRiskEngine", "status": decision.value}],
             assessment_id=assessment_id,
             assessed_at=now_iso,
             trip_context=UserContext(
@@ -554,6 +600,9 @@ class AssessmentService:
             stability=stability,
             safe_window=safe_window,
         )
+
+        retain_assessment(response)
+        return response
 
     @staticmethod
     def _build_error_response(

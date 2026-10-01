@@ -79,6 +79,8 @@ def _build_user_context(request: ChatRequest) -> dict[str, Any]:
     """Convert ChatRequest.user_context and request.mission_state to the dict expected by ORCAState."""
     ctx = request.user_context or UserContext()
     context = {
+        "evidence_bundle_id": request.evidence_bundle_id,
+        "baseline_assessment_id": request.baseline_assessment_id,
         "data_mode": request.data_mode or settings.DATA_MODE,
         "vessel_size": ctx.vessel_size or "medium",
         "sector_id": ctx.sector_id,
@@ -212,18 +214,20 @@ async def health_check():
     connectors = []
 
     try:
-        with SessionLocal() as session:
-            session.execute(text("SELECT 1"))
-            db_status = "connected"
-
-            # Check connector health
-            if settings.DATA_MODE != "SNAPSHOT":
-                connectors = session.query(ConnectorStatus).all()
-                if any(not c.is_online for c in connectors):
-                    global_status = "degraded"
-                if connectors and all(not c.is_online for c in connectors):
-                    global_status = "unavailable"
-
+        if settings.DATA_MODE.upper() == "DEMO":
+            db_status = "not_required"
+        else:
+            with SessionLocal() as session:
+                session.execute(text("SELECT 1"))
+                db_status = "connected"
+    
+                # Check connector health
+                if settings.DATA_MODE != "SNAPSHOT":
+                    connectors = session.query(ConnectorStatus).all()
+                    if any(not c.is_online for c in connectors):
+                        global_status = "degraded"
+                    if connectors and all(not c.is_online for c in connectors):
+                        global_status = "unavailable"
     except Exception as e:
         logger.debug("Database health check failed (service offline): %s", e)
         db_status = "disconnected"
@@ -308,6 +312,21 @@ async def chat_endpoint(request: ChatRequest) -> ChatResponse:
     conversation_id = request.conversation_id or str(uuid.uuid4())
     run_id = str(uuid.uuid4())
     user_context = _build_user_context(request)
+
+    if request.baseline_assessment_id:
+        from backend.app.services.mission_evidence import get_assessment, EvidenceUnavailable
+        try:
+            retained = get_assessment(request.baseline_assessment_id)
+            if request.evidence_bundle_id != retained.evidence_bundle_id:
+                raise EvidenceUnavailable("Chat evidence does not match the active assessment.")
+            if (request.data_mode or settings.DATA_MODE).upper() != retained.conditions.data_mode.upper():
+                raise EvidenceUnavailable("Chat mode does not match the active assessment.")
+            requested_locale = user_context.get("language_preference", "en")
+            user_context.update(retained.trip_context.model_dump())
+            user_context["language_preference"] = requested_locale
+            user_context["evidence_bundle_id"] = retained.evidence_bundle_id
+        except EvidenceUnavailable as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     # Resolve canonical MissionState context (M1.1)
     mission_state = request.mission_state

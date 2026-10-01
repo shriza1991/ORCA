@@ -61,13 +61,13 @@ class ObservationBundle(BaseModel):
             return "DEMO"
         for payload in (self.marine, self.weather, self.hazard):
             if payload is not None:
-                ff = getattr(payload, "freshness_flags", None)
+                ff = payload.get("freshness_flags") if isinstance(payload, dict) else getattr(payload, "freshness_flags", None)
                 if isinstance(ff, dict):
-                    dm = str(ff.get("data_mode") or "").upper()
+                    dm = str(ff.get("data_mode") or ff.get("provenance_mode") or "").upper()
                     if dm in ("DEMO", "SYNTHETIC", "MOCK", "SNAPSHOT", "SIMULATED"):
                         return "DEMO"
         sources = " ".join(
-            str(getattr(payload, "source_name", ""))
+            str(payload.get("source_name", "") if isinstance(payload, dict) else getattr(payload, "source_name", ""))
             for payload in (self.marine, self.weather, self.hazard)
             if payload is not None
         ).upper()

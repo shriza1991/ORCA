@@ -1,3 +1,4 @@
+import MissionRecordInspector from "../components/mission/MissionRecordInspector";
 import { useState, useMemo, useEffect } from 'react';
 import {
   Activity,
@@ -247,6 +248,7 @@ export default function AuthorityPage({
 
   return (
     <div className={`authority-page view-${mobileView}`} role="region" aria-label="Authority Command Deck">
+      <MissionRecordInspector />
       {/* Single Unified Authority Command Bar */}
       <section className="authority-command-bar" aria-label="Operational Command Bar">
         <div className="authority-bar-left">

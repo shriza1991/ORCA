@@ -86,7 +86,7 @@ export default function DataModeIndicator({
           })}
         </span>
       </span>
-      {health?.database && !health.database.includes("{{") && (
+      {health?.database && health.database !== "not_required" && !health.database.includes("{{") && (
         <span
           className={`pilot-badge ${databaseConnected ? "db-connected" : "db-offline"}`}
           title={

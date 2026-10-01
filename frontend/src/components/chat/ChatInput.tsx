@@ -45,7 +45,8 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
   const handleSend = () => {
     const trimmed = text.trim();
     if (!trimmed || disabled || isRecording || isTranscribing) return;
-    onSend(trimmed);
+    onSend(trimmed, detectedLanguage === "en" || detectedLanguage === "hi" || detectedLanguage === "mr" ? detectedLanguage : undefined);
+    setDetectedLanguage(null);
     setText('');
   };
 
@@ -115,7 +116,7 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
         {detectedLanguage && !isRecording && !isTranscribing && (
           <div className="voice-status-pill detected" role="status">
             <Mic size={13} />
-            <span>{i18nT('ChatInput.voicedetectedva', { val: languageLabel(detectedLanguage) })}</span>
+            <span>{i18nT('ChatInput.voicedetectedva', { val: languageLabel(detectedLanguage) })} ? Review harbor and time before sending.</span>
           </div>
         )}
 

@@ -152,6 +152,16 @@ export function useTripAssessment() {
     [missionState],
   );
 
+  const adoptAssessment = useCallback((assessment: TripAssessmentResponse) => {
+    abortControllerRef.current?.abort();
+    setData(assessment);
+    setMissionState(assessment.mission_state || null);
+    setIsLoading(false);
+    setIsOffline(false);
+    setIsExpired(false);
+    setError(null);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -164,6 +174,7 @@ export function useTripAssessment() {
   return {
     data,
     setData,
+    adoptAssessment,
     missionState,
     setMissionState,
     isLoading,

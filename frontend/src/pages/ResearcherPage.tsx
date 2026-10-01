@@ -1,3 +1,4 @@
+import MissionRecordInspector from "../components/mission/MissionRecordInspector";
 import { useState, Component, type ErrorInfo, type ReactNode } from 'react';
 import {
   Beaker, Waves, Database, FlaskConical, MessageSquareText, AlertOctagon, RotateCcw, BookOpen,
@@ -79,6 +80,7 @@ export default function ResearcherPage() {
 
   return (
     <div className="researcher-page">
+      <MissionRecordInspector />
       {/* Command Bar */}
       <div className="researcher-command-bar">
         <div className="researcher-bar-left">

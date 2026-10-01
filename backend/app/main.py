@@ -45,14 +45,16 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from backend.app.core.worker import alert_monitor_loop
-    task = asyncio.create_task(alert_monitor_loop(interval_seconds=60))
+    task = asyncio.create_task(alert_monitor_loop(interval_seconds=60)) if settings.DATA_MODE.upper() != "DEMO" else None
     yield
-    task.cancel()
+    if task:
+        task.cancel()
     connector_http_client.close()
 
 
 def create_app() -> FastAPI:
     """Application factory for ORCA."""
+    from backend.app.core.config import settings
     setup_logging(settings.LOG_LEVEL)
     
     app = FastAPI(

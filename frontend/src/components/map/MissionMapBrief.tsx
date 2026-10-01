@@ -26,6 +26,8 @@ export interface RouteCandidateInfo {
   risk_rating: string;
   exposure_score: number;
   is_recommended: boolean;
+  departure_supported?: boolean;
+  rejection_reasons?: string[];
   start_coordinates?: [number, number];
   end_coordinates?: [number, number];
   origin?: string;
@@ -41,24 +43,24 @@ const ALL_OPERATIONAL_MODES: Array<{
 }> = [
   {
     id: 'safest',
-    label: 'Safest Corridor',
-    badge: 'Min Risk',
+    label: 'Inshore Corridor',
+    badge: 'Inspect',
     icon: <ShieldCheck size={13} />,
-    strategy: 'Maximizes distance from squall advisory & naval firing buffers',
+    strategy: 'Inspect backend exposure and rejection reasons; corridor selection does not change the mission decision.',
   },
   {
     id: 'balanced',
     label: 'Balanced Corridor',
-    badge: 'Optimal',
+    badge: 'Inspect',
     icon: <Compass size={13} />,
     strategy: 'Balanced transit time & wave height exposure along coast',
   },
   {
     id: 'direct',
     label: 'Direct Passage',
-    badge: 'Fastest',
+    badge: 'Inspect',
     icon: <Zap size={13} />,
-    strategy: 'Direct bearing to target PFZ coordinate (highest weather sensitivity)',
+    strategy: 'Inspect the evaluated direct corridor to the fishing target.',
   },
 ];
 
@@ -86,6 +88,8 @@ export function extractRouteCandidates(layers: MapLayer[]): RouteCandidateInfo[]
           risk_rating: gj.properties.risk_rating || 'LOW',
           exposure_score: typeof gj.properties.exposure_score === 'number' ? gj.properties.exposure_score : 0,
           is_recommended: Boolean(gj.properties.is_recommended),
+          departure_supported: gj.properties.departure_supported,
+          rejection_reasons: gj.properties.rejection_reasons,
           start_coordinates: startCoord,
           end_coordinates: endCoord,
           origin: gj.properties.origin,
@@ -110,6 +114,8 @@ export function extractRouteCandidates(layers: MapLayer[]): RouteCandidateInfo[]
               risk_rating: feat.properties.risk_rating || 'LOW',
               exposure_score: typeof feat.properties.exposure_score === 'number' ? feat.properties.exposure_score : 0,
               is_recommended: Boolean(feat.properties.is_recommended),
+              departure_supported: feat.properties.departure_supported,
+              rejection_reasons: feat.properties.rejection_reasons,
               start_coordinates: startCoord,
               end_coordinates: endCoord,
               origin: feat.properties.origin,
@@ -294,6 +300,7 @@ export default function MissionMapBrief({
 
               <div className="map-corridor-info">
                 <small>{translateText(activeStrategy, language)}</small>
+                {activeCandidate?.departure_supported === false && <p role="status">Departure not supported. {(activeCandidate.rejection_reasons || []).join(" ")}</p>}
                 {activeCandidate ? (
                   <>
                     <div className="map-route-metrics-bar" style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>

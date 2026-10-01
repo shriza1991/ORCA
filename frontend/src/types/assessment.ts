@@ -9,6 +9,8 @@ import type {
 import type { MissionState } from "./mission";
 
 export interface TripAssessmentRequest {
+  evidence_bundle_id?: string;
+  selected_route_id?: string;
   origin_harbor?: string;
   coordinates?: [number, number];
   craft_profile: string;
@@ -130,6 +132,10 @@ export interface CounterfactualFlipExplanation {
 }
 
 export interface TripAssessmentResponse {
+  evidence_bundle_id?: string;
+  evaluator_version?: string;
+  explanation_kind?: string;
+  evaluation_events?: Array<{ component: string; status: string; details?: string }>;
   assessment_id: string;
   assessed_at: string;
   trip_context: UserContext;

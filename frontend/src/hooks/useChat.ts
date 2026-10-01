@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { ChatRequest, ChatResponse } from '../types/contracts';
 import { sendMessage, ApiError } from '../api/client';
 import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type MissionState, type WhatIfParameters } from '../types/mission';
-import { deriveCounterfactualFlip } from '../utils/counterfactual';
+import type { TripAssessmentResponse } from '../types/assessment';
 
 export interface ChatMessage {
   id: string;
@@ -21,6 +21,7 @@ function generateId(): string {
 }
 
 export function useChat() {
+  const [missionAssessment, setMissionAssessment] = useState<TripAssessmentResponse | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -72,7 +73,9 @@ export function useChat() {
 
     try {
       const req: ChatRequest = {
-        data_mode: (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
+        evidence_bundle_id: requestContext?.sector_id ? undefined : missionAssessment?.evidence_bundle_id,
+        baseline_assessment_id: requestContext?.sector_id ? undefined : missionAssessment?.assessment_id,
+        data_mode: missionAssessment?.conditions.data_mode || (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
         conversation_id: conversationId ?? undefined,
         message: text,
         user_context: {
@@ -127,112 +130,17 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, language, missionContext, missionState]);
+  }, [conversationId, language, missionContext, missionState, missionAssessment]);
 
   const simulateWhatIf = useCallback(async (params: WhatIfParameters, queryText: string, currentAssessmentId?: string) => {
-    const baselineStatus = activeResponse?.recommendation.status ?? 'READY';
-    
-    // Calculate new departure and return times
-    const now = new Date();
-    const departureDate = new Date(now.getTime() + (params.timeOffsetHours || 0) * 60 * 60 * 1000);
-    const returnDate = new Date(departureDate.getTime() + 12 * 60 * 60 * 1000); // Assume 12hr default trip
-
-    const effectiveContext: MissionContext = {
-      origin_harbor: missionContext.origin_harbor,
-      craft_profile: params.craftProfileOverride ?? missionContext.craft_profile,
-      vessel_size: params.vesselSizeOverride ?? missionContext.vessel_size ?? 'medium',
-      departure_time: departureDate.toISOString(),
-      return_time: returnDate.toISOString()
-    };
-
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content: queryText,
-      timestamp: new Date(),
-    };
-
-    const loadingMsg: ChatMessage = {
-      id: generateId(),
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      isLoading: true,
-    };
-
-    setMessages(prev => [...prev, userMsg, loadingMsg]);
-    setIsLoading(true);
-
-    try {
-      const req: ChatRequest = {
-        data_mode: (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
-        conversation_id: conversationId ?? undefined,
-        message: queryText,
-        user_context: {
-          ...effectiveContext,
-          language_preference: language as any,
-          parent_assessment_id: currentAssessmentId || activeResponse?.assessment_id,
-        },
-        mission_state: missionState ?? undefined,
-      };
-
-      const response = await sendMessage(req);
-
-      if (!conversationId && response.conversation_id) {
-        setConversationId(response.conversation_id);
-      }
-
-      if (response.mission_state) {
-        setMissionState(response.mission_state);
-      }
-
-      const assistantMsg: ChatMessage = {
-        id: loadingMsg.id,
-        role: 'assistant',
-        content: response.answer,
-        timestamp: new Date(),
-        response,
-      };
-
-      setMessages(prev => prev.map(m => (m.id === loadingMsg.id ? assistantMsg : m)));
-      setActiveResponse(response);
-
-      // Construct Decision Diff with Deterministic Flip Attribution (M1.4)
-      const bComps = activeResponse?.recommendation?.threshold_comparisons || [];
-      const sComps = response?.recommendation?.threshold_comparisons || [];
-      const flipExplanation = deriveCounterfactualFlip(
-        baselineStatus,
-        response.recommendation.status,
-        bComps,
-        sComps
-      );
-
-      setActiveDiff({
-        baselineStatus,
-        simulatedStatus: response.recommendation.status,
-        summary: response.recommendation.summary,
-        timeOffsetHours: params.timeOffsetHours,
-        craftProfile: effectiveContext.craft_profile,
-        timestamp: new Date().toISOString(),
-        flip_explanation: flipExplanation,
-      });
-    } catch (err) {
-      let errorMsg = 'Failed to run simulation. Please check server connectivity.';
-      if (err instanceof ApiError) {
-        errorMsg = `Simulation error (${err.status}): ${err.statusText}`;
-      } else if (err instanceof Error) {
-        errorMsg = err.message;
-      }
-
-      setMessages(prev => prev.map(m =>
-        m.id === loadingMsg.id
-          ? { ...m, isLoading: false, error: errorMsg, content: errorMsg }
-          : m
-      ));
-    } finally {
-      setIsLoading(false);
+    if (!missionContext.departure_time || !missionContext.return_time || !currentAssessmentId) {
+      await send('What if I change my plan?');
+      return;
     }
-  }, [activeResponse, conversationId, language, missionContext, missionState]);
+    // The backend resolves edits relative to the retained mission; React does not compute a verdict.
+    const edit = params.craftProfileOverride ? `What if I use a ${params.craftProfileOverride.replace(/_/g, ' ')}?` : `What if I leave ${params.timeOffsetHours || 0} hours later?`;
+    await send(edit || queryText);
+  }, [missionContext, send]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
@@ -243,6 +151,8 @@ export function useChat() {
 
   return {
     messages,
+    missionAssessment,
+    setMissionAssessment,
     isLoading,
     conversationId,
     activeResponse,

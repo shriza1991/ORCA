@@ -1023,7 +1023,7 @@ export default function GuidedTripSetup({
               </h3>
               <p style={{ color: "#64748b", fontSize: "1.15rem", margin: 0 }}>
                 {translateText(
-                  "Launch authoritative safety assessment and route risk evaluation with this verified mission plan.",
+                  "Evaluate marine evidence and route exposure for this confirmed mission plan.",
                   language,
                 )}
               </p>

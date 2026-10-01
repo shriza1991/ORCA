@@ -5,7 +5,7 @@ import { assessmentStatus } from '../fisher/MissionSummary';
 
 const API = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
 export function assessmentRequest(a: TripAssessmentResponse): TripAssessmentRequest {
-  return { origin_harbor: a.trip_context.origin_harbor, craft_profile: a.trip_context.craft_profile || 'motorized_boat', vessel_size: a.mission_state?.vessel.size_category || 'medium', departure_time: a.trip_context.departure_time, return_time: a.trip_context.return_time, destination_id: a.trip_context.target_pfz, language_preference: a.trip_context.language_preference || 'en', data_mode: a.conditions.data_mode || 'DEMO', mission_state: a.mission_state || undefined };
+  return { evidence_bundle_id: a.evidence_bundle_id, coordinates: a.trip_context.coordinates, origin_harbor: a.trip_context.origin_harbor, craft_profile: a.trip_context.craft_profile || 'motorized_boat', vessel_size: a.mission_state?.vessel.size_category || 'medium', departure_time: a.trip_context.departure_time, return_time: a.trip_context.return_time, destination_id: a.trip_context.target_pfz, language_preference: a.trip_context.language_preference || 'en', data_mode: a.conditions.data_mode || 'DEMO', mission_state: a.mission_state || undefined };
 }
 
 export default function AssessmentSimulator({ assessment, onApply }: { assessment: TripAssessmentResponse; onApply: (a: TripAssessmentResponse) => void }) {
@@ -27,8 +27,8 @@ export default function AssessmentSimulator({ assessment, onApply }: { assessmen
     const baseline = assessmentRequest(assessment);
     const simulated = { ...baseline, mission_state: undefined, craft_profile: craft, vessel_size: size, departure_time: proposed, return_time: baseline.return_time ? new Date(Date.parse(baseline.return_time) + delay * 3600000).toISOString() : undefined, parent_assessment_id: assessment.assessment_id };
     try {
-      const response = await fetch(`${API}/trip-assessments/simulate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseline, simulated }), signal: abort.signal });
-      if (!response.ok) throw new Error('Could not compare these missions. Check your connection and try again.');
+      const response = await fetch(`${API}/trip-assessments/simulate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseline, simulated, baseline_assessment_id: assessment.assessment_id }), signal: abort.signal });
+      if (!response.ok) { const failure = await response.json(); throw new Error(failure.detail || 'Could not compare these missions.'); }
       const data = await response.json();
       if (!abort.signal.aborted) setResult(data);
     } catch (e) { if (!abort.signal.aborted) setError((e as Error).message); }
@@ -45,6 +45,6 @@ export default function AssessmentSimulator({ assessment, onApply }: { assessmen
     <p>New departure: <strong>{proposed ? new Date(proposed).toLocaleString() : 'Choose a departure'}</strong>. Trip duration is preserved.</p>
     <button className="product-primary" disabled={loading} onClick={simulate}>{loading ? 'Comparing missions…' : 'Compare plans'}</button>
     {error && <p role="alert">{error}</p>}
-    {result && <div className="simulation-result" aria-live="polite"><div className="decision-comparison"><div><small>CURRENT</small><strong>{assessmentStatus(result.baseline)}</strong></div><span>→</span><div><small>NEW SCENARIO</small><strong>{assessmentStatus(result.simulated)}</strong></div></div><h4>What changed?</h4>{result.delta.changed_factors.length ? <ul>{result.delta.changed_factors.map((f, i) => <li key={i}>{f}</li>)}</ul> : <p>No measured threshold values changed.</p>}<p>{result.delta.summary}</p><button onClick={() => onApply(result.simulated)}>Use this exact plan</button></div>}
+    {result && <div className="simulation-result" aria-live="polite"><div className="decision-comparison"><div><small>CURRENT</small><strong>{assessmentStatus(result.baseline)}</strong></div><span>→</span><div><small>NEW SCENARIO</small><strong>{assessmentStatus(result.simulated)}</strong></div></div><h4>What changed?</h4>{result.delta.changed_factors.length ? <ul>{result.delta.changed_factors.map((f, i) => <li key={i}>{f}</li>)}</ul> : <p>No measured threshold values changed.</p>}<p>{result.delta.summary}</p><ul>{[...result.delta.added_factors, ...result.delta.removed_factors].map((f, i) => <li key={i}>{f}</li>)}</ul><p className="muted">Evidence: {result.simulated.evidence_bundle_id}. Evaluator: {result.simulated.evaluator_version}. Unchanged restrictions still apply.</p><button onClick={() => onApply(result.simulated)}>Use this exact plan</button></div>}
   </section>;
 }

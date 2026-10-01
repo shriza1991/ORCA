@@ -153,6 +153,12 @@ class ConnectorManager:
         import time
         start_time = time.perf_counter()
         mode = self.current_mode
+        if context.evidence_bundle_id:
+            from backend.app.services.mission_evidence import FrozenDataService
+            service = FrozenDataService(context.evidence_bundle_id, context, context.data_mode or settings.DATA_MODE)
+            if hasattr(service, snapshot_method):
+                return getattr(service, snapshot_method)(context)
+            raise ValueError("Capability is not part of the retained evidence bundle.")
         if context.data_mode == "DEMO" or settings.DATA_MODE == "DEMO":
             from backend.app.services.data_service import DataService
             service = DataService("DEMO")

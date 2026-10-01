@@ -60,6 +60,8 @@ class UserContext(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    evidence_bundle_id: Optional[str] = None
+    baseline_assessment_id: Optional[str] = None
     data_mode: Optional[str] = Field(None, pattern="^(DEMO|SNAPSHOT|SYNTHETIC|HYBRID|LIVE)$")
     conversation_id: Optional[str] = Field(
         None, description="Client session UUID; generated server-side if null"
@@ -229,6 +231,9 @@ class AgentTraceItem(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    evidence_bundle_id: Optional[str] = None
+    mission_assessment: Optional[Any] = None
+    proposed_assessment: Optional[Any] = None
     run_id: str = Field(..., description="Unique orchestration run ID")
     conversation_id: str = Field(..., description="Client session UUID mapping to message thread")
     assessment_id: Optional[str] = Field(None, description="Unique identifier for the generated assessment if applicable")

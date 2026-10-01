@@ -1168,6 +1168,8 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
         if state.get("tool_mode") == "provider":
             profile = state.get("user_profile", {})
             params.update({
+                "evidence_bundle_id": profile.get("evidence_bundle_id"),
+                "coordinates": profile.get("coordinates"),
                 "data_mode": profile.get("data_mode") or settings.DATA_MODE,
                 "craft_profile": craft_type,
                 "vessel_size": profile.get("vessel_size") or "medium",
@@ -1214,9 +1216,9 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
                 }
                 rec_dict = {
                     "status": dec_status,
-                    "summary": summary_map.get(dec_status, f"Operational evaluation: {dec_status}."),
+                    "summary": assessment_response.brief.summary if assessment_response.brief else summary_map.get(dec_status, f"Operational evaluation: {dec_status}."),
                     "decisive_factors": [a.get("message", "") for a in (assessment_response.alerts or []) if a.get("message")] or [f"Assessed status: {dec_status}"],
-                    "next_action": action_map.get(dec_status, "Verify port warnings before departure."),
+                    "next_action": assessment_response.brief.recommended_action if assessment_response.brief else "Verify port warnings before departure.",
                 }
                 
                 result_data = {
@@ -1227,7 +1229,7 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
                     "conditions": assessment_response.conditions.model_dump() if assessment_response.conditions else None,
                 }
                 
-                if req.parent_assessment_id:
+                if req.parent_assessment_id and req.data_mode != "DEMO":
                     try:
                         from backend.app.db.session import SessionLocal
                         from backend.app.db.repositories import AssessmentRepository

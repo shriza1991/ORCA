@@ -29,6 +29,8 @@ class TripAssessmentRequest(BaseModel):
     destination_id: Optional[str] = Field(None, description="Optional PFZ or target destination ID.")
     language_preference: str = Field("auto", description="Language preference for alerts and summaries.")
     data_mode: str = Field("HYBRID", description="Data resolution mode (LIVE | HYBRID | SNAPSHOT | SYNTHETIC | DEMO).")
+    evidence_bundle_id: Optional[str] = None
+    selected_route_id: Optional[str] = None
     parent_assessment_id: Optional[str] = Field(None, description="ID of a previous assessment for comparison.")
     mission_state: Optional[MissionState] = Field(None, description="Canonical M1.1 MissionState context.")
 
@@ -141,6 +143,10 @@ class CounterfactualFlipExplanation(BaseModel):
 class TripAssessmentResponse(BaseModel):
     """Unified response payload containing the complete safety assessment."""
 
+    evidence_bundle_id: Optional[str] = None
+    evaluator_version: str = "mission-evaluation-v1"
+    explanation_kind: str = "derived_domain_explanation"
+    evaluation_events: List[Dict[str, Any]] = Field(default_factory=list)
     assessment_id: str = Field(..., description="Unique identifier for this assessment.")
     assessed_at: str = Field(..., description="Timestamp of the assessment generation (ISO-8601 UTC).")
     
@@ -183,6 +189,7 @@ class TripAssessmentResponse(BaseModel):
 
 
 class TripSimulationRequest(BaseModel):
+    baseline_assessment_id: Optional[str] = None
     baseline: TripAssessmentRequest
     simulated: TripAssessmentRequest
 

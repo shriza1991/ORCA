@@ -1,0 +1,10 @@
+import { useState } from 'react';
+import type { TripAssessmentResponse } from '../../types/assessment';
+import { assessmentStatus } from '../fisher/MissionSummary';
+
+/** Reuse Fisher records across workspaces; no synthetic fleet membership implied. */
+export default function MissionRecordInspector() {
+  const [records] = useState<TripAssessmentResponse[]>(() => { try { return JSON.parse(localStorage.getItem('orca.trips') || '[]'); } catch { return []; } });
+  const [record, setRecord] = useState<TripAssessmentResponse | null>(null);
+  return <details className="product-details shared-mission-record"><summary>Inspect a Fisher mission record on this device</summary><p className="muted">Read-only historical assessment. These records are not authenticated fleet telemetry or a fresh departure clearance.</p><label>Mission<select value={record?.assessment_id || ''} onChange={e => setRecord(records.find(a => a.assessment_id === e.target.value) || null)}><option value="">Select a record</option>{records.map(a => <option key={a.assessment_id} value={a.assessment_id}>{a.trip_context.origin_harbor} · {new Date(a.assessed_at).toLocaleString()} · {assessmentStatus(a)}</option>)}</select></label>{!records.length && <p>Complete a Fisher assessment to inspect its evidence here.</p>}{record && <div><p><strong>{assessmentStatus(record)}</strong> · {record.conditions.source_metadata?.provenance_mode || record.conditions.data_mode}</p><p>{record.brief?.recommended_action}</p><p>Evidence {record.evidence_bundle_id} · evaluated {record.assessed_at}</p><ul>{record.brief?.negative_factors.map((f, i) => <li key={i}>{f}</li>)}</ul><div className="route-timeline"><table><thead><tr><th>Metric</th><th>Value</th><th>Limit</th><th>Impact</th></tr></thead><tbody>{record.evidence.filter(e => e.metric_name).map((e, i) => <tr key={i}><td>{e.metric_name}</td><td>{String(e.observed_value)}</td><td>{String(e.threshold_value ?? '—')}</td><td>{e.impact}</td></tr>)}</tbody></table></div></div>}</details>;
+}

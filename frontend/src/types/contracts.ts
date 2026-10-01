@@ -26,6 +26,8 @@ export interface UserContext {
 }
 
 export interface ChatRequest {
+  evidence_bundle_id?: string;
+  baseline_assessment_id?: string;
   data_mode?: string;
   conversation_id?: string;
   message: string;
@@ -119,6 +121,9 @@ export interface AgentTraceItem {
 }
 
 export interface ChatResponse {
+  evidence_bundle_id?: string;
+  mission_assessment?: import("./assessment").TripAssessmentResponse;
+  proposed_assessment?: import("./assessment").TripAssessmentResponse;
   run_id: string;
   conversation_id: string;
   assessment_id?: string;

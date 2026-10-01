@@ -27,10 +27,12 @@ export default function MissionSummary({ assessment, loading, error, onPlan, onM
   const brief = assessment.brief;
   return <section className={`mission-summary status-${status}`}>
     <div className="section-heading"><span className="eyebrow">YOUR TRIP ASSESSMENT</span><span className="decision-label">{status.replace('_', ' ')}</span></div>
+    <p className="muted">{assessment.conditions.source_metadata?.provenance_mode || assessment.conditions.data_mode} ? Evidence {assessment.evidence_bundle_id || "not retained"}</p>
     <h2>{titles[status] || 'Review your mission'}</h2>
     <p className="mission-action">{brief?.recommended_action || brief?.summary}</p>
     <ConditionStrip assessment={assessment} />
     <details className="product-details"><summary>Why this decision?</summary><p>{brief?.negative_factors[0] || brief?.positive_factors[0] || brief?.summary}</p><ul>{[...(brief?.negative_factors || []), ...(brief?.positive_factors || [])].slice(0, 5).map((factor, i) => <li key={i}>{factor}</li>)}</ul><p className="muted">Confidence: {brief?.confidence}. {brief?.confidence_reasons.join(' ')}</p></details>
+    <details className="product-details"><summary>Evidence and evaluation record</summary><p>Derived domain explanation. These are executed service outcomes, not specialist agent votes.</p><ul>{assessment.evaluation_events?.map((e, i) => <li key={i}>{e.component}: {e.status}{e.details ? ` ? ${e.details}` : ""}</li>)}</ul><p>Captured: {assessment.conditions.captured_at}. Evaluator: {assessment.evaluator_version}.</p><p>Marine: {assessment.conditions.marine?.source_name} ? valid until {assessment.conditions.marine?.valid_to || "unavailable"}</p><p>Weather: {assessment.conditions.weather?.source_name} ? valid until {assessment.conditions.weather?.valid_to || "unavailable"}</p></details>
     <div className="product-actions"><button className="product-primary" onClick={onMap}>Explore trip map <ArrowRight size={16} /></button><button onClick={onPlan}>Edit trip</button></div>
   </section>;
 }
