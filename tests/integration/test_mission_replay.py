@@ -142,7 +142,7 @@ def test_pinned_chat_reuses_mission_and_returns_server_proposal(baseline, monkey
     context = {"language_preference": "en"}
     conversation = None
     try:
-        for message, intent in (("Can I go fishing?", "SAFETY"), ("Why?", "ANALYTICAL_EXPLANATION"), ("What if I leave four hours later?", "WHAT_IF"), ("Where is the nearest PFZ?", "PFZ"), ("Show me the safest route", "ROUTE")):
+        for message, intent in (("Can I go fishing?", "SAFETY"), ("Why?", "ANALYTICAL_EXPLANATION"), ("What if I leave four hours later?", "WHAT_IF"), ("Where is the nearest PFZ?", "PFZ"), ("Where are the nearest hazards?", "HAZARDS"), ("Show me the safest route", "ROUTE")):
             res = client.post("/api/v1/chat", json={"message": message, "conversation_id": conversation,
                 "data_mode": "DEMO", "user_context": context,
                 "baseline_assessment_id": a.assessment_id, "evidence_bundle_id": a.evidence_bundle_id})

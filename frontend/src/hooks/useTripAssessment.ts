@@ -123,6 +123,7 @@ export function useTripAssessment() {
               const expiredData: TripAssessmentResponse = {
                 ...cached.data,
                 decision: 'UNKNOWN' as const,
+                route_candidates: cached.data.route_candidates.map(route => ({ ...route, departure_supported: false, is_recommended: false, rejection_reasons: ['Cached evidence expired. Reconnect to reevaluate this corridor.'] })),
                 brief: {
                   summary: 'Offline mode: Cached assessment has expired. Safety status is unknown.',
                   recommended_action: 'Please reconnect to the internet to fetch fresh assessments.',
