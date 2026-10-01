@@ -312,7 +312,7 @@ class AssessmentService:
                     pfz_engine = DeterministicPFZRankingEngine()
                     pfz_ranking = pfz_engine.rank_pfz_candidates(ctx, pfz_raw.features)
                     pfz_candidates = [c.model_dump() for c in pfz_ranking.ranked_candidates]
-                    if request.data_mode.upper() == "DEMO":
+                    if request.data_mode.upper() == "DEMO" and data_service.is_archived_demo(ctx):
                         from backend.app.scenarios.fisher_demo import pfz_features
                         demo_features = pfz_features()
                         reasons = {
@@ -392,7 +392,7 @@ class AssessmentService:
                     rd = r.model_dump()
                     rd["is_recommended"] = (r.route_id == route_payload.recommended_route_id)
                     route_candidates.append(rd)
-                if request.data_mode.upper() == "DEMO":
+                if request.data_mode.upper() == "DEMO" and data_service.is_archived_demo(ctx):
                     from backend.app.scenarios.fisher_demo import route_constants
                     route_candidates = route_constants()
             except Exception as e:
@@ -505,7 +505,7 @@ class AssessmentService:
 
         # 6. Persist where possible
         is_durable = False
-        if DB_AVAILABLE:
+        if DB_AVAILABLE and request.data_mode.upper() != "DEMO":
             from backend.app.core.config import settings
             # Only attempt DB persistence if configured with a real non-placeholder password and not testing
             db_url = getattr(settings, "DATABASE_URL", "")
@@ -532,6 +532,7 @@ class AssessmentService:
                 origin_harbor=effective_origin_harbor,
                 coordinates=effective_coordinates,
                 craft_profile=effective_craft_profile,
+                vessel_size=effective_vessel_size,
                 departure_time=effective_departure_time,
                 return_time=effective_return_time,
                 target_pfz=effective_destination_id,

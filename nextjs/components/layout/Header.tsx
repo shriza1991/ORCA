@@ -31,7 +31,7 @@ export default function Header({
       <div className="app-header-left">
         <h1 className="app-title">ORCA</h1>
         <p className="app-tagline">
-          {t.appTagline}
+          Marine mission intelligence
         </p>
       </div>
 
@@ -67,11 +67,11 @@ export default function Header({
             type="button"
             className="header-logout-btn"
             onClick={handleLogout}
-            title={t.logoutBtn || 'Logout'}
-            aria-label={t.logoutBtn || 'Logout'}
+            title={'Workspaces'}
+            aria-label={'Workspaces'}
           >
             <LogOut size={14} />
-            <span>{t.logoutBtn || 'Logout'}</span>
+            <span>{'Workspaces'}</span>
           </button>
         )}
       </div>

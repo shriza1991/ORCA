@@ -1159,6 +1159,16 @@ def specialist_tools_node(state: ORCAState) -> Dict[str, Any]:
         if sector_id and "origin_harbor" in params:
             params["sector_id"] = sector_id
 
+        if state.get("tool_mode") == "provider":
+            profile = state.get("user_profile", {})
+            params.update({
+                "data_mode": profile.get("data_mode") or settings.DATA_MODE,
+                "craft_profile": craft_type,
+                "vessel_size": profile.get("vessel_size") or "medium",
+                "departure_time": profile.get("departure_time"),
+                "return_time": profile.get("return_time"),
+            })
+
         # Execute through typed registry with reliability support
         def on_retry(attempt: int, exc: Exception):
             nonlocal trace
@@ -3002,6 +3012,8 @@ def run_orca_graph(
         register_dev2_provider_tools(tool_registry, manager)
         register_dev4_operational_engines(tool_registry, manager)
         register_m2_contract_mocks(tool_registry, override=False)
+        from backend.app.connectors.registration import register_dev4_operational_engines
+        register_dev4_operational_engines(tool_registry, manager)
 
     # Determine LLM provider instance based on mode
     active_provider: Optional[LLMProvider] = None

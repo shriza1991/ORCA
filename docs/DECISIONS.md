@@ -2215,3 +2215,10 @@ Impact:
 - Clean Vite production build (`tsc && vite build`).
 Owner: Dev 2 (Backend Platform), Dev 3 (Agent Orchestration), Dev 4 (Deterministic Engine)
 Date: 2026-10-01
+
+## D064 — Integrated operational workspace and controlled scenario
+Status: ACCEPTED
+Date: 2026-10-01
+Decision: Retain both existing Vite and Next.js clients and the FastAPI/domain core. Reuse the synthetic generator through a timestamped daily DEMO view, shared by assessments, chat tools and institutional demo APIs. Preserve the original dated Fisher scenario as explicit historical replay. Add a deterministic assessment comparison endpoint: both sides are evaluated by AssessmentService, and the returned simulated mission is the only mission applied by the UI. Role selection remains workspace navigation, not authentication. Compact summaries progressively disclose existing evidence and analysis.
+Reason: Current screens mix data modes and What-If baselines, and the Fisher entry begins with a form rather than operational context. The previous audit missed the existing Next.js tree; both clients must remain usable.
+Safety: No frontend safety verdicts, no suppression of genuinely unavailable evidence, no change to vessel safety limits, no claim that synthetic data is live.

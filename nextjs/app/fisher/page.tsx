@@ -63,31 +63,6 @@ export default function FisherRoute() {
         onOpenSettings={() => router.push('/settings')}
       />
 
-      {/* Mobile Segmented View Tabs */}
-      <nav className="mobile-view-tabs" role="tablist" aria-label="Mobile viewport selection">
-        <button
-          type="button"
-          className={`mobile-tab-btn ${mobileView === 'chat' ? 'active' : ''}`}
-          onClick={() => setMobileView('chat')}
-          role="tab"
-          aria-selected={mobileView === 'chat'}
-        >
-          <MessageSquare size={16} />
-          <span>Console</span>
-        </button>
-        <button
-          type="button"
-          className={`mobile-tab-btn ${mobileView === 'map' ? 'active' : ''}`}
-          onClick={() => setMobileView('map')}
-          role="tab"
-          aria-selected={mobileView === 'map'}
-        >
-          <MapIcon size={16} />
-          <span>Map</span>
-          {layerCount > 0 && <span className="mobile-tab-badge">{layerCount}</span>}
-        </button>
-      </nav>
-
       <FisherPage
         chat={chat}
         theme={theme}

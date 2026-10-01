@@ -263,16 +263,11 @@ export default function MapView({
 
   useEffect(() => {
     if (assessment) {
-      const records = assessment.conditions?.hourly_forecast || [];
       const marine = assessment.conditions?.marine;
       const weather = assessment.conditions?.weather;
-      const selected =
-        records[
-          Math.min(
-            Math.round(selectedTimeStep / 2),
-            Math.max(records.length - 1, 0),
-          )
-        ] || {};
+      // The parent recomputes the mission for a changed time. Display that
+      // exact snapshot; array indices are not forecast timestamps.
+      const selected: Record<string, any> = {};
       setMapForecast({
         loading: false,
         wave_height_m: Number(
@@ -293,7 +288,7 @@ export default function MapView({
           selected.sea_surface_temp_c ?? marine?.sea_surface_temp_c ?? 0,
         ),
         tide_height_m: Number(
-          selected.sea_level_height_m ?? marine?.sea_level_height_m ?? 0,
+          selected.sea_level_height_m ?? marine?.tide_level_m ?? marine?.sea_level_height_m ?? 0,
         ),
         tide_phase: marine?.tide_phase
           ? `${marine.tide_phase} estimated`

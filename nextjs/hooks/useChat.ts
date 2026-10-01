@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
+"use client";
+import { useState, useCallback, useEffect } from 'react';
 import type { ChatRequest, ChatResponse } from '../types/contracts';
 import { sendMessage, ApiError } from '../api/client';
-import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type WhatIfParameters } from '../types/mission';
+import { DEFAULT_MISSION_CONTEXT, type DecisionDiff, type MissionContext, type MissionState, type WhatIfParameters } from '../types/mission';
+import { deriveCounterfactualFlip } from '../utils/counterfactual';
 
 export interface ChatMessage {
   id: string;
@@ -25,7 +27,13 @@ export function useChat() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [activeResponse, setActiveResponse] = useState<ChatResponse | null>(null);
   const [language, setLanguage] = useState<'en' | 'hi' | 'mr'>('en');
-  const [missionContext, setMissionContext] = useState<MissionContext>(DEFAULT_MISSION_CONTEXT);
+
+  const [missionContext, setMissionContext] = useState<MissionContext>(() => {
+    try { return JSON.parse(localStorage.getItem('orca.mission') || 'null') || DEFAULT_MISSION_CONTEXT; }
+    catch { return DEFAULT_MISSION_CONTEXT; }
+  });
+  useEffect(() => { try { localStorage.setItem('orca.mission', JSON.stringify(missionContext)); } catch {} }, [missionContext]);
+  const [missionState, setMissionState] = useState<MissionState | null>(null);
   const [activeDiff, setActiveDiff] = useState<DecisionDiff | null>(null);
 
   const send = useCallback(async (
@@ -60,13 +68,15 @@ export function useChat() {
 
     try {
       const req: ChatRequest = {
+        data_mode: (process.env.NEXT_PUBLIC_DATA_MODE || 'DEMO').toUpperCase(),
         conversation_id: conversationId ?? undefined,
         message: text,
         user_context: {
           ...missionContext,
-          language_preference: targetLanguage,
+          language_preference: targetLanguage as any,
           ...requestContext,
         },
+        mission_state: missionState ?? undefined,
       };
 
       // Always call the live backend API
@@ -76,6 +86,9 @@ export function useChat() {
         setConversationId(response.conversation_id);
       }
 
+      if (response.mission_state) {
+        setMissionState(response.mission_state);
+      }
 
       const assistantMsg: ChatMessage = {
         id: loadingMsg.id,
@@ -89,19 +102,14 @@ export function useChat() {
       setMessages(prev => prev.map(m => m.id === loadingMsg.id ? assistantMsg : m));
       setActiveResponse(response);
     } catch (err) {
-      let errorMsg = 'ORCA cannot access marine data right now. Hold departure and verify with port authorities.';
+      let errorMsg = 'Failed to connect to ORCA backend.';
       if (err instanceof ApiError) {
         if (typeof err.body === 'object' && err.body !== null && 'detail' in err.body) {
           errorMsg = String((err.body as Record<string, unknown>).detail);
         } else if (typeof err.body === 'object' && err.body !== null && 'message' in err.body) {
           errorMsg = String((err.body as Record<string, unknown>).message);
-        } else if (typeof err.body === 'object' && err.body !== null && 'error' in err.body) {
-          const envelope = (err.body as Record<string, unknown>).error;
-          if (typeof envelope === 'object' && envelope !== null && 'message' in envelope) {
-            errorMsg = String((envelope as Record<string, unknown>).message);
-          }
         } else {
-          errorMsg = 'ORCA cannot access marine data right now. Hold departure and verify with port authorities.';
+          errorMsg = `API Error (${err.status}): ${err.statusText}`;
         }
       } else if (err instanceof Error) {
         errorMsg = err.message;
@@ -115,7 +123,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, language, missionContext]);
+  }, [conversationId, language, missionContext, missionState]);
 
   const simulateWhatIf = useCallback(async (params: WhatIfParameters, queryText: string, currentAssessmentId?: string) => {
     const baselineStatus = activeResponse?.recommendation.status ?? 'READY';
@@ -128,6 +136,7 @@ export function useChat() {
     const effectiveContext: MissionContext = {
       origin_harbor: missionContext.origin_harbor,
       craft_profile: params.craftProfileOverride ?? missionContext.craft_profile,
+      vessel_size: params.vesselSizeOverride ?? missionContext.vessel_size ?? 'medium',
       departure_time: departureDate.toISOString(),
       return_time: returnDate.toISOString()
     };
@@ -152,19 +161,25 @@ export function useChat() {
 
     try {
       const req: ChatRequest = {
+        data_mode: (process.env.NEXT_PUBLIC_DATA_MODE || 'DEMO').toUpperCase(),
         conversation_id: conversationId ?? undefined,
         message: queryText,
         user_context: {
           ...effectiveContext,
-          language_preference: language,
+          language_preference: language as any,
           parent_assessment_id: currentAssessmentId || activeResponse?.assessment_id,
         },
+        mission_state: missionState ?? undefined,
       };
 
       const response = await sendMessage(req);
 
       if (!conversationId && response.conversation_id) {
         setConversationId(response.conversation_id);
+      }
+
+      if (response.mission_state) {
+        setMissionState(response.mission_state);
       }
 
       const assistantMsg: ChatMessage = {
@@ -178,7 +193,16 @@ export function useChat() {
       setMessages(prev => prev.map(m => (m.id === loadingMsg.id ? assistantMsg : m)));
       setActiveResponse(response);
 
-      // Construct Decision Diff
+      // Construct Decision Diff with Deterministic Flip Attribution (M1.4)
+      const bComps = activeResponse?.recommendation?.threshold_comparisons || [];
+      const sComps = response?.recommendation?.threshold_comparisons || [];
+      const flipExplanation = deriveCounterfactualFlip(
+        baselineStatus,
+        response.recommendation.status,
+        bComps,
+        sComps
+      );
+
       setActiveDiff({
         baselineStatus,
         simulatedStatus: response.recommendation.status,
@@ -186,6 +210,7 @@ export function useChat() {
         timeOffsetHours: params.timeOffsetHours,
         craftProfile: effectiveContext.craft_profile,
         timestamp: new Date().toISOString(),
+        flip_explanation: flipExplanation,
       });
     } catch (err) {
       let errorMsg = 'Failed to run simulation. Please check server connectivity.';
@@ -203,7 +228,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeResponse, conversationId, language, missionContext]);
+  }, [activeResponse, conversationId, language, missionContext, missionState]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
@@ -221,6 +246,8 @@ export function useChat() {
     setLanguage,
     missionContext,
     setMissionContext,
+    missionState,
+    setMissionState,
     activeDiff,
     simulateWhatIf,
     send,

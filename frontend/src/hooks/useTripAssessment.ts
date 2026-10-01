@@ -23,6 +23,7 @@ function missionStateMatchesRequest(
   return (
     (!request.origin_harbor || state.origin.name === request.origin_harbor) &&
     (!request.craft_profile || state.vessel.type === request.craft_profile) &&
+    (!request.vessel_size || (state.vessel.size_category || state.vessel.vessel_size) === request.vessel_size) &&
     (!request.departure_time ||
       state.timing.departure === request.departure_time) &&
     (!request.return_time ||
@@ -162,6 +163,7 @@ export function useTripAssessment() {
 
   return {
     data,
+    setData,
     missionState,
     setMissionState,
     isLoading,

@@ -248,6 +248,12 @@ class AgentRunService:
             logger.error("AgentRunService: langgraph not installed — run_orca_graph unavailable")
             raise _AgentRuntimeUnavailableError(run_id=run_id)
 
+        if (user_context or {}).get("data_mode") == "DEMO":
+            # Controlled demo runs are retained in the existing offline store.
+            # Do not block an offline scenario on an external database.
+            def SessionLocal():
+                raise RuntimeError("Controlled demo uses the offline run store")
+
         run_uuid = uuid.UUID(run_id)
 
         # 0. Check in-memory store for active runs in the same thread (concurrency check in offline mode)
@@ -351,6 +357,8 @@ class AgentRunService:
         if response.run_id != run_id:
             response.run_id = run_id
         response.data_mode = self._response_data_mode(response)
+        if (user_context or {}).get("data_mode") == "DEMO":
+            response.data_mode = "DEMO"
 
         # Determine run status
         has_warnings = any(

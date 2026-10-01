@@ -26,9 +26,11 @@ export interface UserContext {
 }
 
 export interface ChatRequest {
+  data_mode?: string;
   conversation_id?: string;
   message: string;
   user_context?: UserContext;
+  mission_state?: MissionState;
 }
 
 export interface ThresholdComparison {
@@ -212,3 +214,4 @@ export interface VoiceChatResponse extends ChatResponse {
   audio_base64?: string;
   audio_format?: string;
 }
+

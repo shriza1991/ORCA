@@ -72,7 +72,7 @@ export default function AuthorityPage({
     const { t } = useTranslation();
   const [sectors, setSectors] = useState<DemoSector[]>(FALLBACK_DEMO_SECTORS);
   const [selectedSector, setSelectedSector] = useState<string>(FALLBACK_DEMO_SECTORS[0].public_id);
-  const [authorityTab, setAuthorityTab] = useState<AuthorityTab>('terminal');
+  const [authorityTab, setAuthorityTab] = useState<AuthorityTab>('fleet');
   const [selectedVesselId, setSelectedVesselId] = useState<string | null>(null);
   const [replayLayer, setReplayLayer] = useState<MapLayer | null>(null);
   const [trajectoryLayer, setTrajectoryLayer] = useState<MapLayer | null>(null);

@@ -79,6 +79,8 @@ def _build_user_context(request: ChatRequest) -> dict[str, Any]:
     """Convert ChatRequest.user_context and request.mission_state to the dict expected by ORCAState."""
     ctx = request.user_context or UserContext()
     context = {
+        "data_mode": request.data_mode or settings.DATA_MODE,
+        "vessel_size": ctx.vessel_size or "medium",
         "sector_id": ctx.sector_id,
         "origin_harbor": ctx.origin_harbor,
         "coordinates": ctx.coordinates,
@@ -1006,11 +1008,8 @@ _in_memory_synthetic_cache: dict[str, Any] | None = None
 
 def _get_synthetic_records(key: str, namespace: str = "ORCA_DEMO_V1") -> list[dict[str, Any]]:
     """Fallback generator for synthetic demo records when PostgreSQL is offline."""
-    global _in_memory_synthetic_cache
-    if _in_memory_synthetic_cache is None:
-        from backend.app.domain.synthetic.generator import generate_synthetic_demo_dataset
-        _in_memory_synthetic_cache = generate_synthetic_demo_dataset()
-    raw_items = _in_memory_synthetic_cache.get(key, [])
+    from backend.app.domain.synthetic.generator import current_demo_dataset
+    raw_items = current_demo_dataset().get(key, [])
     formatted = []
     for item in raw_items:
         if item.get("namespace") == namespace:
@@ -1269,14 +1268,6 @@ def get_demo_marine_observations(
     harbor_id: str | None = None, namespace: str = "ORCA_DEMO_V1"
 ) -> list[dict[str, Any]]:
     """List synthetic demo marine observations."""
-    try:
-        with SessionLocal() as session:
-            repo = SyntheticDemoRepository(session)
-            items = repo.get_marine_observations(namespace=namespace, harbor_id=harbor_id)
-            if items:
-                return [_model_to_dict(item) for item in items]
-    except Exception as exc:
-        logger.debug("Database get_demo_marine_observations failed (service offline): %s", exc)
     records = _get_synthetic_records("marine_observations", namespace=namespace)
     if harbor_id:
         records = [r for r in records if r.get("harbor_id") == harbor_id]
@@ -1288,14 +1279,6 @@ def get_demo_eo_grid_cells(
     cell_id: str | None = None, namespace: str = "ORCA_DEMO_V1"
 ) -> list[dict[str, Any]]:
     """List synthetic Earth Observation grid cell data."""
-    try:
-        with SessionLocal() as session:
-            repo = SyntheticDemoRepository(session)
-            items = repo.get_eo_grid_cells(namespace=namespace, cell_id=cell_id)
-            if items:
-                return [_model_to_dict(item) for item in items]
-    except Exception as exc:
-        logger.debug("Database get_demo_eo_grid_cells failed (service offline): %s", exc)
     records = _get_synthetic_records("eo_grid_cells", namespace=namespace)
     if cell_id:
         records = [r for r in records if r.get("cell_id") == cell_id]
@@ -1307,14 +1290,6 @@ def get_demo_pfz_candidates(
     valid_only: bool = False, namespace: str = "ORCA_DEMO_V1"
 ) -> list[dict[str, Any]]:
     """List synthetic Potential Fishing Zone (PFZ) advisory candidates."""
-    try:
-        with SessionLocal() as session:
-            repo = SyntheticDemoRepository(session)
-            items = repo.get_pfz_candidates(namespace=namespace, valid_only=valid_only)
-            if items:
-                return [_model_to_dict(item) for item in items]
-    except Exception as exc:
-        logger.debug("Database get_demo_pfz_candidates failed (service offline): %s", exc)
     records = _get_synthetic_records("pfz_candidates", namespace=namespace)
     if valid_only:
         records = [r for r in records if r.get("qc_status") == "VALID" or r.get("status") == "ACTIVE"]

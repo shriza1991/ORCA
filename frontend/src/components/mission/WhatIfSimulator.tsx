@@ -1,3 +1,5 @@
+import AssessmentSimulator from './AssessmentSimulator';
+import type { TripAssessmentResponse } from '../../types/assessment';
 import { useState } from 'react';
 import { ArrowRight, Check, Clock, Cpu, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import type { DecisionDiff, MissionContext, WhatIfParameters } from '../../types/mission';
@@ -5,6 +7,8 @@ import { translateText, type SupportedLanguage } from '../../i18n/translations';
 import DecisionDeltaPanel from '../fisher/DecisionDeltaPanel';
 
 interface WhatIfSimulatorProps {
+  assessment?: TripAssessmentResponse | null;
+  onApplyAssessment?: (assessment: TripAssessmentResponse) => void;
   currentContext: MissionContext;
   currentStatus?: string;
   language?: SupportedLanguage;
@@ -34,7 +38,7 @@ const OBJECTIVES = [
   { value: 'transit', label: '🧭 Safe Passage' },
 ] as const;
 
-export default function WhatIfSimulator({
+function LegacyWhatIfSimulator({
   currentContext,
   currentStatus = 'READY',
   language = 'en',
@@ -279,4 +283,9 @@ export default function WhatIfSimulator({
       )}
     </div>
   );
+}
+
+export default function WhatIfSimulator(props: WhatIfSimulatorProps) {
+  if (props.assessment && props.onApplyAssessment) return <AssessmentSimulator assessment={props.assessment} onApply={props.onApplyAssessment} />;
+  return <LegacyWhatIfSimulator {...props} />;
 }

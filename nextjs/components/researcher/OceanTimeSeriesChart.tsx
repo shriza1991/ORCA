@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useMemo } from 'react';
 import { Activity, Info, Calendar } from 'lucide-react';
 import type { MarineObservation } from '../../api/researcher-client';
@@ -292,7 +293,7 @@ export default function OceanTimeSeriesChart({
         <div className="ocean-chart-title-area">
           <div className="ocean-chart-title">
             <Activity size={16} className="ocean-chart-icon" />
-            <span>48-Hour Marine Observation Time Series — {harborName}</span>
+            <span>Marine Observation Time Series — {harborName}</span>
           </div>
           <div className="ocean-chart-coverage">
             <Calendar size={13} />
@@ -347,7 +348,7 @@ export default function OceanTimeSeriesChart({
                 y={p.panelTop}
                 width={plotWidth}
                 height={panelHeight}
-                fill="rgba(15, 23, 42, 0.45)"
+                fill="var(--product-ground, #f3f6f6)"
                 stroke="rgba(51, 65, 85, 0.4)"
                 rx="4"
               />

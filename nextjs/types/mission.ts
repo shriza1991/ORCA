@@ -1,4 +1,5 @@
 import type { UserContext } from './contracts';
+import type { CounterfactualFlipExplanation } from './assessment';
 
 /** UI-only presentation mode. It deliberately does not grant server permissions. */
 export type OperationalRole = 'fisher' | 'authority';
@@ -15,21 +16,17 @@ export type VesselSize = 'small' | 'medium' | 'large';
  * ChatRequest.user_context shape. Route/time fields are intentionally absent
  * until their API contract is available.
  */
-export type MissionContext = Pick<UserContext, 'origin_harbor' | 'craft_profile' | 'vessel_size' | 'departure_time' | 'return_time'> & {
-  target_pfz?: string;
-  parent_assessment_id?: string;
-};
-
-const _now = new Date();
-const _defaultDep = new Date(_now.getTime() + 3600 * 1000).toISOString();
-const _defaultRet = new Date(_now.getTime() + 13 * 3600 * 1000).toISOString();
+export type MissionContext = Pick<
+  UserContext,
+  'origin_harbor' | 'craft_profile' | 'vessel_size' | 'departure_time' | 'return_time' | 'target_pfz' | 'parent_assessment_id'
+>;
 
 export const DEFAULT_MISSION_CONTEXT: MissionContext = {
   origin_harbor: 'Ratnagiri',
   craft_profile: 'motorized_boat',
   vessel_size: 'medium',
-  departure_time: _defaultDep,
-  return_time: _defaultRet,
+  departure_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  return_time: new Date(Date.now() + 13 * 60 * 60 * 1000).toISOString(),
 };
 
 /** Counterfactual simulation parameters for Mission Twin */
@@ -56,6 +53,7 @@ export interface DecisionDiff {
   craftProfile: MissionContext['craft_profile'];
   vesselSize?: VesselSize;
   timestamp: string;
+  flip_explanation?: CounterfactualFlipExplanation | null;
 }
 
 /** Operational corridor modes for multi-route evaluation */
@@ -145,6 +143,7 @@ export interface MissionState {
     evidence_ids?: string[];
     timestamp: string;
   };
+  parent_assessment_id?: string;
   created_at: string;
   updated_at: string;
 }

@@ -26,11 +26,26 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
+export function getOfflineCacheKey(
+  originHarbor: string,
+  craftProfile: string = 'motorized_boat',
+  departureTime: string = 'default'
+): string {
+  return `${CACHE_KEY_PREFIX}${originHarbor}_${craftProfile}_${departureTime || 'default'}`;
+}
+
 /**
  * Saves a trip assessment to IndexedDB (or fallback localStorage) for offline use.
  */
-export async function saveOfflineAssessment(originHarbor: string, data: TripAssessmentResponse): Promise<void> {
-  const key = `${CACHE_KEY_PREFIX}${originHarbor}`;
+export async function saveOfflineAssessment(
+  originHarbor: string,
+  data: TripAssessmentResponse,
+  craftProfile: string = 'motorized_boat',
+  departureTime: string = 'default'
+): Promise<void> {
+  const effCraft = craftProfile || data.trip_context?.craft_profile || 'motorized_boat';
+  const effDep = departureTime !== 'default' ? departureTime : (data.trip_context?.departure_time || 'default');
+  const key = getOfflineCacheKey(originHarbor, effCraft, effDep);
   const record: CachedAssessment = {
     timestamp: Date.now(),
     data,
@@ -58,14 +73,29 @@ export async function saveOfflineAssessment(originHarbor: string, data: TripAsse
  * Loads a cached trip assessment from IndexedDB (or fallback localStorage).
  * Ensures the data is returned even if old, but allows the caller to check expiry.
  */
-export async function loadOfflineAssessment(originHarbor: string): Promise<CachedAssessment | null> {
-  const key = `${CACHE_KEY_PREFIX}${originHarbor}`;
+export async function loadOfflineAssessment(
+  originHarbor: string,
+  craftProfile: string = 'motorized_boat',
+  departureTime: string = 'default'
+): Promise<CachedAssessment | null> {
+  const key = getOfflineCacheKey(originHarbor, craftProfile, departureTime);
+  const legacyKey = `${CACHE_KEY_PREFIX}${originHarbor}`;
+
   try {
     const db = await openDB();
     const record = await new Promise<CachedAssessment | null>((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readonly');
       const req = tx.objectStore(STORE_NAME).get(key);
-      req.onsuccess = () => resolve(req.result || null);
+      req.onsuccess = () => {
+        if (req.result) {
+          resolve(req.result);
+        } else {
+          // Fallback to legacy key for backwards compatibility
+          const legacyReq = tx.objectStore(STORE_NAME).get(legacyKey);
+          legacyReq.onsuccess = () => resolve(legacyReq.result || null);
+          legacyReq.onerror = () => resolve(null);
+        }
+      };
       req.onerror = () => reject(req.error);
     });
     if (record) return record;
@@ -75,7 +105,7 @@ export async function loadOfflineAssessment(originHarbor: string): Promise<Cache
 
   try {
     if (typeof localStorage !== 'undefined') {
-      const raw = localStorage.getItem(key);
+      const raw = localStorage.getItem(key) || localStorage.getItem(legacyKey);
       if (raw) {
         return JSON.parse(raw) as CachedAssessment;
       }
@@ -89,13 +119,19 @@ export async function loadOfflineAssessment(originHarbor: string): Promise<Cache
 /**
  * Clears a specific cached assessment.
  */
-export async function clearOfflineAssessment(originHarbor: string): Promise<void> {
-  const key = `${CACHE_KEY_PREFIX}${originHarbor}`;
+export async function clearOfflineAssessment(
+  originHarbor: string,
+  craftProfile: string = 'motorized_boat',
+  departureTime: string = 'default'
+): Promise<void> {
+  const key = getOfflineCacheKey(originHarbor, craftProfile, departureTime);
+  const legacyKey = `${CACHE_KEY_PREFIX}${originHarbor}`;
   try {
     const db = await openDB();
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       tx.objectStore(STORE_NAME).delete(key);
+      tx.objectStore(STORE_NAME).delete(legacyKey);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -106,6 +142,7 @@ export async function clearOfflineAssessment(originHarbor: string): Promise<void
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(key);
+      localStorage.removeItem(legacyKey);
     }
   } catch (err) {
     console.error('Failed to clear offline assessment:', err);

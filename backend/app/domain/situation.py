@@ -244,7 +244,7 @@ def get_canonical_active_hazards_for_sector(
     if sector is None:
         return None
 
-    from backend.app.domain.synthetic.generator import generate_synthetic_demo_dataset
+    from backend.app.domain.synthetic.generator import current_demo_dataset as generate_synthetic_demo_dataset
 
     hazards = generate_synthetic_demo_dataset()["hazards"]
     return [
@@ -263,7 +263,7 @@ def get_canonical_vessel_hazard_associations_for_sector(
     context = resolve_authority_sector_context(sector_id)
     if context is None:
         return None
-    from backend.app.domain.synthetic.generator import generate_synthetic_demo_dataset
+    from backend.app.domain.synthetic.generator import current_demo_dataset as generate_synthetic_demo_dataset
     from shapely.geometry import Point, shape
 
     dataset = generate_synthetic_demo_dataset()
@@ -398,7 +398,7 @@ def evaluate_sector_situation(
     )
 
     if bundle is None:
-        ds = data_service or DataService()
+        ds = data_service or DataService("DEMO")
         bundle = ds.get_observation_bundle(context)
 
     # 4. Deterministic Risk Engine evaluation

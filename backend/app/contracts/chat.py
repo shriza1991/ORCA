@@ -60,6 +60,7 @@ class UserContext(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    data_mode: Optional[str] = Field(None, pattern="^(DEMO|SNAPSHOT|SYNTHETIC|HYBRID|LIVE)$")
     conversation_id: Optional[str] = Field(
         None, description="Client session UUID; generated server-side if null"
     )
