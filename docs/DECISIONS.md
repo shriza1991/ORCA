@@ -2257,3 +2257,32 @@ Impact:
 - 297/297 frontend tests pass in Vitest including new `fisher-time-controls.test.ts`.
 - Clean Vite production build (`tsc && vite build`).
 
+## D072: Task 3 — Honest Source Labels, Evidence Freshness, and Provenance Architecture
+
+Date: 2026-10-02
+Decision:
+1. Strict Verification Invariants for Safety Predicates:
+   - In `backend/app/domain/risk_engine.py`, `_is_prov_verified_official()` strictly requires both authentic official authority (`has_official`) AND structured live verification (`has_verified_live`). It rejects unverified, fallback, degraded, unavailable, simulated, or demo inputs regardless of provider-like source names or application settings.
+   - Defined `is_verified_live_hazard` and aligned `is_active_verified_hazard`, `is_verified_severe_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` so unverified/fallback severe hazards can never acquire fabricated verified official status or HIGH confidence.
+   - Preserved justified NO_GO with HIGH confidence when authentic verified official severe hazard bulletins are present.
+2. Distinct Source Facts and Provenance Pipeline:
+   - In `backend/app/agents/integrations/adapters.py`, added `_resolve_lineage()` returning truthful lineage identifiers: `snapshot_fixture` for snapshot payloads, `demo_scenario` for demo/synthetic data, `fallback_model` for fallback inputs, and actual `bulletin_id` / `snapshot_id` where available. Eliminated default fallback to `live_api`.
+   - In `backend/app/connectors/snapshot.py`, updated marine fixture labeling to `snapshot fixture` with `data_mode="SNAPSHOT"` and `snapshot_id="snapshot_fixture"`.
+   - In `backend/app/connectors/registration.py` and `adapters.py`, PFZ calculations preserve input bulletin date and validity interval without converting execution time into observation time. When direct sensor timestamps are absent, `observed_time` remains None.
+   - In `backend/app/services/assessment_service.py`, `EvidenceItem` preserves `observed_time`, `valid_from`, `valid_to`, `retrieved_at`, `data_mode`, and `lineage_id`.
+   - In `backend/app/domain/agent_collaboration.py`, `derive_collaboration()` derives source providers, timestamps, and quality ratings directly from underlying `EvidenceItem` instances without hardcoding INCOIS or VERIFIED.
+   - In `backend/app/services/marinewatch_service.py`, offline/harmonic fallback calculations are truthfully labeled `"data_mode": "PHYSICAL_FALLBACK_MODEL"` and attributed to `"ORCA Physical Fallback Model"`, never claiming INCOIS or CACHED_REAL_FALLBACK.
+3. Evidence-Driven Vite Source Presentation:
+   - In `frontend/src/components/evidence/EvidenceCard.tsx`, replaced naive `retrieved_at` freshness calculations with evidence-driven badges: "Live provider data", "Cached official bulletin", "Historical/expired data", "Demo scenario", "Model fallback", "Calculated from snapshot inputs", "Source unavailable", and "Coverage fallback".
+   - Rendered observation time separately from retrieval time. Displayed explicit note for calculations without direct sensor timestamps.
+   - In `frontend/src/components/collaboration/AgentEvidenceCard.tsx`, updated header to "Data Feeds & Provenance" and replaced unconditional checkmarks with status-appropriate indicators (`✓`, `⟳`, `!`).
+   - In `frontend/src/types/contracts.ts`, added missing `data_mode`, `lineage_id`, `provider_name`, `coverage`, and `resolved_conflicts` fields to `EvidenceItem`.
+Reason:
+Enforce epistemic data honesty across every layer of ORCA's Vite frontend and backend: prevent unearned verification claims, separate observation from retrieval, preserve snapshot calculation lineage, and honestly label fallback models.
+Impact:
+- 10/10 Task 3 regression tests pass in `tests/integration/test_task3_provenance_freshness.py`.
+- 52/52 integration & regression tests pass across `test_integration_inconsistencies.py`, `test_task2_hazard_validity.py`, and `test_mission_replay.py`.
+- 297/297 frontend tests pass in Vitest.
+- Clean Vite production build (`tsc && vite build`).
+
+

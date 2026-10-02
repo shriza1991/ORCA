@@ -71,27 +71,60 @@ class AgentCollaborationEngine:
         sst_c = observations.get("sea_surface_temperature_c") or observations.get("sst_celsius")
         pfz_cand = observations.get("pfz_candidates") or tool_results.get("pfz_search", {}).get("candidates", [])
         
-        is_marine_fallback = any("fallback" in (ev.quality_flags or []) for ev in evidence if "OSF" in (ev.source_name or ""))
-        marine_quality = DataQualityRating.SNAPSHOT_FALLBACK if is_marine_fallback else DataQualityRating.VERIFIED
+        def _resolve_agent_quality(flags: List[str], data_mode: Optional[str]) -> DataQualityRating:
+            flags_lower = [f.lower() for f in (flags or [])]
+            mode_upper = (data_mode or "").upper()
+            if "verified_live" in flags_lower and "official_source" in flags_lower:
+                return DataQualityRating.VERIFIED
+            if "snapshot_source" in flags_lower or mode_upper == "SNAPSHOT":
+                return DataQualityRating.SNAPSHOT_FALLBACK
+            if any(marker in flags_lower for marker in ("fallback", "fallback_model", "geographic_fallback")) or mode_upper in ("FALLBACK", "HYBRID", "PHYSICAL_FALLBACK_MODEL"):
+                return DataQualityRating.PARTIAL
+            if any(marker in flags_lower for marker in ("simulated", "deterministic_demo", "m2_contract_mock", "degraded", "stale", "unavailable")) or mode_upper in ("DEMO", "MOCK", "UNAVAILABLE"):
+                return DataQualityRating.LIMITED
+            if "official_source" in flags_lower:
+                return DataQualityRating.PARTIAL
+            return DataQualityRating.PARTIAL
+
+        marine_ev = next(
+            (ev for ev in evidence if ev.metric_name in ("significant_wave_height", "wave_height", "swell_period_sec") or "OSF" in (ev.source_name or "").upper() or "MARINE" in (ev.source_name or "").upper()),
+            None
+        )
+        if marine_ev:
+            marine_source_name = marine_ev.source_name
+            marine_provider = getattr(marine_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in marine_source_name.lower() else ("INCOIS" if "incois" in marine_source_name.lower() else "Marine Authority"))
+            marine_updated = marine_ev.observed_time or marine_ev.retrieved_at or observations.get("observed_at")
+            marine_vt = marine_ev.valid_to or observations.get("valid_to")
+            marine_quality = _resolve_agent_quality(marine_ev.quality_flags, marine_ev.data_mode)
+        else:
+            marine_source_name = "INCOIS OSF (Ocean State Forecast)"
+            marine_provider = "INCOIS"
+            marine_updated = observations.get("observed_at")
+            marine_vt = observations.get("valid_to")
+            marine_quality = DataQualityRating.PARTIAL
+
+        is_marine_fallback = marine_quality in (DataQualityRating.SNAPSHOT_FALLBACK, DataQualityRating.PARTIAL)
 
         marine_sources = [
             AgentEvidenceSource(
-                source_name="INCOIS OSF (Ocean State Forecast)",
-                provider="INCOIS",
-                last_updated=observations.get("observed_at") or now_iso,
-                valid_to=observations.get("valid_to"),
+                source_name=marine_source_name,
+                provider=marine_provider,
+                last_updated=marine_updated,
+                valid_to=marine_vt,
                 coverage=f"Arabian Sea · {harbor} Coastal Sector",
                 quality_rating=marine_quality,
             ),
         ]
         if pfz_cand:
+            pfz_ev = next((ev for ev in evidence if ev.metric_name in ("pfz_distance_nm", "pfz_candidates") or "PFZ" in (ev.source_name or "").upper()), None)
+            pfz_quality = _resolve_agent_quality(pfz_ev.quality_flags, pfz_ev.data_mode) if pfz_ev else DataQualityRating.PARTIAL
             marine_sources.append(
                 AgentEvidenceSource(
-                    source_name="INCOIS PFZ (Potential Fishing Zone)",
-                    provider="INCOIS",
-                    last_updated=now_iso,
+                    source_name=pfz_ev.source_name if pfz_ev else "INCOIS PFZ (Potential Fishing Zone)",
+                    provider=getattr(pfz_ev, "provider_name", None) or "INCOIS",
+                    last_updated=pfz_ev.observed_time if pfz_ev else observations.get("observed_at"),
                     coverage=f"Offshore {harbor} Corridor",
-                    quality_rating=DataQualityRating.VERIFIED,
+                    quality_rating=pfz_quality,
                 )
             )
 
@@ -152,24 +185,55 @@ class AgentCollaborationEngine:
         squall_active = bool(observations.get("squall_alert", False))
         hazard_headline = observations.get("headline") or observations.get("hazard_headline")
 
-        is_weather_fallback = any("fallback" in (ev.quality_flags or []) for ev in evidence if "WEATHER" in (ev.source_name or "") or "IMD" in (ev.source_name or ""))
-        weather_quality = DataQualityRating.SNAPSHOT_FALLBACK if is_weather_fallback else DataQualityRating.VERIFIED
+        weather_ev = next(
+            (ev for ev in evidence if ev.metric_name in ("wind_speed", "wind_speed_knots", "wind_gust") or "WEATHER" in (ev.source_name or "").upper() or "IMD COASTAL" in (ev.source_name or "").upper()),
+            None
+        )
+        if weather_ev:
+            weather_source_name = weather_ev.source_name
+            weather_provider = getattr(weather_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in weather_source_name.lower() else ("IMD" if "imd" in weather_source_name.lower() else "Meteorological Authority"))
+            weather_updated = weather_ev.observed_time or weather_ev.retrieved_at or observations.get("observed_at")
+            weather_vt = weather_ev.valid_to or observations.get("valid_to")
+            weather_quality = _resolve_agent_quality(weather_ev.quality_flags, weather_ev.data_mode)
+        else:
+            weather_source_name = "IMD Coastal Weather Bulletin"
+            weather_provider = "IMD"
+            weather_updated = observations.get("observed_at")
+            weather_vt = observations.get("valid_to")
+            weather_quality = DataQualityRating.PARTIAL
+
+        hazard_ev = next(
+            (ev for ev in evidence if ev.metric_name in ("cyclone_warning_active", "severe_hazard_warning") or "CYCLONE" in (ev.source_name or "").upper() or "HAZARD" in (ev.source_name or "").upper()),
+            None
+        )
+        if hazard_ev:
+            hazard_source_name = hazard_ev.source_name
+            hazard_provider = getattr(hazard_ev, "provider_name", None) or ("IMD" if "imd" in hazard_source_name.lower() else "Hazard Division")
+            hazard_updated = hazard_ev.observed_time or hazard_ev.retrieved_at
+            hazard_quality = _resolve_agent_quality(hazard_ev.quality_flags, hazard_ev.data_mode)
+        else:
+            hazard_source_name = "IMD Cyclone Warning Division"
+            hazard_provider = "IMD"
+            hazard_updated = None
+            hazard_quality = DataQualityRating.PARTIAL
+
+        is_weather_fallback = weather_quality in (DataQualityRating.SNAPSHOT_FALLBACK, DataQualityRating.PARTIAL)
 
         weather_sources = [
             AgentEvidenceSource(
-                source_name="IMD Coastal Weather Bulletin",
-                provider="IMD",
-                last_updated=observations.get("observed_at") or now_iso,
-                valid_to=observations.get("valid_to"),
+                source_name=weather_source_name,
+                provider=weather_provider,
+                last_updated=weather_updated,
+                valid_to=weather_vt,
                 coverage=f"{harbor} Coastal District & Offshore Waters",
                 quality_rating=weather_quality,
             ),
             AgentEvidenceSource(
-                source_name="IMD Cyclone Warning Division",
-                provider="IMD",
-                last_updated=now_iso,
+                source_name=hazard_source_name,
+                provider=hazard_provider,
+                last_updated=hazard_updated,
                 coverage="West Coast Marine Zone",
-                quality_rating=DataQualityRating.VERIFIED,
+                quality_rating=hazard_quality,
             ),
         ]
 
@@ -290,13 +354,14 @@ class AgentCollaborationEngine:
         else:
             safety_findings.append(f"Evaluated against standard safety thresholds for {craft_profile}.")
 
+        safety_quality = DataQualityRating.VERIFIED if (risk_assessment and risk_assessment.confidence and risk_assessment.confidence.level == ConfidenceLevel.HIGH) else (DataQualityRating.PARTIAL if (risk_assessment and risk_assessment.confidence and risk_assessment.confidence.level == ConfidenceLevel.MEDIUM) else DataQualityRating.LIMITED)
         safety_sources = [
             AgentEvidenceSource(
                 source_name="Deterministic Marine Risk Engine (ORCA Core)",
                 provider="ORCA Safety Authority",
-                last_updated=now_iso,
+                last_updated=None,
                 coverage=f"Vessel Class: {craft_profile}",
-                quality_rating=DataQualityRating.VERIFIED,
+                quality_rating=safety_quality,
             )
         ]
 

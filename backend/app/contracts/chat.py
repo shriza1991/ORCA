@@ -98,6 +98,8 @@ class DataProvenance(BaseModel):
     valid_from: Optional[str] = Field(None, description="Validity start timestamp (ISO-8601 UTC)")
     valid_to: Optional[str] = Field(None, description="Validity expiration timestamp (ISO-8601 UTC)")
     data_mode: Optional[str] = Field("HISTORICAL", description="Data resolution mode: LIVE | CACHED_REAL | HISTORICAL | MOCK | UNAVAILABLE")
+    lineage_id: Optional[str] = Field(None, description="Lineage ID, bulletin ID, or fixture identifier")
+    retrieved_at: Optional[str] = Field(None, description="System retrieval timestamp (ISO-8601 UTC)")
     is_stale: bool = Field(False, description="True if observation time or valid_to window indicates stale data")
     quality_flags: List[str] = Field(default_factory=list, description="Quality and verification badges")
 

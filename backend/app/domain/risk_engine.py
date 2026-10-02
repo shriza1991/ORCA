@@ -399,6 +399,8 @@ class DeterministicRiskEngine:
                 valid_from=getattr(marine, "valid_from", None),
                 valid_to=marine.valid_to,
                 data_mode=marine_mode,
+                lineage_id=ProviderToolAdapter._resolve_lineage(marine, marine_mode, is_mock=(data_mode == "MOCK")),
+                retrieved_at=now_utc.isoformat(),
                 is_stale=marine_stale or ("stale" in marine_flags or "EXPIRED" in marine_flags),
                 quality_flags=marine_flags,
             )
@@ -434,6 +436,8 @@ class DeterministicRiskEngine:
                 valid_from=getattr(weather, "valid_from", None),
                 valid_to=weather.valid_to,
                 data_mode=weather_mode,
+                lineage_id=ProviderToolAdapter._resolve_lineage(weather, weather_mode, is_mock=(data_mode == "MOCK")),
+                retrieved_at=now_utc.isoformat(),
                 is_stale=weather_stale or ("stale" in weather_flags or "EXPIRED" in weather_flags),
                 quality_flags=weather_flags,
             )
@@ -468,9 +472,12 @@ class DeterministicRiskEngine:
                 provider_name=hazard_provider,
                 source_name=hazard_source,
                 source_url=hazard.source_url,
+                observed_time=getattr(hazard, "observed_at", None) or getattr(hazard, "issued_at", None),
                 valid_from=hazard.valid_from,
                 valid_to=hazard.valid_to,
                 data_mode=hazard_mode,
+                lineage_id=ProviderToolAdapter._resolve_lineage(hazard, hazard_mode, is_mock=(data_mode == "MOCK")),
+                retrieved_at=now_utc.isoformat(),
                 is_stale=hazard_stale or ("stale" in hazard_flags or "EXPIRED" in hazard_flags),
                 quality_flags=hazard_flags,
             )
@@ -506,7 +513,7 @@ class DeterministicRiskEngine:
                 return False
 
             prov_mode = str(getattr(prov, "data_mode", "") or "").upper()
-            if prov_mode in ("MOCK", "SIMULATED", "SNAPSHOT", "SYNTHETIC", "DEMO", "HYBRID", "UNVERIFIED", "UNAVAILABLE"):
+            if prov_mode in ("MOCK", "SIMULATED", "SNAPSHOT", "SYNTHETIC", "DEMO", "HYBRID", "UNVERIFIED", "UNAVAILABLE", "FALLBACK", "PHYSICAL_FALLBACK_MODEL"):
                 return False
 
             flags = [str(f).lower() for f in (getattr(prov, "quality_flags", []) or [])]
@@ -514,7 +521,10 @@ class DeterministicRiskEngine:
                 return False
 
             s_name = str(getattr(prov, "source_name", "") or "").lower()
-            if any(marker in s_name for marker in ("fallback", "unverified", "degraded", "unavailable")):
+            p_name = str(getattr(prov, "provider_name", "") or "").lower()
+            if any(marker in s_name for marker in ("fallback", "unverified", "degraded", "unavailable", "open-meteo", "synthetic")):
+                return False
+            if any(marker in p_name for marker in ("fallback", "unverified", "degraded", "unavailable", "open-meteo", "synthetic")):
                 return False
 
             freshness = getattr(payload, "freshness_flags", {}) if payload else {}
@@ -526,9 +536,18 @@ class DeterministicRiskEngine:
             if cov_status in ("FALLBACK", "FALLBACK_MODEL", "GEOGRAPHIC_FALLBACK", "UNAVAILABLE", "UNVERIFIED", "SYNTHETIC_DATA"):
                 return False
 
-            has_verified_live = "verified_live" in flags or bool(freshness.get("verified_live")) or bool(freshness.get("is_live"))
-            has_official = "official_source" in flags or bool(freshness.get("is_official")) or cov_status in ("OFFICIAL_STATION", "OFFICIAL_BULLETIN")
-            return bool(has_verified_live or has_official)
+            is_official_authority = any(auth in p_name.upper() or auth in s_name.upper() for auth in ("IMD", "INCOIS", "INHO", "DG_SHIPPING", "GOVERNMENT"))
+            has_official = (
+                "official_source" in flags
+                or bool(freshness.get("is_official"))
+                or cov_status in ("OFFICIAL_STATION", "OFFICIAL_BULLETIN")
+            ) and is_official_authority
+
+            has_verified_live = (
+                "verified_live" in flags
+                or bool(freshness.get("verified_live"))
+            )
+            return bool(has_verified_live and has_official)
 
         # Check for missing critical inputs or degraded telemetry
         is_data_degraded = (
@@ -635,10 +654,11 @@ class DeterministicRiskEngine:
             and not any(x in (hazard.source_name or "").upper() for x in ("DEGRADED", "UNAVAILABLE"))
             and hazard_is_above_normal
         )
-        is_active_verified_hazard = bool(
+        is_verified_live_hazard = bool(
             is_active_hazard
             and _is_prov_verified_official(prov_hazard, hazard)
         )
+        is_active_verified_hazard = is_verified_live_hazard
 
         cyclone_active = bool(is_active_hazard and hazard.cyclone_warning_active)
         squall_alert = bool(is_active_hazard and hazard.squall_alert)

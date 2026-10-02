@@ -472,10 +472,13 @@ class AssessmentService:
                             source_name=prov.source_name,
                             provider_name=prov.provider_name,
                             source_url=prov.source_url,
+                            observed_time=prov.observed_time,
                             valid_from=prov.valid_from,
                             valid_to=prov.valid_to,
-                            retrieved_at=prov.observed_time or now_iso,
+                            retrieved_at=prov.retrieved_at or now_iso,
                             quality_flags=prov.quality_flags,
+                            data_mode=prov.data_mode,
+                            lineage_id=prov.lineage_id,
                         )
                     )
 

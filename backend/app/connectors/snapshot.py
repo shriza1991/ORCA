@@ -491,9 +491,9 @@ class SnapshotConnector:
                 # Normalize the selected record; preserve its original timestamps
                 payload = IncoisOSFNormalizer.normalize(chosen)
                 if geographic_fallback:
-                    payload.source_name = f"INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture; Ratnagiri GEOGRAPHIC_FALLBACK for {harbor})"
+                    payload.source_name = f"INCOIS Ocean State Forecast (ORCA deterministic snapshot fixture; Ratnagiri GEOGRAPHIC_FALLBACK for {harbor})"
                 else:
-                    payload.source_name = "INCOIS Ocean State Forecast (ORCA deterministic demo marine fixture)"
+                    payload.source_name = "INCOIS Ocean State Forecast (ORCA deterministic snapshot fixture)"
                 payload.source_url = None
                 # Always use the requested harbor name (do not silently relabel as Ratnagiri)
                 payload.harbor = harbor
@@ -504,6 +504,8 @@ class SnapshotConnector:
                     or chosen.get("observed_at")
                 )
                 payload.freshness_flags = {
+                    "data_mode": "SNAPSHOT",
+                    "snapshot_id": chosen.get("snapshot_id") or "snapshot_fixture",
                     "forecast_valid_time": obs_time_str,
                     "source_issue_time": (chosen.get("provenance_json") or {}).get("source_issue_time"),
                     "retrieved_at": None,  # populated by ObservationBundle captured_at

@@ -8,6 +8,34 @@
 
 ## Current Release & Workstream State
 
+### 2026-10-02 Task 3: Honest Source Labels, Evidence Freshness, and Provenance Presentation (§D072)
+
+- **DIAGNOSED DEFECTS & CORRECTIONS**:
+  1. *Closed Safety Verification Defect*:
+     - In `backend/app/domain/risk_engine.py`, `_is_prov_verified_official()` strictly requires both authentic authority origin (`has_official`) AND verified live status (`has_verified_live`).
+     - Refactored `is_verified_live_hazard`, `is_active_verified_hazard`, `is_verified_severe_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` so unverified/fallback hazards can never acquire fabricated official verification or `HIGH` confidence.
+     - Preserved justified `NO_GO` with `HIGH` confidence when valid verified official severe hazard warnings are active.
+  2. *Truthful Lineage & Fallback Attribution*:
+     - In `backend/app/agents/integrations/adapters.py`, implemented `_resolve_lineage()` producing `snapshot_fixture`, `demo_scenario`, `fallback_model`, or `cached_official_store` instead of defaulting to `live_api`.
+     - In `backend/app/connectors/snapshot.py`, updated marine fixture labeling to snapshot fixture with explicit `data_mode="SNAPSHOT"`.
+     - In `backend/app/services/marinewatch_service.py`, offline/harmonic fallback calculations are truthfully labeled `"data_mode": "PHYSICAL_FALLBACK_MODEL"` and attributed to `"ORCA Physical Fallback Model"`.
+     - In `backend/app/connectors/registration.py` and `adapters.py`, PFZ calculations preserve input bulletin date and validity interval without turning execution time into observation time.
+  3. *Evidence-Driven Vite Source Presentation*:
+     - In `frontend/src/components/evidence/EvidenceCard.tsx`, replaced naive `retrieved_at` freshness calculation with evidence-driven badges: "Live provider data", "Cached official bulletin", "Historical/expired data", "Demo scenario", "Model fallback", "Calculated from snapshot inputs", "Source unavailable", and "Coverage fallback".
+     - Displayed observation time separately from retrieval time. Displayed explicit note for calculations without direct sensor timestamps.
+     - In `frontend/src/components/collaboration/AgentEvidenceCard.tsx`, updated header to "Data Feeds & Provenance" and replaced unconditional checkmarks with status-appropriate indicators (`✓`, `⟳`, `!`).
+     - In `frontend/src/types/contracts.ts`, added missing `data_mode`, `lineage_id`, `provider_name`, `coverage`, and `resolved_conflicts` fields to `EvidenceItem`.
+- **TEST VERIFICATION & INTEGRITY**:
+  - `tests/integration/test_task3_provenance_freshness.py`: **10/10 passed** in 4.21s (A/B/C safety predicates, snapshot lineage, cached official, Open-Meteo fallback, PFZ input provenance, expired sources, Marinewatch fallback).
+  - `tests/integration/test_integration_inconsistencies.py`: **6/6 passed**.
+  - `tests/integration/test_task2_hazard_validity.py`: **31/31 passed**.
+  - `tests/integration/test_mission_replay.py`: **15/15 passed**.
+  - Total backend pytest suite: **62/62 passed**.
+  - Frontend Vitest suite: **24 test files, 297/297 passed** in 110.60s.
+  - Frontend production build (`tsc && vite build`): **Passed cleanly** in 4m 17s.
+- **NEXT RECOMMENDED TASK**:
+  - Submit Task 3 changes for user review.
+
 ### 2026-10-02 Resolution of Three Remaining Integration Inconsistencies (§D070)
 
 - **DIAGNOSED INCONSISTENCIES & RESOLUTIONS**:
