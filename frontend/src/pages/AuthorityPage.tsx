@@ -1,4 +1,5 @@
 import MissionRecordInspector from "../components/mission/MissionRecordInspector";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 import { useState, useMemo, useEffect } from 'react';
 import {
   Activity,
@@ -354,6 +355,18 @@ export default function AuthorityPage({
             <FlaskConical size={13} />
             <span>{translateText('Benchmark Runner', chat.language)}</span>
           </button>
+          {authorityTab === 'audit' && (
+            <button
+              type="button"
+              className="authority-segment-btn active"
+              onClick={() => setAuthorityTab('audit')}
+              role="tab"
+              aria-selected={true}
+            >
+              <FileCheck2 size={13} />
+              <span>{selectedOperationalAlert ? translateText('Alert Audit', chat.language) : translateText('Audit Evidence', chat.language)}</span>
+            </button>
+          )}
         </nav>
 
         {/* Right: Live KPIs & Verified Sources */}
@@ -441,39 +454,51 @@ export default function AuthorityPage({
           <div className="authority-workspace-grid">
             {/* Left: Reused ChatPanel in Official Dispatch Terminal Mode */}
             <aside className="authority-terminal-pane" aria-label="Terminal Pane">
-              <ChatPanel
-                language={chat.language}
-                messages={chat.messages}
-                activeResponse={authorityActiveResponse}
-                isLoading={chat.isLoading}
-                onSend={(text, languageOverride) => chat.send(text, languageOverride, {
-                  sector_id: activeSector.public_id,
-                })}
-                onBack={onBack}
-                onReset={chat.clearChat}
-                onEvidenceClick={onOpenEvidence}
-              />
+              <ErrorBoundary
+                fallbackTitle="Terminal Unavailable"
+                fallbackMessage="Failed to render official dispatch chat panel."
+                resetButtonText="Retry Terminal"
+              >
+                <ChatPanel
+                  language={chat.language}
+                  messages={chat.messages}
+                  activeResponse={authorityActiveResponse}
+                  isLoading={chat.isLoading}
+                  onSend={(text, languageOverride) => chat.send(text, languageOverride, {
+                    sector_id: activeSector.public_id,
+                  })}
+                  onBack={onBack}
+                  onReset={chat.clearChat}
+                  onEvidenceClick={onOpenEvidence}
+                />
+              </ErrorBoundary>
             </aside>
 
             {/* Right: Authority 3D Operational Command Map */}
             <div className="authority-map-pane">
               {hazardError && <p className="authority-empty-note" role="status">{hazardError}</p>}
-              <AuthorityDeckGLMap
-                activeSector={activeSector}
-                sectors={sectors}
-                baseLayers={baseLayers}
-                sectorHazards={sectorHazards}
-                hazardAssociations={hazardAssociations}
-                selectedOperationalAlert={selectedOperationalAlert}
-                vessels={sectorVessels}
-                selectedVesselId={selectedVesselId}
-                onSelectVessel={setSelectedVesselId}
-                replayLayer={replayLayer}
-                trajectoryLayer={trajectoryLayer}
-                sectorRouteLayers={sectorRouteLayers}
-                language={chat.language}
-                theme={theme}
-              />
+              <ErrorBoundary
+                fallbackTitle="Tactical Map Unavailable"
+                fallbackMessage="3D map rendering encountered an error. Terminal dispatch remains operational."
+                resetButtonText="Retry Map"
+              >
+                <AuthorityDeckGLMap
+                  activeSector={activeSector}
+                  sectors={sectors}
+                  baseLayers={baseLayers}
+                  sectorHazards={sectorHazards}
+                  hazardAssociations={hazardAssociations}
+                  selectedOperationalAlert={selectedOperationalAlert}
+                  vessels={sectorVessels}
+                  selectedVesselId={selectedVesselId}
+                  onSelectVessel={setSelectedVesselId}
+                  replayLayer={replayLayer}
+                  trajectoryLayer={trajectoryLayer}
+                  sectorRouteLayers={sectorRouteLayers}
+                  language={chat.language}
+                  theme={theme}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         )}
@@ -481,67 +506,102 @@ export default function AuthorityPage({
         {authorityTab === 'fleet' && (
           <div className="authority-workspace-grid authority-fleet-grid">
             <aside className="authority-fleet-pane" aria-label="Fleet Surveillance Pane">
-              <FleetTrackingDeck
-                selectedSector={selectedSector}
-                onVesselSelect={setSelectedVesselId}
-                onReplayUpdate={setReplayLayer}
-                onTrajectoryUpdate={setTrajectoryLayer}
-                onAlertSelectionChange={(alert) => {
-                  // The alert endpoint is sector-scoped; still enforce the
-                  // boundary at the UI hand-off so stale async UI state cannot
-                  // highlight a different sector.
-                  setSelectedOperationalAlert(alert?.sector_id === activeSector.public_id ? alert : null);
-                }}
-                onAlertWhy={(alert) => {
-                  if (alert.sector_id !== activeSector.public_id) return;
-                  setSelectedOperationalAlert(alert);
-                  setAuthorityTab('audit');
-                }}
-                language={chat.language}
-              />
+              <ErrorBoundary
+                fallbackTitle="Fleet Surveillance Unavailable"
+                fallbackMessage="Failed to render fleet tracking telemetry list."
+                resetButtonText="Retry Surveillance"
+              >
+                <FleetTrackingDeck
+                  selectedSector={selectedSector}
+                  onVesselSelect={setSelectedVesselId}
+                  onReplayUpdate={setReplayLayer}
+                  onTrajectoryUpdate={setTrajectoryLayer}
+                  onAlertSelectionChange={(alert) => {
+                    // The alert endpoint is sector-scoped; still enforce the
+                    // boundary at the UI hand-off so stale async UI state cannot
+                    // highlight a different sector.
+                    setSelectedOperationalAlert(alert?.sector_id === activeSector.public_id ? alert : null);
+                  }}
+                  onAlertWhy={(alert) => {
+                    if (alert.sector_id !== activeSector.public_id) return;
+                    setSelectedOperationalAlert(alert);
+                    setAuthorityTab('audit');
+                  }}
+                  language={chat.language}
+                />
+              </ErrorBoundary>
             </aside>
             <div className="authority-map-pane">
-              <AuthorityDeckGLMap
-                activeSector={activeSector}
-                sectors={sectors}
-                baseLayers={baseLayers}
-                sectorHazards={sectorHazards}
-                hazardAssociations={hazardAssociations}
-                selectedOperationalAlert={selectedOperationalAlert}
-                vessels={sectorVessels}
-                selectedVesselId={selectedVesselId}
-                onSelectVessel={setSelectedVesselId}
-                replayLayer={replayLayer}
-                trajectoryLayer={trajectoryLayer}
-                sectorRouteLayers={sectorRouteLayers}
-                language={chat.language}
-                theme={theme}
-              />
+              <ErrorBoundary
+                fallbackTitle="Fleet Map Unavailable"
+                fallbackMessage="3D tactical fleet map encountered a rendering failure. Surveillance controls remain active."
+                resetButtonText="Retry Map"
+              >
+                <AuthorityDeckGLMap
+                  activeSector={activeSector}
+                  sectors={sectors}
+                  baseLayers={baseLayers}
+                  sectorHazards={sectorHazards}
+                  hazardAssociations={hazardAssociations}
+                  selectedOperationalAlert={selectedOperationalAlert}
+                  vessels={sectorVessels}
+                  selectedVesselId={selectedVesselId}
+                  onSelectVessel={setSelectedVesselId}
+                  replayLayer={replayLayer}
+                  trajectoryLayer={trajectoryLayer}
+                  sectorRouteLayers={sectorRouteLayers}
+                  language={chat.language}
+                  theme={theme}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         )}
 
         {authorityTab === 'ports' && (
           <div className="authority-benchmarks-container" style={{ background: 'var(--background)' }}>
-            <PortWatchRegistry />
+            <ErrorBoundary
+              fallbackTitle="Port Census Unavailable"
+              fallbackMessage="An unexpected rendering error occurred in the Port Census registry."
+              resetButtonText="Retry Census"
+            >
+              <PortWatchRegistry />
+            </ErrorBoundary>
           </div>
         )}
 
         {authorityTab === 'aquaculture' && (
           <div className="authority-benchmarks-container" style={{ background: 'var(--background)' }}>
-            <AquaWatchRegistry />
+            <ErrorBoundary
+              fallbackTitle="Aquaculture Registry Unavailable"
+              fallbackMessage="An unexpected rendering error occurred in the Aquaculture registry."
+              resetButtonText="Retry Aquaculture"
+            >
+              <AquaWatchRegistry />
+            </ErrorBoundary>
           </div>
         )}
 
         {authorityTab === 'benchmarks' && (
           <div className="authority-benchmarks-container">
-            <ScenarioBenchmarkDeck language={chat.language} />
+            <ErrorBoundary
+              fallbackTitle="Benchmark Suite Unavailable"
+              fallbackMessage="An unexpected error occurred in the Scenario Benchmark deck."
+              resetButtonText="Retry Runner"
+            >
+              <ScenarioBenchmarkDeck language={chat.language} />
+            </ErrorBoundary>
           </div>
         )}
 
         {authorityTab === 'audit' && (
-          /* Audit View: Direct In-Page Evidence & Agent Trace Logs */
-          <div className="authority-audit-view">
+          <ErrorBoundary
+            fallbackTitle="Audit & Evidence View Unavailable"
+            fallbackMessage="Failed to render multi-agent arbitration audit view."
+            resetButtonText="Retry Audit"
+          >
+            {/* Audit View: Direct In-Page Evidence & Agent Trace Logs */}
+            <div className="authority-audit-view">
             {authorityActiveResponse?.agent_collaboration && (
               <div className="authority-collaboration-audit-section" data-testid="authority-collaboration-section">
                 <div className="authority-collaboration-audit-header">
@@ -621,6 +681,7 @@ export default function AuthorityPage({
               )}
             </div>
           </div>
+        </ErrorBoundary>
         )}
       </div>
     </div>

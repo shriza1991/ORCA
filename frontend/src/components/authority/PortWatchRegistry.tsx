@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Anchor, Radio, Search, Filter, RefreshCw } from 'lucide-react';
+import { Anchor, Radio, Search, Filter, RefreshCw, AlertTriangle } from 'lucide-react';
 import { fetchNearbyPorts, type LandingCentre } from '../../api/marinewatch-client';
 
 export default function PortWatchRegistry() {
   const [ports, setPorts] = useState<LandingCentre[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState<string>('ALL');
 
@@ -14,11 +15,18 @@ export default function PortWatchRegistry() {
 
   async function loadPorts() {
     setLoading(true);
+    setError(null);
     try {
       const data = await fetchNearbyPorts(20.0, 78.0, 2500, 50);
-      setPorts(data.ports || []);
-    } catch (err) {
+      if (data && Array.isArray(data.ports)) {
+        setPorts(data.ports);
+      } else {
+        setPorts([]);
+      }
+    } catch (err: any) {
       console.error('Failed to load ports:', err);
+      setError(err?.message || 'Failed to fetch harbour records from CMFRI registry');
+      setPorts([]);
     } finally {
       setLoading(false);
     }
@@ -29,9 +37,9 @@ export default function PortWatchRegistry() {
   const filteredPorts = ports.filter((p) => {
     const matchesSearch =
       !searchQuery ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.state.toLowerCase().includes(searchQuery.toLowerCase());
+      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.district?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.state?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesState = selectedState === 'ALL' || p.state === selectedState;
     return matchesSearch && matchesState;
   });
@@ -54,13 +62,16 @@ export default function PortWatchRegistry() {
           </p>
         </div>
         <div className="portwatch-header-actions">
-          <span className="portwatch-count-badge">{filteredPorts.length} Registered Harbours</span>
+          <span className="portwatch-count-badge">
+            {loading ? 'Loading…' : error ? 'Unavailable' : `${filteredPorts.length} Registered Harbours`}
+          </span>
           <button
             type="button"
             onClick={loadPorts}
             className="portwatch-refresh-btn"
             title="Refresh port census"
             aria-label="Refresh port census"
+            disabled={loading}
           >
             <RefreshCw size={13} className={loading ? 'spin-icon' : ''} />
           </button>
@@ -71,19 +82,27 @@ export default function PortWatchRegistry() {
       <div className="portwatch-kpi-grid">
         <div className="portwatch-kpi-card">
           <span className="portwatch-kpi-label">Total Monitored Harbours</span>
-          <span className="portwatch-kpi-value" style={{ color: 'var(--color-accent)' }}>{filteredPorts.length}</span>
+          <span className="portwatch-kpi-value" style={{ color: 'var(--color-accent)' }}>
+            {loading ? '…' : error ? '—' : filteredPorts.length}
+          </span>
         </div>
         <div className="portwatch-kpi-card">
           <span className="portwatch-kpi-label">Total Registered Craft</span>
-          <span className="portwatch-kpi-value">{totalCraft.toLocaleString()}</span>
+          <span className="portwatch-kpi-value">
+            {loading ? '…' : error ? '—' : totalCraft.toLocaleString()}
+          </span>
         </div>
         <div className="portwatch-kpi-card">
           <span className="portwatch-kpi-label">Mechanized Fleet</span>
-          <span className="portwatch-kpi-value accent-emerald">{totalMech.toLocaleString()}</span>
+          <span className="portwatch-kpi-value accent-emerald">
+            {loading ? '…' : error ? '—' : totalMech.toLocaleString()}
+          </span>
         </div>
         <div className="portwatch-kpi-card">
           <span className="portwatch-kpi-label">Motorized Fleet</span>
-          <span className="portwatch-kpi-value accent-blue">{totalMot.toLocaleString()}</span>
+          <span className="portwatch-kpi-value accent-blue">
+            {loading ? '…' : error ? '—' : totalMot.toLocaleString()}
+          </span>
         </div>
       </div>
 
@@ -97,6 +116,7 @@ export default function PortWatchRegistry() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="portwatch-search-input"
+            disabled={loading || !!error}
           />
         </div>
         <div className="portwatch-filter-group">
@@ -106,6 +126,7 @@ export default function PortWatchRegistry() {
             onChange={(e) => setSelectedState(e.target.value)}
             className="portwatch-filter-select"
             aria-label="Filter by state"
+            disabled={loading || !!error}
           >
             {states.map((st) => (
               <option key={st} value={st}>
@@ -133,7 +154,66 @@ export default function PortWatchRegistry() {
             </tr>
           </thead>
           <tbody>
-            {filteredPorts.map((p) => (
+            {loading && (
+              <tr>
+                <td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                  <RefreshCw size={16} className="spin-icon" style={{ verticalAlign: 'middle', marginRight: '8px' }} />
+                  Loading harbour census registry data…
+                </td>
+              </tr>
+            )}
+
+            {!loading && error && (
+              <tr>
+                <td colSpan={9} style={{ padding: '32px', textAlign: 'center' }}>
+                  <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--color-text-muted)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-warning, #d97706)', fontWeight: 600 }}>
+                      <AlertTriangle size={16} />
+                      <span>Port Census Registry Unavailable</span>
+                    </div>
+                    <span style={{ fontSize: '12px', maxWidth: '420px' }}>{error}</span>
+                    <button
+                      type="button"
+                      onClick={loadPorts}
+                      style={{
+                        marginTop: '6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 12px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        borderRadius: '4px',
+                        border: '1px solid var(--color-border)',
+                        background: 'var(--color-bg-primary)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <RefreshCw size={12} />
+                      Retry Connection
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && ports.length === 0 && (
+              <tr>
+                <td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                  No registered harbours available in the census database.
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && ports.length > 0 && filteredPorts.length === 0 && (
+              <tr>
+                <td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                  No harbours match the current search filter.
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && filteredPorts.map((p) => (
               <tr key={p.id}>
                 <td>
                   <div className="port-name-cell">
@@ -146,7 +226,7 @@ export default function PortWatchRegistry() {
                 </td>
                 <td>
                   <span className="port-type-tag">
-                    {p.type.replace(/_/g, ' ')}
+                    {(p.type || '').replace(/_/g, ' ')}
                   </span>
                 </td>
                 <td><strong>{p.craft_count?.total ?? '—'}</strong></td>
@@ -167,13 +247,6 @@ export default function PortWatchRegistry() {
                 </td>
               </tr>
             ))}
-            {filteredPorts.length === 0 && (
-              <tr>
-                <td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                  No harbours match the current search filter.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
