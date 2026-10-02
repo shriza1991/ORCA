@@ -84,26 +84,60 @@ def bind_mission_response(response, profile, message):
     elif intent == "WHAT_CHANGED" and baseline.trip_context.parent_assessment_id:
         from backend.app.api.v1.assessments import decision_delta
         delta = decision_delta(get_assessment(baseline.trip_context.parent_assessment_id), baseline)
+    from backend.app.contracts.chat import RecommendationStatus
     brief = selected.brief
     if not brief:
         return response
     from backend.app.agents.localization import localize_operational_text
     localize = lambda t: localize_operational_text(t, response.language)
     factors = brief.negative_factors or brief.positive_factors
-    response.recommendation = Recommendation(status=selected.decision, summary=localize(brief.summary),
-        decisive_factors=[localize(x) for x in factors], non_decisive_factors=[localize(x) for x in brief.positive_factors],
-        threshold_comparisons=selected.evidence, next_action=localize(brief.recommended_action))
+
     response.confidence = Confidence(level=brief.confidence, reasons=brief.confidence_reasons)
     response.assessment_id = selected.assessment_id
     response.evidence = [EvidenceItem(evidence_id=f"{selected.evidence_bundle_id}:{row.get('metric_name', i)}",
         source_name="Retained mission domain evaluation", metric_name=row.get("metric_name"), metric_value=row.get("observed_value"),
         metric_unit=row.get("unit"), quality_flags=[selected.conditions.provenance_mode], retrieved_at=selected.conditions.captured_at)
         for i, row in enumerate(selected.evidence) if row.get("metric_name")]
-    response.decision_object = DecisionObject(decision=selected.decision, confidence=brief.confidence,
-        decisive_factor=localize(factors[0] if factors else brief.summary), supporting_factors=factors[1:],
-        evidence=response.evidence, recommended_action=localize(brief.recommended_action), timestamp=selected.assessed_at,
-        alternatives=[r for r in selected.route_candidates if r.get("departure_supported")],
-        uncertainty=brief.confidence_reasons).model_dump(mode="json")
+
+    if intent == "PFZ":
+        rec_status = RecommendationStatus.INFORMATIONAL
+        cand_list = [f"{p.get('candidate_id')}: {p.get('distance_nautical_miles')} nm, bearing {p.get('bearing_degrees')} degrees." for p in selected.pfz_candidates[:3]]
+        cand_text = "\n".join(cand_list) if cand_list else "No supported fishing candidate in retained evidence."
+        pfz_summary = f"Potential Fishing Zone advisory: {', '.join(p.get('candidate_id') for p in selected.pfz_candidates[:2])} identified from retained mission evidence." if selected.pfz_candidates else "Potential Fishing Zone advisory: No supported fishing candidate in retained evidence."
+        pfz_factors = [
+            f"PFZ candidate {p.get('candidate_id')} identified at {p.get('distance_nautical_miles')} nm bearing {p.get('bearing_degrees')}°" for p in selected.pfz_candidates[:2]
+        ] or ["No supported fishing candidate in retained evidence."]
+        pfz_factors.append("Informational advisory only — voyage navigation and departure safety must be independently assessed")
+        pfz_action = "Obtain voyage safety assessment and verify local harbor bulletins before departure."
+        response.recommendation = Recommendation(
+            status=rec_status,
+            summary=localize(pfz_summary),
+            decisive_factors=[localize(x) for x in pfz_factors],
+            non_decisive_factors=[localize(x) for x in brief.positive_factors],
+            threshold_comparisons=selected.evidence,
+            next_action=localize(pfz_action),
+        )
+        response.decision_object = DecisionObject(
+            decision=rec_status,
+            confidence=brief.confidence,
+            decisive_factor=localize("Informational advisory only — voyage navigation and departure safety must be independently assessed"),
+            supporting_factors=[localize(x) for x in pfz_factors],
+            evidence=response.evidence,
+            recommended_action=localize(pfz_action),
+            timestamp=selected.assessed_at,
+            alternatives=[r for r in selected.route_candidates if r.get("departure_supported")],
+            uncertainty=brief.confidence_reasons,
+        ).model_dump(mode="json")
+    else:
+        response.recommendation = Recommendation(status=selected.decision, summary=localize(brief.summary),
+            decisive_factors=[localize(x) for x in factors], non_decisive_factors=[localize(x) for x in brief.positive_factors],
+            threshold_comparisons=selected.evidence, next_action=localize(brief.recommended_action))
+        response.decision_object = DecisionObject(decision=selected.decision, confidence=brief.confidence,
+            decisive_factor=localize(factors[0] if factors else brief.summary), supporting_factors=factors[1:],
+            evidence=response.evidence, recommended_action=localize(brief.recommended_action), timestamp=selected.assessed_at,
+            alternatives=[r for r in selected.route_candidates if r.get("departure_supported")],
+            uncertainty=brief.confidence_reasons).model_dump(mode="json")
+
     response.decision_delta = delta.model_dump(mode="json") if delta else None
     if intent == "WHAT_IF" and delta:
         response.answer = f"{delta.original_decision.value} → {delta.new_decision.value}. " + " ".join(delta.changed_factors + delta.added_factors + [localize(brief.recommended_action)])
@@ -112,8 +146,7 @@ def bind_mission_response(response, profile, message):
     elif intent in ("ROUTE", "ALTERNATIVE"):
         response.answer = "\n".join(f"{r.get('name')}: {r.get('distance_km')} km, {r.get('eta_hours')} hours. " + ("Supported within evaluated limits." if r.get("departure_supported") else "; ".join(r.get("rejection_reasons", []))) for r in selected.route_candidates) + "\n" + localize(brief.recommended_action)
     elif intent == "PFZ":
-        response.answer = "\n".join(f"{p.get('candidate_id')}: {p.get('distance_nautical_miles')} nm, bearing {p.get('bearing_degrees')} degrees." for p in selected.pfz_candidates[:3]) or "No supported fishing candidate in retained evidence."
-        response.answer += "\n" + localize(brief.recommended_action)
+        response.answer = f"{cand_text}\n\nNotice: Potential Fishing Zone advisory for fishing opportunity identification only; voyage navigation and departure clearance must be independently assessed."
     elif intent == "HAZARDS":
         h = selected.conditions.hazard
         response.answer = f"{h.headline if h else 'Hazard evidence unavailable.'} Valid {h.valid_from if h else 'unknown'} to {h.valid_to if h else 'unknown'}. " + localize(brief.recommended_action)

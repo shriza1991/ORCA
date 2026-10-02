@@ -217,6 +217,9 @@ def register_dev4_operational_engines(
             raw_features=raw_advisories.features,
             is_mock=is_mock,
             source_data_mode=str(source_mode).upper() if source_mode else None,
+            observed_time=getattr(raw_advisories, "bulletin_date", None),
+            valid_from=getattr(raw_advisories, "bulletin_date", None),
+            valid_to=getattr(raw_advisories, "valid_to", None),
         )
     registry.register_tool(pfz_def, handle_pfz, override=True)
     registry.set_capability_availability("pfz_search", True)

@@ -77,12 +77,14 @@ export interface Confidence {
 }
 
 export interface EvidenceItem {
+  evidence_id?: string;
   source_name: string;
+  provider_name?: string;
   source_url?: string;
   observed_time?: string;
   valid_from?: string;
   valid_to?: string;
-  retrieved_at: string;
+  retrieved_at?: string;
   geometry?: {
     type: string;
     coordinates: any;
@@ -91,6 +93,10 @@ export interface EvidenceItem {
   metric_value?: any;
   metric_unit?: string;
   quality_flags: string[];
+  coverage?: string;
+  data_mode?: string;
+  lineage_id?: string;
+  resolved_conflicts?: any[];
 }
 
 export interface MapLayer {

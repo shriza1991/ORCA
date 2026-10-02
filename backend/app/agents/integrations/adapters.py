@@ -78,6 +78,10 @@ class ProviderToolAdapter:
                 return "LIVE"
             return dm_upper
 
+        explicit_mode = freshness.get("data_mode") or getattr(payload, "data_mode", None)
+        if explicit_mode:
+            return "MOCK" if is_mock else str(explicit_mode).upper()
+
         if cov_status in ("SYNTHETIC_DATA", "SIMULATED", "DEMO"):
             return "MOCK" if is_mock else "DEMO"
         if cov_status == "SNAPSHOT":
@@ -180,9 +184,23 @@ class ProviderToolAdapter:
                 if f not in quality_flags:
                     quality_flags.append(f)
 
-        # Fallback model handling
-        is_fb_model = bool(freshness.get("fallback_model")) or cov_status == "FALLBACK_MODEL" or "OPEN-METEO" in source_upper
-        if is_fb_model:
+        # Fallback model and general fallback handling
+        is_fb_model = bool(
+            freshness.get("fallback_model")
+            or cov_status == "FALLBACK_MODEL"
+            or "OPEN-METEO" in source_upper
+        )
+        is_fallback_input = bool(
+            is_fb_model
+            or is_geo_fb
+            or "fallback" in source_upper
+            or cov_status in ("FALLBACK", "FALLBACK_MODEL", "GEOGRAPHIC_FALLBACK")
+            or bool(freshness.get("fallback"))
+            or bool(freshness.get("is_fallback"))
+            or "FALLBACK" in quality_flags
+            or "fallback_model" in quality_flags
+        )
+        if is_fallback_input:
             for f in ("fallback_model", "FALLBACK"):
                 if f not in quality_flags:
                     quality_flags.append(f)
@@ -200,14 +218,28 @@ class ProviderToolAdapter:
             or any(f in quality_flags for f in ("SIMULATED", "SNAPSHOT_SOURCE", "deterministic_demo"))
         )
 
+        is_unverified_input = bool(
+            data_mode in ("UNVERIFIED", "UNAVAILABLE")
+            or cov_status in ("UNVERIFIED", "UNAVAILABLE")
+            or "unverified" in source_upper
+            or "UNVERIFIED" in quality_flags
+        )
+
         # Official source classification:
+        # Structured metadata takes precedence. Do NOT infer official verification merely from provider-like source names.
         is_official = (
             bool(freshness.get("is_official"))
             or cov_status in ("OFFICIAL_STATION", "OFFICIAL_BULLETIN")
             or "official_source" in quality_flags
-            or (any(auth in source_upper for auth in ("IMD", "INCOIS")) and not is_fb_model and not is_simulated)
+            or (
+                any(auth in source_upper for auth in ("IMD", "INCOIS"))
+                and not is_fallback_input
+                and not is_simulated
+                and not is_unverified_input
+                and cov_status not in ("FALLBACK", "FALLBACK_MODEL", "UNVERIFIED", "UNAVAILABLE")
+            )
         )
-        if is_official and not is_fb_model and not is_simulated:
+        if is_official and not is_fallback_input and not is_simulated and not is_unverified_input:
             if "official_source" not in quality_flags:
                 quality_flags.append("official_source")
 
@@ -216,7 +248,10 @@ class ProviderToolAdapter:
         if is_cached:
             quality_flags = [f for f in quality_flags if f != "verified_live"]
         # Fallback data must never claim official_source or verified_live
-        if is_fb_model:
+        if is_fallback_input:
+            quality_flags = [f for f in quality_flags if f not in ("official_source", "verified_live")]
+        # Unverified data must never claim official_source or verified_live
+        if is_unverified_input:
             quality_flags = [f for f in quality_flags if f not in ("official_source", "verified_live")]
         # Simulated data must never claim official_source or verified_live
         if is_simulated:
@@ -230,12 +265,13 @@ class ProviderToolAdapter:
             or cov_status in ("OFFICIAL_STATION", "OFFICIAL_BULLETIN", "OFFICIAL")
         )
 
-        # Verified live is preserved/added ONLY when genuinely live, official, uncached, non-fallback, non-simulated
+        # Verified live is preserved/added ONLY when genuinely live, official, uncached, non-fallback, non-simulated, non-unverified
         if (
             data_mode == "LIVE"
             and not is_cached
-            and not is_fb_model
+            and not is_fallback_input
             and not is_simulated
+            and not is_unverified_input
             and is_official
             and has_verified_live_flag
         ):
@@ -264,6 +300,39 @@ class ProviderToolAdapter:
         return data_mode, quality_flags
 
     @staticmethod
+    def _resolve_lineage(payload: Any, data_mode: str, is_mock: bool = False) -> str:
+        """Resolve truthful, non-fabricated lineage identifier."""
+        explicit_lineage = getattr(payload, "lineage_id", None)
+        if explicit_lineage:
+            return str(explicit_lineage)
+
+        if is_mock or data_mode == "MOCK":
+            return "mock_fixture"
+
+        bulletin_id = getattr(payload, "bulletin_id", None)
+        if bulletin_id and bulletin_id not in ("live_api", "default"):
+            return str(bulletin_id)
+
+        snapshot_id = getattr(payload, "snapshot_id", None)
+        if snapshot_id:
+            return str(snapshot_id)
+
+        source_name = (getattr(payload, "source_name", "") or "").lower()
+        if data_mode == "SNAPSHOT" or "snapshot" in source_name:
+            return "snapshot_fixture"
+        if data_mode in ("DEMO", "SYNTHETIC") or "demo" in source_name:
+            return "demo_scenario"
+        if data_mode in ("FALLBACK", "FALLBACK_MODEL") or "fallback" in source_name or "open-meteo" in source_name:
+            return "fallback_model"
+        if data_mode == "CACHED_REAL" or "cached" in source_name:
+            return "cached_official_store"
+        if data_mode == "UNAVAILABLE" or "unavailable" in source_name:
+            return "unavailable_source"
+        if data_mode == "LIVE":
+            return "live_api"
+        return "live_api"
+
+    @staticmethod
     def adapt_marine_conditions(
         provider_fn: Callable[[ToolInvocationContext], MarineConditionsPayload],
         context: ToolInvocationContext,
@@ -284,7 +353,7 @@ class ProviderToolAdapter:
             data_mode_val, quality_flags = ProviderToolAdapter._resolve_provenance(
                 payload, is_mock, getattr(context, "departure_time", None)
             )
-            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            lineage_val = ProviderToolAdapter._resolve_lineage(payload, data_mode_val, is_mock)
             coverage_val = payload.harbor or context.origin_harbor
 
             evidence = [
@@ -378,7 +447,7 @@ class ProviderToolAdapter:
             data_mode_val, quality_flags = ProviderToolAdapter._resolve_provenance(
                 payload, is_mock, getattr(context, "departure_time", None)
             )
-            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            lineage_val = ProviderToolAdapter._resolve_lineage(payload, data_mode_val, is_mock)
             coverage_val = payload.harbor or context.origin_harbor
 
             evidence = [
@@ -454,7 +523,7 @@ class ProviderToolAdapter:
             data_mode_val, quality_flags = ProviderToolAdapter._resolve_provenance(
                 payload, is_mock, getattr(context, "departure_time", None)
             )
-            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            lineage_val = ProviderToolAdapter._resolve_lineage(payload, data_mode_val, is_mock)
             coverage_val = payload.harbor or context.origin_harbor
 
             evidence = [
@@ -527,7 +596,7 @@ class ProviderToolAdapter:
             data_mode_val, quality_flags = ProviderToolAdapter._resolve_provenance(
                 payload, is_mock, getattr(context, "departure_time", None)
             )
-            lineage_val = "mock_fixture" if is_mock else getattr(payload, "bulletin_id", "live_api")
+            lineage_val = ProviderToolAdapter._resolve_lineage(payload, data_mode_val, is_mock)
             coverage_val = payload.harbor or context.origin_harbor
 
             evidence = [
@@ -683,6 +752,9 @@ class ProviderToolAdapter:
         raw_features: List[Dict[str, Any]],
         is_mock: bool = False,
         source_data_mode: Optional[str] = None,
+        observed_time: Optional[str] = None,
+        valid_from: Optional[str] = None,
+        valid_to: Optional[str] = None,
     ) -> ToolResult:
         """Adapts Dev 4 PFZRankingEngine output into normalized ToolResult."""
         try:
@@ -723,6 +795,9 @@ class ProviderToolAdapter:
                 evidence.append(
                     EvidenceItem(
                         source_name=src_name,
+                        observed_time=observed_time,
+                        valid_from=valid_from,
+                        valid_to=valid_to,
                         retrieved_at=datetime.now(timezone.utc).isoformat(),
                         metric_name="pfz_distance_nm",
                         metric_value=top_cand.distance_nautical_miles,

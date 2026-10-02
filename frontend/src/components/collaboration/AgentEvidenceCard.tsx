@@ -32,7 +32,7 @@ export default function AgentEvidenceCard({ sources, agentName }: AgentEvidenceC
       <div className="sources-block-header">
         <span className="sources-title">
           <Database size={13} className="text-accent" />
-          Official Data Feeds & Provenance
+          Data Feeds & Provenance
         </span>
       </div>
 
@@ -44,7 +44,9 @@ export default function AgentEvidenceCard({ sources, agentName }: AgentEvidenceC
           return (
             <div key={idx} className="source-item-row">
               <div className="source-row-top">
-                <span className="source-check-icon">✓</span>
+                <span className={`source-check-icon ${isVerified ? 'verified' : isFallback ? 'fallback' : 'partial'}`} style={{ color: isVerified ? '#16a34a' : isFallback ? '#d97706' : '#64748b' }}>
+                  {isVerified ? '✓' : isFallback ? '⟳' : '!'}
+                </span>
                 <span className="source-feed-name">{src.source_name}</span>
                 <span className={`source-quality-pill ${isVerified ? 'verified' : isFallback ? 'fallback' : 'partial'}`}>
                   {isVerified ? (

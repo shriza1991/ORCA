@@ -9,6 +9,7 @@ import EvidenceDrawer from "./components/evidence/EvidenceDrawer";
 import CallModal from "./components/call/CallModal";
 import { useChat } from "./hooks/useChat";
 import { MessageSquare, Map as MapIcon } from "lucide-react";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 export type PortalMode =
   | "selection"
@@ -126,13 +127,19 @@ export default function App() {
           onViewMap={() => setMobileView("map")}
         />
       ) : portal === "authority" ? (
-        <AuthorityPage
-          chat={chat}
-          theme={theme}
-          mobileView={mobileView}
-          onOpenEvidence={() => setIsDrawerOpen(true)}
-          onBack={handleBack}
-        />
+        <ErrorBoundary
+          fallbackTitle="Authority Command Deck Unavailable"
+          fallbackMessage="An unexpected error occurred in the Authority Command Deck. You can retry or return to the workspace selection."
+          resetButtonText="Retry Authority Deck"
+        >
+          <AuthorityPage
+            chat={chat}
+            theme={theme}
+            mobileView={mobileView}
+            onOpenEvidence={() => setIsDrawerOpen(true)}
+            onBack={handleBack}
+          />
+        </ErrorBoundary>
       ) : portal === "researcher" ? (
         <ResearcherPage />
       ) : (

@@ -1919,11 +1919,12 @@ Date: 2026-09-26
 
 ## D054 - Fixture Forecast Horizon and Telemetry Field Mappings
 Status: ACCEPTED
-Decision: 
+Decision:
 1. Extended the deterministically generated synthetic fixture horizon from 24h to 72h (generator.py).
 2. Anchored the deterministic REFERENCE_TIME in generator.py to the current evaluation day (2026-09-26) so mock data encompasses active test trips.
 3. Modified IncoisOSFNormalizer to derive a 72-hour valid window and check wave_height_m alongside native INCOIS keys to maintain consistency across DB records and direct JSON file loading.
-Reason: Offline trip evaluations for typical durations (e.g., 12 hours) were triggering TRIP_WINDOW_EXCEEDS_FORECAST alerts because the fallback snapshot data derived a 6-hour alid_to window. Additionally, valid records were being marked as DEGRADED_DATA because the database model mapped wave height to wave_height_m while the normalizer only read swh or significant_wave_height_m.
+Reason: Offline trip evaluations for typical durations (e.g., 12 hours) were triggering TRIP_WINDOW_EXCEEDS_FORECAST alerts because the fallback snapshot data derived a 6-hour
+alid_to window. Additionally, valid records were being marked as DEGRADED_DATA because the database model mapped wave height to wave_height_m while the normalizer only read swh or significant_wave_height_m.
 Impact: Test trips of 12+ hours now successfully pass the snapshot staleness evaluation and return a deterministic GO decision without degraded data warnings.
 Owner: ORCA engineering
 Date: 2026-09-27
@@ -2224,7 +2225,7 @@ Reason: Current screens mix data modes and What-If baselines, and the Fisher ent
 Safety: No frontend safety verdicts, no suppression of genuinely unavailable evidence, no change to vessel safety limits, no claim that synthetic data is live.
 
 
-## D069 ? Vite mission continuity and immutable comparison inputs
+## D069 — Vite mission continuity and immutable comparison inputs
 Status: ACCEPTED
 Date: 2026-10-02
 Decision: For the explicitly requested roadmap implementation, target the existing Vite frontend only; do not modify Next.js. This task-specific scope supersedes client-parity work in D064. Preserve all domain engines and existing contracts with additive evidence-bundle IDs, retained assessment replay, and explicit refresh versus parameter comparison. Reuse AssessmentService for recomputation and LangGraph for intent/tool coordination. Retain up to 256 evidence bundles and assessments per process under a lock; lost/evicted IDs require explicit reassessment, never silent refetch. This is not durable multi-worker persistence. Route rankings expose outbound assumptions and cannot authorize departure against a NO_GO/UNKNOWN mission.
@@ -2237,8 +2238,62 @@ Safety: Python remains the decision authority. Preserve synthetic provenance, va
 Text and call entry points share retained-context validation. Content identity excludes capture-clock variation; unchanged refresh does not create fictitious changed evidence. The existing complete DEMO hazard corpus can support a full mission window even when one warning ends mid-trip; warning applicability retains its actual interval. PFZ expiry removes unsupported targets instead of constructing a substitute corridor. Browser comparison controls are withheld while a replacement assessment loads. Institutional handoff is read-only inspection of the actual saved device record, not fleet integration. Native mobile, durable multi-worker replay, new analytics/prediction models and provider activation remain deferred.
 
 
-## D070 ? Legacy regression expectations follow source honesty
+## D073 - Legacy regression expectations follow source honesty
 Status: ACCEPTED
 Date: 2026-10-03
 Decision: Align three historical agent assertions with the previously accepted D068/D069 epistemic policy. Simulated contract evidence requires MEDIUM confidence and an explicit non-live/non-clearance explanation. Replace the obsolete M1-specific provenance phrase with the actual canonical demonstration disclaimer. Retain every intent, execution, observation, threshold, decision, PFZ and route assertion, and add confidence/provenance checks.
 Reason: All three failures reproduced on the unchanged original commit. Raising synthetic confidence or restoring obsolete presentation wording would undermine current source-honesty behavior. These changes strengthen the regression contract; they do not change the risk engine or remove scenario coverage.
+
+## D070 — Resolution of Three Remaining Integration Inconsistencies: Informational PFZ Responses, Authentic Source Verification for Safety Confidence, and Mission-Consistent Map Time Controls
+Status: ACCEPTED
+Date: 2026-10-02
+Decision:
+1. Grounded Informational PFZ Responses:
+   - In `backend/app/services/mission_conversation.py`, mission chat binding strictly enforces that PFZ queries produce `RecommendationStatus.INFORMATIONAL` for both `response.recommendation.status` and `response.decision_object.decision`.
+   - Candidate information (distance, bearing, selection reason) is grounded directly in retained `selected.pfz_candidates`.
+   - The separate voyage assessment baseline (`GO`, `CAUTION`, `NO_GO`) is preserved intact in `response.mission_assessment`.
+   - The response text provides an informational advisory notice and strictly omits passage or departure clearance actions.
+2. Authentic Source Verification for Safety Confidence:
+   - In `backend/app/agents/integrations/adapters.py`, structured `is_fallback_input` and `is_unverified_input` strip `official_source` and `verified_live` from provenance metadata, preventing provider-like names (e.g. IMD, INCOIS) in fallback/unverified sources from manufacturing official status.
+   - In `backend/app/domain/risk_engine.py`, `is_active_verified_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` require structured provider verification (`_is_prov_verified_official()`: `official_source`, `verified_live`, absence of fallback/unverified flags, non-simulated, and operational `LIVE` mode).
+   - Valid verified official severe hazards retain justified `NO_GO` with `HIGH` confidence even alongside demo auxiliary telemetry.
+   - Unverified/fallback severe hazards preserve restrictive safety bounds (`NO_GO` / `UNKNOWN`), but receive honest `MEDIUM` or `LOW` confidence and honest provenance reasons (e.g., "fallback model forecast observations" or "unverified hazard advisory"), never claiming "verified official observations".
+3. Mission-Consistent Map Time Controls:
+   - In `frontend/src/pages/FisherPage.tsx`, map time slider adjustments are treated as forecast browsing and counterfactual proposals without mutating the active mission timing in `chat.missionContext`.
+   - Offsets are calculated strictly relative to the retained mission departure time (never `Date.now()`).
+   - Original voyage duration is preserved exactly (`retParsed - depParsed`), eliminating 12-hour overwrite and clock drift across repeated slider adjustments.
+   - Proposals are evaluated via `/api/v1/trip-assessments/simulate` and applied only upon explicit user action ("Apply Proposal to Mission"), synchronizing dashboard, chat context, and map.
+Reason:
+Eliminate integration discrepancies from commit 29cbf05 across PFZ recommendation semantics, safety confidence predicates, and map temporal controls without altering vessel thresholds or relaxing deterministic safety bounds.
+Impact:
+- 52/52 integration & regression tests pass across `test_integration_inconsistencies.py`, `test_task2_hazard_validity.py`, and `test_mission_replay.py`.
+- 297/297 frontend tests pass in Vitest including new `fisher-time-controls.test.ts`.
+- Clean Vite production build (`tsc && vite build`).
+
+## D072: Task 3 — Honest Source Labels, Evidence Freshness, and Provenance Architecture
+
+Date: 2026-10-02
+Decision:
+1. Strict Verification Invariants for Safety Predicates:
+   - In `backend/app/domain/risk_engine.py`, `_is_prov_verified_official()` strictly requires both authentic official authority (`has_official`) AND structured live verification (`has_verified_live`). It rejects unverified, fallback, degraded, unavailable, simulated, or demo inputs regardless of provider-like source names or application settings.
+   - Defined `is_verified_live_hazard` and aligned `is_active_verified_hazard`, `is_verified_severe_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` so unverified/fallback severe hazards can never acquire fabricated verified official status or HIGH confidence.
+   - Preserved justified NO_GO with HIGH confidence when authentic verified official severe hazard bulletins are present.
+2. Distinct Source Facts and Provenance Pipeline:
+   - In `backend/app/agents/integrations/adapters.py`, added `_resolve_lineage()` returning truthful lineage identifiers: `snapshot_fixture` for snapshot payloads, `demo_scenario` for demo/synthetic data, `fallback_model` for fallback inputs, and actual `bulletin_id` / `snapshot_id` where available. Eliminated default fallback to `live_api`.
+   - In `backend/app/connectors/snapshot.py`, updated marine fixture labeling to `snapshot fixture` with `data_mode="SNAPSHOT"` and `snapshot_id="snapshot_fixture"`.
+   - In `backend/app/connectors/registration.py` and `adapters.py`, PFZ calculations preserve input bulletin date and validity interval without converting execution time into observation time. When direct sensor timestamps are absent, `observed_time` remains None.
+   - In `backend/app/services/assessment_service.py`, `EvidenceItem` preserves `observed_time`, `valid_from`, `valid_to`, `retrieved_at`, `data_mode`, and `lineage_id`.
+   - In `backend/app/domain/agent_collaboration.py`, `derive_collaboration()` derives source providers, timestamps, and quality ratings directly from underlying `EvidenceItem` instances without hardcoding INCOIS or VERIFIED.
+   - In `backend/app/services/marinewatch_service.py`, offline/harmonic fallback calculations are truthfully labeled `"data_mode": "PHYSICAL_FALLBACK_MODEL"` and attributed to `"ORCA Physical Fallback Model"`, never claiming INCOIS or CACHED_REAL_FALLBACK.
+3. Evidence-Driven Vite Source Presentation:
+   - In `frontend/src/components/evidence/EvidenceCard.tsx`, replaced naive `retrieved_at` freshness calculations with evidence-driven badges: "Live provider data", "Cached official bulletin", "Historical/expired data", "Demo scenario", "Model fallback", "Calculated from snapshot inputs", "Source unavailable", and "Coverage fallback".
+   - Rendered observation time separately from retrieval time. Displayed explicit note for calculations without direct sensor timestamps.
+   - In `frontend/src/components/collaboration/AgentEvidenceCard.tsx`, updated header to "Data Feeds & Provenance" and replaced unconditional checkmarks with status-appropriate indicators (`✓`, `⟳`, `!`).
+   - In `frontend/src/types/contracts.ts`, added missing `data_mode`, `lineage_id`, `provider_name`, `coverage`, and `resolved_conflicts` fields to `EvidenceItem`.
+Reason:
+Enforce epistemic data honesty across every layer of ORCA's Vite frontend and backend: prevent unearned verification claims, separate observation from retrieval, preserve snapshot calculation lineage, and honestly label fallback models.
+Impact:
+- 10/10 Task 3 regression tests pass in `tests/integration/test_task3_provenance_freshness.py`.
+- 52/52 integration & regression tests pass across `test_integration_inconsistencies.py`, `test_task2_hazard_validity.py`, and `test_mission_replay.py`.
+- 297/297 frontend tests pass in Vitest.
+- Clean Vite production build (`tsc && vite build`).

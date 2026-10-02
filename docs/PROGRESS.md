@@ -9,7 +9,7 @@
 ## Current Release & Workstream State
 
 
-### 2026-10-03 ? P0/P1 mission coherence and focused institutional handoff (D069)
+### 2026-10-03 - P0/P1 mission coherence and focused institutional handoff (D069)
 
 - **Implemented in Vite/FastAPI; Next.js untouched.** Existing engines and canonical models retained. No new dependency, frontend risk model, native client or live-provider claim.
 - **P0:** immutable normalized evidence identity and bounded assessment replay; server comparison against the displayed assessment; mission-relative conversational edits; exact returned-plan Apply with no refetch; structured cached/synthetic/unavailable provenance; derived explanation versus executed service events; actual corridor timelines, rejection reasons and backend support flags; frozen DEMO clock. Missing/evicted identities require explicit reassessment.
@@ -18,14 +18,71 @@
 - **Final corrections:** gate stale comparison controls while a new assessment loads; apply canonical context to call/text turns; preserve active warning restrictions over any overlapping mission segment; avoid false expiry when the complete DEMO bulletin corpus covers the trip; retain/filter PFZ validity and omit invented corridors when a target is unavailable; revoke route support for expired browser cache.
 - **Verification:**
   - Broad backend command: `python -m pytest tests/domain tests/api tests/agent_eval tests/integration/test_task1_snapshot_pipeline.py tests/integration/test_task2_hazard_validity.py tests/integration/test_fisher_demo_scenario.py tests/integration/test_mission_replay.py -q` with process-local `DEBUG=false` and explicit permitted CORS origins: **663 passed, 3 failed**. This run preceded the final focused corpus/provenance/PFZ/voice refinements.
-  - Those three failures were separately reproduced on original commit `786c495`: `test_m1_safety_vertical_slice` expects an older M1 provenance phrase; `test_mock_dev4_tools_execution` and `test_m2_contract_mock_mode_backward_compatibility` expect HIGH confidence for mock evidence, whereas current source honesty gives MEDIUM. D070 strengthens these assertions to require explicit non-live disclaimers and MEDIUM simulated confidence while retaining execution/numeric checks. The rerun of `tests/agent_eval/test_m1_graph.py tests/agent_eval/test_m2_integration.py tests/agent_eval/test_m3_llm.py tests/integration/test_mission_replay.py` passed: **69 passed**. Simulated confidence was not promoted. The entire broad command was not rerun after these final refinements.
+  - Those three failures were separately reproduced on original commit `786c495`: `test_m1_safety_vertical_slice` expects an older M1 provenance phrase; `test_mock_dev4_tools_execution` and `test_m2_contract_mock_mode_backward_compatibility` expect HIGH confidence for mock evidence, whereas current source honesty gives MEDIUM. D073 strengthens these assertions to require explicit non-live disclaimers and MEDIUM simulated confidence while retaining execution/numeric checks. The rerun of `tests/agent_eval/test_m1_graph.py tests/agent_eval/test_m2_integration.py tests/agent_eval/test_m3_llm.py tests/integration/test_mission_replay.py` passed: **69 passed**. Simulated confidence was not promoted. The entire broad command was not rerun after these final refinements.
   - Latest mission/demo/voice command: `python -m pytest tests/integration/test_mission_replay.py tests/integration/test_fisher_demo_scenario.py tests/integration/test_voice_language_switching.py tests/integration/test_voice_endpoint.py tests/test_voice_chat.py -q`: **33 passed, 4 skipped**. External speech/provider tests remain skipped; adapter continuity uses controlled STT/TTS stubs with the real agent/assessment pipeline.
   - Safety/corpus/trajectory checks during refinement: **51 passed**. Final `python -m pytest tests/integration/test_task1_snapshot_pipeline.py tests/integration/test_task2_hazard_validity.py tests/domain tests/api/test_assessments.py -q`: **157 passed**, one LangGraph deprecation warning.
   - Vite: `npm.cmd test` **283 passed (22 files)**; `npm.cmd run typecheck` passed; `npm.cmd run build` passed. Existing i18next test warning, shared static/dynamic i18n import warning and approximately 2.83 MB main bundle warning remain.
   - Actual Chromium at desktop 1440 px and Fisher 390 px: guided plan, same-bundle server simulation, exact times/duration on Apply, no automatic assessment refetch, pinned Why follow-up, map restriction, explicit refresh and identical Authority/Researcher record IDs passed; no page errors. Separate disconnected-API cache check: a seven-hour-old GO record displays UNKNOWN and revokes corridor support; 390 px has no horizontal overflow.
   - `git diff --check` clean; `git diff --name-only 786c495 -- nextjs` empty. No deployed/live upstream validation performed.
+- **Integration of concurrent remote work:** preserved commits `8832c61`, `835cee9`, and `8766084`; combined overlapping-warning semantics with authentic-source verification. The new map proposal control rejects failed/pending evaluations and clears proposals when the baseline changes. Merged Vite verification: **297 passed (24 files)**, typecheck passed, production build passed; focused map-time regression **3 passed**. Build warning remains approximately 2.85 MB. Combined backend command: `python -m pytest tests/integration/test_integration_inconsistencies.py tests/integration/test_task3_provenance_freshness.py tests/integration/test_task2_hazard_validity.py tests/integration/test_mission_replay.py tests/agent_eval/test_m1_graph.py tests/agent_eval/test_m2_integration.py tests/agent_eval/test_m3_llm.py -q`: **116 passed**, one LangGraph deprecation warning.
 - **Practical limits:** 256 evidence bundles/assessments per process, not durable multi-worker replay; origin forecasts along outbound corridors, not a spatial grid or return-route navigation clearance; device-local history; session-only update monitoring; physical microphone recognition and external TTS/STT quality not field-verified; production auth/provider activation deferred.
 - **Next tasks:** add durable shared evidence storage before multi-worker deployment, and verify one bounded authentic provider path before operational/live claims. Rehearsal/launch instructions: `docs/ORCA_MISSION_DEMO_GUIDE.md`.
+
+### 2026-10-02 Task 3: Honest Source Labels, Evidence Freshness, and Provenance Presentation (§D072)
+
+- **DIAGNOSED DEFECTS & CORRECTIONS**:
+  1. *Closed Safety Verification Defect*:
+     - In `backend/app/domain/risk_engine.py`, `_is_prov_verified_official()` strictly requires both authentic authority origin (`has_official`) AND verified live status (`has_verified_live`).
+     - Refactored `is_verified_live_hazard`, `is_active_verified_hazard`, `is_verified_severe_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` so unverified/fallback hazards can never acquire fabricated official verification or `HIGH` confidence.
+     - Preserved justified `NO_GO` with `HIGH` confidence when valid verified official severe hazard warnings are active.
+  2. *Truthful Lineage & Fallback Attribution*:
+     - In `backend/app/agents/integrations/adapters.py`, implemented `_resolve_lineage()` producing `snapshot_fixture`, `demo_scenario`, `fallback_model`, or `cached_official_store` instead of defaulting to `live_api`.
+     - In `backend/app/connectors/snapshot.py`, updated marine fixture labeling to snapshot fixture with explicit `data_mode="SNAPSHOT"`.
+     - In `backend/app/services/marinewatch_service.py`, offline/harmonic fallback calculations are truthfully labeled `"data_mode": "PHYSICAL_FALLBACK_MODEL"` and attributed to `"ORCA Physical Fallback Model"`.
+     - In `backend/app/connectors/registration.py` and `adapters.py`, PFZ calculations preserve input bulletin date and validity interval without turning execution time into observation time.
+  3. *Evidence-Driven Vite Source Presentation*:
+     - In `frontend/src/components/evidence/EvidenceCard.tsx`, replaced naive `retrieved_at` freshness calculation with evidence-driven badges: "Live provider data", "Cached official bulletin", "Historical/expired data", "Demo scenario", "Model fallback", "Calculated from snapshot inputs", "Source unavailable", and "Coverage fallback".
+     - Displayed observation time separately from retrieval time. Displayed explicit note for calculations without direct sensor timestamps.
+     - In `frontend/src/components/collaboration/AgentEvidenceCard.tsx`, updated header to "Data Feeds & Provenance" and replaced unconditional checkmarks with status-appropriate indicators (`✓`, `⟳`, `!`).
+     - In `frontend/src/types/contracts.ts`, added missing `data_mode`, `lineage_id`, `provider_name`, `coverage`, and `resolved_conflicts` fields to `EvidenceItem`.
+- **TEST VERIFICATION & INTEGRITY**:
+  - `tests/integration/test_task3_provenance_freshness.py`: **10/10 passed** in 4.21s (A/B/C safety predicates, snapshot lineage, cached official, Open-Meteo fallback, PFZ input provenance, expired sources, Marinewatch fallback).
+  - `tests/integration/test_integration_inconsistencies.py`: **6/6 passed**.
+  - `tests/integration/test_task2_hazard_validity.py`: **31/31 passed**.
+  - `tests/integration/test_mission_replay.py`: **15/15 passed**.
+  - Total backend pytest suite: **62/62 passed**.
+  - Frontend Vitest suite: **24 test files, 297/297 passed** in 110.60s.
+  - Frontend production build (`tsc && vite build`): **Passed cleanly** in 4m 17s.
+- **NEXT RECOMMENDED TASK**:
+  - Submit Task 3 changes for user review.
+
+### 2026-10-02 Resolution of Three Remaining Integration Inconsistencies (§D070)
+
+- **DIAGNOSED INCONSISTENCIES & RESOLUTIONS**:
+  1. *Grounded Informational PFZ Responses*:
+     - In `backend/app/services/mission_conversation.py`, fixed `bind_mission_response()` so that when `intent == "PFZ"`, `response.recommendation.status = RecommendationStatus.INFORMATIONAL` and `response.decision_object.decision = RecommendationStatus.INFORMATIONAL`, preventing retained voyage decisions (`GO`/`CAUTION`/`NO_GO`) from masquerading as departure clearance.
+     - Candidate details are grounded directly in `selected.pfz_candidates` (ID, distance in nautical miles, bearing in degrees).
+     - The original voyage baseline decision is preserved separately in `response.mission_assessment`.
+     - `response.answer` includes an explicit informational advisory notice and strictly omits voyage clearance directives.
+  2. *Authentic Source Verification for Safety Confidence*:
+     - In `backend/app/agents/integrations/adapters.py`, hardened `_resolve_provenance()` so that `is_fallback_input` or `is_unverified_input` explicitly strips `official_source` and `verified_live`, ensuring provider-like names in fallback sources cannot fabricate official status.
+     - In `backend/app/domain/risk_engine.py`, predicates `is_active_verified_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` verify authentic provenance via helper `_is_prov_verified_official()` (`official_source`, `verified_live`, not simulated/fallback, and operational `LIVE` mode).
+     - Valid verified official severe hazard plus demo auxiliary data retains justified `NO_GO` with `HIGH` confidence.
+     - Unverified/fallback severe hazards retain restrictive `NO_GO` or `UNKNOWN` bounds, but receive honest `MEDIUM` or `LOW` confidence and honest explanation ("fallback model forecast observations" or "unverified hazard advisory"), never acquiring "verified official observations".
+  3. *Mission-Consistent Map Time Controls*:
+     - In `frontend/src/pages/FisherPage.tsx`, map time slider adjustments are treated as forecast browsing and counterfactual proposals without mutating the active mission timing in `chat.missionContext`.
+     - Offsets are calculated relative to the retained baseline mission departure time (never `Date.now()`).
+     - Original voyage duration is preserved exactly (`retParsed - depParsed`), preventing overwrite with 12 hours.
+     - Proposals are evaluated via `/api/v1/trip-assessments/simulate` and applied only upon explicit user action ("Apply Proposal to Mission"), maintaining alignment across dashboard, chat context, and map.
+- **TEST VERIFICATION & INTEGRITY**:
+  - `tests/integration/test_integration_inconsistencies.py`: **6/6 passed** (PFZ informational with GO/NO_GO baselines, authentic source verification, fallback marine/wind thresholds).
+  - `tests/integration/test_task2_hazard_validity.py`: **31/31 passed**.
+  - `tests/integration/test_mission_replay.py`: **15/15 passed**.
+  - Total backend pytest suite: **52/52 passed** in 74.88s.
+  - Frontend Vitest suite: **24 test files, 297/297 passed** in 59.06s.
+  - Frontend production build (`tsc && vite build`): **Passed cleanly** in 2m 58s.
+- **NEXT RECOMMENDED TASK**:
+  - Await user review of integration inconsistency resolutions and walkthrough.
 
 ### 2026-10-01 Task 2 Final Focused Correction: Snapshot Classification Gap, Epistemic Honesty, and Chat Endpoint Regressions (§D068)
 

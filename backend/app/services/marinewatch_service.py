@@ -884,7 +884,7 @@ class IndiaMarineWatchService:
             "visibility_nm": round(visibility_nm, 1),
             "observed_at": target_dt.isoformat(),
             "valid_until": (target_dt + timedelta(hours=1)).isoformat(),
-            "data_mode": "LIVE" if is_live else "CACHED_REAL_FALLBACK",
+            "data_mode": "LIVE" if is_live else "PHYSICAL_FALLBACK_MODEL",
         }
 
         # 4. Active hazards affecting this coordinate
@@ -909,10 +909,10 @@ class IndiaMarineWatchService:
             },
             "sources": [
                 {
-                    "provider": "INCOIS",
-                    "dataset": "Ocean State Forecast (OSF)",
-                    "issued_at": target_dt.isoformat(),
-                    "license": "Government Open Data / Fair Use Attribution",
+                    "provider": "Open-Meteo / INCOIS" if is_live else "ORCA Physical Fallback Model",
+                    "dataset": "Ocean State Forecast (OSF)" if is_live else "Harmonic Tidal & Diurnal Physical Estimation",
+                    "issued_at": target_dt.isoformat() if is_live else None,
+                    "license": "Government Open Data / Fair Use Attribution" if is_live else "Internal Physical Fallback Model (Not Live INCOIS Observation)",
                 },
                 {
                     "provider": "INCOIS",
@@ -1026,7 +1026,11 @@ class IndiaMarineWatchService:
             "restricted_violations": restricted_violations,
             "segments_count": len(segments),
             "segments": segments,
-            "sources": ["INCOIS Ocean State Forecast", "GEBCO 2024", "MoEFCC Marine Protected Areas"],
+            "sources": [
+                "Open-Meteo / INCOIS OSF" if any(s.get("data_mode") == "LIVE" for s in segments) else "ORCA Physical Fallback Model",
+                "GEBCO 2024",
+                "MoEFCC Marine Protected Areas",
+            ],
         }
 
     # -----------------------------------------------------------------------

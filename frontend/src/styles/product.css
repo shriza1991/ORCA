@@ -147,7 +147,8 @@ button:disabled { opacity:.6; cursor:wait!important; }
 .monitor-toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 .mission-context-bar { padding: 12px; border: 1px solid #dbe5e9; border-radius: 10px; margin-bottom: 12px; }
 .mission-context-bar label { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.shared-mission-record { margin: 12px; flex-basis: 100%; max-width: calc(100% - 24px); }
+.shared-mission-record { margin: 6px 14px; flex: 0 0 auto; max-width: calc(100% - 28px); }
+.shared-mission-record[open] { max-height: 240px; overflow-y: auto; }
 .shared-mission-record select { max-width: 100%; }
 .mission-summary .muted, .simulation-result .muted { overflow-wrap: anywhere; }
 @media (max-width: 700px) { .mission-context-bar label { flex-direction: column; align-items: stretch; } .route-choice button { min-height: 44px; } .simulation-result button { width: 100%; margin-top: 8px; } }
