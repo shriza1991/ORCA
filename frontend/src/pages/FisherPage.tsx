@@ -22,7 +22,8 @@ import { useGeolocation } from "../hooks/useGeolocation";
 import { useGeofence } from "../hooks/useGeofence";
 import LocationWarningsOverlay from "../components/map/LocationWarningsOverlay";
 import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRound, ArrowUpRight, Bookmark, Mic } from "lucide-react";
-import { type MissionContext } from "../types/mission";
+import { type MissionContext, type DecisionDeltaContract } from "../types/mission";
+import { assessmentRequest } from "../components/mission/AssessmentSimulator";
 
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
@@ -56,15 +57,107 @@ export default function FisherPage({
     import.meta.env.VITE_DATA_MODE || "DEMO"
   ).toUpperCase();
 
+  const [mapProposal, setMapProposal] = useState<{
+    proposedAssessment: TripAssessmentResponse;
+    delta?: DecisionDeltaContract;
+    hours: number;
+    proposedDeparture: string;
+    proposedReturn?: string;
+    loading?: boolean;
+    error?: string;
+  } | null>(null);
+
+  const proposalAbortRef = useRef<AbortController | null>(null);
+
   const handleTimeOffsetChange = (hours: number) => {
     setMapTimeOffset(hours);
-    const departureDate = new Date(Date.now() + hours * 60 * 60 * 1000);
-    const returnDate = new Date(departureDate.getTime() + 12 * 60 * 60 * 1000);
-    chat.setMissionContext({
-      ...chat.missionContext,
-      departure_time: departureDate.toISOString(),
-      return_time: returnDate.toISOString(),
+    proposalAbortRef.current?.abort();
+
+    if (hours === 0) {
+      setMapProposal(null);
+      return;
+    }
+
+    const baseDeparture = chat.missionContext.departure_time || assessment?.trip_context.departure_time;
+    if (!baseDeparture || !assessment) {
+      return;
+    }
+
+    const depParsed = Date.parse(baseDeparture);
+    if (isNaN(depParsed)) return;
+
+    // Calculate proposed departure strictly from retained mission departure (not current clock)
+    const proposedDeparture = new Date(depParsed + hours * 3600000).toISOString();
+
+    // Strictly preserve the original trip duration
+    const baseReturn = chat.missionContext.return_time || assessment.trip_context.return_time;
+    let proposedReturn: string | undefined;
+    if (baseReturn) {
+      const retParsed = Date.parse(baseReturn);
+      if (!isNaN(retParsed)) {
+        const duration = retParsed - depParsed;
+        proposedReturn = new Date(depParsed + hours * 3600000 + duration).toISOString();
+      }
+    }
+
+    setMapProposal({
+      proposedAssessment: assessment,
+      hours,
+      proposedDeparture,
+      proposedReturn,
+      loading: true,
     });
+
+    const abort = new AbortController();
+    proposalAbortRef.current = abort;
+
+    const API = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
+    const baseline = assessmentRequest(assessment);
+    const simulated = {
+      ...baseline,
+      mission_state: undefined,
+      departure_time: proposedDeparture,
+      return_time: proposedReturn,
+      parent_assessment_id: assessment.assessment_id,
+    };
+
+    fetch(`${API}/trip-assessments/simulate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        baseline,
+        simulated,
+        baseline_assessment_id: assessment.assessment_id,
+      }),
+      signal: abort.signal,
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Simulation failed');
+        return res.json();
+      })
+      .then(data => {
+        if (!abort.signal.aborted) {
+          setMapProposal({
+            proposedAssessment: data.simulated,
+            delta: data.delta,
+            hours,
+            proposedDeparture,
+            proposedReturn,
+            loading: false,
+          });
+        }
+      })
+      .catch(err => {
+        if (!abort.signal.aborted) {
+          setMapProposal(prev => prev ? { ...prev, loading: false, error: err.message } : null);
+        }
+      });
+  };
+
+  const handleApplyMapProposal = (proposed: TripAssessmentResponse) => {
+    applyAssessment(proposed);
+    setMapTimeOffset(0);
+    setMapProposal(null);
   };
 
   const {
@@ -310,7 +403,39 @@ export default function FisherPage({
         {sidebarTab === 'profile' && <section className="product-section profile-form"><h3>Profile on this device</h3><p className="muted">Your name is a local preference. This prototype has no account sign-in.</p><label>Your name<input value={name} onChange={e => { setName(e.target.value); try { localStorage.setItem('orca.name', e.target.value); } catch {} }} placeholder="Add your name" /></label><label>Vessel<select value={chat.missionContext.craft_profile} onChange={e => chat.setMissionContext({ ...chat.missionContext, craft_profile: e.target.value as any })}><option value="traditional_non_motorized">Traditional craft</option><option value="motorized_boat">Motorized boat</option><option value="mechanized_trawler">Mechanized trawler</option></select></label><label>Size<select value={chat.missionContext.vessel_size} onChange={e => chat.setMissionContext({ ...chat.missionContext, vessel_size: e.target.value as any })}>{['small', 'medium', 'large'].map(size => <option key={size}>{size}</option>)}</select></label><button onClick={onStartCall}><Mic size={18} /> Talk to ORCA</button><h3>Saved fishing areas</h3>{savedZones.length ? savedZones.map(id => <div className="zone-row" key={id}><span>{id}</span><button onClick={() => saveZone(id)}>Remove</button></div>) : <p className="muted">Save an area from Home to keep it here.</p>}</section>}
         {sidebarTab === 'map' && <div className="map-context-strip"><strong>{originHarbor}</strong><span>{zones.length} fishing areas ? {assessment?.route_candidates.length || 0} routes</span><button onClick={() => setSidebarTab('decision')}>View decision</button></div>}
       </div>
-      <section className="fisher-map-pane" aria-label="Marine mission map"><LocationWarningsOverlay status={geoStatus} alerts={geofenceAlerts} language={chat.language} /><MapView layers={effectiveLayers} theme={theme} center={harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={assessment} canonicalConditions={assessment?.conditions} canonicalDecision={canonicalMapDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
+      <section className="fisher-map-pane" aria-label="Marine mission map">
+        <LocationWarningsOverlay status={geoStatus} alerts={geofenceAlerts} language={chat.language} />
+        {mapTimeOffset > 0 && mapProposal && (
+          <div className="product-notice map-proposal-strip" style={{ margin: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+            <div>
+              <strong>Forecast Timeline &amp; Departure Proposal (+{mapTimeOffset}h)</strong>
+              <div style={{ fontSize: '13px', marginTop: '2px' }}>
+                Proposed: {new Date(mapProposal.proposedDeparture).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                {mapProposal.proposedReturn && (
+                  <span> · Duration: {((Date.parse(mapProposal.proposedReturn) - Date.parse(mapProposal.proposedDeparture)) / 3600000).toFixed(1)}h</span>
+                )}
+                {mapProposal.loading ? (
+                  <span> · <em>Evaluating proposal…</em></span>
+                ) : mapProposal.delta ? (
+                  <span> · Result: <strong>{assessmentStatus(mapProposal.proposedAssessment)}</strong> ({mapProposal.delta.summary})</span>
+                ) : null}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="product-primary"
+                disabled={mapProposal.loading}
+                onClick={() => handleApplyMapProposal(mapProposal.proposedAssessment)}
+              >
+                Apply Proposal to Mission
+              </button>
+              <button onClick={() => handleTimeOffsetChange(0)}>
+                Reset to Now
+              </button>
+            </div>
+          </div>
+        )}
+        <MapView layers={effectiveLayers} theme={theme} center={harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={assessment} canonicalConditions={assessment?.conditions} canonicalDecision={canonicalMapDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
     </div>
   </main>;
 }

@@ -2224,9 +2224,36 @@ Reason: Current screens mix data modes and What-If baselines, and the Fisher ent
 Safety: No frontend safety verdicts, no suppression of genuinely unavailable evidence, no change to vessel safety limits, no claim that synthetic data is live.
 
 
-## D069 ? Vite mission continuity and immutable comparison inputs
+## D069 — Vite mission continuity and immutable comparison inputs
 Status: ACCEPTED
 Date: 2026-10-02
 Decision: For the explicitly requested roadmap implementation, target the existing Vite frontend only; do not modify Next.js. This task-specific scope supersedes client-parity work in D064. Preserve all domain engines and existing contracts with additive evidence-bundle IDs, retained assessment replay, and explicit refresh versus parameter comparison. Reuse AssessmentService for recomputation and LangGraph for intent/tool coordination. Retain up to 256 evidence bundles and assessments per process under a lock; lost/evicted IDs require explicit reassessment, never silent refetch. This is not durable multi-worker persistence. Route rankings expose outbound assumptions and cannot authorize departure against a NO_GO/UNKNOWN mission.
 Reason: Existing comparison independently retrieved both sides and chat context could differ from the Fisher baseline. Same-evidence comparisons need immutable normalized inputs and honest execution/provenance presentation. User expressly prohibits Next.js changes.
 Safety: Python remains the decision authority. Preserve synthetic provenance, validity and hard-stop precedence; distinguish derived domain explanation from executed agent traces.
+
+## D070 — Resolution of Three Remaining Integration Inconsistencies: Informational PFZ Responses, Authentic Source Verification for Safety Confidence, and Mission-Consistent Map Time Controls
+Status: ACCEPTED
+Date: 2026-10-02
+Decision:
+1. Grounded Informational PFZ Responses:
+   - In `backend/app/services/mission_conversation.py`, mission chat binding strictly enforces that PFZ queries produce `RecommendationStatus.INFORMATIONAL` for both `response.recommendation.status` and `response.decision_object.decision`.
+   - Candidate information (distance, bearing, selection reason) is grounded directly in retained `selected.pfz_candidates`.
+   - The separate voyage assessment baseline (`GO`, `CAUTION`, `NO_GO`) is preserved intact in `response.mission_assessment`.
+   - The response text provides an informational advisory notice and strictly omits passage or departure clearance actions.
+2. Authentic Source Verification for Safety Confidence:
+   - In `backend/app/agents/integrations/adapters.py`, structured `is_fallback_input` and `is_unverified_input` strip `official_source` and `verified_live` from provenance metadata, preventing provider-like names (e.g. IMD, INCOIS) in fallback/unverified sources from manufacturing official status.
+   - In `backend/app/domain/risk_engine.py`, `is_active_verified_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` require structured provider verification (`_is_prov_verified_official()`: `official_source`, `verified_live`, absence of fallback/unverified flags, non-simulated, and operational `LIVE` mode).
+   - Valid verified official severe hazards retain justified `NO_GO` with `HIGH` confidence even alongside demo auxiliary telemetry.
+   - Unverified/fallback severe hazards preserve restrictive safety bounds (`NO_GO` / `UNKNOWN`), but receive honest `MEDIUM` or `LOW` confidence and honest provenance reasons (e.g., "fallback model forecast observations" or "unverified hazard advisory"), never claiming "verified official observations".
+3. Mission-Consistent Map Time Controls:
+   - In `frontend/src/pages/FisherPage.tsx`, map time slider adjustments are treated as forecast browsing and counterfactual proposals without mutating the active mission timing in `chat.missionContext`.
+   - Offsets are calculated strictly relative to the retained mission departure time (never `Date.now()`).
+   - Original voyage duration is preserved exactly (`retParsed - depParsed`), eliminating 12-hour overwrite and clock drift across repeated slider adjustments.
+   - Proposals are evaluated via `/api/v1/trip-assessments/simulate` and applied only upon explicit user action ("Apply Proposal to Mission"), synchronizing dashboard, chat context, and map.
+Reason:
+Eliminate integration discrepancies from commit 29cbf05 across PFZ recommendation semantics, safety confidence predicates, and map temporal controls without altering vessel thresholds or relaxing deterministic safety bounds.
+Impact:
+- 52/52 integration & regression tests pass across `test_integration_inconsistencies.py`, `test_task2_hazard_validity.py`, and `test_mission_replay.py`.
+- 297/297 frontend tests pass in Vitest including new `fisher-time-controls.test.ts`.
+- Clean Vite production build (`tsc && vite build`).
+

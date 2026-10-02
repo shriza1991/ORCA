@@ -477,6 +477,59 @@ class DeterministicRiskEngine:
             provenance_list.append(prov_hazard)
             evidence_ids.append(f"EV-{hazard_provider.upper()}-HAZARD-01")
 
+        def _is_prov_simulated(prov: Optional[DataProvenance]) -> bool:
+            if not prov:
+                return False
+            mode = str(getattr(prov, "data_mode", "") or "").upper()
+            if mode in ("MOCK", "SIMULATED", "SNAPSHOT", "SYNTHETIC", "DEMO"):
+                return True
+            s_name = str(getattr(prov, "source_name", "") or "").lower()
+            if any(marker in s_name for marker in ("demo", "synthetic", "mock", "fixture", "simulation", "snapshot")):
+                return True
+            for flag in getattr(prov, "quality_flags", []) or []:
+                f_lower = str(flag).lower()
+                if any(marker in f_lower for marker in ("demo", "synthetic", "mock", "simulated", "fixture", "snapshot_source", "m1_demo_data", "m2_contract_mock")):
+                    return True
+            return False
+
+        def _is_prov_verified_official(prov: Optional[DataProvenance], payload: Any = None) -> bool:
+            """Determine if a telemetry or hazard source is an authentically verified official observation.
+            
+            Being non-simulated, fresh, or geographically applicable does NOT establish verification.
+            Verification must be established through structured provider/verification metadata.
+            Must NOT infer verification merely from application mode or provider-like source names.
+            Fallback models and unverified feeds never acquire official verification.
+            """
+            if not prov:
+                return False
+            if _is_prov_simulated(prov):
+                return False
+
+            prov_mode = str(getattr(prov, "data_mode", "") or "").upper()
+            if prov_mode in ("MOCK", "SIMULATED", "SNAPSHOT", "SYNTHETIC", "DEMO", "HYBRID", "UNVERIFIED", "UNAVAILABLE"):
+                return False
+
+            flags = [str(f).lower() for f in (getattr(prov, "quality_flags", []) or [])]
+            if any(marker in flags for marker in ("fallback", "fallback_model", "geographic_fallback", "unverified", "degraded", "unavailable", "simulated", "deterministic_demo", "m2_contract_mock")):
+                return False
+
+            s_name = str(getattr(prov, "source_name", "") or "").lower()
+            if any(marker in s_name for marker in ("fallback", "unverified", "degraded", "unavailable")):
+                return False
+
+            freshness = getattr(payload, "freshness_flags", {}) if payload else {}
+            if not isinstance(freshness, dict):
+                freshness = {}
+            if freshness.get("fallback_model") or freshness.get("is_fallback") or freshness.get("fallback"):
+                return False
+            cov_status = str(freshness.get("coverage_status", "")).upper()
+            if cov_status in ("FALLBACK", "FALLBACK_MODEL", "GEOGRAPHIC_FALLBACK", "UNAVAILABLE", "UNVERIFIED", "SYNTHETIC_DATA"):
+                return False
+
+            has_verified_live = "verified_live" in flags or bool(freshness.get("verified_live")) or bool(freshness.get("is_live"))
+            has_official = "official_source" in flags or bool(freshness.get("is_official")) or cov_status in ("OFFICIAL_STATION", "OFFICIAL_BULLETIN")
+            return bool(has_verified_live or has_official)
+
         # Check for missing critical inputs or degraded telemetry
         is_data_degraded = (
             marine is None
@@ -573,7 +626,8 @@ class DeterministicRiskEngine:
         # - Well-formed validity window (both valid_from and valid_to parseable)
         # - Current evaluation time within validity window
         # - Not stale or degraded
-        is_active_verified_hazard = bool(
+        # - Authentic source verification (official source, not fallback or unverified)
+        is_active_hazard = bool(
             hazard
             and is_geo_applicable
             and is_within_window
@@ -581,10 +635,14 @@ class DeterministicRiskEngine:
             and not any(x in (hazard.source_name or "").upper() for x in ("DEGRADED", "UNAVAILABLE"))
             and hazard_is_above_normal
         )
+        is_active_verified_hazard = bool(
+            is_active_hazard
+            and _is_prov_verified_official(prov_hazard, hazard)
+        )
 
-        cyclone_active = bool(is_active_verified_hazard and hazard.cyclone_warning_active)
-        squall_alert = bool(is_active_verified_hazard and hazard.squall_alert)
-        severe_hazard_active = bool(is_active_verified_hazard and str(hazard.severity).upper() in ("WARNING", "DANGER"))
+        cyclone_active = bool(is_active_hazard and hazard.cyclone_warning_active)
+        squall_alert = bool(is_active_hazard and hazard.squall_alert)
+        severe_hazard_active = bool(is_active_hazard and str(hazard.severity).upper() in ("WARNING", "DANGER"))
 
         # Informative transparency for non-active hazard bulletins:
         if hazard and hazard_is_above_normal:
@@ -629,15 +687,21 @@ class DeterministicRiskEngine:
                 unit="boolean",
                 exceeded=cyclone_active,
                 impact="NO_GO_TRIGGER" if cyclone_active else "SAFE",
-                description=f"Cyclone warning active: {cyclone_active} ({hazard.headline if is_active_verified_hazard else ('Historical/Expired/Inactive' if hazard and hazard_is_above_normal else 'Normal')})",
+                description=f"Cyclone warning active: {cyclone_active} ({hazard.headline if is_active_hazard else ('Historical/Expired/Inactive' if hazard and hazard_is_above_normal else 'Normal')})",
             )
         )
 
         if cyclone_active:
-            decisive_factors.append(f"Active IMD cyclone warning: {hazard.headline or 'Cyclonic Storm Alert'}")
+            if is_active_verified_hazard:
+                decisive_factors.append(f"Active IMD cyclone warning: {hazard.headline or 'Cyclonic Storm Alert'}")
+            else:
+                decisive_factors.append(f"Active cyclone warning ({hazard.source_name or 'hazard advisory'}): {hazard.headline or 'Cyclonic Storm Alert'}")
 
         if severe_hazard_active and not cyclone_active:
-            decisive_factors.append(f"Active IMD severe hazard warning: {hazard.headline or 'Severe Weather Warning'}")
+            if is_active_verified_hazard:
+                decisive_factors.append(f"Active IMD severe hazard warning: {hazard.headline or 'Severe Weather Warning'}")
+            else:
+                decisive_factors.append(f"Active severe hazard warning ({hazard.source_name or 'hazard advisory'}): {hazard.headline or 'Severe Weather Warning'}")
             threshold_checks.append(
                 ThresholdComparison(
                     metric_name="severe_hazard_warning",
@@ -818,45 +882,26 @@ class DeterministicRiskEngine:
             for prov in provenance_list
         )
 
-        def _is_prov_simulated(prov: DataProvenance) -> bool:
-            mode = str(getattr(prov, "data_mode", "") or "").upper()
-            if mode in ("MOCK", "SIMULATED", "SNAPSHOT", "SYNTHETIC", "DEMO"):
-                return True
-            s_name = str(getattr(prov, "source_name", "") or "").lower()
-            if any(marker in s_name for marker in ("demo", "synthetic", "mock", "fixture", "simulation", "snapshot")):
-                return True
-            for flag in getattr(prov, "quality_flags", []) or []:
-                f_lower = str(flag).lower()
-                if any(marker in f_lower for marker in ("demo", "synthetic", "mock", "simulated", "fixture", "snapshot_source", "m1_demo_data", "m2_contract_mock")):
-                    return True
-            return False
-
         is_simulated_source = any(_is_prov_simulated(p) for p in provenance_list)
 
         hazard_is_simulated = bool(prov_hazard and _is_prov_simulated(prov_hazard))
         marine_is_simulated = bool(prov_marine and _is_prov_simulated(prov_marine))
         weather_is_simulated = bool(prov_weather and _is_prov_simulated(prov_weather))
 
-        is_verified_live_hazard = bool(
-            hazard
-            and not hazard_is_simulated
-            and is_geo_applicable
-            and is_active_verified_hazard
-        )
         is_verified_severe_hazard = bool(
-            is_verified_live_hazard
+            is_active_verified_hazard
             and (cyclone_active or severe_hazard_active)
         )
         is_verified_severe_marine = bool(
             marine
-            and not marine_is_simulated
+            and _is_prov_verified_official(prov_marine, marine)
             and not marine_stale
             and marine.significant_wave_height_m is not None
             and marine.significant_wave_height_m > limits["wave_nogo_m"]
         )
         is_verified_severe_wind = bool(
             weather
-            and not weather_is_simulated
+            and _is_prov_verified_official(prov_weather, weather)
             and not weather_stale
             and weather.wind_speed_knots is not None
             and weather.wind_speed_knots > limits["wind_nogo_knots"]
@@ -869,7 +914,14 @@ class DeterministicRiskEngine:
             status = RecommendationStatus.NO_GO
             summary = f"Severe marine conditions or hazards detected exceeding {vessel_label} safety ceiling."
             action = "Remain moored in port. Do not navigate under any circumstances."
-            conf_reasons = ["Deterministic safety ceiling exceeded by official observations"]
+            if has_verified_severe_nogo:
+                conf_reasons = ["Deterministic safety ceiling exceeded by verified official observations"]
+            elif is_fallback_source or any("fallback" in flag.lower() for prov in (prov_marine, prov_weather, prov_hazard) if prov for flag in prov.quality_flags):
+                conf_reasons = ["Deterministic safety ceiling exceeded by fallback model forecast observations"]
+            elif (cyclone_active or severe_hazard_active) and not is_active_verified_hazard:
+                conf_reasons = ["Deterministic safety ceiling exceeded by unverified hazard advisory"]
+            else:
+                conf_reasons = ["Deterministic safety ceiling exceeded by reported conditions"]
             if is_data_degraded or is_geo_fallback:
                 warnings.append("Note: Secondary telemetry is missing, degraded, or from geographic fallback, but NO_GO prohibition takes precedence.")
         elif is_data_degraded or forecast_coverage_incomplete:
@@ -941,9 +993,12 @@ class DeterministicRiskEngine:
         elif is_simulated_source:
             confidence_level = ConfidenceLevel.MEDIUM
             conf_reasons = ["Evaluated using demonstration scenario reference data"]
-        elif is_fallback_source:
+        elif is_fallback_source or any("fallback" in flag.lower() for prov in (prov_marine, prov_weather, prov_hazard) if prov for flag in prov.quality_flags):
             confidence_level = ConfidenceLevel.MEDIUM
-            conf_reasons.append("Evaluated using verified fallback marine model observations")
+            if not has_nogo:
+                conf_reasons.append("Evaluated using verified fallback marine model observations")
+        elif (cyclone_active or severe_hazard_active) and not is_active_verified_hazard:
+            confidence_level = ConfidenceLevel.MEDIUM
         else:
             confidence_level = ConfidenceLevel.HIGH
 

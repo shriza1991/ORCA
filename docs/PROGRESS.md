@@ -8,6 +8,34 @@
 
 ## Current Release & Workstream State
 
+### 2026-10-02 Resolution of Three Remaining Integration Inconsistencies (§D070)
+
+- **DIAGNOSED INCONSISTENCIES & RESOLUTIONS**:
+  1. *Grounded Informational PFZ Responses*:
+     - In `backend/app/services/mission_conversation.py`, fixed `bind_mission_response()` so that when `intent == "PFZ"`, `response.recommendation.status = RecommendationStatus.INFORMATIONAL` and `response.decision_object.decision = RecommendationStatus.INFORMATIONAL`, preventing retained voyage decisions (`GO`/`CAUTION`/`NO_GO`) from masquerading as departure clearance.
+     - Candidate details are grounded directly in `selected.pfz_candidates` (ID, distance in nautical miles, bearing in degrees).
+     - The original voyage baseline decision is preserved separately in `response.mission_assessment`.
+     - `response.answer` includes an explicit informational advisory notice and strictly omits voyage clearance directives.
+  2. *Authentic Source Verification for Safety Confidence*:
+     - In `backend/app/agents/integrations/adapters.py`, hardened `_resolve_provenance()` so that `is_fallback_input` or `is_unverified_input` explicitly strips `official_source` and `verified_live`, ensuring provider-like names in fallback sources cannot fabricate official status.
+     - In `backend/app/domain/risk_engine.py`, predicates `is_active_verified_hazard`, `is_verified_severe_marine`, and `is_verified_severe_wind` verify authentic provenance via helper `_is_prov_verified_official()` (`official_source`, `verified_live`, not simulated/fallback, and operational `LIVE` mode).
+     - Valid verified official severe hazard plus demo auxiliary data retains justified `NO_GO` with `HIGH` confidence.
+     - Unverified/fallback severe hazards retain restrictive `NO_GO` or `UNKNOWN` bounds, but receive honest `MEDIUM` or `LOW` confidence and honest explanation ("fallback model forecast observations" or "unverified hazard advisory"), never acquiring "verified official observations".
+  3. *Mission-Consistent Map Time Controls*:
+     - In `frontend/src/pages/FisherPage.tsx`, map time slider adjustments are treated as forecast browsing and counterfactual proposals without mutating the active mission timing in `chat.missionContext`.
+     - Offsets are calculated relative to the retained baseline mission departure time (never `Date.now()`).
+     - Original voyage duration is preserved exactly (`retParsed - depParsed`), preventing overwrite with 12 hours.
+     - Proposals are evaluated via `/api/v1/trip-assessments/simulate` and applied only upon explicit user action ("Apply Proposal to Mission"), maintaining alignment across dashboard, chat context, and map.
+- **TEST VERIFICATION & INTEGRITY**:
+  - `tests/integration/test_integration_inconsistencies.py`: **6/6 passed** (PFZ informational with GO/NO_GO baselines, authentic source verification, fallback marine/wind thresholds).
+  - `tests/integration/test_task2_hazard_validity.py`: **31/31 passed**.
+  - `tests/integration/test_mission_replay.py`: **15/15 passed**.
+  - Total backend pytest suite: **52/52 passed** in 74.88s.
+  - Frontend Vitest suite: **24 test files, 297/297 passed** in 59.06s.
+  - Frontend production build (`tsc && vite build`): **Passed cleanly** in 2m 58s.
+- **NEXT RECOMMENDED TASK**:
+  - Await user review of integration inconsistency resolutions and walkthrough.
+
 ### 2026-10-01 Task 2 Final Focused Correction: Snapshot Classification Gap, Epistemic Honesty, and Chat Endpoint Regressions (§D068)
 
 - **DIAGNOSED DEFECTS & CORRECTIONS**:

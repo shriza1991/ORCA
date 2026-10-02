@@ -180,9 +180,23 @@ class ProviderToolAdapter:
                 if f not in quality_flags:
                     quality_flags.append(f)
 
-        # Fallback model handling
-        is_fb_model = bool(freshness.get("fallback_model")) or cov_status == "FALLBACK_MODEL" or "OPEN-METEO" in source_upper
-        if is_fb_model:
+        # Fallback model and general fallback handling
+        is_fb_model = bool(
+            freshness.get("fallback_model")
+            or cov_status == "FALLBACK_MODEL"
+            or "OPEN-METEO" in source_upper
+        )
+        is_fallback_input = bool(
+            is_fb_model
+            or is_geo_fb
+            or "fallback" in source_upper
+            or cov_status in ("FALLBACK", "FALLBACK_MODEL", "GEOGRAPHIC_FALLBACK")
+            or bool(freshness.get("fallback"))
+            or bool(freshness.get("is_fallback"))
+            or "FALLBACK" in quality_flags
+            or "fallback_model" in quality_flags
+        )
+        if is_fallback_input:
             for f in ("fallback_model", "FALLBACK"):
                 if f not in quality_flags:
                     quality_flags.append(f)
@@ -200,14 +214,28 @@ class ProviderToolAdapter:
             or any(f in quality_flags for f in ("SIMULATED", "SNAPSHOT_SOURCE", "deterministic_demo"))
         )
 
+        is_unverified_input = bool(
+            data_mode in ("UNVERIFIED", "UNAVAILABLE")
+            or cov_status in ("UNVERIFIED", "UNAVAILABLE")
+            or "unverified" in source_upper
+            or "UNVERIFIED" in quality_flags
+        )
+
         # Official source classification:
+        # Structured metadata takes precedence. Do NOT infer official verification merely from provider-like source names.
         is_official = (
             bool(freshness.get("is_official"))
             or cov_status in ("OFFICIAL_STATION", "OFFICIAL_BULLETIN")
             or "official_source" in quality_flags
-            or (any(auth in source_upper for auth in ("IMD", "INCOIS")) and not is_fb_model and not is_simulated)
+            or (
+                any(auth in source_upper for auth in ("IMD", "INCOIS"))
+                and not is_fallback_input
+                and not is_simulated
+                and not is_unverified_input
+                and cov_status not in ("FALLBACK", "FALLBACK_MODEL", "UNVERIFIED", "UNAVAILABLE")
+            )
         )
-        if is_official and not is_fb_model and not is_simulated:
+        if is_official and not is_fallback_input and not is_simulated and not is_unverified_input:
             if "official_source" not in quality_flags:
                 quality_flags.append("official_source")
 
@@ -216,7 +244,10 @@ class ProviderToolAdapter:
         if is_cached:
             quality_flags = [f for f in quality_flags if f != "verified_live"]
         # Fallback data must never claim official_source or verified_live
-        if is_fb_model:
+        if is_fallback_input:
+            quality_flags = [f for f in quality_flags if f not in ("official_source", "verified_live")]
+        # Unverified data must never claim official_source or verified_live
+        if is_unverified_input:
             quality_flags = [f for f in quality_flags if f not in ("official_source", "verified_live")]
         # Simulated data must never claim official_source or verified_live
         if is_simulated:
@@ -230,12 +261,13 @@ class ProviderToolAdapter:
             or cov_status in ("OFFICIAL_STATION", "OFFICIAL_BULLETIN", "OFFICIAL")
         )
 
-        # Verified live is preserved/added ONLY when genuinely live, official, uncached, non-fallback, non-simulated
+        # Verified live is preserved/added ONLY when genuinely live, official, uncached, non-fallback, non-simulated, non-unverified
         if (
             data_mode == "LIVE"
             and not is_cached
-            and not is_fb_model
+            and not is_fallback_input
             and not is_simulated
+            and not is_unverified_input
             and is_official
             and has_verified_live_flag
         ):
