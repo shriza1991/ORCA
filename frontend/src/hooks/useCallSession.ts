@@ -26,6 +26,9 @@ export interface UseCallSessionOptions {
   returnTime?: string;
   targetPfz?: string;
   parentAssessmentId?: string;
+  baselineAssessmentId?: string;
+  evidenceBundleId?: string;
+  dataMode?: string;
   silenceTimeoutMs?: number; // Configurable silence duration before auto-turn completion (~3000ms)
   speechThreshold?: number;  // RMS volume threshold for speech detection (default: 0.032)
   minSpeechDurationMs?: number; // Minimum speech duration before confirming user speech (default: 300ms)
@@ -66,6 +69,9 @@ export function useCallSession({
   returnTime,
   targetPfz,
   parentAssessmentId,
+  baselineAssessmentId,
+  evidenceBundleId,
+  dataMode,
   silenceTimeoutMs = 3000,
   speechThreshold = 0.032,
   minSpeechDurationMs = 300,
@@ -208,6 +214,9 @@ export function useCallSession({
         return_time: returnTime,
         target_pfz: targetPfz,
         parent_assessment_id: parentAssessmentId,
+        baseline_assessment_id: baselineAssessmentId,
+        evidence_bundle_id: evidenceBundleId,
+        data_mode: dataMode,
         language_preference: 'auto',
       });
 
@@ -309,7 +318,7 @@ export function useCallSession({
       callStateRef.current = 'ERROR';
       setError(msg);
     }
-  }, [clearVadTimers, craftProfile, originHarbor, startListeningTurn]);
+  }, [clearVadTimers, craftProfile, originHarbor, departureTime, returnTime, targetPfz, parentAssessmentId, baselineAssessmentId, evidenceBundleId, dataMode, startListeningTurn]);
 
   // Finalize speech turn (triggered automatically by VAD silence timeout or manual fallback)
   const finishSpeakingTurn = useCallback(() => {

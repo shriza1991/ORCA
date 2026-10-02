@@ -94,7 +94,8 @@ def test_m1_safety_vertical_slice():
 
     # 5. Response reflects exact status
     assert state["response"].startswith("[CAUTION]")
-    assert "M1 simulated" in state["response"] or "M1 demonstration" in state["response"]
+    assert "snapshot/demonstration data" in state["response"]
+    assert "does not constitute live clearance" in state["response"]
 
 
 def test_m1_conditions_vertical_slice():

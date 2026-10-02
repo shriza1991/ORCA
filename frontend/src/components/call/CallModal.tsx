@@ -28,6 +28,9 @@ interface CallModalProps {
   returnTime?: string;
   targetPfz?: string;
   parentAssessmentId?: string;
+  baselineAssessmentId?: string;
+  evidenceBundleId?: string;
+  dataMode?: string;
 }
 
 function getLanguageLabel(code: string | null): { name: string; flag: string } {
@@ -50,6 +53,9 @@ export default function CallModal({
   returnTime,
   targetPfz,
   parentAssessmentId,
+  baselineAssessmentId,
+  evidenceBundleId,
+  dataMode,
 }: CallModalProps) {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -74,6 +80,9 @@ export default function CallModal({
     returnTime,
     targetPfz,
     parentAssessmentId,
+    baselineAssessmentId,
+    evidenceBundleId,
+    dataMode,
     silenceTimeoutMs: 3000, // ~3 seconds silence detection
     speechThreshold: 0.032,
     minSpeechDurationMs: 300,

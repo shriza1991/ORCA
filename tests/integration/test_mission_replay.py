@@ -186,3 +186,56 @@ def test_historical_hazard_corpus_is_reused_for_new_window(baseline):
     assert result.simulated.evidence_bundle_id == a.evidence_bundle_id
     assert result.simulated.conditions.hazard.severity == "NORMAL"
     assert result.simulated.conditions.captured_at == a.conditions.captured_at
+
+
+def test_voice_turn_uses_same_retained_decision_as_text(baseline, monkeypatch):
+    from backend.app.core.config import settings
+    from backend.app.agents.integrations.mocks import register_m2_contract_mocks
+    from backend.app.agents.tools import tool_registry
+    monkeypatch.setattr(settings, "LLM_MODE", "deterministic")
+    _, a = baseline
+    monkeypatch.setattr("backend.app.api.v1.routes.transcribe_audio_bytes", lambda **kwargs:
+        {"transcript": "Why?", "language": "hi", "normalized_language": "hi"})
+    monkeypatch.setattr("backend.app.api.v1.routes.synthesize_speech", lambda **kwargs:
+        {"audio_base64": None, "audio_format": "audio/wav"})
+    try:
+        response = TestClient(app).post("/api/v1/voice/chat", files={"file": ("voice.wav", b"controlled-test", "audio/wav")},
+            data={"baseline_assessment_id": a.assessment_id, "evidence_bundle_id": a.evidence_bundle_id, "data_mode": "DEMO"})
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert data["language"] == "hi"
+        assert data["recommendation"]["status"] == a.decision.value
+        assert data["evidence_bundle_id"] == a.evidence_bundle_id
+        assert data["mission_state"]["timing"]["departure"] == a.mission_state.timing.departure
+        assert data["mission_assessment"]["assessment_id"] == a.assessment_id
+    finally:
+        register_m2_contract_mocks(tool_registry, override=True)
+
+
+def test_complete_demo_hazard_corpus_does_not_create_false_expiry(baseline):
+    _, a = baseline
+    assert a.decision.value == "NO_GO"
+    assert a.conditions.hazard.freshness_flags["coverage_end"]
+    assert a.brief.confidence == "MEDIUM"
+    assert not any("expired" in factor.lower() for factor in a.brief.negative_factors)
+
+
+def test_structured_cached_provenance_survives_bundle_serialization():
+    from backend.app.contracts.observation import ObservationBundle
+    cached = {"source_name": "INCOIS", "freshness_flags": {"data_mode": "SAVED"}}
+    bundle = ObservationBundle(marine=cached, data_mode="HYBRID")
+    assert bundle.provenance_mode == "SAVED"
+    assert ObservationBundle(**bundle.model_dump()).provenance_mode == "SAVED"
+    assert ObservationBundle(data_mode="LIVE").provenance_mode == "UNAVAILABLE"
+
+
+def test_retained_pfz_expiry_does_not_create_an_invented_route(baseline, monkeypatch):
+    from backend.app.services.mission_evidence import FrozenDataService
+    from backend.app.agents.integrations.dev2 import PFZSourceDataPayload
+    from backend.app.api.v1.assessments import compare_trip
+    req, a = baseline
+    monkeypatch.setattr(FrozenDataService, "get_pfz_raw_advisories", lambda *args:
+        PFZSourceDataPayload(features=[], bulletin_date=req.departure_time, valid_to=req.departure_time, source_name="Expired retained PFZ (DEMO)"))
+    result = compare_trip(TripSimulationRequest(baseline=req, simulated=req, baseline_assessment_id=a.assessment_id))
+    assert result.simulated.pfz_candidates == []
+    assert result.simulated.route_candidates == []

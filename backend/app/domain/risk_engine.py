@@ -451,8 +451,13 @@ class DeterministicRiskEngine:
             elif is_operational and hazard_vf and hazard_vf > window_end_utc:
                 hazard_stale = True
             elif hazard_vt < window_end_utc:
-                warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Hazard bulletin expires before planned return.")
-                hazard_stale = True
+                # The controlled scenario retains the complete applicable bulletin
+                # corpus. A warning ending mid-trip does not expire that corpus.
+                flags = hazard.freshness_flags or {}
+                scenario_end = parse_to_utc(flags.get("coverage_end")) if data_mode.upper() == "DEMO" and "hazard_records" in flags else None
+                if scenario_end is None or scenario_end < window_end_utc:
+                    warnings.append("TRIP_WINDOW_EXCEEDS_FORECAST: Hazard bulletin expires before planned return.")
+                    hazard_stale = True
 
             if is_operational and hazard.severity in (None, "UNKNOWN"):
                 hazard_stale = True
@@ -571,8 +576,9 @@ class DeterministicRiskEngine:
         # Verified active hazard requires:
         # - Geographic applicability
         # - Well-formed validity window (both valid_from and valid_to parseable)
-        # - Current evaluation time within validity window
-        # - Not stale or degraded
+        # - Valid warning interval overlaps the requested mission
+        # - A horizon shorter than the trip does not erase a known restriction
+        # - Malformed windows and unavailable/degraded sources cannot establish it
         is_active_verified_hazard = bool(
             hazard
             and is_geo_applicable

@@ -513,4 +513,6 @@ def test_m2_contract_mock_mode_backward_compatibility():
         llm_mode="deterministic",
     )
     assert result["risk_assessment"].status == RecommendationStatus.CAUTION
-    assert result["confidence"].level == ConfidenceLevel.HIGH
+    assert result["confidence"].level == ConfidenceLevel.MEDIUM
+    assert "snapshot/demonstration data" in result["response"]
+    assert "does not constitute live clearance" in result["response"]

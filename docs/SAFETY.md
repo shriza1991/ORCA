@@ -75,3 +75,15 @@ When multiple sources provide data for the same geospatial area or time window:
    - Telemetry older than 24 hours is classified as `STALE`.
    - In the presence of stale data, the decision status degrades to `UNKNOWN` or `CAUTION`, never `GO`.
 
+
+
+## 2026-10-03: Mission comparison invariants (D069)
+
+- Parameter comparison uses the retained evidence bundle; provider refresh is a separate operation. Missing/evicted IDs cannot silently fetch a replacement baseline.
+- A well-formed, geographically applicable warning that overlaps **any part** of the mission can establish a restriction, including a warning beginning after departure. Expiry before the entire return window does not erase a restriction already known to apply during the trip.
+- Operational source verification, simulated-source restrictions, and missing-evidence fail-closed behavior remain mandatory. An expired warning entirely before departure or an unavailable/degraded source cannot establish a verified active restriction.
+- The complete controlled DEMO hazard corpus has its own coverage interval. A warning ending mid-trip does not expire that entire corpus. Outside retained scenario/forecast coverage remains unsupported; this exception does not extend live bulletin validity.
+- Route ranking is not departure permission. NO_GO/UNKNOWN missions and routes with missing exposure/constraint evidence have no supported selectable corridor. Missing/expired PFZ evidence does not invent a target route.
+- Apply adopts the exact returned assessment/mission times and caches that record; it does not run a different frontend safety calculation or silently refetch inputs.
+- The existing six-hour browser cache expiry changes displayed status to UNKNOWN and revokes route support. Cached records are historical; no fresh clearance is implied.
+- Changing vessel, delay, response language, voice/text entry, or map presentation cannot override Python safety authority.

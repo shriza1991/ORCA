@@ -166,6 +166,9 @@ export default function App() {
         departureTime={chat.missionContext.departure_time}
         returnTime={chat.missionContext.return_time}
         targetPfz={chat.missionContext.target_pfz}
+        baselineAssessmentId={portal === "fisher" ? chat.missionAssessment?.assessment_id : undefined}
+        evidenceBundleId={portal === "fisher" ? chat.missionAssessment?.evidence_bundle_id : undefined}
+        dataMode={portal === "fisher" ? chat.missionAssessment?.conditions.data_mode : undefined}
         parentAssessmentId={
           chat.missionContext.parent_assessment_id ||
           chat.missionState?.parent_assessment_id ||

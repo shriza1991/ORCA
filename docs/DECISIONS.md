@@ -2230,3 +2230,15 @@ Date: 2026-10-02
 Decision: For the explicitly requested roadmap implementation, target the existing Vite frontend only; do not modify Next.js. This task-specific scope supersedes client-parity work in D064. Preserve all domain engines and existing contracts with additive evidence-bundle IDs, retained assessment replay, and explicit refresh versus parameter comparison. Reuse AssessmentService for recomputation and LangGraph for intent/tool coordination. Retain up to 256 evidence bundles and assessments per process under a lock; lost/evicted IDs require explicit reassessment, never silent refetch. This is not durable multi-worker persistence. Route rankings expose outbound assumptions and cannot authorize departure against a NO_GO/UNKNOWN mission.
 Reason: Existing comparison independently retrieved both sides and chat context could differ from the Fisher baseline. Same-evidence comparisons need immutable normalized inputs and honest execution/provenance presentation. User expressly prohibits Next.js changes.
 Safety: Python remains the decision authority. Preserve synthetic provenance, validity and hard-stop precedence; distinguish derived domain explanation from executed agent traces.
+
+
+### D069 verification and scope clarification ? 2026-10-03
+
+Text and call entry points share retained-context validation. Content identity excludes capture-clock variation; unchanged refresh does not create fictitious changed evidence. The existing complete DEMO hazard corpus can support a full mission window even when one warning ends mid-trip; warning applicability retains its actual interval. PFZ expiry removes unsupported targets instead of constructing a substitute corridor. Browser comparison controls are withheld while a replacement assessment loads. Institutional handoff is read-only inspection of the actual saved device record, not fleet integration. Native mobile, durable multi-worker replay, new analytics/prediction models and provider activation remain deferred.
+
+
+## D070 ? Legacy regression expectations follow source honesty
+Status: ACCEPTED
+Date: 2026-10-03
+Decision: Align three historical agent assertions with the previously accepted D068/D069 epistemic policy. Simulated contract evidence requires MEDIUM confidence and an explicit non-live/non-clearance explanation. Replace the obsolete M1-specific provenance phrase with the actual canonical demonstration disclaimer. Retain every intent, execution, observation, threshold, decision, PFZ and route assertion, and add confidence/provenance checks.
+Reason: All three failures reproduced on the unchanged original commit. Raising synthetic confidence or restoring obsolete presentation wording would undermine current source-honesty behavior. These changes strengthen the regression contract; they do not change the risk engine or remove scenario coverage.

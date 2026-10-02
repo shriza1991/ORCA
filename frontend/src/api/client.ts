@@ -58,6 +58,9 @@ export async function transcribeAudio(audioBlob: Blob): Promise<TranscribeRespon
 }
 
 export interface VoiceChatParams {
+  baseline_assessment_id?: string;
+  evidence_bundle_id?: string;
+  data_mode?: string;
   conversation_id?: string;
   origin_harbor?: string;
   craft_profile?: string;
@@ -99,6 +102,10 @@ export async function sendVoiceChat(
   }
   if (params?.parent_assessment_id) {
     formData.append('parent_assessment_id', params.parent_assessment_id);
+  }
+
+  for (const key of ["baseline_assessment_id", "evidence_bundle_id", "data_mode"] as const) {
+    if (params?.[key]) formData.append(key, params[key]);
   }
 
   const res = await fetch(`${API_BASE}/voice/chat`, {

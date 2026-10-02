@@ -357,7 +357,7 @@ class AssessmentService:
                 
         # Routes Evaluation
         route_candidates = []
-        if marine and weather:
+        if marine and weather and pfz_ranking and pfz_ranking.ranked_candidates:
             try:
                 from backend.app.domain.route_engine import DeterministicRouteExposureEngine
                 from backend.app.domain.geo_restrictions import DeterministicGeospatialEngine

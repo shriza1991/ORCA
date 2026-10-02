@@ -144,7 +144,20 @@ class FrozenDataService:
 
     def get_pfz_raw_advisories(self, context):
         from backend.app.agents.integrations.dev2 import PFZSourceDataPayload
-        return PFZSourceDataPayload(**deepcopy(self.pfz)) if self.pfz else PFZSourceDataPayload(features=[], bulletin_date=self.bundle.captured_at, valid_to=self.bundle.captured_at, source_name="Unavailable retained PFZ")
+        from datetime import datetime, timezone
+        payload = PFZSourceDataPayload(**deepcopy(self.pfz)) if self.pfz else PFZSourceDataPayload(features=[], bulletin_date=self.bundle.captured_at, valid_to=self.bundle.captured_at, source_name="Unavailable retained PFZ")
+        if context.departure_time:
+            target = datetime.fromisoformat(context.departure_time.replace("Z", "+00:00"))
+            if target.tzinfo is None:
+                target = target.replace(tzinfo=timezone.utc)
+            def covers(feature):
+                start, end = feature.get("valid_from"), feature.get("valid_to")
+                if not start or not end:
+                    end = payload.valid_to
+                    return target <= datetime.fromisoformat(end.replace("Z", "+00:00"))
+                return datetime.fromisoformat(start.replace("Z", "+00:00")) <= target <= datetime.fromisoformat(end.replace("Z", "+00:00"))
+            payload.features = [feature for feature in payload.features if covers(feature)]
+        return payload
 
     def get_hourly_marine_forecast(self, context, start_time, end_time):
         return deepcopy(self.bundle.hourly_forecast)

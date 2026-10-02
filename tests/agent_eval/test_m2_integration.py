@@ -240,7 +240,9 @@ def test_mock_dev4_tools_execution():
     risk_assessment = risk_engine.evaluate_risk(ctx, marine, weather, hazard)
     assert risk_assessment.status in [RecommendationStatus.GO, RecommendationStatus.CAUTION, RecommendationStatus.NO_GO]
     assert len(risk_assessment.decisive_factors) >= 1
-    assert risk_assessment.confidence_level == ConfidenceLevel.HIGH
+    assert risk_assessment.confidence_level == ConfidenceLevel.MEDIUM
+    assert any("demonstration" in reason.lower() for reason in risk_assessment.confidence_reasons)
+    assert any(prov.data_mode in ("MOCK", "DEMO", "M2_CONTRACT_MOCK") for prov in risk_assessment.provenance)
 
     # 2. PFZ Ranking
     pfz_ranking = pfz_ranking_engine.rank_pfz_candidates(ctx, [])

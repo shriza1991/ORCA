@@ -141,7 +141,7 @@ class DataService:
                     active.append(hazard)
                     hazard_windows.append((start, end))
             return HazardBulletinPayload(harbor=harbor, cyclone_warning_active=any("CYCLONE" in str(h.get("event_type", "")).upper() for h in active), squall_alert=any("SQUALL" in str(h.get("event_type", "")).upper() for h in active), severity="WARNING" if active else "NORMAL", headline="; ".join(h["headline"] for h in active) or "No active atmospheric warning at this origin in the controlled scenario.", valid_from=min(w[0] for w in hazard_windows).isoformat() if hazard_windows else min(r["observation_time"] for r in records).isoformat(), valid_to=max(w[1] for w in hazard_windows).isoformat() if hazard_windows else valid_to, source_name=source, freshness_flags={"hazard_records": retained_hazards, "coverage_start": min(r["observation_time"] for r in records).isoformat(), "coverage_end": valid_to})
-        features = [{"id": r["public_id"], "lat": r["latitude"], "lon": r["longitude"], "sst_grad": r["sst_gradient"], "chlorophyll": r["chlorophyll_value"], "depth_m": r["depth_m"]} for r in dataset["pfz_candidates"] if r.get("qc_status") == "VALID" and r["detected_at"] <= target <= r["valid_to"]]
+        features = [{"id": r["public_id"], "lat": r["latitude"], "lon": r["longitude"], "sst_grad": r["sst_gradient"], "chlorophyll": r["chlorophyll_value"], "depth_m": r["depth_m"], "valid_from": r["detected_at"].isoformat(), "valid_to": r["valid_to"].isoformat()} for r in dataset["pfz_candidates"] if r.get("qc_status") == "VALID" and r["detected_at"] <= target <= r["valid_to"]]
         return PFZSourceDataPayload(features=features, bulletin_date=observed, valid_to=valid_to, source_name=source)
 
     @staticmethod

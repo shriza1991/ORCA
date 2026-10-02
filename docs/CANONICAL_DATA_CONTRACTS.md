@@ -290,3 +290,16 @@ class VesselProfileRecord(BaseModel):
 
 - **Backend Protocol Tests**: [`tests/contract/test_connector_contracts.py`](file:///c:/Users/dyara/ORCA/tests/contract/test_connector_contracts.py) validates runtime conformance of all providers.
 - **Frontend TypeScript Typings**: [`frontend/src/types/contracts.ts`](file:///c:/Users/dyara/ORCA/frontend/src/types/contracts.ts) provides compile-time verification mirroring `backend/app/contracts/chat.py`.
+
+
+## 2026-10-03: Evidence identity and revision semantics (D069)
+
+`mission_evidence.py` retains deep copies of the existing `ObservationBundle`, PFZ payload, origin, coordinates, and explicit data mode. The evidence ID is a content hash excluding assembly `captured_at`; equivalent normalized inputs have the same identity. The first retained capture time is preserved. A new evaluation has a new assessment ID and parent assessment reference; parameter comparisons preserve the canonical mission ID and source issue/validity times. Assessment ID, evidence ID, and evaluator version are distinct concepts.
+
+For the current controlled DEMO, the bundle includes the applicable origin's complete hazard corpus and coverage interval. Parameter edits select warnings intersecting the proposed mission window from that corpus without provider retrieval. PFZ feature validity is retained and filtered for the proposed departure; expired/unavailable candidates do not produce an invented route. Captured forecasts are forecasts, not newly observed conditions.
+
+Structured payload freshness/source fields survive serialization. Simulated sources remain DEMO; cached delivery remains SAVED; unavailable/empty operational bundles are not labelled LIVE. Origin forecasts applied along a corridor are explicitly labelled as such, not spatial forecast grids.
+
+Route records add backend `departure_supported`, `rejection_reasons`, `evaluation_scope`, and `spatial_basis`. Existing waypoint timelines, peak exposure, craft speed assumptions and geofence calculations remain the numerical authority. Whole-window environmental evaluation is separate from outbound transit exposure; no return-route/chart-grade clearance is implied.
+
+The evidence store is bounded and process-local. Browser history and role inspection are device-local historical records, not authenticated fleet telemetry. Durable multi-worker replay remains future work.

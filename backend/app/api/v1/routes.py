@@ -220,7 +220,7 @@ async def health_check():
             with SessionLocal() as session:
                 session.execute(text("SELECT 1"))
                 db_status = "connected"
-    
+
                 # Check connector health
                 if settings.DATA_MODE != "SNAPSHOT":
                     connectors = session.query(ConnectorStatus).all()
@@ -248,6 +248,29 @@ async def health_check():
             "git_branch": os.getenv("RENDER_GIT_BRANCH"),
         },
     }
+
+
+def bind_retained_context(user_context, baseline_assessment_id, evidence_bundle_id, data_mode):
+    """Use the same retained mission validation for text and voice entry points."""
+    if not baseline_assessment_id:
+        return None
+    from backend.app.services.mission_evidence import get_assessment, EvidenceUnavailable
+    try:
+        retained = get_assessment(baseline_assessment_id)
+        if evidence_bundle_id != retained.evidence_bundle_id:
+            raise EvidenceUnavailable("Chat evidence does not match the active assessment.")
+        if (data_mode or settings.DATA_MODE).upper() != retained.conditions.data_mode.upper():
+            raise EvidenceUnavailable("Chat mode does not match the active assessment.")
+        locale = user_context.get("language_preference", "en")
+        user_context.update(retained.trip_context.model_dump())
+        user_context.update(language_preference=locale, evidence_bundle_id=retained.evidence_bundle_id,
+                            baseline_assessment_id=retained.assessment_id, data_mode=retained.conditions.data_mode)
+        mission = retained.mission_state.model_copy(deep=True) if retained.mission_state else None
+        if mission:
+            mission.user.locale = locale
+        return mission
+    except EvidenceUnavailable as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post(
@@ -313,23 +336,11 @@ async def chat_endpoint(request: ChatRequest) -> ChatResponse:
     run_id = str(uuid.uuid4())
     user_context = _build_user_context(request)
 
-    if request.baseline_assessment_id:
-        from backend.app.services.mission_evidence import get_assessment, EvidenceUnavailable
-        try:
-            retained = get_assessment(request.baseline_assessment_id)
-            if request.evidence_bundle_id != retained.evidence_bundle_id:
-                raise EvidenceUnavailable("Chat evidence does not match the active assessment.")
-            if (request.data_mode or settings.DATA_MODE).upper() != retained.conditions.data_mode.upper():
-                raise EvidenceUnavailable("Chat mode does not match the active assessment.")
-            requested_locale = user_context.get("language_preference", "en")
-            user_context.update(retained.trip_context.model_dump())
-            user_context["language_preference"] = requested_locale
-            user_context["evidence_bundle_id"] = retained.evidence_bundle_id
-        except EvidenceUnavailable as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    retained_mission = bind_retained_context(user_context, request.baseline_assessment_id,
+                                            request.evidence_bundle_id, request.data_mode)
 
     # Resolve canonical MissionState context (M1.1)
-    mission_state = request.mission_state
+    mission_state = retained_mission or request.mission_state
     if not mission_state:
         u_ctx = request.user_context or UserContext(
             origin_harbor=user_context.get("origin_harbor"),
@@ -745,8 +756,8 @@ async def get_base_layers():
             }
         ],
     }
- 
- 
+
+
 @router.post(
     "/voice/transcribe",
     response_model=TranscribeResponse,
@@ -820,6 +831,9 @@ async def voice_chat_endpoint(
     return_time: str | None = Form(None),
     target_pfz: str | None = Form(None),
     parent_assessment_id: str | None = Form(None),
+    baseline_assessment_id: str | None = Form(None),
+    evidence_bundle_id: str | None = Form(None),
+    data_mode: str | None = Form(None),
 ):
     """End-to-end voice chat adapter around ORCA pipeline."""
     # 1. Validate audio payload
@@ -897,6 +911,9 @@ async def voice_chat_endpoint(
         "parent_assessment_id": parent_assessment_id,
     }
 
+    user_context["data_mode"] = data_mode or settings.DATA_MODE
+    retained_mission = bind_retained_context(user_context, baseline_assessment_id, evidence_bundle_id, data_mode)
+
     # Build MissionState before AgentRunService.run_agent() (M1.1)
     u_ctx = UserContext(
         origin_harbor=origin_harbor,
@@ -907,7 +924,7 @@ async def voice_chat_endpoint(
         target_pfz=target_pfz,
         parent_assessment_id=parent_assessment_id,
     )
-    mission_state = mission_from_user_context(
+    mission_state = retained_mission or mission_from_user_context(
         user_context=u_ctx,
         message=transcript,
         conversation_id=effective_conv_id,
@@ -1012,6 +1029,13 @@ async def voice_chat_endpoint(
         audio_base64=audio_base64,
         audio_format=audio_format,
         data_mode=chat_response.data_mode,
+        evidence_bundle_id=chat_response.evidence_bundle_id,
+        mission_assessment=chat_response.mission_assessment,
+        proposed_assessment=chat_response.proposed_assessment,
+        decision_object=chat_response.decision_object,
+        decision_delta=chat_response.decision_delta,
+        mission_state=chat_response.mission_state,
+        assessment_id=chat_response.assessment_id,
     )
 
 

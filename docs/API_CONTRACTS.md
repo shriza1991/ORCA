@@ -258,3 +258,20 @@ All domain tools in `backend/app/tools/` must return this standardized wrapper:
 ### 3.5 `GET /api/v1/layers/base`
 
 - **Description**: Returns GeoJSON geometries for Indian coastal boundaries, EEZ, major fishing harbors, and designated Marine Protected Areas (MPAs).
+
+
+## 2026-10-03: Retained mission comparison and replay (D069)
+
+The Vite client uses the existing assessment and agent services. Fields below are additive; Python remains the safety authority.
+
+- `TripAssessmentRequest`: optional `evidence_bundle_id` reuses retained normalized inputs; `selected_route_id` selects a backend-supported candidate.
+- `TripAssessmentResponse`: `evidence_bundle_id`, `evaluator_version`, `explanation_kind`, and `evaluation_events`. Assessment explanations are derived domain explanations, not proof of executed specialist agents.
+- `POST /api/v1/trip-assessments/simulate`: accepts optional `baseline_assessment_id` alongside the existing baseline/proposed requests. It uses that retained assessment, pins the proposal to its evidence, preserves mission identity, and returns the existing server `DecisionDelta`. A supplied unrelated bundle/origin/mode is rejected; unavailable IDs return HTTP 409. Without a baseline ID, the baseline is evaluated once and its bundle is reused.
+- `GET /api/v1/trip-assessments/{assessment_id}`: returns the retained historical assessment; unavailable/evicted IDs return HTTP 404. Replay is not fresh clearance.
+- `POST /api/v1/trip-assessments/{assessment_id}/refresh`: explicitly retrieves evidence again for the same mission and returns a baseline/refreshed assessment with a server delta. Identical normalized evidence retains its content identity; changed evidence gets a different ID.
+- `ChatRequest`: optional `baseline_assessment_id` and `evidence_bundle_id`. Both must match the active retained assessment and its data mode. Mission edits use its departure, local Indian clock date, and existing duration. Ambiguous edits require clarification. A proposal does not replace the active assessment until Apply.
+- `ChatResponse`/`VoiceChatResponse`: additive `evidence_bundle_id`, `mission_assessment`, and `proposed_assessment`; canonical decision/delta/mission projections reuse the assessment service. Informational intents retain distinct conditions, PFZ, hazard, or route content.
+- `POST /api/v1/voice/chat`: additive multipart `baseline_assessment_id`, `evidence_bundle_id`, `data_mode`; it shares text-chat retained-context validation. STT/TTS availability remains independently reported.
+- DEMO health returns `database: not_required` and does not query DB/connector health. The DB alert worker is disabled in DEMO; explicit mission refresh/session monitoring remains available.
+
+Retention is bounded to 256 bundles and 256 assessments **per process**, not durable or shared across workers. Restart/eviction requires explicit reassessment. No live-source availability or protected-role authorization is established by these APIs.

@@ -59,11 +59,13 @@ class ObservationBundle(BaseModel):
         """Return the display mode derived from structured provenance or underlying source labels."""
         if self.data_mode.upper() in ("DEMO", "SYNTHETIC", "MOCK", "SNAPSHOT", "SIMULATED"):
             return "DEMO"
+        modes = set()
         for payload in (self.marine, self.weather, self.hazard):
             if payload is not None:
                 ff = payload.get("freshness_flags") if isinstance(payload, dict) else getattr(payload, "freshness_flags", None)
                 if isinstance(ff, dict):
                     dm = str(ff.get("data_mode") or ff.get("provenance_mode") or "").upper()
+                    modes.add(dm)
                     if dm in ("DEMO", "SYNTHETIC", "MOCK", "SNAPSHOT", "SIMULATED"):
                         return "DEMO"
         sources = " ".join(
@@ -73,4 +75,8 @@ class ObservationBundle(BaseModel):
         ).upper()
         if any(token in sources for token in ("DEMO", "SYNTHETIC", "MOCK", "SNAPSHOT", "SIMULATED")):
             return "DEMO"
-        return "SAVED" if any(token in sources for token in ("SAVED", "DEGRADED")) else "LIVE"
+        if "UNAVAILABLE" in modes or "UNAVAILABLE" in sources or not sources:
+            return "UNAVAILABLE"
+        if modes.intersection({"SAVED", "CACHED"}) or any(token in sources for token in ("SAVED", "DEGRADED", "CACHED")):
+            return "SAVED"
+        return "LIVE"
