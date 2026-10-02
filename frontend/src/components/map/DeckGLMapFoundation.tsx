@@ -104,6 +104,7 @@ export default function DeckGLMapFoundation({
   const containerRef = useRef<HTMLDivElement>(null);
   const maplibreContainerRef = useRef<HTMLDivElement>(null);
   const maplibreMapRef = useRef<maplibregl.Map | null>(null);
+  const currentStyleRef = useRef(activeStyle);
 
   const activeViewState = externalViewState || internalViewState;
   const currentPreset = controlledPreset || localPreset;
@@ -141,6 +142,7 @@ export default function DeckGLMapFoundation({
       });
 
       maplibreMapRef.current = map;
+      currentStyleRef.current = activeStyle;
 
       return () => {
         map.remove();
@@ -154,9 +156,10 @@ export default function DeckGLMapFoundation({
   // Dynamically update basemap style when theme toggles
   useEffect(() => {
     const map = maplibreMapRef.current;
-    if (!map) return;
+    if (!map || currentStyleRef.current === activeStyle) return;
     try {
-      map.setStyle(activeStyle);
+      map.setStyle(activeStyle, { diff: false });
+      currentStyleRef.current = activeStyle;
     } catch {
       // Ignore transient style-switch errors
     }

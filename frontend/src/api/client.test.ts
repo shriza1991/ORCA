@@ -76,6 +76,7 @@ describe('API Client', () => {
     });
 
     const health = await getHealth();
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/health', expect.objectContaining({ headers: {} }));
     expect(health.status).toBe('healthy');
     expect(health.data_mode).toBe('HYBRID');
   });

@@ -22,9 +22,15 @@ export class ApiError extends Error {
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const headers = new Headers(options?.headers);
+  if (typeof options?.body === 'string' && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  const headerRecord: Record<string, string> = {};
+  headers.forEach((value, key) => { headerRecord[key === 'content-type' ? 'Content-Type' : key] = value; });
   const res = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
+    headers: headerRecord,
   });
   if (!res.ok) {
     const body = await res.json().catch(() => null);

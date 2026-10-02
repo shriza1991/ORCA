@@ -158,7 +158,6 @@ export interface DataSourceInfo {
 async function fetchOrMock<T>(url: string, mockData: T): Promise<T> {
   try {
     const res = await fetch(`${API_BASE}${url}`, {
-      headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(5000),
     });
     if (res.ok) return res.json();

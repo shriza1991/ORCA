@@ -2297,3 +2297,9 @@ Impact:
 - 52/52 integration & regression tests pass across `test_integration_inconsistencies.py`, `test_task2_hazard_validity.py`, and `test_mission_replay.py`.
 - 297/297 frontend tests pass in Vitest.
 - Clean Vite production build (`tsc && vite build`).
+
+## D074 - Exact prototype browser origin and deployment diagnostics
+Status: ACCEPTED
+Date: 2026-10-03
+Decision: Maintain the known ORCA prototype origin with a dedicated FRONTEND_ORIGIN setting in addition to configurable CORS_ORIGINS. Accept CSV/JSON lists, normalize exact origins, and reject broad/path-bearing entries. Explicit empty FRONTEND_ORIGIN opts out for other deployments. Remove unnecessary GET JSON headers and disable basemap style diffing for unrelated style switches.
+Reason: Live OPTIONS returned Disallowed CORS origin while health was reachable; a stale environment override and an older deployed commit cannot be corrected by repository defaults alone. Include a browser-access deployment check and precise Render/Vercel instructions. No wildcard permissions, frontend safety changes, or Next.js changes.

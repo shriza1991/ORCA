@@ -10,6 +10,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 import os
+import json
+from urllib.parse import urlsplit
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -32,12 +34,34 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8000
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://orca-qxx1.vercel.app"
 
+    # Dedicated, exact prototype origin survives a stale CORS_ORIGINS override.
+    # Set empty to opt out when deploying a different client. Never a wildcard.
+    FRONTEND_ORIGIN: str = "https://orca-qxx1.vercel.app"
+
     @property
     def cors_origins_list(self) -> list[str]:
-        origins = [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
-        if any(o == "*" for o in origins):
-            raise ValueError("Wildcard CORS (*) is not safe. Specify precise origins.")
-        return origins
+        raw = self.CORS_ORIGINS.strip()
+        if raw.startswith("["):
+            origins = json.loads(raw)
+            if not isinstance(origins, list) or not all(isinstance(o, str) for o in origins):
+                raise ValueError("CORS_ORIGINS JSON must be an array of origin strings.")
+        else:
+            origins = raw.split(",")
+        if self.FRONTEND_ORIGIN.strip():
+            origins.append(self.FRONTEND_ORIGIN)
+        normalized = []
+        for value in origins:
+            origin = value.strip().rstrip("/")
+            if not origin:
+                continue
+            parsed = urlsplit(origin)
+            if (parsed.scheme not in {"http", "https"} or not parsed.netloc
+                    or parsed.path or parsed.query or parsed.fragment
+                    or parsed.username or parsed.password or "*" in origin):
+                raise ValueError("CORS requires exact http(s) origins without paths or wildcards.")
+            if origin not in normalized:
+                normalized.append(origin)
+        return normalized
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://orca_user:orca_password_placeholder@localhost:5432/orca_db"

@@ -8,6 +8,15 @@
 
 ## Current Release & Workstream State
 
+### 2026-10-03 - Prototype browser console repair (D074)
+
+- **Root cause verified against deployed service:** Vercel-origin OPTIONS returned **400 Disallowed CORS origin**; GET health returned **200** without Allow-Origin. Health reported older commit `a660d747`, development/SNAPSHOT. The effective deployed allowlist rejects this client; its exact environment value cannot be inspected here. The many failed forecast/map/fleet/port/scenario requests share this cause.
+- **Corrections:** dedicated exact prototype FRONTEND_ORIGIN plus normalized CSV/JSON CORS entries; explicit environment/blueprint settings; remove needless GET JSON headers; DeckGL basemap skips unchanged styles and disables style diffing. No wildcard, navigation-safety or Next.js changes.
+- **Verification:** `python -m pytest tests/api/test_browser_access.py tests/api/test_production_resilience.py -q` with `DEBUG=false`: **11 passed**. Vite `npm.cmd test`: **297 passed (24 files)**; `npm.cmd run build` (TypeScript + Vite): **passed**, existing approximately 2.85 MB chunk/i18n warnings remain. Diff check clean.
+- **Deployment status:** repository fixes are ready; the live environment update/redeploy requires Render dashboard access unavailable in this session. Set `CORS_ORIGINS=https://orca-qxx1.vercel.app` on the service serving samudra-1.onrender.com, save/redeploy, then run `python backend/scripts/check_browser_access.py --api https://samudra-1.onrender.com/api/v1`. Do not describe the live outage as resolved before that check passes.
+- **Runbook:** `docs/BROWSER_CONSOLE_FIX.md`; exact-origin checks cover GET/POST preflights and browser-readable errors, with unknown origins rejected.
+
+
 
 ### 2026-10-03 - P0/P1 mission coherence and focused institutional handoff (D069)
 
