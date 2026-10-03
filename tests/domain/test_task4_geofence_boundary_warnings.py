@@ -425,8 +425,9 @@ def test_case_13_malformed_validity(tmp_path: Path):
     engine = DeterministicGeospatialEngine(restrictions_path=malformed_file, geofences_path=tmp_path / "empty.geojson")
 
     res = engine.evaluate_location(coordinates=[73.1, 15.1])
-    # Malformed validity is rejected from active warnings; does not crash or falsely claim verified active
-    assert res.evaluation_state == "CLEAR"
+    # Invalid relevant validity cannot establish CLEAR.
+    assert res.evaluation_state == "UNKNOWN"
+    assert res.unknown_reason == "MALFORMED_RESTRICTION_VALIDITY"
     assert res.warnings == []
 
 

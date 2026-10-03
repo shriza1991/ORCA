@@ -106,3 +106,24 @@ def test_api_alias_endpoint(client: TestClient):
     )
     assert response.status_code == 200
     assert response.json()["evaluation_state"] == "INSIDE"
+
+
+@pytest.mark.parametrize('offset_ms', [-30000, -60000, 6000])
+def test_api_rejects_stale_or_future_fix_against_server_clock(client, offset_ms):
+    from datetime import datetime, UTC
+    res = client.post('/api/v1/geospatial/evaluate', json={
+        'longitude': 73.28, 'latitude': 16.99, 'accuracy': 15,
+        'timestamp': datetime.now(UTC).timestamp() * 1000 + offset_ms,
+        'evaluation_time': '1970-01-01T00:00:00Z',
+    })
+    assert res.json()['evaluation_state'] == 'UNKNOWN'
+    assert res.json()['unknown_reason'] == 'STALE_OR_INVALID_LOCATION_TIMESTAMP'
+
+
+def test_api_accepts_fresh_fix(client):
+    from datetime import datetime, UTC
+    res = client.post('/api/v1/geospatial/evaluate', json={
+        'longitude': 73.25, 'latitude': 15.4, 'accuracy': 15,
+        'timestamp': datetime.now(UTC).timestamp() * 1000,
+    })
+    assert res.json()['evaluation_state'] == 'INSIDE'

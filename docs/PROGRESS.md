@@ -1,3 +1,12 @@
+### 2026-10-03 - Task 4 corrective pass on 1cd8757 (D078)
+- Corrected relevant malformed/inverted restriction validity: UNKNOWN instead of CLEAR; confirmed INSIDE warnings retain precedence. Updated the previous incorrect CLEAR assertion.
+- Deduplicated canonical reference/fixture zone aliases while retaining reference validity and warning IDs.
+- Enforced 30-second GPS freshness in the API and hook, including timer-based expiry without new GPS events. Kept timestamp-less explicit point/demo API compatibility and existing m/s-to-knots conversion.
+- Fixed cancelled/throttled evaluations with a trailing timer, compatible in-flight stationary requests, latest-position checks, dispatch generations, abort on invalidation/unmount and fail-closed errors.
+- Replaced copied hook logic tests with 16 real mounted-hook cases using React 18 test renderer and fake timers/deferred fetches. Corrected API/model documentation to actual field names/units.
+- Verification: 115 focused backend tests passed; 338 frontend tests passed; strict TypeScript and Vite production build passed. Includes original geospatial, Task 2 validity, Task 3 provenance and mission replay suites. Full backend suite and interactive browser/deployment checks not performed.
+- Existing map, threshold, geometry method, mission proposal and voice logic preserved; Next.js untouched. Next: apply patch, perform the boundary demo checklist, then continue remaining tasks.
+
 
 ### 2026-10-03 - Minimal Task 3 follow-up on babce3b (D076)
 - Preserved the pushed retained-evidence builder, localization, proposal states, and mission continuity. Work is scoped to the Vite frontend and Python backend.
@@ -17,6 +26,40 @@
 
 
 ## Current Release & Workstream State
+
+### 2026-10-03 - Task 5: Reliable Active-Mission Synchronization Across Dashboard, Chat, Map, Routes, Simulator, and Evidence Refresh (D079)
+
+- **Implemented in Vite frontend and FastAPI backend; Next.js untouched.** Preserved all Task 3 provenance fixes, Task 4 geofencing behaviors, and deterministic Python evaluation.
+- **Unified Deterministic Mission Identity:**
+  - Added `getMissionIdentityKey()` normalizing harbor, coordinates (4 decimals), craft profile, vessel size, ISO departure, ISO return, destination/PFZ, and uppercase data mode.
+  - Distinguishes active assessed mission, edited mission awaiting assessment, proposed mission awaiting explicit Apply, and offline historical assessments.
+  - Language preference is strictly presentation state; switching response language preserves active assessment, evidence bundle, and mission identity without triggering assessment requests.
+- **Request Generation & Offline Cache Race Guards:**
+  - `useTripAssessment.ts`: Monotonic `requestGenerationRef` guards and `AbortController` cancellation ensure slow in-flight API calls or offline cache fallbacks never overwrite newer requests or explicit adoptions.
+  - Isolated cache-write so failure cannot convert a successful API assessment into a failed or offline assessment.
+  - Implemented 6-hour offline expiry timer that demotes cached assessments to `UNKNOWN` with `departure_supported: false` while the application remains open.
+  - Reject mismatched legacy cache entries (`storedAssessmentMatchesRequest`) when craft, size, return time, destination, or data mode differ.
+  - Clears obsolete mission state when returned assessment has no `mission_state`.
+- **Chat Baseline Synchronization & Sector Isolation:**
+  - `useChat.ts`: Monotonic `chatGenerationRef` and in-flight count tracking ensure clean response resolution. `clearChat()` immediately cancels pending requests.
+  - Tracked `missionContextRef` to ensure late chat replies cannot overwrite `activeResponse` or `missionState` when the user has transitioned to a different mission.
+  - Omits baseline assessment and evidence bundle if the current assessment is expired or mismatched to active mission context.
+  - Authority sector chat remains strictly isolated from Fisher mission state and assessment identifiers.
+- **Proposal & Apply Validation Across Surfaces:**
+  - `mission-proposal.ts`: Added `validateSimulationProposal` (permitting intentional craft/size revisions while rejecting unexpected mutations in coordinates or timing), `validateRouteChoiceProposal` (validating candidate route selection and baseline identity), `validateRefreshedAssessment` (permitting fresh evidence bundles while strictly enforcing identical mission plan parameters), and `validateChatProposedAssessment`.
+  - Hardened `AssessmentSimulator.tsx`, `RouteChoices.tsx`, `MissionChanges.tsx`, and `FisherPage.tsx` at both response receipt and Apply time.
+- **Internal Snapshot Consistency for Map Previews:**
+  - Replaced mixed snapshots in `FisherPage.tsx` with unified `mapLayersTarget`.
+  - Map preview derives route geometry, candidate corridor styling, PFZ candidates, conditions, telemetry, and decision from the exact evaluated proposed assessment, accompanied by an explicit `[PREVIEW]` badge.
+  - While a proposal is loading or invalid for a future time offset, hybrid telemetry is never mixed with active geometry and old clearance is never shown for a future timestamp.
+  - Applying a valid proposal adopts the reviewed assessment object directly without triggering an additional assessment request.
+- **Verification:**
+  - 29/29 frontend test files (355 tests) passed in Vitest (`npm test`).
+  - Strict TypeScript check (`tsc --noEmit`) passed cleanly.
+  - Frontend production build (`tsc && vite build`) passed cleanly.
+  - 28/28 Task 4 backend & domain tests passed (`test_task4_corrective.py`, `test_task4_geofence_boundary_warnings.py`, `test_task4_geospatial_evaluate_api.py`).
+  - 50/50 backend pytest suite passed across assessments, Task 3 provenance, and mission replay.
+- **Deployment Status:** No git push or deployment executed. Ready for review.
 
 ### 2026-10-03 - Task 4: Authoritative Python Geofencing, Approach Warning State Taxonomy & UI (D077)
 

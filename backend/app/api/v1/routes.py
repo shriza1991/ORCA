@@ -825,8 +825,20 @@ def evaluate_geospatial_location(request: LocationEvaluationRequest) -> Any:
                 unknown_reason="MALFORMED_EVALUATION_TIME: Could not parse evaluation_time ISO string.",
             )
 
+    # Live fixes are checked against the server clock, never a client evaluation time.
+    # Timestamp-less calls remain supported for existing explicit point/demo checks.
+    if request.timestamp is not None:
+        age_ms = now_utc.timestamp() * 1000 - request.timestamp
+        if not math.isfinite(request.timestamp) or age_ms >= 30000 or age_ms < -5000:
+            return LocationEvaluationResult(
+                evaluation_state="UNKNOWN", evaluated_at=now_utc.isoformat(),
+                location_timestamp=request.timestamp if math.isfinite(request.timestamp) else None,
+                coordinates=[lon, lat] if lon is not None and lat is not None else None,
+                unknown_reason="STALE_OR_INVALID_LOCATION_TIMESTAMP",
+            )
+
     # Validate accuracy if provided: if > 200 meters, treat fix as insufficiently accurate
-    if request.accuracy is not None and request.accuracy > 200.0:
+    if request.accuracy is not None and (not math.isfinite(request.accuracy) or request.accuracy < 0 or request.accuracy > 200.0):
         return LocationEvaluationResult(
             evaluation_state="UNKNOWN",
             evaluated_at=eval_dt.isoformat(),
@@ -835,7 +847,7 @@ def evaluate_geospatial_location(request: LocationEvaluationRequest) -> Any:
             approach_threshold_km=DeterministicGeospatialEngine.APPROACH_THRESHOLD_KM,
             warnings=[],
             primary_warning=None,
-            unknown_reason=f"INSUFFICIENT_ACCURACY: GPS fix accuracy (+/-{round(request.accuracy, 1)}m) exceeds 200m safety tolerance.",
+            unknown_reason="INSUFFICIENT_ACCURACY: GPS fix accuracy must be finite and between 0 and 200m.",
         )
 
     # Convert speed to knots if provided in m/s

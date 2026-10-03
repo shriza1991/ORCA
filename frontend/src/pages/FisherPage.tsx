@@ -25,7 +25,11 @@ import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRou
 import { type MissionContext, type DecisionDeltaContract } from "../types/mission";
 import { assessmentRequest } from "../components/mission/AssessmentSimulator";
 
-import { matchesMissionProposal } from "../utils/mission-proposal";
+import {
+  matchesMissionProposal,
+  getMissionIdentityKey,
+  validateChatProposedAssessment,
+} from "../utils/mission-proposal";
 
 export type MapProposalStatus = "pending" | "success" | "error";
 
@@ -44,14 +48,14 @@ export interface MapProposalState {
 }
 
 export function missionContextKey(c: MissionContext): string {
-  return JSON.stringify([
-    c.origin_harbor,
-    c.craft_profile,
-    c.vessel_size || "medium",
-    c.departure_time,
-    c.return_time,
-    c.target_pfz,
-  ]);
+  return getMissionIdentityKey({
+    origin_harbor: c.origin_harbor,
+    craft_profile: c.craft_profile,
+    vessel_size: c.vessel_size,
+    departure_time: c.departure_time,
+    return_time: c.return_time,
+    target_pfz: c.target_pfz,
+  });
 }
 
 export interface FisherPageProps {
@@ -99,7 +103,16 @@ export default function FisherPage({
   const [mapProposal, setMapProposal] = useState<MapProposalState | null>(null);
   const proposalAbortRef = useRef<AbortController | null>(null);
 
-  const currentContextKey = missionContextKey(chat.missionContext);
+  const currentContextKey = getMissionIdentityKey({
+    origin_harbor: chat.missionContext.origin_harbor,
+    coordinates: harborCoords,
+    craft_profile: chat.missionContext.craft_profile,
+    vessel_size: chat.missionContext.vessel_size,
+    departure_time: chat.missionContext.departure_time,
+    return_time: chat.missionContext.return_time,
+    target_pfz: chat.missionContext.target_pfz,
+    data_mode: fisherDataMode,
+  });
 
   const isProposalApplicable = Boolean(
     mapProposal &&
@@ -107,12 +120,13 @@ export default function FisherPage({
     mapProposal.proposedAssessment &&
     mapProposal.delta &&
     assessment &&
+    !isExpired &&
+    !isLoading &&
     mapProposal.baselineAssessmentId === assessment.assessment_id &&
     (mapProposal.evidenceBundleId === undefined || mapProposal.evidenceBundleId === assessment.evidence_bundle_id) &&
     mapProposal.hours === mapTimeOffset &&
     mapProposal.missionContextKey === currentContextKey &&
-    matchesMissionProposal(assessment, mapProposal.proposedAssessment, mapProposal.proposedDeparture, mapProposal.proposedReturn || "") &&
-    !isLoading
+    matchesMissionProposal(assessment, mapProposal.proposedAssessment, mapProposal.proposedDeparture, mapProposal.proposedReturn || "")
   );
 
   const handleTimeOffsetChange = (hours: number) => {
@@ -292,7 +306,6 @@ export default function FisherPage({
   }, []);
 
   const appliedContext = useRef<string | null>(null);
-  const contextKey = (c: MissionContext) => JSON.stringify([c.origin_harbor, c.craft_profile, c.vessel_size || "medium", c.departure_time, c.return_time, c.target_pfz]);
 
   // 2. Assess trip when context changes (inhibited while wizard is active to prevent premature network calls)
   useEffect(() => {
@@ -300,10 +313,11 @@ export default function FisherPage({
       return;
     }
 
-    if (appliedContext.current === contextKey(chat.missionContext)) return;
+    if (appliedContext.current === currentContextKey) return;
     appliedContext.current = null;
     assessTrip({
       origin_harbor: chat.missionContext.origin_harbor,
+      coordinates: harborCoords,
       craft_profile: chat.missionContext.craft_profile || "motorized_boat",
       vessel_size: chat.missionContext.vessel_size || "medium",
       departure_time: chat.missionContext.departure_time,
@@ -323,32 +337,28 @@ export default function FisherPage({
       language: chat.language,
     });
   }, [
-    chat.missionContext.origin_harbor,
-    chat.missionContext.craft_profile,
-    chat.missionContext.vessel_size,
-    chat.missionContext.departure_time,
-    chat.missionContext.return_time,
-    chat.missionContext.target_pfz,
-    chat.language,
+    currentContextKey,
     fisherDataMode,
     lastPlanTime,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    sidebarTab,
   ]);
 
   // Synchronize canonical mission_state across assessment -> chat (M1.1)
   useEffect(() => {
     chat.setMissionAssessment(assessment);
-    if (assessment?.mission_state) {
-      chat.setMissionState(assessment.mission_state);
-    }
-  }, [assessment?.mission_state]);
+    chat.setMissionState(assessment?.mission_state || null);
+  }, [assessment]);
 
-  const effectiveDecisionStatus = assessment?.decision
+  const effectiveDecisionStatus = isLoading
+    ? "UNKNOWN"
+    : assessment?.decision
     ? typeof assessment.decision === "string"
       ? assessment.decision
       : assessment.decision.status
     : "UNKNOWN";
+
   const canonicalMapDecision = (() => {
+    if (isLoading) return "UNKNOWN" as const;
     switch (getFisherDecisionStatus(assessment, error)) {
       case "SAFE_TO_GO":
         return "GO" as const;
@@ -361,10 +371,20 @@ export default function FisherPage({
     }
   })();
 
-  const effectiveLayers = useMemo(() => {
-    const chatLayers = assessment?.map_layers?.layers || [];
+  const mapLayersTarget = (mapTimeOffset > 0 && isProposalApplicable && mapProposal?.proposedAssessment)
+    ? mapProposal.proposedAssessment
+    : (mapTimeOffset > 0 ? null : assessment);
 
-    const routes = assessment?.route_candidates || [];
+  const mapDisplayAssessment = mapLayersTarget;
+  const mapDisplayDecision = mapTimeOffset > 0
+    ? (isProposalApplicable && mapProposal?.proposedAssessment ? assessmentStatus(mapProposal.proposedAssessment) : "UNKNOWN")
+    : canonicalMapDecision;
+
+  const effectiveLayers = useMemo(() => {
+    const target = mapLayersTarget;
+    const chatLayers = target?.map_layers?.layers || [];
+
+    const routes = target?.route_candidates || [];
     const routeLayers: MapLayer[] = routes.map((route, i) => ({
       layer_id: `route_${route.route_id || i}`, name: route.name || "Evaluated corridor",
       layer_type: "geojson", visible: true,
@@ -378,7 +398,7 @@ export default function FisherPage({
     }));
 
     // Convert backend pfz_candidates to MapLayers
-    const pfzLayers: MapLayer[] = (assessment?.pfz_candidates || []).map(
+    const pfzLayers: MapLayer[] = (target?.pfz_candidates || []).map(
       (p, i) => ({
         layer_id: `pfz_${p.candidate_id || i}`,
         name: `PFZ Rank ${p.rank || i + 1}`,
@@ -408,7 +428,7 @@ export default function FisherPage({
       baseLayers,
       harborCoords,
       originHarbor,
-      status: effectiveDecisionStatus,
+      status: mapDisplayDecision,
       baselineRoutes: sidebarTab === "voyage" ? [] : routeLayers,
       baselinePFZ: sidebarTab === "voyage" ? [] : pfzLayers,
       baselineHazards: [],
@@ -418,15 +438,15 @@ export default function FisherPage({
     baseLayers,
     harborCoords,
     originHarbor,
-    assessment,
+    mapLayersTarget,
     sidebarTab,
-    effectiveDecisionStatus,
+    mapDisplayDecision,
   ]);
 
   const layerAvailability = {
-    pfz: assessment?.pfz_candidates?.length ? "AVAILABLE" : "EMPTY",
-    routes: assessment?.route_candidates?.length ? "AVAILABLE" : "EMPTY",
-    hazards: assessment?.alerts?.length ? "AVAILABLE" : "EMPTY",
+    pfz: mapLayersTarget?.pfz_candidates?.length ? "AVAILABLE" : "EMPTY",
+    routes: mapLayersTarget?.route_candidates?.length ? "AVAILABLE" : "EMPTY",
+    hazards: mapLayersTarget?.alerts?.length ? "AVAILABLE" : "EMPTY",
   } as const;
 
 
@@ -453,23 +473,69 @@ export default function FisherPage({
     });
   }
   function applyAssessment(next: TripAssessmentResponse) {
-    const context = { ...chat.missionContext, ...next.trip_context, vessel_size: (next.mission_state?.vessel.size_category || "medium") as any };
-    appliedContext.current = contextKey(context);
+    if (isExpired) {
+      console.warn("Cannot apply proposal to an expired assessment baseline.");
+      return;
+    }
+    if (next.trip_context.parent_assessment_id) {
+      if (!assessment || assessment.assessment_id !== next.trip_context.parent_assessment_id) {
+        console.warn("Cannot apply proposal: parent baseline mismatch.");
+        return;
+      }
+    }
+    const context: MissionContext = {
+      ...chat.missionContext,
+      origin_harbor: next.trip_context.origin_harbor || chat.missionContext.origin_harbor,
+      craft_profile: next.trip_context.craft_profile || chat.missionContext.craft_profile,
+      vessel_size: (next.mission_state?.vessel.size_category || next.trip_context.vessel_size || chat.missionContext.vessel_size || "medium") as any,
+      departure_time: next.trip_context.departure_time || chat.missionContext.departure_time,
+      return_time: next.trip_context.return_time || chat.missionContext.return_time,
+      target_pfz: next.trip_context.target_pfz ?? chat.missionContext.target_pfz,
+    };
+    const newContextKey = getMissionIdentityKey({
+      origin_harbor: context.origin_harbor,
+      coordinates: next.trip_context.coordinates || harborCoords,
+      craft_profile: context.craft_profile,
+      vessel_size: context.vessel_size,
+      departure_time: context.departure_time,
+      return_time: context.return_time,
+      target_pfz: context.target_pfz,
+      data_mode: next.conditions.data_mode || fisherDataMode,
+    });
+    appliedContext.current = newContextKey;
     setAssessment(next);
     chat.setMissionAssessment(next);
-    void saveOfflineAssessment(context.origin_harbor || "Ratnagiri", next, context.craft_profile || "motorized_boat", context.departure_time || "default");
-    if (next.mission_state) chat.setMissionState(next.mission_state);
+    chat.setMissionState(next.mission_state || null);
     chat.setMissionContext(context);
+    void saveOfflineAssessment(
+      context.origin_harbor || "Ratnagiri",
+      next,
+      context.craft_profile || "motorized_boat",
+      context.departure_time || "default",
+      context.return_time,
+      context.vessel_size,
+      context.target_pfz,
+      next.trip_context.coordinates,
+      next.conditions.data_mode,
+    );
+    setMapProposal(null);
+    setMapTimeOffset(0);
     setSidebarTab('decision');
   }
+
+  const chatProposal = chat.activeResponse?.proposed_assessment;
+  const isChatProposalApplicable = Boolean(
+    chatProposal &&
+    assessment &&
+    !isExpired &&
+    !isLoading &&
+    validateChatProposedAssessment(assessment, chatProposal, isExpired).valid,
+  );
+
   const tripWindow = chat.missionContext.departure_time ? new Date(chat.missionContext.departure_time).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Choose departure';
   const nav = [ ['home', Home, 'Home'], ['voyage', Navigation, 'Plan'], ['chat', MessageSquare, 'Ask ORCA'], ['map', MapIcon, 'Map'], ['trips', History, 'Trips'], ['alerts', Bell, 'Alerts'], ['profile', UserRound, 'Profile'] ] as const;
   const zones = assessment?.pfz_candidates || [];
   const summary = <MissionSummary assessment={assessment} loading={isLoading} error={error} onPlan={() => setSidebarTab('voyage')} onMap={() => setSidebarTab('map')} />;
-  const mapDisplayAssessment = isProposalApplicable ? mapProposal!.proposedAssessment! : assessment;
-  const mapDisplayDecision = mapTimeOffset > 0
-    ? (isProposalApplicable ? assessmentStatus(mapProposal!.proposedAssessment!) : "UNKNOWN")
-    : canonicalMapDecision;
 
   return <main className={`fisher-workspace workspace-${sidebarTab}`}>
     <nav className="fisher-navigation" aria-label="Fisher workspace">{nav.map(([id, Icon, label]) => <button key={id} className={sidebarTab === id || (id === 'voyage' && sidebarTab === 'decision') ? 'active' : ''} onClick={() => setSidebarTab(id)} aria-current={sidebarTab === id ? 'page' : undefined}><Icon size={19} /><span>{label}</span></button>)}</nav>
@@ -486,7 +552,7 @@ export default function FisherPage({
         </>}
         {sidebarTab === 'voyage' && <GuidedTripSetup context={chat.missionContext} language={chat.language} onContextChange={chat.setMissionContext} onComplete={handleCompletePlan} onCancel={() => setSidebarTab('home')} />}
         {sidebarTab === 'decision' && <>{summary}{assessment && !isLoading && <RouteChoices assessment={assessment} onApply={applyAssessment} />}{!isLoading && <WhatIfSimulator assessment={assessment} onApplyAssessment={applyAssessment} currentContext={chat.missionContext} currentStatus={effectiveDecisionStatus} language={chat.language} onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)} onApplyContext={chat.setMissionContext} />}<details className="product-details evidence-details"><summary>Inspect evidence, routes and detailed reasoning</summary><FisherDecisionSurface assessment={assessment} isLoading={isLoading} error={error} isOffline={isOffline} isExpired={isExpired} missionContext={chat.missionContext} language={chat.language} collaboration={null} onOpenVoyageSettings={() => setSidebarTab('voyage')} onViewMap={() => setSidebarTab('map')} /></details></>}
-        {sidebarTab === 'chat' && <div className="product-chat"><div className="mission-context-bar"><p>Current mission (correct harbor and time before asking): <strong>{originHarbor}</strong> · {tripWindow} · {(chat.missionContext.craft_profile || '').replace(/_/g, ' ')}</p><button onClick={() => setSidebarTab('voyage')}>Correct mission</button><label>Response language<select aria-label="Response language" value={chat.language} onChange={e => chat.setLanguage(e.target.value as 'en' | 'hi' | 'mr')}><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select></label></div>{chat.activeResponse?.proposed_assessment && <div className="product-notice"><p>Proposed mission: {new Date(chat.activeResponse.proposed_assessment.trip_context.departure_time || '').toLocaleString()} → {assessmentStatus(chat.activeResponse.proposed_assessment)}</p><button onClick={() => applyAssessment(chat.activeResponse!.proposed_assessment!)}>Use this exact proposed plan</button></div>}<div className="question-shortcuts">{['Can I go fishing tomorrow?', 'Where is the nearest PFZ?', 'What are the nearest hazards?', 'Why this decision?', 'Compare the routes.'].map(q => <button key={q} disabled={chat.isLoading} onClick={() => chat.send(q)}>{q}</button>)}</div><ChatPanel language={chat.language} messages={chat.messages} activeResponse={chat.activeResponse} isLoading={chat.isLoading} onSend={chat.send} onStartCall={onStartCall} onBack={() => setSidebarTab('home')} onReset={chat.clearChat} onEvidenceClick={onOpenEvidence} /></div>}
+        {sidebarTab === 'chat' && <div className="product-chat"><div className="mission-context-bar"><p>Current mission (correct harbor and time before asking): <strong>{originHarbor}</strong> · {tripWindow} · {(chat.missionContext.craft_profile || '').replace(/_/g, ' ')}</p><button onClick={() => setSidebarTab('voyage')}>Correct mission</button><label>Response language<select aria-label="Response language" value={chat.language} onChange={e => chat.setLanguage(e.target.value as 'en' | 'hi' | 'mr')}><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select></label></div>{chatProposal && <div className="product-notice"><p>Proposed mission: {new Date(chatProposal.trip_context.departure_time || '').toLocaleString()} → {assessmentStatus(chatProposal)}{!isChatProposalApplicable && <span className="muted" style={{ display: 'block', fontSize: '12px', marginTop: '2px' }}>Proposal no longer applies to the active mission baseline.</span>}</p><button disabled={!isChatProposalApplicable} onClick={() => isChatProposalApplicable && applyAssessment(chatProposal)}>Use this exact proposed plan</button></div>}<div className="question-shortcuts">{['Can I go fishing tomorrow?', 'Where is the nearest PFZ?', 'What are the nearest hazards?', 'Why this decision?', 'Compare the routes.'].map(q => <button key={q} disabled={chat.isLoading} onClick={() => chat.send(q)}>{q}</button>)}</div><ChatPanel language={chat.language} messages={chat.messages} activeResponse={chat.activeResponse} isLoading={chat.isLoading} onSend={chat.send} onStartCall={onStartCall} onBack={() => setSidebarTab('home')} onReset={chat.clearChat} onEvidenceClick={onOpenEvidence} /></div>}
         {sidebarTab === 'trips' && <section className="product-section"><p className="muted">Assessments saved on this device. Open a trip to plan from its context; conditions will be checked again.</p>{recent.length ? recent.map(a => <button className="trip-history-row" key={a.assessment_id} onClick={() => { chat.setMissionContext({ ...chat.missionContext, ...a.trip_context }); setSidebarTab('voyage'); }}><span><strong>{a.trip_context.origin_harbor}</strong><small>{new Date(a.assessed_at).toLocaleString()}</small></span><span className={`decision-label status-${assessmentStatus(a)}`}>{assessmentStatus(a)}</span></button>) : <p>No assessments yet. Plan your first trip to start a history.</p>}</section>}
         {sidebarTab === 'alerts' && <section className="product-section">{assessment && <MissionChanges assessment={assessment} onApply={applyAssessment} />}<h3>Current mission advisories</h3><p>{assessment?.conditions.hazard?.headline || 'No assessment available yet.'}</p>{assessment?.alerts.map((a, i) => <p className="product-notice" key={i}>{(a as any).message || a.title}</p>)}<FisherAlertPanel alerts={alerts} language={chat.language} onAcknowledge={acknowledgeAlert} onReplay={text => speak(text)} /></section>}
         {sidebarTab === 'profile' && <section className="product-section profile-form"><h3>Profile on this device</h3><p className="muted">Your name is a local preference. This prototype has no account sign-in.</p><label>Your name<input value={name} onChange={e => { setName(e.target.value); try { localStorage.setItem('orca.name', e.target.value); } catch {} }} placeholder="Add your name" /></label><label>Vessel<select value={chat.missionContext.craft_profile} onChange={e => chat.setMissionContext({ ...chat.missionContext, craft_profile: e.target.value as any })}><option value="traditional_non_motorized">Traditional craft</option><option value="motorized_boat">Motorized boat</option><option value="mechanized_trawler">Mechanized trawler</option></select></label><label>Size<select value={chat.missionContext.vessel_size} onChange={e => chat.setMissionContext({ ...chat.missionContext, vessel_size: e.target.value as any })}>{['small', 'medium', 'large'].map(size => <option key={size}>{size}</option>)}</select></label><button onClick={onStartCall}><Mic size={18} /> Talk to ORCA</button><h3>Saved fishing areas</h3>{savedZones.length ? savedZones.map(id => <div className="zone-row" key={id}><span>{id}</span><button onClick={() => saveZone(id)}>Remove</button></div>) : <p className="muted">Save an area from Home to keep it here.</p>}</section>}
@@ -503,7 +569,7 @@ export default function FisherPage({
         {mapTimeOffset > 0 && mapProposal && (
           <div className="product-notice map-proposal-strip" style={{ margin: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
             <div>
-              <strong>Forecast Timeline &amp; Departure Proposal (+{mapTimeOffset}h)</strong>
+              <strong>Forecast Timeline &amp; Departure Proposal (+{mapTimeOffset}h) [PREVIEW]</strong>
               <div style={{ fontSize: '13px', marginTop: '2px' }}>
                 Proposed: {new Date(mapProposal.proposedDeparture).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 <span className="muted" style={{ marginLeft: '4px' }}>

@@ -2377,3 +2377,52 @@ Impact:
 - 103/103 total backend tests pass across Task 4, Task 3 provenance, Task 2 hazard validity, and mission replay.
 - 327/327 frontend tests pass in Vitest across 27 test files (including 9 in `location-warnings.test.ts` and 5 in `useGeofence.test.ts`).
 - Production build passes cleanly with zero TypeScript errors.
+
+
+## D078 - Task 4 corrective validity, freshness and request lifecycle
+Status: ACCEPTED
+Date: 2026-10-03
+Decision: Fail closed for malformed/inverted relevant restriction validity; preserve confirmed INSIDE restrictions. Deduplicate seeded REST-/POLY- aliases with reference validity taking precedence. Live GPS timestamps expire at 30 seconds against the server clock; tolerate at most five seconds of future clock skew. Preserve timestamp-less explicit point/demo API calls. Schedule trailing GPS evaluation, allow compatible stationary requests to finish, abort superseded dispatches, and reject obsolete replies. Timer expiry demotes results without another GPS event.
+Reason: Review of 1cd8757 reproduced false CLEAR for corrupt restriction validity and an ancient GPS timestamp, duplicate zones, and a throttle/cancellation lifecycle gap. Copied hook tests did not exercise effects.
+Impact: Existing endpoint/payload/hook interfaces, warning presentation, 10 km threshold, mission Apply and Python spatial authority remain. Tests mount the real hook using React 18 test renderer; no JSDOM/browser interaction is claimed.
+
+## D079 — Task 5: Reliable Active-Mission Synchronization Across Dashboard, Chat, Map, Routes, Simulator, and Evidence Refresh
+Status: ACCEPTED
+Date: 2026-10-03
+Decision:
+1. Deterministic Mission Identity:
+   - Shared canonical key `getMissionIdentityKey()` incorporates all decision-relevant request inputs: `origin_harbor`, normalized `coordinates` (4 decimals), `craft_profile`, `vessel_size`, normalized ISO `departure_time`, normalized ISO `return_time`, `target_pfz`/`destination_id`, and uppercase `data_mode`.
+   - Distinguishes active assessed mission, edited mission awaiting assessment, proposed mission awaiting explicit Apply, and saved/offline historical assessment.
+   - Language is strictly presentation state; switching response language preserves active assessment, evidence bundle, and mission key.
+2. Request Generation Guards & Race Prevention:
+   - In `useTripAssessment`, implemented monotonic `requestGenerationRef` guards and abort controllers. Superseded requests and stale offline cache lookups cannot overwrite a newer assessment or an explicit adoption.
+   - Cache-write failures are isolated and cannot turn a successful API assessment into a failed or offline assessment.
+   - Added an active 6-hour offline cache expiry timer that demotes cached assessments to `UNKNOWN` with `departure_supported: false` while the application remains open.
+   - Reject mismatched legacy cache entries via `storedAssessmentMatchesRequest`.
+   - When an assessment returns without `mission_state`, obsolete mission state is cleared instead of retained.
+3. Chat Baseline Synchronization & Sector Isolation:
+   - In `useChat`, tracked `chatGenerationRef` and in-flight counts so concurrent requests complete accurately and `clearChat()` immediately invalidates pending replies.
+   - Tracked `missionContextRef` to ensure late chat replies cannot overwrite `activeResponse` or `missionState` when the user has transitioned to a different mission.
+   - Baseline assessment and evidence bundle are only attached if the assessment is strictly applicable to the current active mission context and non-expired.
+   - Authority sector chat remains strictly isolated from Fisher mission state and assessment identifiers.
+4. Proposal and Apply Validation:
+   - Formalized multi-mode validation helpers in `frontend/src/utils/mission-proposal.ts`:
+     - `validateSimulationProposal`: accepts intentional craft/size revisions while rejecting unexpected mutations in coordinates, harbor, or timing.
+     - `validateRouteChoiceProposal`: accepts route changes from matching baseline and unchanged mission parameters.
+     - `validateRefreshedAssessment`: allows fresh evidence bundles while strictly enforcing identical mission plan parameters and baseline parentage.
+     - `validateChatProposedAssessment`: verifies baseline linkage and context before enabling adoption.
+   - `AssessmentSimulator`, `RouteChoices`, `MissionChanges`, and `FisherPage` guard both response reception and Apply time, preventing adoption of stale baselines.
+5. Internal Snapshot Consistency for Map Previews:
+   - Replaced mixed snapshots in `FisherPage.tsx` with unified `mapLayersTarget`.
+   - Valid forecast previews derive route geometry, candidate corridor styling, PFZ candidates, conditions, telemetry, and decision from the exact evaluated proposed assessment, accompanied by an explicit `[PREVIEW]` badge.
+   - While a proposal is loading or invalid for a future time offset, hybrid telemetry is never mixed with active geometry and old clearance is never shown for a future timestamp.
+   - Applying a valid proposal adopts the reviewed assessment object directly without triggering an additional assessment request.
+
+Reason:
+Eliminate assessment races, stale proposal adoptions, chat baseline leakage, and preview snapshot mixtures across all ORCA client surfaces without introducing external state-management dependencies or duplicating Python decision logic.
+
+Impact:
+- 29/29 frontend test files (355 tests) pass in Vitest.
+- 50/50 backend pytest suite passes across assessments, Task 3 provenance, and mission replay.
+- 28/28 Task 4 geofencing tests pass.
+- Clean TypeScript check and production build (`vite build`) with zero errors.

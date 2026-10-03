@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -149,6 +150,9 @@ def is_restriction_active(
         except Exception:
             return False, "MALFORMED_VALIDITY"
 
+    if parsed_from and parsed_to and parsed_from > parsed_to:
+        return False, "MALFORMED_VALIDITY"
+
     if parsed_from and evaluation_time < parsed_from:
         return False, "FUTURE"
 
@@ -252,6 +256,7 @@ class DeterministicGeospatialEngine(GeospatialHazardEngine):
             self._load_error = f"Neither {self.restrictions_path} nor {self.geofences_path} exists."
 
         parsed_polygons: List[Dict[str, Any]] = []
+        canonical_ids = set()
         for feat in features:
             geom_data = feat.get("geometry")
             if not geom_data:
@@ -267,6 +272,14 @@ class DeterministicGeospatialEngine(GeospatialHazardEngine):
                     continue
 
                 geom = shape(geom_data)
+                boundary_id = feat.get("id") or props.get("restriction_id") or props.get("polygon_id")
+                # REST and POLY are source prefixes for the same canonical seeded zone.
+                # Reference records are loaded first and retain their validity metadata.
+                canonical_id = props.get("canonical_id") or re.sub(r"^(REST|POLY)-", "", str(boundary_id))
+                if boundary_id and canonical_id in canonical_ids:
+                    continue
+                if boundary_id:
+                    canonical_ids.add(canonical_id)
                 parsed_polygons.append({
                     "id": feat.get("id") or props.get("restriction_id") or props.get("polygon_id"),
                     "name": props.get("name", "Restricted Sector"),
@@ -378,10 +391,15 @@ class DeterministicGeospatialEngine(GeospatialHazardEngine):
             proj_line = LineString([(lon, lat), (lon2, lat2)])
 
         applicable_warnings: List[BoundaryWarning] = []
+        malformed_nearby = False
 
         for poly_item in self._polygons:
             is_active, reason = is_restriction_active(poly_item, now_utc)
             if not is_active:
+                if reason == "MALFORMED_VALIDITY":
+                    geometry = poly_item["geometry"]
+                    if compute_metric_distance_km(pt, geometry) <= self.APPROACH_THRESHOLD_KM or (proj_line is not None and geometry.intersects(proj_line)):
+                        malformed_nearby = True
                 continue
 
             poly_geom = poly_item["geometry"]
@@ -454,6 +472,8 @@ class DeterministicGeospatialEngine(GeospatialHazardEngine):
 
         if has_inside:
             state = "INSIDE"
+        elif malformed_nearby:
+            state = "UNKNOWN"
         elif has_approaching:
             state = "APPROACHING"
         else:
@@ -470,7 +490,7 @@ class DeterministicGeospatialEngine(GeospatialHazardEngine):
             warnings=applicable_warnings,
             primary_warning=primary,
             coverage_scope="Evaluated against available reference marine restrictions and geofence polygons. CLEAR indicates no applicable restrictions within evaluated coverage; not a certified navigational clearance.",
-            unknown_reason=None,
+            unknown_reason="MALFORMED_RESTRICTION_VALIDITY" if state == "UNKNOWN" else None,
             data_mode="DEMO",
         )
 

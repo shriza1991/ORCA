@@ -317,25 +317,24 @@ Authoritative spatial models for live position boundary evaluation in `backend/a
 class BoundaryWarning(BaseModel):
     boundary_id: str
     boundary_name: str
-    restriction_type: str
-    distance_km: float                       # Metric distance from polygon boundary (0.0 if inside)
-    is_inside: bool                          # Geometric containment or boundary touch
-    is_hard_restriction: bool                # Prohibited zone (e.g., military, international border)
-    projected_crossing: bool = False         # Heading/speed vector crossing
-    time_to_crossing_min: Optional[float] = None
-    source: str
-    data_mode: str = "DEMO"
-    coverage_limitations: Optional[str] = None
-    action_guidance: Optional[str] = None
+    boundary_type: str
+    distance_km: float
+    is_inside: bool
+    is_hard_restriction: bool
+    restriction_level: str
+    projected_crossing: bool = False
+    time_to_cross_hours: Optional[float] = None
+    source_mode: str = "OFFLINE_FIXTURE"
+    coverage_limitation: Optional[str] = None
 
 class LocationEvaluationResult(BaseModel):
-    state: str                               # "CLEAR" | "APPROACHING" | "INSIDE" | "UNKNOWN"
-    evaluated_at: str                        # ISO-8601 UTC
-    location_timestamp: Optional[str] = None
-    coordinates: Optional[List[float]] = None # [longitude, latitude]
+    evaluation_state: str
+    evaluated_at: str
+    location_timestamp: Optional[float] = None  # epoch milliseconds
+    coordinates: Optional[List[float]] = None
     approach_threshold_km: float = 10.0
     warnings: List[BoundaryWarning] = Field(default_factory=list)
-    active_restrictions_count: int = 0
+    primary_warning: Optional[BoundaryWarning] = None
     coverage_scope: str
     unknown_reason: Optional[str] = None
     data_mode: str = "DEMO"
@@ -344,3 +343,5 @@ class LocationEvaluationResult(BaseModel):
 - Coordinate order is strictly `[longitude, latitude]`.
 - Distance is computed via local metric projection; unrounded internally, formatted for display.
 - Non-zero distance with `is_inside: false` represents distance to nearest polygon boundary. Boundary-touching points are deterministically `is_inside: true`, `distance_km: 0.0`.
+
+D078: The API and GPS hook use a 30-second fix lifetime, with up to five seconds of future clock skew tolerated. Fix expiry clears current warnings without requiring another GPS event. Malformed/inverted validity on a nearby or projected-intercept restriction prevents CLEAR. REST-/POLY- source aliases resolve to one canonical zone with reference validity retained. Local metric projection remains an approximation; this corrective patch does not change geometry mathematics or the 10 km policy.

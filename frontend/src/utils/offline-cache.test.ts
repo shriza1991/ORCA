@@ -82,4 +82,161 @@ describe('offline-cache M1.1 collision resistance', () => {
     expect(afterClear1).toBeNull();
     expect(afterClear2).not.toBeNull();
   });
+
+  it('generates distinct cache keys distinguishing return time, size, destination, coordinates, and data mode', () => {
+    const baseKey = getOfflineCacheKey(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T18:00:00Z',
+      'medium',
+      'pfz_1',
+      [73.1234, 17.5678],
+      'LIVE'
+    );
+
+    // Different return time
+    const diffRet = getOfflineCacheKey(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T22:00:00Z',
+      'medium',
+      'pfz_1',
+      [73.1234, 17.5678],
+      'LIVE'
+    );
+    expect(diffRet).not.toBe(baseKey);
+
+    // Different vessel size
+    const diffSize = getOfflineCacheKey(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T18:00:00Z',
+      'large',
+      'pfz_1',
+      [73.1234, 17.5678],
+      'LIVE'
+    );
+    expect(diffSize).not.toBe(baseKey);
+
+    // Different destination
+    const diffDest = getOfflineCacheKey(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T18:00:00Z',
+      'medium',
+      'pfz_2',
+      [73.1234, 17.5678],
+      'LIVE'
+    );
+    expect(diffDest).not.toBe(baseKey);
+
+    // Different coordinates
+    const diffCoords = getOfflineCacheKey(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T18:00:00Z',
+      'medium',
+      'pfz_1',
+      [74.0000, 18.0000],
+      'LIVE'
+    );
+    expect(diffCoords).not.toBe(baseKey);
+
+    // Different data mode
+    const diffMode = getOfflineCacheKey(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T18:00:00Z',
+      'medium',
+      'pfz_1',
+      [73.1234, 17.5678],
+      'DEMO'
+    );
+    expect(diffMode).not.toBe(baseKey);
+  });
+
+  it('rejects mismatched legacy cache entries when craft, size, return time, or data mode differ', async () => {
+    // Store a legacy entry under harbor + craft + departure only
+    const legacyKey = 'orca_trip_assessment_Ratnagiri_motorized_boat_2026-10-04T06:00:00Z';
+    const legacyAssessment = {
+      assessment_id: 'legacy-assmnt',
+      decision: 'GO',
+      overall_risk_level: 'LOW',
+      trip_context: {
+        origin_harbor: 'Ratnagiri',
+        craft_profile: 'motorized_boat',
+        vessel_size: 'small',
+        departure_time: '2026-10-04T06:00:00Z',
+        return_time: '2026-10-04T12:00:00Z',
+        target_pfz: 'pfz-small-zone',
+      },
+      conditions: {
+        data_mode: 'DEMO',
+      },
+    } as unknown as TripAssessmentResponse;
+
+    store[legacyKey] = JSON.stringify({
+      timestamp: Date.now(),
+      data: legacyAssessment,
+    });
+
+    // Request with matching parameters should match
+    const match = await loadOfflineAssessment(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T12:00:00Z',
+      'small',
+      'pfz-small-zone',
+      undefined,
+      'DEMO'
+    );
+    expect(match).not.toBeNull();
+    expect(match?.data.assessment_id).toBe('legacy-assmnt');
+
+    // Request with different vessel size must be rejected (not served from legacy entry)
+    const rejectSize = await loadOfflineAssessment(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T12:00:00Z',
+      'large', // mismatch!
+      'pfz-small-zone',
+      undefined,
+      'DEMO'
+    );
+    expect(rejectSize).toBeNull();
+
+    // Request with different return time must be rejected
+    const rejectReturn = await loadOfflineAssessment(
+      'Ratnagiri',
+      'motorized_boat',
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T18:00:00Z', // mismatch!
+      'small',
+      'pfz-small-zone',
+      undefined,
+      'DEMO'
+    );
+    expect(rejectReturn).toBeNull();
+
+    // Request with different craft profile must be rejected
+    const rejectCraft = await loadOfflineAssessment(
+      'Ratnagiri',
+      'mechanized_trawler', // mismatch!
+      '2026-10-04T06:00:00Z',
+      '2026-10-04T12:00:00Z',
+      'small',
+      'pfz-small-zone',
+      undefined,
+      'DEMO'
+    );
+    expect(rejectCraft).toBeNull();
+  });
 });

@@ -281,59 +281,26 @@ Retention is bounded to 256 bundles and 256 assessments **per process**, not dur
 The Vite client accepts `TripSimulationResponse.simulated` only when it matches the retained baseline's mission ID, evidence bundle, origin, coordinates, vessel, destination, data mode and parent assessment, plus the requested departure/return times. Proposal browsing uses the returned assessment for preview; the active mission changes only on Apply. Evidence badges evaluate departure when supplied, otherwise assessment time. Unknown or malformed validity cannot be labelled Valid.
 
 
-## 2026-10-03: Location evaluation and geofencing contract (D077)
+## 2026-10-03: Location evaluation and geofencing contract (D077, corrected by D078)
 
-### `POST /api/v1/geospatial/evaluate` (alias `/api/v1/geofence/evaluate`)
-Authoritative evaluation of live vessel coordinates against active maritime restrictions and boundary zones.
+`POST /api/v1/geospatial/evaluate` (alias `/api/v1/geofence/evaluate`) consumes the existing `LocationEvaluationRequest` and returns `LocationEvaluationResult`.
 
-- **Request Body** (`LocationEvaluationRequest`):
-  ```json
-  {
-    "latitude": 16.985,
-    "longitude": 73.275,
-    "speed_knots": 8.5,
-    "heading_deg": 270.0,
-    "accuracy_m": 15.0,
-    "evaluation_time": "2026-10-03T12:00:00Z",
-    "location_timestamp": "2026-10-03T11:59:58Z",
-    "vessel_id": "vessel-01",
-    "data_mode": "DEMO"
-  }
-  ```
+Actual request fields: `latitude`, `longitude` (or `coordinates: [lon, lat]`), `accuracy` in meters, `speed`, `speed_unit` (browser: `m/s`; explicit callers may use `knots`), `heading` in degrees, `timestamp` in epoch milliseconds, optional ISO `evaluation_time`, and `lookahead_hours`.
 
-- **Response Body** (`LocationEvaluationResult`):
-  ```json
-  {
-    "state": "APPROACHING",
-    "evaluated_at": "2026-10-03T12:00:00Z",
-    "location_timestamp": "2026-10-03T11:59:58Z",
-    "coordinates": [73.275, 16.985],
-    "approach_threshold_km": 10.0,
-    "warnings": [
-      {
-        "boundary_id": "naval_firing_zone_a",
-        "boundary_name": "Naval Firing Range West",
-        "restriction_type": "military_exercise",
-        "distance_km": 3.42,
-        "is_inside": false,
-        "is_hard_restriction": true,
-        "projected_crossing": true,
-        "time_to_crossing_min": 13.0,
-        "source": "DG Shipping / Naval Gazette",
-        "data_mode": "DEMO",
-        "coverage_limitations": "Demo polygon fixture",
-        "action_guidance": "Near restricted area: Naval Firing Range West — 3.42 km from boundary."
-      }
-    ],
-    "active_restrictions_count": 3,
-    "coverage_scope": "Evaluated against 3 active restrictions in demo fixture dataset. Does not represent certified legal clearance.",
-    "unknown_reason": null,
-    "data_mode": "DEMO"
-  }
-  ```
+Example request:
+```json
+{"longitude":73.25,"latitude":15.4,"accuracy":15,"speed":4,"speed_unit":"m/s","heading":180,"timestamp":1791028798000}
+```
+The example timestamp is illustrative; live clients send the current GPS fix time.
 
-- **State Taxonomy**:
-  - `INSIDE`: Confirmed containment (`is_inside: true`) within an active restricted polygon.
-  - `APPROACHING`: Outside all active restrictions, but within `approach_threshold_km` (10.0 km). Proximity-based unless explicit heading/speed support a projected crossing.
-  - `CLEAR`: Successful evaluation against active boundaries with no boundary inside or approaching. Scoped to evaluated dataset coverage.
-  - `UNKNOWN`: Missing/invalid coordinates, coarse GPS accuracy (>200m), stale location, or unavailable boundary dataset.
+Actual response fields: `evaluation_state`, `evaluated_at`, numeric/null `location_timestamp`, `coordinates`, `approach_threshold_km`, `warnings`, `primary_warning`, `coverage_scope`, `unknown_reason`, and `data_mode`.
+
+Each warning uses `boundary_id`, `boundary_name`, `boundary_type`, `distance_km`, `is_inside`, `is_hard_restriction`, `restriction_level`, `time_to_cross_hours`, `projected_crossing`, `source_mode`, and `coverage_limitation`. There are no `state`, `time_to_crossing_min`, or `action_guidance` response fields.
+
+- INSIDE: confirmed containment/boundary touch in an active restricted polygon.
+- APPROACHING: within 10 km or a supported projected crossing.
+- CLEAR: no applicable nearby restriction found in successfully evaluated reference coverage; not navigational clearance.
+- UNKNOWN: unusable location/data or malformed relevant validity. A confirmed inside warning is retained rather than being erased by uncertainty in another zone.
+- Supplied GPS timestamps expire at age >=30,000 ms against the server clock, independent of client `evaluation_time`. More than 5,000 ms in the future is rejected. Timestamp-less calls remain compatible with explicit point/demo evaluation; browser GPS always supplies a timestamp.
+- Accuracy must be finite and between 0 and 200 meters when supplied.
+- Reference and fixture records with equivalent REST-/POLY-prefixed canonical identities are deduplicated; the reference record and its validity take precedence.
