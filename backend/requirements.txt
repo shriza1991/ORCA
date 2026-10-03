@@ -36,3 +36,4 @@ pytest-cov>=5.0.0
 respx>=0.21.1
 faster-whisper>=1.2.0
 
+sarvamai
