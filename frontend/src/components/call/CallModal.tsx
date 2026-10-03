@@ -332,6 +332,7 @@ export default function CallModal({
             </div>
             <button
               type="button"
+              disabled={!onApplyProposal || !isBaselineApplicable || isBaselineLoading || isBaselineExpired}
               onClick={applyPendingProposal}
               style={{ padding: '6px 12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
             >

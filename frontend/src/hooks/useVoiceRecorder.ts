@@ -31,6 +31,7 @@ export function useVoiceRecorder({
   const streamRef = useRef<MediaStream | null>(null);
   const isCancelledRef = useRef<boolean>(false);
   const recorderGenRef = useRef<number>(0);
+  const permissionPendingRef = useRef(false);
   const isMountedRef = useRef<boolean>(true);
 
   const isSupported =
@@ -66,6 +67,8 @@ export function useVoiceRecorder({
   }, [cleanupStream]);
 
   const startRecording = useCallback(async () => {
+    if (permissionPendingRef.current || mediaRecorderRef.current?.state === "recording") return;
+    mediaRecorderRef.current = null;
     setError(null);
     isCancelledRef.current = false;
     audioChunksRef.current = [];
@@ -79,6 +82,7 @@ export function useVoiceRecorder({
     }
 
     try {
+      permissionPendingRef.current = true;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // If user released, cancelled, or component unmounted while waiting for permission:
@@ -87,6 +91,7 @@ export function useVoiceRecorder({
         return;
       }
 
+      permissionPendingRef.current = false;
       streamRef.current = stream;
 
       // Determine best supported MIME type
@@ -113,6 +118,9 @@ export function useVoiceRecorder({
       };
 
       recorder.onstop = async () => {
+        if (recorderGenRef.current !== currentGen || isCancelledRef.current || !isMountedRef.current) {
+          stream.getTracks().forEach(track => track.stop()); return;
+        }
         cleanupStream();
         if (isMountedRef.current) {
           setIsRecording(false);
@@ -176,6 +184,7 @@ export function useVoiceRecorder({
       };
 
       recorder.onerror = () => {
+        if (recorderGenRef.current !== currentGen || !isMountedRef.current) return;
         cleanupStream();
         if (isMountedRef.current) {
           setIsRecording(false);
@@ -191,6 +200,8 @@ export function useVoiceRecorder({
         setIsRecording(true);
       }
     } catch (err: any) {
+      if (recorderGenRef.current !== currentGen || isCancelledRef.current || !isMountedRef.current) return;
+      permissionPendingRef.current = false;
       cleanupStream();
       if (isMountedRef.current) {
         setIsRecording(false);
@@ -209,7 +220,8 @@ export function useVoiceRecorder({
   }, [isSupported, cleanupStream, onTranscription, onError]);
 
   const stopRecording = useCallback(() => {
-    if (!streamRef.current && !mediaRecorderRef.current) {
+    if (permissionPendingRef.current) {
+      permissionPendingRef.current = false;
       // Permission request still pending when stopped -> cancel it
       isCancelledRef.current = true;
       recorderGenRef.current++;
@@ -229,6 +241,7 @@ export function useVoiceRecorder({
 
   const cancelRecording = useCallback(() => {
     isCancelledRef.current = true;
+    permissionPendingRef.current = false;
     recorderGenRef.current++;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
@@ -241,6 +254,8 @@ export function useVoiceRecorder({
       cleanupStream();
       setIsRecording(false);
     }
+    cleanupStream();
+    setIsRecording(false);
     setIsTranscribing(false);
     audioChunksRef.current = [];
   }, [cleanupStream]);

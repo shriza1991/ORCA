@@ -2472,3 +2472,12 @@ Impact:
 - Clean TypeScript check (`npm run typecheck`) and production build (`npm run build`).
 Owner: Dev 1 (Frontend), Dev 2 (Backend Platform), Dev 3 (Voice & Agents), Dev 4 (Deterministic Safety)
 Date: 2026-10-03
+
+## D082 — Task 6 corrective review against 2e4f0e3 (2026-10-03)
+Status: ACCEPTED
+
+Decision: Route explicit voice proposal adoption through the existing Fisher validation/apply path; bind call, microphone, refresh and speech work to the current mission and lifecycle generation. Filter alert validity before display or speech, distinguish foreground session monitoring from durable monitoring, and report acknowledgment/stop failures without claiming persistence. Register durable monitoring only after a usable assessment with full canonical mission context. Renew recurring warnings after expiry and expose an explicit durable subscription stop endpoint.
+
+Reason: The initial Task 6 implementation contained disconnected voice proposal adoption, stale callback races, incomplete monitoring context, and misleading alert lifecycle behavior. Preserve existing assessment and deterministic safety logic while closing these integration gaps.
+
+Verification: 401 frontend tests passed; 284 tests passed and 4 skipped across backend API/domain and selected mission/voice suites. TypeScript and Vite production build passed. Alembic has one head, f1a2b3c4d5e7, and the Task 6 upgrade SQL generated successfully. Live database upgrade and real microphone/provider playback were not exercised.

@@ -38,7 +38,7 @@ const baseline: any = { assessment_id: 'baseline', evidence_bundle_id: 'evidence
 let tree: ReactTestRenderer;
 let chat: ReturnType<typeof useChat>;
 let store: Record<string,string>;
-function Harness() { chat = useChat(); return createElement(FisherPage, { chat, theme: 'light', mobileView: 'map', onStartCall: vi.fn(), onOpenEvidence: vi.fn(), onBack: vi.fn(), onViewMap: vi.fn() }); }
+function Harness(props: any = {}) { chat = useChat(); return createElement(FisherPage, { chat, voiceProposal: props.voiceProposal, onVoiceProposalHandled: props.onHandled, theme: 'light', mobileView: 'map', onStartCall: vi.fn(), onOpenEvidence: vi.fn(), onBack: vi.fn(), onViewMap: vi.fn() }); }
 function ChatProbe() { chat = useChat(); return null; }
 async function mount(component: () => ReturnType<typeof createElement> | null = Harness) { await act(async () => { tree = create(createElement(component)); }); }
 function navigate(label: string) { const nav = tree.root.findByProps({ 'aria-label': 'Fisher workspace' }); act(() => nav.findAllByType('button').find(b => b.findAllByType('span').some(span => span.children.includes(label)))!.props.onClick()); }
@@ -146,6 +146,15 @@ describe('Task 5 corrective production integration', () => {
     expect(onApply).not.toHaveBeenCalled();
     act(() => tree.root.findAllByType('button').find(b => b.props.children === 'Review and use refreshed assessment')!.props.onClick());
     expect(onApply).toHaveBeenCalledWith(refreshed);
+  });
+
+  it('explicit voice proposal adoption uses the guarded Fisher flow without reassessment', async () => {
+    await mount(); const handled = vi.fn();
+    const voiceProposal = { ...baseline, assessment_id: 'voice-proposal', trip_context: { ...baseline.trip_context, parent_assessment_id: 'baseline', departure_time: '2026-10-04T12:00:00Z', return_time: '2026-10-05T00:00:00Z' } };
+    await act(async () => tree.update(createElement(Harness, { voiceProposal, onHandled: handled })));
+    expect(chat.missionAssessment?.assessment_id).toBe('voice-proposal');
+    expect(map().assessment.assessment_id).toBe('voice-proposal');
+    expect(fetch).toHaveBeenCalledTimes(1); expect(handled).toHaveBeenCalled();
   });
 
   it('rejects a chat reply after baseline replacement for identical mission parameters', async () => {

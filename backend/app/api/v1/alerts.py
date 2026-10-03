@@ -78,3 +78,11 @@ def acknowledge_alert(alert_id: str) -> Any:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to acknowledge alert: {str(exc)}"
         )
+
+
+@router.post("/{subscription_id}/stop")
+def stop_monitoring(subscription_id: str):
+    """Stop a durable subscription; foreground session monitoring is managed by its client."""
+    if not AlertService.stop_monitoring(subscription_id):
+        raise HTTPException(status_code=503, detail="Monitoring stop could not be confirmed; retry when connected.")
+    return {"subscription_id": subscription_id, "success": True, "is_active": False}

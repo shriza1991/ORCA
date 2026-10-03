@@ -139,7 +139,7 @@ export function useCallSession({
 
   // Track mission parameter changes during an active call
   const activeMissionKeyRef = useRef<string>('');
-  const currentMissionKey = getMissionIdentityKey({
+  const currentMissionKey = JSON.stringify([getMissionIdentityKey({
     origin_harbor: originHarbor,
     coordinates,
     craft_profile: craftProfile,
@@ -148,7 +148,7 @@ export function useCallSession({
     return_time: returnTime,
     target_pfz: targetPfz,
     data_mode: dataMode,
-  });
+  }), baselineAssessmentId, evidenceBundleId, isBaselineApplicable, isBaselineLoading, isBaselineExpired]);
 
   // Clear VAD timers
   const clearVadTimers = useCallback(() => {
@@ -212,6 +212,12 @@ export function useCallSession({
       abortControllerRef.current?.abort();
       abortControllerRef.current = null;
       cleanupAudioPlayback();
+      speechCoordinator.stop();
+      setPendingProposal(null);
+      isSubmittingTurnRef.current = false;
+      const recorder = mediaRecorderRef.current;
+      if (recorder) { recorder.onstop = null; recorder.ondataavailable = null; if (recorder.state === 'recording') try { recorder.stop(); } catch {} }
+      audioChunksRef.current = [];
       clearVadTimers();
       clearResumeTimer();
       setCallState('PAUSED');
@@ -349,9 +355,12 @@ export function useCallSession({
       setTranscriptHistory((prev) => [...prev, userTurn, assistantTurn]);
 
       // If response includes a proposed mission assessment, hold it for explicit user review
-      if (response.mission_assessment) {
-        setPendingProposal(response.mission_assessment as TripAssessmentResponse);
-      }
+      const proposal = response.proposed_assessment;
+      const proposalMatches = proposal && isBaselineApplicable && !isBaselineExpired && !isBaselineLoading &&
+        proposal.trip_context?.parent_assessment_id === baselineAssessmentId && proposal.evidence_bundle_id === evidenceBundleId &&
+        proposal.trip_context.origin_harbor === originHarbor && proposal.conditions?.data_mode === dataMode &&
+        (!coordinates || JSON.stringify(proposal.trip_context.coordinates) === JSON.stringify(coordinates));
+      setPendingProposal(proposalMatches ? proposal : null);
 
       // Play audio response if available from backend TTS
       if (response.audio_base64 && response.audio_base64.length > 50) {
@@ -371,6 +380,7 @@ export function useCallSession({
         currentAudioRef.current = audio;
 
         audio.onended = () => {
+          if (currentCallGen !== callGenRef.current || currentTurnGen !== turnGenRef.current || currentAudioRef.current !== audio) return;
           cleanupAudioPlayback();
           if (callActiveRef.current && currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) {
             // Guard interval before re-enabling listening to avoid capturing speaker echo
@@ -385,6 +395,7 @@ export function useCallSession({
         };
 
         audio.onerror = () => {
+          if (currentCallGen !== callGenRef.current || currentTurnGen !== turnGenRef.current || currentAudioRef.current !== audio) return;
           cleanupAudioPlayback();
           if (callActiveRef.current && currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) {
             clearResumeTimer();
@@ -406,6 +417,7 @@ export function useCallSession({
 
         const spoke = speechCoordinator.speak(response.answer, {
           isExplicit: true,
+          isCallSpeech: true,
           language: (response.language as any) || 'en',
           onEnd: () => {
             if (callActiveRef.current && currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) {
@@ -443,7 +455,7 @@ export function useCallSession({
         }
       }
     } catch (err: unknown) {
-      if (!callActiveRef.current || currentCallGen !== callGenRef.current || abortCtrl.signal.aborted) {
+      if (!callActiveRef.current || currentCallGen !== callGenRef.current || currentTurnGen !== turnGenRef.current || abortCtrl.signal.aborted) {
         return;
       }
 
@@ -464,7 +476,7 @@ export function useCallSession({
       callStateRef.current = 'ERROR';
       setError(msg);
     } finally {
-      isSubmittingTurnRef.current = false;
+      if (currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) isSubmittingTurnRef.current = false;
     }
   }, [
     baselineAssessmentId,
@@ -487,6 +499,9 @@ export function useCallSession({
     vesselSize,
   ]);
 
+  const processAudioRef = useRef(processCapturedAudio);
+  processAudioRef.current = processCapturedAudio;
+
   // Finalize speech turn (triggered automatically by VAD silence timeout or manual fallback)
   const finishSpeakingTurn = useCallback(() => {
     const currentState = callStateRef.current;
@@ -498,12 +513,14 @@ export function useCallSession({
     clearVadTimers();
 
     const recorder = mediaRecorderRef.current;
+    const ownerCall = callGenRef.current, ownerTurn = turnGenRef.current;
     if (recorder.state === 'recording') {
       recorder.onstop = () => {
+        if (!callActiveRef.current || ownerCall !== callGenRef.current || ownerTurn !== turnGenRef.current) return;
         const chunks = audioChunksRef.current;
         const audioBlob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
         audioChunksRef.current = [];
-        processCapturedAudio(audioBlob);
+        void processAudioRef.current(audioBlob);
       };
       try {
         recorder.stop();
@@ -514,6 +531,9 @@ export function useCallSession({
       isSubmittingTurnRef.current = false;
     }
   }, [clearVadTimers, processCapturedAudio]);
+
+  const finishTurnRef = useRef(finishSpeakingTurn);
+  finishTurnRef.current = finishSpeakingTurn;
 
   // Real-time Voice Activity Detection (VAD) loop
   const startVadAnalyser = useCallback((stream: MediaStream) => {
@@ -576,7 +596,7 @@ export function useCallSession({
                 silenceTimeoutTimerRef.current = setTimeout(() => {
                   if (callActiveRef.current && callStateRef.current === 'HEARING_YOU') {
                     // ~3 seconds silence reached -> finalize speech turn automatically!
-                    finishSpeakingTurn();
+                    finishTurnRef.current();
                   }
                 }, silenceTimeoutMs);
               }
@@ -602,6 +622,7 @@ export function useCallSession({
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
 
+    speechCoordinator.stop();
     cleanupAudioPlayback();
     cleanupMediaStream();
 
@@ -662,6 +683,7 @@ export function useCallSession({
       // Begin first listening turn
       startListeningTurn();
     } catch (err: unknown) {
+      if (currentCallGen !== callGenRef.current || !callActiveRef.current) return;
       callActiveRef.current = false;
       setCallState('ERROR');
       callStateRef.current = 'ERROR';
@@ -693,6 +715,7 @@ export function useCallSession({
         mediaRecorderRef.current.stop();
       } catch {}
     }
+    speechCoordinator.stop();
     cleanupAudioPlayback();
     cleanupMediaStream();
     speechCoordinator.setCallActive(false);
@@ -733,11 +756,12 @@ export function useCallSession({
 
   // Apply pending proposal surfaced during call
   const applyPendingProposal = useCallback(() => {
-    if (pendingProposal && onApplyProposal) {
+    if (pendingProposal && onApplyProposal && isBaselineApplicable && !isBaselineLoading && !isBaselineExpired &&
+        pendingProposal.trip_context.parent_assessment_id === baselineAssessmentId && pendingProposal.evidence_bundle_id === evidenceBundleId) {
       onApplyProposal(pendingProposal);
       setPendingProposal(null);
     }
-  }, [onApplyProposal, pendingProposal]);
+  }, [onApplyProposal, pendingProposal, baselineAssessmentId, evidenceBundleId, isBaselineApplicable, isBaselineLoading, isBaselineExpired]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -747,6 +771,7 @@ export function useCallSession({
       callActiveRef.current = false;
       abortControllerRef.current?.abort();
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      speechCoordinator.stop();
       cleanupAudioPlayback();
       cleanupMediaStream();
       speechCoordinator.setCallActive(false);

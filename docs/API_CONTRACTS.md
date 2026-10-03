@@ -304,3 +304,11 @@ Each warning uses `boundary_id`, `boundary_name`, `boundary_type`, `distance_km`
 - Supplied GPS timestamps expire at age >=30,000 ms against the server clock, independent of client `evaluation_time`. More than 5,000 ms in the future is rejected. Timestamp-less calls remain compatible with explicit point/demo evaluation; browser GPS always supplies a timestamp.
 - Accuracy must be finite and between 0 and 200 meters when supplied.
 - Reference and fixture records with equivalent REST-/POLY-prefixed canonical identities are deduplicated; the reference record and its validity take precedence.
+
+## 2026-10-03 — Task 6 monitoring corrections (D082)
+
+Saved trip registration accepts optional `coordinates: [longitude, latitude]` and `destination_id`, alongside existing vessel size, data mode, trip window and canonical `mission_state`. Explicit registration fields override their corresponding retained mission context fields; context is persisted as JSON-safe canonical mission state and restored by the monitoring worker. Invalid or reversed supplied timestamps return HTTP 400.
+
+`POST /api/v1/alerts/{subscription_id}/stop` deactivates the durable subscription and expires its active alerts. Success: `{"subscription_id":"...","success":true,"is_active":false}`. An unconfirmed stop returns HTTP 503; clients must not claim durable monitoring stopped on failure. Foreground-only session monitoring is controlled by its client.
+
+Active delivery requires ACTIVE status, an arrived valid_from and an unexpired valid_to. Future, malformed or expired records are not displayed or spoken by the Vite client. A recurring warning can be renewed after expiry with a fresh validity window and acknowledgment reset. Acknowledgment is reflected locally only after confirmed server success.

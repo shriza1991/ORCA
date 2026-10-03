@@ -137,7 +137,7 @@ export function useChat() {
         parentAssessmentId: !sectorId && isApplicable
           ? missionContextRef.current.parent_assessment_id || missionState?.parent_assessment_id || undefined
           : undefined,
-        coordinates: availability.coordinates || (isApplicable ? currentAssessment?.trip_context.coordinates : undefined),
+        coordinates: sectorId ? undefined : availability.coordinates || (isApplicable ? currentAssessment?.trip_context.coordinates : undefined),
         isLoading: Boolean(availability.isLoading),
         isExpired: Boolean(availability.isExpired),
         assessment: isApplicable ? currentAssessment : null,

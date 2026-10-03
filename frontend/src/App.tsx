@@ -36,6 +36,7 @@ export default function App() {
   const [previousPortal, setPreviousPortal] = useState<PortalMode>("selection");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [voiceProposal, setVoiceProposal] = useState<import("./types/assessment").TripAssessmentResponse | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [mobileView, setMobileView] = useState<"chat" | "map">("chat");
 
@@ -119,6 +120,8 @@ export default function App() {
       ) : portal === "fisher" ? (
         <FisherPage
           chat={chat}
+          voiceProposal={voiceProposal}
+          onVoiceProposalHandled={() => setVoiceProposal(null)}
           theme={theme}
           mobileView={mobileView}
           onStartCall={() => setIsCallModalOpen(true)}
@@ -187,6 +190,7 @@ export default function App() {
             isBaselineApplicable={activeBaseline.isApplicable}
             isBaselineLoading={activeBaseline.isLoading}
             isBaselineExpired={activeBaseline.isExpired}
+            onApplyProposal={portal === 'fisher' ? (proposal) => { setVoiceProposal(proposal); setIsCallModalOpen(false); } : undefined}
           />
         );
       })()}

@@ -9,6 +9,7 @@ interface FisherAlertPanelProps {
   alerts: ActionableAlertDto[];
   language: SupportedLanguage;
   monitoringMode?: MonitoringMode;
+  actionError?: string | null;
   isMonitoringEnabled?: boolean;
   onToggleMonitoring?: (enabled: boolean) => void;
   onAcknowledge: (alertId: string) => void;
@@ -20,6 +21,7 @@ export default function FisherAlertPanel({
   alerts,
   language,
   monitoringMode,
+  actionError,
   isMonitoringEnabled,
   onToggleMonitoring,
   onAcknowledge,
@@ -38,14 +40,16 @@ export default function FisherAlertPanel({
     return (
       <div className="fisher-monitoring-status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '4px', marginBottom: '12px', fontSize: '0.85rem' }}>
         <span style={{ color: '#64748b' }}>
-          Monitoring: <strong>{monitoringMode === 'session-only' ? 'DEMO / Session-Only (Active)' : monitoringMode === 'durable' ? 'Operational / Durable (Active)' : 'Unavailable / Degraded'}</strong>
+          {translateText('Monitoring', language)}: <strong>{translateText(monitoringMode === 'off' ? 'Off' : monitoringMode === 'session-only' ? 'Session-only / Foreground (Active)' : monitoringMode === 'durable' ? 'Operational / Durable (Active)' : 'Unavailable / Degraded', language)}</strong>
         </span>
+        {actionError && <p role="alert">{actionError}</p>}
+        <button aria-label={muted ? 'Unmute automatic speech' : 'Mute automatic speech'} onClick={() => speechCoordinator.toggleMute()}>{muted ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
         {onToggleMonitoring && (
           <button
             onClick={() => onToggleMonitoring(!isMonitoringEnabled)}
             style={{ fontSize: '0.75rem', padding: '2px 8px', background: '#e2e8f0', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
           >
-            {isMonitoringEnabled ? 'Disable' : 'Enable'}
+            {translateText(isMonitoringEnabled ? 'Disable' : 'Enable', language)}
           </button>
         )}
       </div>
@@ -63,14 +67,14 @@ export default function FisherAlertPanel({
       {monitoringMode && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '0.75rem', color: '#991b1b' }}>
           <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-            {topAlert.is_session_only ? 'DEMO · Session-Only Alert' : 'Operational Warning'}
+            {translateText(topAlert.is_session_only ? (topAlert.refreshed_assessment?.conditions?.data_mode === 'DEMO' ? 'DEMO · Session-Only Alert' : 'Session-Only Alert') : 'Operational Warning', language)}
           </span>
           {onToggleMonitoring && (
             <button
               onClick={() => onToggleMonitoring(!isMonitoringEnabled)}
               style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#fecaca', border: '1px solid #fca5a5', borderRadius: '3px', cursor: 'pointer' }}
             >
-              {isMonitoringEnabled ? 'Pause monitoring' : 'Resume monitoring'}
+              {translateText(isMonitoringEnabled ? 'Pause monitoring' : 'Resume monitoring', language)}
             </button>
           )}
         </div>
@@ -103,10 +107,11 @@ export default function FisherAlertPanel({
             style={{ fontSize: '0.8rem', padding: '4px 8px', backgroundColor: '#fecaca', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', color: '#991b1b' }}
             title="Replay alert guidance"
           >
-            Replay
+            {translateText('Replay', language)}
           </button>
         </div>
       </div>
+      {actionError && <p role="alert">{actionError}</p>}
       <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
         {topAlert.refreshed_assessment && onApplyRefreshed && (
           <button 
@@ -114,7 +119,7 @@ export default function FisherAlertPanel({
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', backgroundColor: '#0284c7', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
           >
             <CheckCircle size={18} />
-            Apply Refreshed Plan
+            {translateText('Apply Refreshed Plan', language)}
           </button>
         )}
         <button 
@@ -122,7 +127,7 @@ export default function FisherAlertPanel({
           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
         >
           <CheckCircle size={18} />
-          {topAlert.refreshed_assessment ? 'Acknowledge (Keep Current Plan)' : translateText('Acknowledge', language)}
+          {translateText(topAlert.refreshed_assessment ? 'Acknowledge (Keep Current Plan)' : 'Acknowledge', language)}
         </button>
       </div>
     </div>

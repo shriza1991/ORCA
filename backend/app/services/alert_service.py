@@ -35,23 +35,25 @@ class AlertService:
         departure_time_val = request.departure_time
         return_time_val = request.return_time
 
-        if departure_time_val and return_time_val:
+        def parse_time(value):
+            if not value:
+                return None
             try:
-                dep_dt = datetime.fromisoformat(departure_time_val.replace("Z", "+00:00"))
-                ret_dt = datetime.fromisoformat(return_time_val.replace("Z", "+00:00"))
-                if ret_dt <= dep_dt:
-                    raise ValueError("return_time must be strictly after departure_time")
-            except ValueError:
-                raise
-            except Exception as e:
-                raise ValueError(f"Invalid departure or return time format: {e}") from e
+                result = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result.astimezone(timezone.utc)
+            except (ValueError, TypeError) as exc:
+                raise ValueError("Invalid departure or return time format") from exc
+        dep_dt, ret_dt = parse_time(departure_time_val), parse_time(return_time_val)
+        if dep_dt and ret_dt and ret_dt <= dep_dt:
+            raise ValueError("return_time must be strictly after departure_time")
 
         # Resolve canonical MissionState context
         if request.mission_state:
-            mission_state = request.mission_state
+            mission_state = MissionState.model_validate(request.mission_state)
         else:
             u_ctx = UserContext(
                 origin_harbor=request.origin_harbor,
+                coordinates=request.coordinates, target_pfz=request.destination_id,
                 craft_profile=request.craft_profile,
                 vessel_size=request.vessel_size or "medium",
                 departure_time=request.departure_time,
@@ -63,10 +65,22 @@ class AlertService:
                 message=f"Monitored trip for {request.origin_harbor}",
             )
 
+        # Keep explicit registration inputs authoritative while preserving mission identity/route.
+        if request.coordinates:
+            mission_state.origin.longitude, mission_state.origin.latitude = request.coordinates
+        if request.destination_id:
+            mission_state.destination.name = request.destination_id
+        mission_state.origin.name = request.origin_harbor
+        mission_state.vessel.type = request.craft_profile
+        mission_state.vessel.size_category = request.vessel_size or "medium"
+        if dep_dt: mission_state.timing.departure = dep_dt.isoformat()
+        if ret_dt: mission_state.timing.return_deadline = ret_dt.isoformat()
+        mission_state.user.locale = request.language
+
         mission_dict = None
         if mission_state:
             if hasattr(mission_state, "model_dump"):
-                mission_dict = mission_state.model_dump()
+                mission_dict = mission_state.model_dump(mode="json")
             elif isinstance(mission_state, dict):
                 mission_dict = mission_state
 
@@ -81,8 +95,8 @@ class AlertService:
                     vessel_size=vessel_size_val,
                     data_mode=data_mode_val,
                     mission_context_json=mission_dict,
-                    departure_time=datetime.fromisoformat(departure_time_val.replace("Z", "+00:00")) if departure_time_val else None,
-                    return_time=datetime.fromisoformat(return_time_val.replace("Z", "+00:00")) if return_time_val else None,
+                    departure_time=dep_dt,
+                    return_time=ret_dt,
                     language=request.language,
                     is_active=True,
                 )
@@ -127,7 +141,7 @@ class AlertService:
         try:
             with SessionLocal() as session:
                 sub = session.query(SavedTripSubscription).filter(SavedTripSubscription.public_id == subscription_id).first()
-                if not sub:
+                if not sub or sub.is_active is False:
                     return [], "unavailable"
 
                 now = utcnow()
@@ -135,7 +149,8 @@ class AlertService:
                 alerts = session.query(ActionableAlert).filter(
                     ActionableAlert.subscription_id == sub.id,
                     ActionableAlert.status == "ACTIVE",
-                    or_(ActionableAlert.valid_to == None, ActionableAlert.valid_to > now)
+                    or_(ActionableAlert.valid_to == None, ActionableAlert.valid_to > now),
+                    or_(ActionableAlert.valid_from == None, ActionableAlert.valid_from <= now)
                 ).order_by(ActionableAlert.created_at.desc()).all()
 
                 dtos = [
@@ -151,12 +166,50 @@ class AlertService:
                         valid_from=a.valid_from,
                         valid_to=a.valid_to,
                         created_at=a.created_at
-                    ) for a in alerts
+                    ) for a in alerts if AlertService._alert_is_current(a, now)
                 ]
                 return dtos, "durable"
         except Exception as e:
             logger.warning(f"Database unavailable for get_active_alerts: {e}")
             return [], "unavailable"
+
+    @staticmethod
+    def _alert_is_current(alert, now):
+        def aware(value):
+            return value.replace(tzinfo=timezone.utc) if value and value.tzinfo is None else value
+        start, end = aware(alert.valid_from), aware(alert.valid_to)
+        return (alert.status == "ACTIVE" and (start is None or start <= now)
+                and (end is None or end > now) and (start is None or end is None or start < end))
+
+    @staticmethod
+    def _renew_alert(alert, assessment_id):
+        # A recurring warning is a new acknowledgement episode after resolution/expiry.
+        if alert.status != "ACTIVE" or (alert.valid_to and not AlertService._alert_is_current(alert, utcnow())):
+            alert.status = "ACTIVE"
+            alert.is_acknowledged = False
+            alert.valid_from = utcnow()
+            alert.valid_to = None
+        alert.assessment_id = assessment_id
+        alert.updated_at = utcnow()
+
+    @staticmethod
+    def stop_monitoring(subscription_id: str) -> bool:
+        try:
+            with SessionLocal() as session:
+                sub = session.query(SavedTripSubscription).filter(SavedTripSubscription.public_id == subscription_id).first()
+                if not sub:
+                    return False
+                sub.is_active = False
+                for alert in session.query(ActionableAlert).filter(ActionableAlert.subscription_id == sub.id, ActionableAlert.status == "ACTIVE").all():
+                    alert.status = "EXPIRED"
+                    alert.valid_to = utcnow()
+                    alert.updated_at = utcnow()
+                session.commit()
+                AlertService._monitored_trips_mission_state.pop(subscription_id, None)
+                return True
+        except Exception as exc:
+            logger.warning("Could not stop monitoring: %s", exc)
+            return False
 
     @staticmethod
     def acknowledge_alert(alert_id: str) -> bool:
@@ -200,9 +253,13 @@ class AlertService:
                         continue
 
                     stored_ms = sub.mission_context_json or AlertService._monitored_trips_mission_state.get(str(sub.public_id))
+                    if stored_ms:
+                        stored_ms = MissionState.model_validate(stored_ms)
 
                     req = TripAssessmentRequest(
                         origin_harbor=sub.origin_harbor,
+                        coordinates=(stored_ms.origin.longitude, stored_ms.origin.latitude) if stored_ms and stored_ms.origin.longitude is not None and stored_ms.origin.latitude is not None else None,
+                        destination_id=stored_ms.destination.name if stored_ms else None,
                         craft_profile=sub.craft_profile,
                         vessel_size=sub.vessel_size or "medium",
                         departure_time=sub.departure_time.isoformat() if sub.departure_time else None,
@@ -230,7 +287,7 @@ class AlertService:
                         action = action or "Verify real-time data sources before departure."
 
                         # Include action and severity so changing warnings are not suppressed
-                        identity_str = f"{sub.id}_ASSESSMENT_ALERT_{title}_{severity}_{action}"
+                        identity_str = f"{sub.id}_ASSESSMENT_ALERT_{title}_{severity}_{description}_{action}"
                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
                         seen_hashes.add(identity_hash)
 
@@ -250,6 +307,8 @@ class AlertService:
                                 valid_from=utcnow(),
                             )
                             session.add(new_alert)
+                        else:
+                            AlertService._renew_alert(existing, assessment.assessment_id)
 
                     decision_value = assessment.decision.value if hasattr(assessment.decision, "value") else str(assessment.decision)
                     if decision_value in ("NO_GO", "CAUTION", "UNKNOWN"):
@@ -267,7 +326,7 @@ class AlertService:
                         )
                         severity = "high" if decision_value == "NO_GO" else "medium"
 
-                        identity_str = f"{sub.id}_ASSESSMENT_DECISION_{decision_value}_{decision_action}"
+                        identity_str = f"{sub.id}_ASSESSMENT_DECISION_{decision_value}_{decision_summary}_{decision_action}"
                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
                         seen_hashes.add(identity_hash)
 
@@ -287,6 +346,8 @@ class AlertService:
                                 valid_from=utcnow(),
                             )
                             session.add(new_alert)
+                        else:
+                            AlertService._renew_alert(existing, assessment.assessment_id)
 
                     # Expire previous active alerts for this trip that no longer apply in current assessment
                     old_active_alerts = session.query(ActionableAlert).filter(

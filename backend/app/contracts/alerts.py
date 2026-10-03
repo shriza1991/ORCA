@@ -16,6 +16,8 @@ class SavedTripRequest(BaseModel):
     return_time: Optional[str] = Field(None, description="ISO-8601 return time")
     language: str = Field("en", description="Preferred language for alerts")
     data_mode: Optional[str] = Field("LIVE", description="Intended data mode")
+    coordinates: Optional[tuple[float, float]] = None
+    destination_id: Optional[str] = None
     mission_state: Optional[Any] = Field(None, description="Canonical MissionState context")
 
 

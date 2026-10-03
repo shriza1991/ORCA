@@ -6,6 +6,7 @@ export interface SpeakOptions {
   priority?: SpeechPriority;
   dedupeKey?: string;
   isExplicit?: boolean;
+  isCallSpeech?: boolean;
   language?: SupportedLanguage;
   onStart?: () => void;
   onEnd?: () => void;
@@ -48,6 +49,7 @@ class SpeechCoordinator {
   private queue: QueuedUtterance[] = [];
   private currentUtteranceId: number | null = null;
   private currentPriority: number = 0;
+  private currentItem: QueuedUtterance | null = null;
   private utteranceCounter = 0;
   private isMuted: boolean = false;
   private isCallActive: boolean = false;
@@ -114,7 +116,7 @@ class SpeechCoordinator {
     this.isCallActive = active;
     if (active) {
       // In continuous call mode, alerts must not be spoken over mic/call audio
-      this.cancelAutomaticSpeech();
+      this.stop();
     }
   }
 
@@ -143,6 +145,11 @@ class SpeechCoordinator {
     options: SpeakOptions = {},
   ): boolean {
     const trimmed = text?.trim();
+    if (this.isCallActive && !options.isCallSpeech) return false;
+    if (typeof window === 'undefined' || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') {
+      options.onError?.(new Error('SpeechSynthesis not supported'));
+      return false;
+    }
     if (!trimmed) return false;
 
     const isExplicit = Boolean(options.isExplicit);
@@ -200,6 +207,7 @@ class SpeechCoordinator {
     this.queue = [];
     this.currentUtteranceId = null;
     this.currentPriority = 0;
+    this.currentItem = null;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -208,33 +216,32 @@ class SpeechCoordinator {
     this.setPlaying(false);
   }
 
+  public cancelScope(prefix: string): void {
+    this.queue = this.queue.filter(item => !item.dedupeKey?.startsWith(prefix));
+    if (this.currentItem?.dedupeKey?.startsWith(prefix)) this.cancelCurrent();
+    this.processQueue();
+  }
+
+  private cancelCurrent(): void {
+    if (this.pendingTimer !== null) { clearTimeout(this.pendingTimer); this.pendingTimer = null; }
+    const cancelled = this.currentItem;
+    this.currentUtteranceId = null;
+    this.currentPriority = 0;
+    this.currentItem = null;
+    // Invalidate callbacks before cancel(), which may synchronously emit an error.
+    try { if (typeof window !== 'undefined') window.speechSynthesis?.cancel(); } catch {}
+    this.setPlaying(false);
+    cancelled?.onError?.({ error: 'canceled' });
+  }
+
   private cancelAutomaticSpeech(): void {
-    // Drop queued non-explicit speech
-    this.queue = this.queue.filter((item) => item.isExplicit);
-    if (this.currentUtteranceId !== null && this.currentPriority < 10) {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-        } catch {}
-      }
-      this.currentUtteranceId = null;
-      this.currentPriority = 0;
-      this.setPlaying(false);
-    }
+    this.queue = this.queue.filter(item => item.isExplicit);
+    if (this.currentItem && !this.currentItem.isExplicit) this.cancelCurrent();
+    this.processQueue();
   }
 
   private interruptCurrentAndPreempt(highPriorityItem: QueuedUtterance): void {
-    if (this.pendingTimer) {
-      clearTimeout(this.pendingTimer);
-      this.pendingTimer = null;
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch {}
-    }
-    this.currentUtteranceId = null;
-    this.currentPriority = 0;
+    this.cancelCurrent();
     this.queue.unshift(highPriorityItem);
     this.processQueue();
   }
@@ -256,6 +263,7 @@ class SpeechCoordinator {
     if (!item) return;
 
     this.currentUtteranceId = item.id;
+    this.currentItem = item;
     this.currentPriority = item.priority;
 
     try {
@@ -282,6 +290,7 @@ class SpeechCoordinator {
         if (this.currentUtteranceId === item.id) {
           this.currentUtteranceId = null;
           this.currentPriority = 0;
+          this.currentItem = null;
           this.setPlaying(false);
           item.onEnd?.();
           this.processQueue();
@@ -292,6 +301,7 @@ class SpeechCoordinator {
         if (this.currentUtteranceId === item.id) {
           this.currentUtteranceId = null;
           this.currentPriority = 0;
+          this.currentItem = null;
           this.setPlaying(false);
           if (e.error !== 'interrupted' && e.error !== 'canceled') {
             item.onError?.(e);

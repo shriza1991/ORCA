@@ -356,6 +356,28 @@ interface TranslationEntry {
 }
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
+  {"en": "Alert", "hi": "चेतावनी", "mr": "इशारा"},
+  {"en": "Decision changed", "hi": "निर्णय बदल गया", "mr": "निर्णय बदलला"},
+  {"en": "Material condition update", "hi": "परिस्थितियों में महत्वपूर्ण बदलाव", "mr": "परिस्थितीत महत्त्वाचा बदल"},
+  {"en": "Review the refreshed assessment before departure.", "hi": "प्रस्थान से पहले नया आकलन देखें।", "mr": "निघण्यापूर्वी अद्ययावत मूल्यांकन पाहा."},
+  {"en": "Monitoring", "hi": "निगरानी", "mr": "देखरेख"},
+  {"en": "Off", "hi": "बंद", "mr": "बंद"},
+  {"en": "Session-only / Foreground (Active)", "hi": "केवल इस सत्र में निगरानी (सक्रिय)", "mr": "फक्त या सत्रात देखरेख (सक्रिय)"},
+  {"en": "Operational / Durable (Active)", "hi": "संग्रहीत यात्रा की निगरानी (सक्रिय)", "mr": "जतन केलेल्या प्रवासाची देखरेख (सक्रिय)"},
+  {"en": "Unavailable / Degraded", "hi": "अनुपलब्ध / सीमित", "mr": "अनुपलब्ध / मर्यादित"},
+  {"en": "Session-Only Alert", "hi": "केवल इस सत्र की चेतावनी", "mr": "फक्त या सत्रातील इशारा"},
+  {"en": "DEMO · Session-Only Alert", "hi": "डेमो · केवल इस सत्र की चेतावनी", "mr": "डेमो · फक्त या सत्रातील इशारा"},
+  {"en": "Operational Warning", "hi": "परिचालन चेतावनी", "mr": "कार्यरत प्रवासाचा इशारा"},
+  {"en": "Apply Refreshed Plan", "hi": "नया आकलित प्लान अपनाएं", "mr": "अद्ययावत योजना स्वीकारा"},
+  {"en": "Acknowledge (Keep Current Plan)", "hi": "स्वीकार करें (मौजूदा प्लान रखें)", "mr": "नोंद घ्या (सध्याची योजना ठेवा)"},
+  {"en": "Replay", "hi": "फिर सुनें", "mr": "पुन्हा ऐका"},
+  {"en": "Enable", "hi": "चालू करें", "mr": "सुरू करा"},
+  {"en": "Disable", "hi": "बंद करें", "mr": "बंद करा"},
+  {"en": "Pause monitoring", "hi": "निगरानी रोकें", "mr": "देखरेख थांबवा"},
+  {"en": "Resume monitoring", "hi": "निगरानी फिर शुरू करें", "mr": "देखरेख पुन्हा सुरू करा"},
+  {"en": "Acknowledgement failed. Please retry; the warning remains active.", "hi": "स्वीकृति विफल रही। फिर कोशिश करें; चेतावनी अभी सक्रिय है।", "mr": "नोंद घेणे अयशस्वी झाले. पुन्हा प्रयत्न करा; इशारा अजून सक्रिय आहे."},
+  {"en": "This update no longer applies to the current mission.", "hi": "यह अपडेट अब मौजूदा यात्रा पर लागू नहीं है।", "mr": "हे अद्यतन सध्याच्या प्रवासाला लागू होत नाही."},
+
   {
     en: "Restricted Area",
     hi: "प्रतिबंधित क्षेत्र",

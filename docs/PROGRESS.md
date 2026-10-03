@@ -2326,3 +2326,13 @@ egister_trip_monitoring to correct UI timestamp gaps causing departure_time == r
   - Review production deployment configuration for Render background task workers.
 
 
+
+## 2026-10-03 — Task 6 corrective review (base 2e4f0e3)
+- Closed voice proposal Apply wiring, same-plan baseline change pausing, stale permission/audio/recorder callbacks, and browser speech fallback teardown.
+- Closed automatic high-priority mute and obsolete speech scope cleanup; retained explicit replay and call speech ownership.
+- Scoped monitoring requests/results to the active assessment; filtered future, malformed and expired alerts before speech; made degraded/off/session status truthful and acknowledgment failure visible.
+- Registered durable monitoring after a usable assessment with coordinates, destination, vessel limits, mode and canonical mission JSON; restored that context after worker restart. Added durable stop and recurring alert renewal.
+- Added mounted frontend lifecycle/integration regressions and backend persistence/validity/stop regressions.
+- Validation: 401 frontend tests passed; 284 backend tests passed, 4 skipped (API/domain plus selected mission/voice suites); TypeScript and Vite production build passed; whitespace checks passed.
+- Migration verification: one Alembic head f1a2b3c4d5e7; upgrade SQL generation passed. Apply the existing migration in deployment.
+- Remaining deployment verification: real microphone permissions, provider TTS/browser playback, database migration and operational worker smoke test. Code review/tests do not establish those runtime checks.

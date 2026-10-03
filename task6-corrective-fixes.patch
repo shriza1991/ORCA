@@ -1,0 +1,1789 @@
+diff --git a/backend/app/api/v1/alerts.py b/backend/app/api/v1/alerts.py
+index c007088..cb1281d 100644
+--- a/backend/app/api/v1/alerts.py
++++ b/backend/app/api/v1/alerts.py
+@@ -78,3 +78,11 @@ def acknowledge_alert(alert_id: str) -> Any:
+             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+             detail=f"Failed to acknowledge alert: {str(exc)}"
+         )
++
++
++@router.post("/{subscription_id}/stop")
++def stop_monitoring(subscription_id: str):
++    """Stop a durable subscription; foreground session monitoring is managed by its client."""
++    if not AlertService.stop_monitoring(subscription_id):
++        raise HTTPException(status_code=503, detail="Monitoring stop could not be confirmed; retry when connected.")
++    return {"subscription_id": subscription_id, "success": True, "is_active": False}
+diff --git a/backend/app/contracts/alerts.py b/backend/app/contracts/alerts.py
+index 7aa1a08..3095295 100644
+--- a/backend/app/contracts/alerts.py
++++ b/backend/app/contracts/alerts.py
+@@ -16,6 +16,8 @@ class SavedTripRequest(BaseModel):
+     return_time: Optional[str] = Field(None, description="ISO-8601 return time")
+     language: str = Field("en", description="Preferred language for alerts")
+     data_mode: Optional[str] = Field("LIVE", description="Intended data mode")
++    coordinates: Optional[tuple[float, float]] = None
++    destination_id: Optional[str] = None
+     mission_state: Optional[Any] = Field(None, description="Canonical MissionState context")
+ 
+ 
+diff --git a/backend/app/services/alert_service.py b/backend/app/services/alert_service.py
+index 190a94d..ad9e130 100644
+--- a/backend/app/services/alert_service.py
++++ b/backend/app/services/alert_service.py
+@@ -35,23 +35,25 @@ class AlertService:
+         departure_time_val = request.departure_time
+         return_time_val = request.return_time
+ 
+-        if departure_time_val and return_time_val:
++        def parse_time(value):
++            if not value:
++                return None
+             try:
+-                dep_dt = datetime.fromisoformat(departure_time_val.replace("Z", "+00:00"))
+-                ret_dt = datetime.fromisoformat(return_time_val.replace("Z", "+00:00"))
+-                if ret_dt <= dep_dt:
+-                    raise ValueError("return_time must be strictly after departure_time")
+-            except ValueError:
+-                raise
+-            except Exception as e:
+-                raise ValueError(f"Invalid departure or return time format: {e}") from e
++                result = datetime.fromisoformat(value.replace("Z", "+00:00"))
++                return result.replace(tzinfo=timezone.utc) if result.tzinfo is None else result.astimezone(timezone.utc)
++            except (ValueError, TypeError) as exc:
++                raise ValueError("Invalid departure or return time format") from exc
++        dep_dt, ret_dt = parse_time(departure_time_val), parse_time(return_time_val)
++        if dep_dt and ret_dt and ret_dt <= dep_dt:
++            raise ValueError("return_time must be strictly after departure_time")
+ 
+         # Resolve canonical MissionState context
+         if request.mission_state:
+-            mission_state = request.mission_state
++            mission_state = MissionState.model_validate(request.mission_state)
+         else:
+             u_ctx = UserContext(
+                 origin_harbor=request.origin_harbor,
++                coordinates=request.coordinates, target_pfz=request.destination_id,
+                 craft_profile=request.craft_profile,
+                 vessel_size=request.vessel_size or "medium",
+                 departure_time=request.departure_time,
+@@ -63,10 +65,22 @@ class AlertService:
+                 message=f"Monitored trip for {request.origin_harbor}",
+             )
+ 
++        # Keep explicit registration inputs authoritative while preserving mission identity/route.
++        if request.coordinates:
++            mission_state.origin.longitude, mission_state.origin.latitude = request.coordinates
++        if request.destination_id:
++            mission_state.destination.name = request.destination_id
++        mission_state.origin.name = request.origin_harbor
++        mission_state.vessel.type = request.craft_profile
++        mission_state.vessel.size_category = request.vessel_size or "medium"
++        if dep_dt: mission_state.timing.departure = dep_dt.isoformat()
++        if ret_dt: mission_state.timing.return_deadline = ret_dt.isoformat()
++        mission_state.user.locale = request.language
++
+         mission_dict = None
+         if mission_state:
+             if hasattr(mission_state, "model_dump"):
+-                mission_dict = mission_state.model_dump()
++                mission_dict = mission_state.model_dump(mode="json")
+             elif isinstance(mission_state, dict):
+                 mission_dict = mission_state
+ 
+@@ -81,8 +95,8 @@ class AlertService:
+                     vessel_size=vessel_size_val,
+                     data_mode=data_mode_val,
+                     mission_context_json=mission_dict,
+-                    departure_time=datetime.fromisoformat(departure_time_val.replace("Z", "+00:00")) if departure_time_val else None,
+-                    return_time=datetime.fromisoformat(return_time_val.replace("Z", "+00:00")) if return_time_val else None,
++                    departure_time=dep_dt,
++                    return_time=ret_dt,
+                     language=request.language,
+                     is_active=True,
+                 )
+@@ -127,7 +141,7 @@ class AlertService:
+         try:
+             with SessionLocal() as session:
+                 sub = session.query(SavedTripSubscription).filter(SavedTripSubscription.public_id == subscription_id).first()
+-                if not sub:
++                if not sub or sub.is_active is False:
+                     return [], "unavailable"
+ 
+                 now = utcnow()
+@@ -135,7 +149,8 @@ class AlertService:
+                 alerts = session.query(ActionableAlert).filter(
+                     ActionableAlert.subscription_id == sub.id,
+                     ActionableAlert.status == "ACTIVE",
+-                    or_(ActionableAlert.valid_to == None, ActionableAlert.valid_to > now)
++                    or_(ActionableAlert.valid_to == None, ActionableAlert.valid_to > now),
++                    or_(ActionableAlert.valid_from == None, ActionableAlert.valid_from <= now)
+                 ).order_by(ActionableAlert.created_at.desc()).all()
+ 
+                 dtos = [
+@@ -151,13 +166,51 @@ class AlertService:
+                         valid_from=a.valid_from,
+                         valid_to=a.valid_to,
+                         created_at=a.created_at
+-                    ) for a in alerts
++                    ) for a in alerts if AlertService._alert_is_current(a, now)
+                 ]
+                 return dtos, "durable"
+         except Exception as e:
+             logger.warning(f"Database unavailable for get_active_alerts: {e}")
+             return [], "unavailable"
+ 
++    @staticmethod
++    def _alert_is_current(alert, now):
++        def aware(value):
++            return value.replace(tzinfo=timezone.utc) if value and value.tzinfo is None else value
++        start, end = aware(alert.valid_from), aware(alert.valid_to)
++        return (alert.status == "ACTIVE" and (start is None or start <= now)
++                and (end is None or end > now) and (start is None or end is None or start < end))
++
++    @staticmethod
++    def _renew_alert(alert, assessment_id):
++        # A recurring warning is a new acknowledgement episode after resolution/expiry.
++        if alert.status != "ACTIVE" or (alert.valid_to and not AlertService._alert_is_current(alert, utcnow())):
++            alert.status = "ACTIVE"
++            alert.is_acknowledged = False
++            alert.valid_from = utcnow()
++            alert.valid_to = None
++        alert.assessment_id = assessment_id
++        alert.updated_at = utcnow()
++
++    @staticmethod
++    def stop_monitoring(subscription_id: str) -> bool:
++        try:
++            with SessionLocal() as session:
++                sub = session.query(SavedTripSubscription).filter(SavedTripSubscription.public_id == subscription_id).first()
++                if not sub:
++                    return False
++                sub.is_active = False
++                for alert in session.query(ActionableAlert).filter(ActionableAlert.subscription_id == sub.id, ActionableAlert.status == "ACTIVE").all():
++                    alert.status = "EXPIRED"
++                    alert.valid_to = utcnow()
++                    alert.updated_at = utcnow()
++                session.commit()
++                AlertService._monitored_trips_mission_state.pop(subscription_id, None)
++                return True
++        except Exception as exc:
++            logger.warning("Could not stop monitoring: %s", exc)
++            return False
++
+     @staticmethod
+     def acknowledge_alert(alert_id: str) -> bool:
+         try:
+@@ -200,9 +253,13 @@ class AlertService:
+                         continue
+ 
+                     stored_ms = sub.mission_context_json or AlertService._monitored_trips_mission_state.get(str(sub.public_id))
++                    if stored_ms:
++                        stored_ms = MissionState.model_validate(stored_ms)
+ 
+                     req = TripAssessmentRequest(
+                         origin_harbor=sub.origin_harbor,
++                        coordinates=(stored_ms.origin.longitude, stored_ms.origin.latitude) if stored_ms and stored_ms.origin.longitude is not None and stored_ms.origin.latitude is not None else None,
++                        destination_id=stored_ms.destination.name if stored_ms else None,
+                         craft_profile=sub.craft_profile,
+                         vessel_size=sub.vessel_size or "medium",
+                         departure_time=sub.departure_time.isoformat() if sub.departure_time else None,
+@@ -230,7 +287,7 @@ class AlertService:
+                         action = action or "Verify real-time data sources before departure."
+ 
+                         # Include action and severity so changing warnings are not suppressed
+-                        identity_str = f"{sub.id}_ASSESSMENT_ALERT_{title}_{severity}_{action}"
++                        identity_str = f"{sub.id}_ASSESSMENT_ALERT_{title}_{severity}_{description}_{action}"
+                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
+                         seen_hashes.add(identity_hash)
+ 
+@@ -250,6 +307,8 @@ class AlertService:
+                                 valid_from=utcnow(),
+                             )
+                             session.add(new_alert)
++                        else:
++                            AlertService._renew_alert(existing, assessment.assessment_id)
+ 
+                     decision_value = assessment.decision.value if hasattr(assessment.decision, "value") else str(assessment.decision)
+                     if decision_value in ("NO_GO", "CAUTION", "UNKNOWN"):
+@@ -267,7 +326,7 @@ class AlertService:
+                         )
+                         severity = "high" if decision_value == "NO_GO" else "medium"
+ 
+-                        identity_str = f"{sub.id}_ASSESSMENT_DECISION_{decision_value}_{decision_action}"
++                        identity_str = f"{sub.id}_ASSESSMENT_DECISION_{decision_value}_{decision_summary}_{decision_action}"
+                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
+                         seen_hashes.add(identity_hash)
+ 
+@@ -287,6 +346,8 @@ class AlertService:
+                                 valid_from=utcnow(),
+                             )
+                             session.add(new_alert)
++                        else:
++                            AlertService._renew_alert(existing, assessment.assessment_id)
+ 
+                     # Expire previous active alerts for this trip that no longer apply in current assessment
+                     old_active_alerts = session.query(ActionableAlert).filter(
+diff --git a/docs/API_CONTRACTS.md b/docs/API_CONTRACTS.md
+index 7ee0c9d..914dd65 100644
+--- a/docs/API_CONTRACTS.md
++++ b/docs/API_CONTRACTS.md
+@@ -304,3 +304,11 @@ Each warning uses `boundary_id`, `boundary_name`, `boundary_type`, `distance_km`
+ - Supplied GPS timestamps expire at age >=30,000 ms against the server clock, independent of client `evaluation_time`. More than 5,000 ms in the future is rejected. Timestamp-less calls remain compatible with explicit point/demo evaluation; browser GPS always supplies a timestamp.
+ - Accuracy must be finite and between 0 and 200 meters when supplied.
+ - Reference and fixture records with equivalent REST-/POLY-prefixed canonical identities are deduplicated; the reference record and its validity take precedence.
++
++## 2026-10-03 — Task 6 monitoring corrections (D082)
++
++Saved trip registration accepts optional `coordinates: [longitude, latitude]` and `destination_id`, alongside existing vessel size, data mode, trip window and canonical `mission_state`. Explicit registration fields override their corresponding retained mission context fields; context is persisted as JSON-safe canonical mission state and restored by the monitoring worker. Invalid or reversed supplied timestamps return HTTP 400.
++
++`POST /api/v1/alerts/{subscription_id}/stop` deactivates the durable subscription and expires its active alerts. Success: `{"subscription_id":"...","success":true,"is_active":false}`. An unconfirmed stop returns HTTP 503; clients must not claim durable monitoring stopped on failure. Foreground-only session monitoring is controlled by its client.
++
++Active delivery requires ACTIVE status, an arrived valid_from and an unexpired valid_to. Future, malformed or expired records are not displayed or spoken by the Vite client. A recurring warning can be renewed after expiry with a fresh validity window and acknowledgment reset. Acknowledgment is reflected locally only after confirmed server success.
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index 2b10f1e..5999750 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -2472,3 +2472,12 @@ Impact:
+ - Clean TypeScript check (`npm run typecheck`) and production build (`npm run build`).
+ Owner: Dev 1 (Frontend), Dev 2 (Backend Platform), Dev 3 (Voice & Agents), Dev 4 (Deterministic Safety)
+ Date: 2026-10-03
++
++## D082 — Task 6 corrective review against 2e4f0e3 (2026-10-03)
++Status: ACCEPTED
++
++Decision: Route explicit voice proposal adoption through the existing Fisher validation/apply path; bind call, microphone, refresh and speech work to the current mission and lifecycle generation. Filter alert validity before display or speech, distinguish foreground session monitoring from durable monitoring, and report acknowledgment/stop failures without claiming persistence. Register durable monitoring only after a usable assessment with full canonical mission context. Renew recurring warnings after expiry and expose an explicit durable subscription stop endpoint.
++
++Reason: The initial Task 6 implementation contained disconnected voice proposal adoption, stale callback races, incomplete monitoring context, and misleading alert lifecycle behavior. Preserve existing assessment and deterministic safety logic while closing these integration gaps.
++
++Verification: 401 frontend tests passed; 284 tests passed and 4 skipped across backend API/domain and selected mission/voice suites. TypeScript and Vite production build passed. Alembic has one head, f1a2b3c4d5e7, and the Task 6 upgrade SQL generated successfully. Live database upgrade and real microphone/provider playback were not exercised.
+diff --git a/docs/PROGRESS.md b/docs/PROGRESS.md
+index a3bc169..a5e891f 100644
+--- a/docs/PROGRESS.md
++++ b/docs/PROGRESS.md
+@@ -2326,3 +2326,13 @@ egister_trip_monitoring to correct UI timestamp gaps causing departure_time == r
+   - Review production deployment configuration for Render background task workers.
+ 
+ 
++
++## 2026-10-03 — Task 6 corrective review (base 2e4f0e3)
++- Closed voice proposal Apply wiring, same-plan baseline change pausing, stale permission/audio/recorder callbacks, and browser speech fallback teardown.
++- Closed automatic high-priority mute and obsolete speech scope cleanup; retained explicit replay and call speech ownership.
++- Scoped monitoring requests/results to the active assessment; filtered future, malformed and expired alerts before speech; made degraded/off/session status truthful and acknowledgment failure visible.
++- Registered durable monitoring after a usable assessment with coordinates, destination, vessel limits, mode and canonical mission JSON; restored that context after worker restart. Added durable stop and recurring alert renewal.
++- Added mounted frontend lifecycle/integration regressions and backend persistence/validity/stop regressions.
++- Validation: 401 frontend tests passed; 284 backend tests passed, 4 skipped (API/domain plus selected mission/voice suites); TypeScript and Vite production build passed; whitespace checks passed.
++- Migration verification: one Alembic head f1a2b3c4d5e7; upgrade SQL generation passed. Apply the existing migration in deployment.
++- Remaining deployment verification: real microphone permissions, provider TTS/browser playback, database migration and operational worker smoke test. Code review/tests do not establish those runtime checks.
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+index 8a63ef0..685ac6d 100644
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -36,6 +36,7 @@ export default function App() {
+   const [previousPortal, setPreviousPortal] = useState<PortalMode>("selection");
+   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
++  const [voiceProposal, setVoiceProposal] = useState<import("./types/assessment").TripAssessmentResponse | null>(null);
+   const [theme, setTheme] = useState<"light" | "dark">("light");
+   const [mobileView, setMobileView] = useState<"chat" | "map">("chat");
+ 
+@@ -119,6 +120,8 @@ export default function App() {
+       ) : portal === "fisher" ? (
+         <FisherPage
+           chat={chat}
++          voiceProposal={voiceProposal}
++          onVoiceProposalHandled={() => setVoiceProposal(null)}
+           theme={theme}
+           mobileView={mobileView}
+           onStartCall={() => setIsCallModalOpen(true)}
+@@ -187,6 +190,7 @@ export default function App() {
+             isBaselineApplicable={activeBaseline.isApplicable}
+             isBaselineLoading={activeBaseline.isLoading}
+             isBaselineExpired={activeBaseline.isExpired}
++            onApplyProposal={portal === 'fisher' ? (proposal) => { setVoiceProposal(proposal); setIsCallModalOpen(false); } : undefined}
+           />
+         );
+       })()}
+diff --git a/frontend/src/components/call/CallModal.tsx b/frontend/src/components/call/CallModal.tsx
+index 2fdaded..ae52b05 100644
+--- a/frontend/src/components/call/CallModal.tsx
++++ b/frontend/src/components/call/CallModal.tsx
+@@ -332,6 +332,7 @@ export default function CallModal({
+             </div>
+             <button
+               type="button"
++              disabled={!onApplyProposal || !isBaselineApplicable || isBaselineLoading || isBaselineExpired}
+               onClick={applyPendingProposal}
+               style={{ padding: '6px 12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+             >
+diff --git a/frontend/src/components/fisher/FisherAlertPanel.tsx b/frontend/src/components/fisher/FisherAlertPanel.tsx
+index e736673..5127c7b 100644
+--- a/frontend/src/components/fisher/FisherAlertPanel.tsx
++++ b/frontend/src/components/fisher/FisherAlertPanel.tsx
+@@ -9,6 +9,7 @@ interface FisherAlertPanelProps {
+   alerts: ActionableAlertDto[];
+   language: SupportedLanguage;
+   monitoringMode?: MonitoringMode;
++  actionError?: string | null;
+   isMonitoringEnabled?: boolean;
+   onToggleMonitoring?: (enabled: boolean) => void;
+   onAcknowledge: (alertId: string) => void;
+@@ -20,6 +21,7 @@ export default function FisherAlertPanel({
+   alerts,
+   language,
+   monitoringMode,
++  actionError,
+   isMonitoringEnabled,
+   onToggleMonitoring,
+   onAcknowledge,
+@@ -38,14 +40,16 @@ export default function FisherAlertPanel({
+     return (
+       <div className="fisher-monitoring-status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '4px', marginBottom: '12px', fontSize: '0.85rem' }}>
+         <span style={{ color: '#64748b' }}>
+-          Monitoring: <strong>{monitoringMode === 'session-only' ? 'DEMO / Session-Only (Active)' : monitoringMode === 'durable' ? 'Operational / Durable (Active)' : 'Unavailable / Degraded'}</strong>
++          {translateText('Monitoring', language)}: <strong>{translateText(monitoringMode === 'off' ? 'Off' : monitoringMode === 'session-only' ? 'Session-only / Foreground (Active)' : monitoringMode === 'durable' ? 'Operational / Durable (Active)' : 'Unavailable / Degraded', language)}</strong>
+         </span>
++        {actionError && <p role="alert">{actionError}</p>}
++        <button aria-label={muted ? 'Unmute automatic speech' : 'Mute automatic speech'} onClick={() => speechCoordinator.toggleMute()}>{muted ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
+         {onToggleMonitoring && (
+           <button
+             onClick={() => onToggleMonitoring(!isMonitoringEnabled)}
+             style={{ fontSize: '0.75rem', padding: '2px 8px', background: '#e2e8f0', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+           >
+-            {isMonitoringEnabled ? 'Disable' : 'Enable'}
++            {translateText(isMonitoringEnabled ? 'Disable' : 'Enable', language)}
+           </button>
+         )}
+       </div>
+@@ -63,14 +67,14 @@ export default function FisherAlertPanel({
+       {monitoringMode && (
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '0.75rem', color: '#991b1b' }}>
+           <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+-            {topAlert.is_session_only ? 'DEMO · Session-Only Alert' : 'Operational Warning'}
++            {translateText(topAlert.is_session_only ? (topAlert.refreshed_assessment?.conditions?.data_mode === 'DEMO' ? 'DEMO · Session-Only Alert' : 'Session-Only Alert') : 'Operational Warning', language)}
+           </span>
+           {onToggleMonitoring && (
+             <button
+               onClick={() => onToggleMonitoring(!isMonitoringEnabled)}
+               style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#fecaca', border: '1px solid #fca5a5', borderRadius: '3px', cursor: 'pointer' }}
+             >
+-              {isMonitoringEnabled ? 'Pause monitoring' : 'Resume monitoring'}
++              {translateText(isMonitoringEnabled ? 'Pause monitoring' : 'Resume monitoring', language)}
+             </button>
+           )}
+         </div>
+@@ -103,10 +107,11 @@ export default function FisherAlertPanel({
+             style={{ fontSize: '0.8rem', padding: '4px 8px', backgroundColor: '#fecaca', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', color: '#991b1b' }}
+             title="Replay alert guidance"
+           >
+-            Replay
++            {translateText('Replay', language)}
+           </button>
+         </div>
+       </div>
++      {actionError && <p role="alert">{actionError}</p>}
+       <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+         {topAlert.refreshed_assessment && onApplyRefreshed && (
+           <button 
+@@ -114,7 +119,7 @@ export default function FisherAlertPanel({
+             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', backgroundColor: '#0284c7', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+           >
+             <CheckCircle size={18} />
+-            Apply Refreshed Plan
++            {translateText('Apply Refreshed Plan', language)}
+           </button>
+         )}
+         <button 
+@@ -122,7 +127,7 @@ export default function FisherAlertPanel({
+           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+         >
+           <CheckCircle size={18} />
+-          {topAlert.refreshed_assessment ? 'Acknowledge (Keep Current Plan)' : translateText('Acknowledge', language)}
++          {translateText(topAlert.refreshed_assessment ? 'Acknowledge (Keep Current Plan)' : 'Acknowledge', language)}
+         </button>
+       </div>
+     </div>
+diff --git a/frontend/src/hooks/task6-corrective.test.ts b/frontend/src/hooks/task6-corrective.test.ts
+new file mode 100644
+index 0000000..c902efc
+--- /dev/null
++++ b/frontend/src/hooks/task6-corrective.test.ts
+@@ -0,0 +1,145 @@
++import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
++import { createElement } from 'react';
++import { act, create, type ReactTestRenderer } from 'react-test-renderer';
++import { useAlerts, isAlertCurrentlyValid } from './useAlerts';
++import { useCallSession } from './useCallSession';
++import { useVoiceRecorder } from './useVoiceRecorder';
++import { speechCoordinator } from '../utils/speech-coordinator';
++import * as client from '../api/client';
++vi.mock('../api/client', async () => ({ ...await vi.importActual<any>('../api/client'), sendVoiceChat: vi.fn(), transcribeAudio: vi.fn() }));
++const baseline: any = { assessment_id: 'baseline', evidence_bundle_id: 'evidence', decision: 'GO', conditions: { data_mode: 'DEMO' }, trip_context: { origin_harbor: 'Ratnagiri', craft_profile: 'motorized_boat', departure_time: '2026-10-04T06:00:00Z', return_time: '2026-10-04T18:00:00Z' }, mission_state: { mission_id: 'mission' }, route_candidates: [], pfz_candidates: [] };
++const proposal = { ...baseline, assessment_id: 'proposal', trip_context: { ...baseline.trip_context, parent_assessment_id: 'baseline' } };
++const refresh = { baseline, simulated: proposal, delta: { original_decision: 'GO', new_decision: 'CAUTION', decision_changed: true, changed_factors: ['waves'], added_factors: [], removed_factors: [], summary: 'Waves increased' } };
++const warning: any = { id: 'warning', status: 'ACTIVE', title: 'Warning', description: 'Waves increased', recommended_action: 'Review', severity: 'high', is_acknowledged: false, valid_from: null, valid_to: null };
++let tree: ReactTestRenderer | undefined;
++let alertHook: ReturnType<typeof useAlerts>;
++let call: ReturnType<typeof useCallSession>;
++let recorder: ReturnType<typeof useVoiceRecorder>;
++let recorders: any[], audios: any[], tracks: any[];
++function AlertProbe(props: any) { alertHook = useAlerts('en', props); return null; }
++function CallProbe(props: any) { call = useCallSession(props); return null; }
++function RecorderProbe() { recorder = useVoiceRecorder(); return null; }
++function deferred() { let resolve!: (v: any) => void, reject!: (v: any) => void; const promise = new Promise<any>((r,j) => { resolve=r; reject=j; }); return { promise, resolve, reject }; }
++async function mount(component: any, props: any = {}) { await act(async () => { tree = create(createElement(component,props)); }); }
++async function finish() { const r = recorders[recorders.length-1]; r.ondataavailable?.({ data: new Blob(['x'.repeat(400)]) }); await act(async () => call.finishSpeakingTurn()); }
++const callProps = { originHarbor: 'Ratnagiri', baselineAssessmentId: 'baseline', evidenceBundleId: 'evidence', isBaselineApplicable: true, dataMode: 'DEMO' };
++beforeEach(() => {
++  vi.useFakeTimers(); vi.clearAllMocks(); recorders=[]; audios=[]; tracks=[];
++  vi.stubGlobal('window', globalThis);
++  vi.stubGlobal('speechSynthesis', { speak: vi.fn(), cancel: vi.fn(), getVoices: () => [], addEventListener: vi.fn() });
++  vi.stubGlobal('SpeechSynthesisUtterance', class { constructor(public text: string) {} });
++  vi.stubGlobal('MediaRecorder', class {
++    state='inactive'; mimeType='audio/webm'; onstop: any; ondataavailable: any;
++    constructor() { recorders.push(this); } start() { this.state='recording'; } stop() { this.state='inactive'; this.onstop?.(); } static isTypeSupported() { return true; }
++  });
++  vi.stubGlobal('Audio', class { src=''; onended:any; onerror:any; play=vi.fn().mockResolvedValue(undefined); pause=vi.fn(); constructor() { audios.push(this); } });
++  vi.stubGlobal('navigator', { onLine: true, mediaDevices: { getUserMedia: vi.fn(async () => { const track={stop:vi.fn(),enabled:true}; tracks.push(track); return { active:true, getTracks:()=>[track], getAudioTracks:()=>[track] }; }) } });
++  vi.spyOn(URL,'createObjectURL').mockReturnValue('blob:test'); vi.spyOn(URL,'revokeObjectURL').mockImplementation(()=>{});
++  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok:true,json:async()=>refresh }));
++  speechCoordinator.stop(); speechCoordinator.setMuted(false); speechCoordinator.setCallActive(false); speechCoordinator.resetDeduplication();
++});
++afterEach(() => { act(() => tree?.unmount()); tree=undefined; speechCoordinator.stop(); speechCoordinator.setCallActive(false); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers(); });
++
++describe('Task 6 monitoring ownership and validity', () => {
++  it('filters expired, future, malformed and inverted alert intervals before delivery', () => {
++    const now=Date.now();
++    for (const extra of [{valid_to:new Date(now-1).toISOString()},{valid_from:new Date(now+1000).toISOString()},{valid_to:'invalid'},{valid_from:'invalid'},{valid_from:new Date(now).toISOString(),valid_to:new Date(now-100).toISOString()}]) expect(isAlertCurrentlyValid({...warning,...extra},now)).toBe(false);
++  });
++  it('clears previous baseline alerts and rejects stale Apply immediately', async () => {
++    const apply=vi.fn();
++    await mount(AlertProbe,{applicableAssessment:baseline,isApplicable:true,dataMode:'DEMO',onApplyRefreshed:apply});
++    const id=alertHook.alerts[0].id;
++    await act(async () => tree!.update(createElement(AlertProbe,{applicableAssessment:null,isApplicable:false,isLoading:true,dataMode:'DEMO',onApplyRefreshed:apply})));
++    expect(alertHook.alerts).toEqual([]); act(()=>alertHook.applyRefreshedAlert(id)); expect(apply).not.toHaveBeenCalled();
++  });
++  it('does not restart successful session polling because monitoring status changed', async () => {
++    await mount(AlertProbe,{applicableAssessment:baseline,isApplicable:true,dataMode:'DEMO'});
++    expect(fetch).toHaveBeenCalledTimes(1);
++    await act(async()=>{ vi.advanceTimersByTime(60000); });
++    expect(fetch).toHaveBeenCalledTimes(2);
++  });
++  it('reports a failed session refresh as degraded and monitoring pause as off', async () => {
++    vi.mocked(fetch).mockRejectedValue(new Error('offline'));
++    await mount(AlertProbe,{applicableAssessment:baseline,isApplicable:true,dataMode:'DEMO'});
++    expect(alertHook.monitoringMode).toBe('degraded');
++    act(()=>alertHook.setIsMonitoringEnabled(false)); expect(alertHook.monitoringMode).toBe('off');
++  });
++  it('operational poll never speaks an expired or future alert', async () => {
++    const speak=vi.spyOn(speechCoordinator,'speak');
++    vi.mocked(fetch).mockResolvedValueOnce({ok:true,json:async()=>({subscription_id:'sub',is_active:true,monitoring_mode:'durable'})} as any).mockResolvedValueOnce({ok:true,json:async()=>({monitoring_mode:'durable',alerts:[{...warning,valid_to:new Date(Date.now()-1).toISOString()},{...warning,id:'future',valid_from:new Date(Date.now()+100000).toISOString()}]})} as any);
++    await mount(AlertProbe,{dataMode:'LIVE'});
++    await act(async()=>{await alertHook.registerTrip({origin_harbor:'Ratnagiri',craft_profile:'motorized_boat',language:'en'});});
++    expect(alertHook.alerts).toEqual([]); expect(speak).not.toHaveBeenCalled();
++  });
++  it('a late registration cannot resume monitoring after mission invalidation', async () => {
++    const pending=deferred(); vi.mocked(fetch).mockReturnValueOnce(pending.promise);
++    await mount(AlertProbe,{dataMode:'LIVE'}); let request:any;
++    act(()=>{ request=alertHook.registerTrip({origin_harbor:'Ratnagiri',craft_profile:'motorized_boat',language:'en'}); });
++    act(()=>tree!.update(createElement(AlertProbe,{dataMode:'LIVE',isApplicable:false,isLoading:true})));
++    await act(async()=>{pending.resolve({ok:true,json:async()=>({subscription_id:'old',is_active:true})});await request;});
++    expect(alertHook.subscriptionId).toBeNull(); expect(fetch).toHaveBeenCalledTimes(1);
++  });
++  it('rejects unrelated refresh baselines and exposes acknowledgement failure', async () => {
++    vi.mocked(fetch).mockResolvedValueOnce({ok:true,json:async()=>({...refresh,baseline:{assessment_id:'other'}})} as any);
++    await mount(AlertProbe,{applicableAssessment:baseline,isApplicable:true,dataMode:'DEMO'});
++    expect(alertHook.alerts).toEqual([]);expect(alertHook.monitoringMode).toBe('degraded');
++  });
++});
++
++describe('Task 6 speech ownership',()=>{
++  it('mute cancels pending high-priority automatic speech before it starts',()=>{
++    speechCoordinator.speak('Restricted zone',{priority:'high',dedupeKey:'boundary:x'});
++    speechCoordinator.setMuted(true); vi.advanceTimersByTime(100);
++    expect(speechSynthesis.speak).not.toHaveBeenCalled();
++  });
++  it('scope cancellation drops an old mission without losing other queued announcements',()=>{
++    speechCoordinator.speak('Old',{dedupeKey:'demo:old:warning'});speechCoordinator.speak('New',{dedupeKey:'demo:new:warning'});
++    speechCoordinator.cancelScope('demo:old:');vi.advanceTimersByTime(100);
++    expect((speechSynthesis.speak as any).mock.calls[0][0].text).toBe('New');
++  });
++  it('blocks explicit alert replay during a call but allows owned call fallback speech',()=>{
++    speechCoordinator.setCallActive(true);expect(speechCoordinator.replay('Alert')).toBe(false);
++    expect(speechCoordinator.speak('Call answer',{isExplicit:true,isCallSpeech:true})).toBe(true);
++  });
++  it('reports unavailable speech immediately without retaining deduplication',()=>{
++    vi.stubGlobal('speechSynthesis',undefined);const onError=vi.fn();
++    expect(speechCoordinator.speak('Warning',{dedupeKey:'missing',onError})).toBe(false);expect(onError).toHaveBeenCalledTimes(1);
++  });
++});
++
++describe('Task 6 call and recorder races',()=>{
++  it('holds proposed_assessment, not the baseline mission_assessment, for explicit Apply',async()=>{
++    const apply=vi.fn();vi.mocked(client.sendVoiceChat).mockResolvedValue({answer:'Preview',mission_assessment:baseline,proposed_assessment:proposal,language:'en'} as any);
++    await mount(CallProbe,{...callProps,onApplyProposal:apply}); await act(async()=>call.startCall()); await finish();
++    expect(call.pendingProposal?.assessment_id).toBe('proposal');expect(apply).not.toHaveBeenCalled();act(()=>call.applyPendingProposal());expect(apply).toHaveBeenCalledWith(proposal);
++  });
++  it('same-plan baseline replacement pauses recording and clears any previous proposal',async()=>{
++    await mount(CallProbe,callProps);await act(async()=>call.startCall());
++    act(()=>tree!.update(createElement(CallProbe,{...callProps,baselineAssessmentId:'replacement'})));
++    expect(call.callState).toBe('PAUSED');expect(recorders[0].state).toBe('inactive');expect(call.pendingProposal).toBeNull();
++    act(()=>call.retryTurn());await finish();
++    expect(vi.mocked(client.sendVoiceChat).mock.calls[0][1]?.baseline_assessment_id).toBe('replacement');
++  });
++  it('old permission rejection cannot shut down a restarted call',async()=>{
++    const pending=deferred();(navigator.mediaDevices.getUserMedia as any).mockReturnValueOnce(pending.promise);
++    await mount(CallProbe,callProps);let first:any;act(()=>{first=call.startCall();});act(()=>call.endCall());await act(async()=>call.startCall());
++    await act(async()=>{pending.reject(new Error('old denied'));await first;});expect(call.callState).toBe('LISTENING');
++  });
++  it('ending a call cancels browser fallback audio and its delayed resume',async()=>{
++    vi.mocked(client.sendVoiceChat).mockResolvedValue({answer:'Answer',language:'en'} as any);
++    await mount(CallProbe,callProps);await act(async()=>call.startCall());await finish();act(()=>call.endCall());vi.advanceTimersByTime(100);
++    expect(speechSynthesis.speak).not.toHaveBeenCalled();expect(call.callState).toBe('ENDED');
++  });
++  it('old audio callbacks cannot pause audio belonging to a newer call',async()=>{
++    vi.mocked(client.sendVoiceChat).mockResolvedValue({answer:'Answer',audio_base64:btoa('x'.repeat(100)),audio_format:'audio/wav'} as any);
++    await mount(CallProbe,callProps);await act(async()=>call.startCall());await finish();const oldEnded=audios[0].onended;
++    act(()=>call.endCall());await act(async()=>call.startCall());await finish();act(()=>oldEnded());
++    expect(audios[1].pause).not.toHaveBeenCalled();expect(call.callState).toBe('SPEAKING');
++  });
++  it('second permission acquisition is cancelled by release even after a prior recorder exists',async()=>{
++    await mount(RecorderProbe);await act(async()=>recorder.startRecording());act(()=>recorder.cancelRecording());
++    const pending=deferred();(navigator.mediaDevices.getUserMedia as any).mockReturnValueOnce(pending.promise);
++    let request:any;act(()=>{request=recorder.startRecording();});act(()=>recorder.stopRecording());const stop=vi.fn();
++    await act(async()=>{pending.resolve({getTracks:()=>[{stop}]});await request;});expect(stop).toHaveBeenCalled();expect(recorders).toHaveLength(1);
++  });
++});
+diff --git a/frontend/src/hooks/useAlerts.ts b/frontend/src/hooks/useAlerts.ts
+index 1bf3a2a..8ce75f3 100644
+--- a/frontend/src/hooks/useAlerts.ts
++++ b/frontend/src/hooks/useAlerts.ts
+@@ -5,11 +5,8 @@ import type { DecisionDeltaContract } from '../types/mission';
+ import { validateRefreshedAssessment } from '../utils/mission-proposal';
+ import { translateText, type SupportedLanguage } from '../i18n/translations';
+ import { speechCoordinator } from '../utils/speech-coordinator';
+-
+ const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
+-
+ export type MonitoringMode = 'durable' | 'session-only' | 'degraded' | 'unavailable' | 'off';
+-
+ export interface UseAlertsOptions {
+   applicableAssessment?: TripAssessmentResponse | null;
+   isApplicable?: boolean;
+@@ -19,317 +16,193 @@ export interface UseAlertsOptions {
+   onApplyRefreshed?: (refreshed: TripAssessmentResponse) => void;
+ }
+ 
+-export function useAlerts(language: SupportedLanguage, options: UseAlertsOptions = {}) {
+-  const {
+-    applicableAssessment,
+-    isApplicable,
+-    isExpired,
+-    isLoading,
+-    dataMode = 'DEMO',
+-    onApplyRefreshed,
+-  } = options;
++export function isAlertCurrentlyValid(alert: ActionableAlertDto, now = Date.now()): boolean {
++  if (alert.status !== 'ACTIVE') return false;
++  const from = alert.valid_from ? Date.parse(alert.valid_from) : null;
++  const to = alert.valid_to ? Date.parse(alert.valid_to) : null;
++  return (from === null || (Number.isFinite(from) && from <= now)) &&
++    (to === null || (Number.isFinite(to) && to > now)) &&
++    (from === null || to === null || from < to);
++}
+ 
++export function useAlerts(language: SupportedLanguage, options: UseAlertsOptions = {}) {
++  const { applicableAssessment, isApplicable, isExpired, isLoading, dataMode = 'DEMO' } = options;
+   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+   const [alerts, setAlerts] = useState<ActionableAlertDto[]>([]);
+-  const [isPolling, setIsPolling] = useState(false);
+   const [isMonitoringEnabled, setIsMonitoringEnabled] = useState(true);
+-  const [monitoringMode, setMonitoringMode] = useState<MonitoringMode>('off');
++  const [operationalMode, setOperationalMode] = useState<MonitoringMode>('off');
++  const [sessionDegraded, setSessionDegraded] = useState(false);
++  const [actionError, setActionError] = useState<string | null>(null);
++  const mounted = useRef(true);
++  const registrationGen = useRef(0);
++  const registrationAbort = useRef<AbortController | null>(null);
++  const scope = `${dataMode}:${applicableAssessment?.assessment_id || ''}:${isApplicable}:${isExpired}:${isLoading}`;
++  const scopeRef = useRef(scope); scopeRef.current = scope;
++  const alertsScopeRef = useRef(scope);
++  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
++  const enabledRef = useRef(isMonitoringEnabled); enabledRef.current = isMonitoringEnabled;
++  const subscriptionRef = useRef(subscriptionId); subscriptionRef.current = subscriptionId;
++  const seen = useRef(new Set<string>());
++  const currentOptions = useRef(options); currentOptions.current = options;
++  const hasUsableBaseline = Boolean(applicableAssessment && isApplicable && !isExpired && !isLoading);
++  const needsSession = dataMode.toUpperCase() === 'DEMO' || !subscriptionId || operationalMode === 'unavailable' || operationalMode === 'degraded';
++  const monitoringMode: MonitoringMode = !isMonitoringEnabled ? 'off'
++    : needsSession && hasUsableBaseline ? (sessionDegraded ? 'degraded' : 'session-only')
++    : options.isApplicable === false || isExpired || isLoading ? 'degraded' : operationalMode;
+ 
+-  // Race-condition prevention refs
+-  const registrationGenRef = useRef<number>(0);
+-  const pollGenRef = useRef<number>(0);
+-  const isPollingInFlightRef = useRef<boolean>(false);
+-  const demoRefreshAbortRef = useRef<AbortController | null>(null);
+-  const seenMaterialSignaturesRef = useRef<Set<string>>(new Set());
+-  const lastMonitoredAssessmentIdRef = useRef<string | null>(null);
++  useEffect(() => {
++    registrationGen.current++;
++    registrationAbort.current?.abort();
++    setSubscriptionId(null);
++    setOperationalMode('off');
++    setAlerts([]); alertsScopeRef.current = scope; setActionError(null); setSessionDegraded(false); seen.current.clear();
++    return () => {
++      registrationGen.current++;
++      registrationAbort.current?.abort();
++      speechCoordinator.cancelScope('demo:');
++      speechCoordinator.cancelScope('operational:');
++    };
++  }, [scope]);
+ 
+-  // Register operational trip monitoring
+   const registerTrip = useCallback(async (req: SavedTripRequest) => {
+-    const currentGen = ++registrationGenRef.current;
++    if (!enabledRef.current) return;
++    const generation = ++registrationGen.current, capturedScope = scopeRef.current;
++    registrationAbort.current?.abort();
++    const abort = new AbortController(); registrationAbort.current = abort;
++    setSubscriptionId(null); setOperationalMode('off'); setAlerts([]);
+     try {
+-      const res = await fetch(`${API_BASE}/alerts/monitor`, {
+-        method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify(req),
+-      });
+-
+-      if (!res.ok) {
+-        if (currentGen === registrationGenRef.current) {
+-          setMonitoringMode('unavailable');
+-        }
+-        throw new Error(`HTTP ${res.status}`);
+-      }
+-
++      const res = await fetch(`${API_BASE}/alerts/monitor`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req), signal: abort.signal });
++      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+       const data: SavedTripResponse = await res.json();
+-      if (currentGen !== registrationGenRef.current) {
+-        return data;
+-      }
+-
+-      setSubscriptionId(data.subscription_id);
+-      setIsPolling(true);
+-      if (data.monitoring_mode === 'unavailable' || !data.is_active) {
+-        setMonitoringMode('unavailable');
+-      } else {
+-        setMonitoringMode((data.monitoring_mode as MonitoringMode) || 'durable');
+-      }
+-      return data;
+-    } catch (e) {
+-      if (currentGen === registrationGenRef.current) {
+-        console.warn('Trip monitoring registration degraded:', e);
+-        setMonitoringMode('unavailable');
++      if (abort.signal.aborted || generation !== registrationGen.current || capturedScope !== scopeRef.current || !enabledRef.current) return;
++      if (!data.is_active || data.monitoring_mode === 'unavailable') { setOperationalMode('unavailable'); return data; }
++      setSubscriptionId(data.subscription_id); setOperationalMode('durable'); return data;
++    } catch (error) {
++      if (!abort.signal.aborted && generation === registrationGen.current && capturedScope === scopeRef.current) {
++        console.warn('Trip monitoring unavailable:', error); setOperationalMode('unavailable');
+       }
+     }
+   }, []);
+ 
+-  // Acknowledge alert (verifies response body success and distinct session acknowledgement)
+-  const acknowledgeAlert = useCallback(async (alertId: string): Promise<boolean> => {
+-    const target = alerts.find((a) => a.id === alertId);
++  const acknowledgeAlert = useCallback(async (id: string): Promise<boolean> => {
++    const target = alerts.find(a => a.id === id);
+     if (!target) return false;
+-
+-    // Session-only local acknowledgement (e.g. DEMO mode refresh)
+-    if (target.is_session_only) {
+-      setAlerts((prev) =>
+-        prev.map((a) => (a.id === alertId ? { ...a, is_acknowledged: true } : a)),
+-      );
+-      return true;
+-    }
+-
+-    try {
+-      const res = await fetch(`${API_BASE}/alerts/${alertId}/acknowledge`, {
+-        method: 'POST',
+-      });
+-      if (!res.ok) return false;
+-      const data = await res.json();
+-
+-      // Check response body success explicitly
+-      if (data && data.success === true) {
+-        setAlerts((prev) =>
+-          prev.map((a) => (a.id === alertId ? { ...a, is_acknowledged: true } : a)),
+-        );
+-        return true;
+-      }
+-      return false;
+-    } catch (e) {
+-      console.warn('Failed to acknowledge alert:', e);
+-      return false;
++    const capturedScope = scopeRef.current;
++    setActionError(null);
++    let success = Boolean(target.is_session_only);
++    if (!success) {
++      try {
++        const res = await fetch(`${API_BASE}/alerts/${id}/acknowledge`, { method: 'POST' });
++        const body = res.ok ? await res.json() : null;
++        success = body?.success === true && body?.is_acknowledged === true;
++      } catch { success = false; }
+     }
+-  }, [alerts]);
+-
+-  // Explicit adoption of a refreshed assessment surfaced through monitoring
+-  const applyRefreshedAlert = useCallback((alertId: string) => {
+-    const target = alerts.find((a) => a.id === alertId);
+-    if (target && target.refreshed_assessment && onApplyRefreshed) {
+-      onApplyRefreshed(target.refreshed_assessment);
+-      // Mark alert acknowledged once applied
+-      setAlerts((prev) =>
+-        prev.map((a) => (a.id === alertId ? { ...a, is_acknowledged: true } : a)),
+-      );
++    if (!mounted.current || capturedScope !== scopeRef.current) return false;
++    if (!success) { setActionError(translateText('Acknowledgement failed. Please retry; the warning remains active.', language)); return false; }
++    setAlerts(previous => previous.map(a => a.id === id ? { ...a, is_acknowledged: true } : a));
++    return true;
++  }, [alerts, language]);
++
++  const applyRefreshedAlert = useCallback((id: string) => {
++    const target = alerts.find(a => a.id === id);
++    const active = currentOptions.current;
++    if (!target?.refreshed_assessment || !active.applicableAssessment || !active.isApplicable || active.isExpired || active.isLoading ||
++        !isAlertCurrentlyValid(target) || !validateRefreshedAssessment(active.applicableAssessment, target.refreshed_assessment).valid) {
++      setActionError(translateText('This update no longer applies to the current mission.', language)); return;
+     }
+-  }, [alerts, onApplyRefreshed]);
++    if (active.onApplyRefreshed) active.onApplyRefreshed(target.refreshed_assessment);
++  }, [alerts, language]);
+ 
+-  // Operational polling loop (non-overlapping, excludes expired alerts)
+   useEffect(() => {
+-    if (!subscriptionId || !isPolling || !isMonitoringEnabled) return;
+-
+-    const currentPollGen = ++pollGenRef.current;
+-
++    if (!subscriptionId || !isMonitoringEnabled || isApplicable === false || isExpired || isLoading || dataMode.toUpperCase() === 'DEMO') return;
++    const capturedScope = scope;
++    const abort = new AbortController(); let inFlight = false;
++    const owns = () => !abort.signal.aborted && capturedScope === scopeRef.current && subscriptionRef.current === subscriptionId;
+     const poll = async () => {
+-      if (isPollingInFlightRef.current || currentPollGen !== pollGenRef.current) return;
+-      isPollingInFlightRef.current = true;
+-
++      if (inFlight || !owns()) return;
++      inFlight = true;
+       try {
+-        const res = await fetch(`${API_BASE}/alerts/${subscriptionId}`);
+-        if (!res.ok) {
+-          if (currentPollGen === pollGenRef.current) {
+-            setMonitoringMode('degraded');
+-          }
+-          return;
+-        }
+-        const data = await res.json();
+-        if (currentPollGen !== pollGenRef.current) return;
+-
+-        if (data.monitoring_mode) {
+-          setMonitoringMode(data.monitoring_mode as MonitoringMode);
+-        }
+-
+-        const incomingAlerts: ActionableAlertDto[] = data.alerts || [];
+-
+-        // Announce new, unacknowledged alerts sequentially through shared coordinator
+-        incomingAlerts.forEach((alert: ActionableAlertDto) => {
+-          if (!alert.is_acknowledged && alert.status === 'ACTIVE') {
+-            const prefix = translateText('Alert', language);
+-            const dedupeKey = `operational:${subscriptionId}:${alert.id}:${alert.severity}:${alert.recommended_action}`;
+-            speechCoordinator.speak(`${prefix}: ${alert.title}. ${alert.recommended_action}`, {
+-              priority: alert.severity.toLowerCase() === 'high' ? 'high' : 'normal',
+-              dedupeKey,
+-              language,
+-            });
+-          }
+-        });
+-
+-        // Filter alerts: only active and unexpired
+-        const nowMs = Date.now();
+-        const validAlerts = incomingAlerts.filter((a) => {
+-          if (a.status !== 'ACTIVE') return false;
+-          if (a.valid_to) {
+-            const exp = Date.parse(a.valid_to);
+-            if (!isNaN(exp) && exp <= nowMs) return false;
+-          }
+-          return true;
+-        });
+-
+-        setAlerts(validAlerts);
+-      } catch (e) {
+-        console.warn('Alert polling network error:', e);
+-        if (currentPollGen === pollGenRef.current) {
+-          setMonitoringMode('degraded');
++        const res = await fetch(`${API_BASE}/alerts/${subscriptionId}`, { signal: abort.signal });
++        if (!res.ok) throw new Error(`HTTP ${res.status}`);
++        const data = await res.json(); if (!owns()) return;
++        setOperationalMode(data.monitoring_mode === 'unavailable' || data.monitoring_mode === 'degraded' ? data.monitoring_mode : 'durable');
++        const incoming: ActionableAlertDto[] = (data.alerts || []).filter((a: ActionableAlertDto) => isAlertCurrentlyValid(a));
++        for (const alert of incoming) if (!alert.is_acknowledged) {
++          speechCoordinator.speak(`${translateText('Alert', language)}: ${alert.title}. ${alert.recommended_action}`, {
++            priority: ['high','critical'].includes(alert.severity.toLowerCase()) ? 'high' : 'normal',
++            dedupeKey: `operational:${subscriptionId}:${alert.id}:${alert.valid_from || ""}:${alert.severity}:${alert.recommended_action}`, language,
++          });
+         }
+-      } finally {
+-        isPollingInFlightRef.current = false;
+-      }
++        setAlerts(previous => [...incoming, ...previous.filter(a => a.is_session_only && isAlertCurrentlyValid(a))]);
++      } catch {
++        if (owns()) setOperationalMode('degraded');
++      } finally { inFlight = false; }
+     };
+-
+-    poll();
+-    const interval = setInterval(poll, 15000);
++    void poll(); const timer = setInterval(() => void poll(), 15000);
+     return () => {
+-      clearInterval(interval);
+-      pollGenRef.current++;
+-      isPollingInFlightRef.current = false;
++      abort.abort(); clearInterval(timer); speechCoordinator.cancelScope(`operational:${subscriptionId}:`);
++      // Stop the server worker too when this subscription is paused, replaced, or its view closes.
++      void fetch(`${API_BASE}/alerts/${subscriptionId}/stop`, { method: 'POST', keepalive: true }).then(async response => {
++        if (!response.ok || (await response.json()).success !== true) throw new Error('Stop unconfirmed');
++      }).catch(() => {
++        if (mounted.current && capturedScope === scopeRef.current && !enabledRef.current) setActionError('Foreground monitoring is paused. Server stop could not be confirmed; reconnect to retry.');
++      });
+     };
+-  }, [subscriptionId, isPolling, isMonitoringEnabled, language]);
++  }, [subscriptionId, scope, isMonitoringEnabled, language, dataMode, isApplicable, isExpired, isLoading]);
+ 
+-  // Foreground DEMO / Session-only monitoring loop (works without PostgreSQL)
+   useEffect(() => {
+-    const isDemo = dataMode.toUpperCase() === 'DEMO';
+-    const isSessionOnlyNeeded = isDemo || monitoringMode === 'unavailable' || !subscriptionId;
+-
+-    if (!isSessionOnlyNeeded || !isMonitoringEnabled) {
+-      return;
+-    }
+-
+-    if (!applicableAssessment || !isApplicable || isExpired || isLoading) {
+-      if (monitoringMode !== 'off' && isDemo) {
+-        setMonitoringMode('degraded');
+-      }
+-      demoRefreshAbortRef.current?.abort();
+-      demoRefreshAbortRef.current = null;
+-      return;
+-    }
+-
+-    setMonitoringMode('session-only');
+-    const assessmentId = applicableAssessment.assessment_id;
+-
+-    // Reset deduplication if baseline changed
+-    if (lastMonitoredAssessmentIdRef.current !== assessmentId) {
+-      lastMonitoredAssessmentIdRef.current = assessmentId;
+-      seenMaterialSignaturesRef.current.clear();
+-      demoRefreshAbortRef.current?.abort();
+-      demoRefreshAbortRef.current = null;
+-    }
+-
+-    const checkDemoEvidence = async () => {
+-      if (navigator.onLine === false || demoRefreshAbortRef.current) return;
+-      const abort = new AbortController();
+-      demoRefreshAbortRef.current = abort;
+-
++    if (!needsSession || !isMonitoringEnabled || !hasUsableBaseline || !applicableAssessment) return;
++    const baseline = applicableAssessment, capturedScope = scope;
++    const abort = new AbortController(); let inFlight = false;
++    const owns = () => !abort.signal.aborted && capturedScope === scopeRef.current;
++    const check = async () => {
++      if (inFlight || !owns()) return;
++      if (typeof navigator !== 'undefined' && navigator.onLine === false) { setSessionDegraded(true); return; }
++      inFlight = true;
+       try {
+-        const res = await fetch(`${API_BASE}/trip-assessments/${assessmentId}/refresh`, {
+-          method: 'POST',
+-          signal: abort.signal,
+-        });
+-        if (!res.ok) throw new Error(`Refresh failed with HTTP ${res.status}`);
+-        const data = await res.json();
+-        if (abort.signal.aborted || lastMonitoredAssessmentIdRef.current !== assessmentId) return;
+-
+-        const val = validateRefreshedAssessment(applicableAssessment, data.simulated);
+-        if (!val.valid) return;
+-
++        const res = await fetch(`${API_BASE}/trip-assessments/${baseline.assessment_id}/refresh`, { method: 'POST', signal: abort.signal });
++        if (!res.ok) throw new Error(`HTTP ${res.status}`);
++        const data = await res.json(); if (!owns()) return;
++        if (data.baseline?.assessment_id !== baseline.assessment_id || !validateRefreshedAssessment(baseline, data.simulated).valid) throw new Error('Unrelated refreshed assessment');
+         const d: DecisionDeltaContract = data.delta;
+-        const material =
+-          d.decision_changed ||
+-          Boolean(d.confidence_change) ||
+-          d.changed_factors.length > 0 ||
+-          d.added_factors.length > 0 ||
+-          d.removed_factors.length > 0;
+-
+-        const signature = JSON.stringify([d.original_decision, d.new_decision, d.changed_factors, d.added_factors, d.removed_factors]);
+-
+-        if (material && !seenMaterialSignaturesRef.current.has(signature)) {
+-          seenMaterialSignaturesRef.current.add(signature);
+-
+-          const decisionChanged = d.original_decision !== d.new_decision;
+-          const sessionAlertId = `demo_refresh_${assessmentId}_${Date.now()}`;
+-          const isHigh = d.new_decision === 'NO_GO' || (d.new_decision === 'CAUTION' && d.original_decision === 'SAFE_TO_GO');
+-
+-          const newAlert: ActionableAlertDto = {
+-            id: sessionAlertId,
+-            alert_type: 'MATERIAL_EVIDENCE_UPDATE',
+-            severity: isHigh ? 'high' : 'medium',
+-            title: decisionChanged
+-              ? `Decision changed: ${d.original_decision} → ${d.new_decision}`
+-              : `Material condition update for ${applicableAssessment.trip_context.origin_harbor}`,
+-            description: d.summary || 'Monitored conditions changed. Review refreshed assessment.',
+-            recommended_action: data.simulated.brief?.recommended_action || 'Review and apply refreshed assessment before departure.',
+-            status: 'ACTIVE',
+-            is_acknowledged: false,
+-            valid_from: new Date().toISOString(),
+-            valid_to: null,
+-            created_at: new Date().toISOString(),
+-            is_session_only: true,
+-            refreshed_assessment: data.simulated,
+-          };
+-
+-          setAlerts((prev) => [newAlert, ...prev.filter((a) => a.id !== sessionAlertId)]);
+-
+-          const prefix = translateText('Alert', language);
+-          speechCoordinator.speak(`${prefix}: ${newAlert.title}. ${newAlert.recommended_action}`, {
+-            priority: isHigh ? 'high' : 'normal',
+-            dedupeKey: `demo:${assessmentId}:${signature}`,
+-            language,
+-          });
+-        }
+-      } catch (err: unknown) {
+-        if (!abort.signal.aborted) {
+-          console.debug('Demo refresh check suppressed:', err);
+-        }
+-      } finally {
+-        if (demoRefreshAbortRef.current === abort) {
+-          demoRefreshAbortRef.current = null;
+-        }
+-      }
++        if (!d || !Array.isArray(d.changed_factors) || !Array.isArray(d.added_factors) || !Array.isArray(d.removed_factors)) throw new Error('Missing comparison');
++        setSessionDegraded(false);
++        const material = d.decision_changed || Boolean(d.confidence_change) || d.changed_factors.length || d.added_factors.length || d.removed_factors.length;
++        const signature = JSON.stringify([d.original_decision, d.new_decision, d.confidence_change, d.changed_factors, d.added_factors, d.removed_factors]);
++        // A refreshed record is current only for this baseline; retire superseded updates.
++        if (!material) { seen.current.clear(); speechCoordinator.cancelScope(`demo:${baseline.assessment_id}:`); speechCoordinator.resetDeduplication(`demo:${baseline.assessment_id}:`); setAlerts(previous => previous.filter(a => !a.is_session_only)); return; }
++        if (seen.current.has(signature)) return;
++        seen.current.add(signature);
++        const isHigh = ['NO_GO','CAUTION','UNKNOWN','DO_NOT_GO'].includes(d.new_decision);
++        const event: ActionableAlertDto = {
++          id: `refresh_${baseline.assessment_id}_${Date.now()}`, alert_type: 'MATERIAL_EVIDENCE_UPDATE', severity: isHigh ? 'high' : 'medium',
++          title: d.decision_changed ? `${translateText("Decision changed", language)}: ${d.original_decision} → ${d.new_decision}` : `${translateText("Material condition update", language)}: ${baseline.trip_context.origin_harbor}`,
++          description: translateText(d.summary || 'Conditions changed. Review the refreshed assessment.', language),
++          recommended_action: translateText(data.simulated.brief?.recommended_action || 'Review the refreshed assessment before departure.', language),
++          status: 'ACTIVE', is_acknowledged: false, valid_from: new Date().toISOString(), valid_to: null, created_at: new Date().toISOString(),
++          is_session_only: true, refreshed_assessment: data.simulated,
++        };
++        setAlerts(previous => [event, ...previous.filter(a => !a.is_session_only)]);
++        speechCoordinator.speak(`${translateText('Alert', language)}: ${event.title}. ${event.recommended_action}`, { priority: isHigh ? 'high' : 'normal', dedupeKey: `demo:${baseline.assessment_id}:${signature}`, language });
++      } catch {
++        if (owns()) { setSessionDegraded(true); setAlerts(previous => previous.filter(a => !a.is_session_only)); }
++      } finally { inFlight = false; }
+     };
++    void check(); const timer = setInterval(() => void check(), 60000);
++    return () => { abort.abort(); clearInterval(timer); speechCoordinator.cancelScope(`demo:${baseline.assessment_id}:`); };
++  }, [scope, needsSession, isMonitoringEnabled, hasUsableBaseline, applicableAssessment, language]);
+ 
+-    // Foreground refresh: check immediately and then every ~60 seconds
+-    void checkDemoEvidence();
+-    const interval = setInterval(() => {
+-      void checkDemoEvidence();
+-    }, 60000);
+-
+-    return () => {
+-      clearInterval(interval);
+-      demoRefreshAbortRef.current?.abort();
+-      demoRefreshAbortRef.current = null;
+-    };
+-  }, [
+-    applicableAssessment,
+-    isApplicable,
+-    isExpired,
+-    isLoading,
+-    dataMode,
+-    monitoringMode,
+-    subscriptionId,
+-    isMonitoringEnabled,
+-    language,
+-  ]);
++  useEffect(() => {
++    if (!isMonitoringEnabled) { registrationGen.current++; registrationAbort.current?.abort(); setActionError(null); }
++  }, [isMonitoringEnabled]);
+ 
+-  return {
+-    subscriptionId,
+-    alerts,
+-    monitoringMode,
+-    isMonitoringEnabled,
+-    setIsMonitoringEnabled,
+-    registerTrip,
+-    acknowledgeAlert,
+-    applyRefreshedAlert,
+-  };
++  // Expire visible records even between poll ticks.
++  useEffect(() => {
++    const deadlines = alerts.flatMap(a => a.valid_to && Number.isFinite(Date.parse(a.valid_to)) ? [Date.parse(a.valid_to)] : []);
++    if (!deadlines.length) return;
++    const timer = setTimeout(() => setAlerts(previous => previous.filter(a => isAlertCurrentlyValid(a))), Math.max(0, Math.min(...deadlines) - Date.now()));
++    return () => clearTimeout(timer);
++  }, [alerts, language]);
++  const visibleAlerts = alertsScopeRef.current === scope ? alerts.filter(a => isAlertCurrentlyValid(a)) : [];
++  return { subscriptionId, alerts: visibleAlerts, monitoringMode, isMonitoringEnabled, setIsMonitoringEnabled, registerTrip, acknowledgeAlert, applyRefreshedAlert, actionError };
+ }
+diff --git a/frontend/src/hooks/useCallSession.ts b/frontend/src/hooks/useCallSession.ts
+index 6a63783..356bf0b 100644
+--- a/frontend/src/hooks/useCallSession.ts
++++ b/frontend/src/hooks/useCallSession.ts
+@@ -139,7 +139,7 @@ export function useCallSession({
+ 
+   // Track mission parameter changes during an active call
+   const activeMissionKeyRef = useRef<string>('');
+-  const currentMissionKey = getMissionIdentityKey({
++  const currentMissionKey = JSON.stringify([getMissionIdentityKey({
+     origin_harbor: originHarbor,
+     coordinates,
+     craft_profile: craftProfile,
+@@ -148,7 +148,7 @@ export function useCallSession({
+     return_time: returnTime,
+     target_pfz: targetPfz,
+     data_mode: dataMode,
+-  });
++  }), baselineAssessmentId, evidenceBundleId, isBaselineApplicable, isBaselineLoading, isBaselineExpired]);
+ 
+   // Clear VAD timers
+   const clearVadTimers = useCallback(() => {
+@@ -212,6 +212,12 @@ export function useCallSession({
+       abortControllerRef.current?.abort();
+       abortControllerRef.current = null;
+       cleanupAudioPlayback();
++      speechCoordinator.stop();
++      setPendingProposal(null);
++      isSubmittingTurnRef.current = false;
++      const recorder = mediaRecorderRef.current;
++      if (recorder) { recorder.onstop = null; recorder.ondataavailable = null; if (recorder.state === 'recording') try { recorder.stop(); } catch {} }
++      audioChunksRef.current = [];
+       clearVadTimers();
+       clearResumeTimer();
+       setCallState('PAUSED');
+@@ -349,9 +355,12 @@ export function useCallSession({
+       setTranscriptHistory((prev) => [...prev, userTurn, assistantTurn]);
+ 
+       // If response includes a proposed mission assessment, hold it for explicit user review
+-      if (response.mission_assessment) {
+-        setPendingProposal(response.mission_assessment as TripAssessmentResponse);
+-      }
++      const proposal = response.proposed_assessment;
++      const proposalMatches = proposal && isBaselineApplicable && !isBaselineExpired && !isBaselineLoading &&
++        proposal.trip_context?.parent_assessment_id === baselineAssessmentId && proposal.evidence_bundle_id === evidenceBundleId &&
++        proposal.trip_context.origin_harbor === originHarbor && proposal.conditions?.data_mode === dataMode &&
++        (!coordinates || JSON.stringify(proposal.trip_context.coordinates) === JSON.stringify(coordinates));
++      setPendingProposal(proposalMatches ? proposal : null);
+ 
+       // Play audio response if available from backend TTS
+       if (response.audio_base64 && response.audio_base64.length > 50) {
+@@ -371,6 +380,7 @@ export function useCallSession({
+         currentAudioRef.current = audio;
+ 
+         audio.onended = () => {
++          if (currentCallGen !== callGenRef.current || currentTurnGen !== turnGenRef.current || currentAudioRef.current !== audio) return;
+           cleanupAudioPlayback();
+           if (callActiveRef.current && currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) {
+             // Guard interval before re-enabling listening to avoid capturing speaker echo
+@@ -385,6 +395,7 @@ export function useCallSession({
+         };
+ 
+         audio.onerror = () => {
++          if (currentCallGen !== callGenRef.current || currentTurnGen !== turnGenRef.current || currentAudioRef.current !== audio) return;
+           cleanupAudioPlayback();
+           if (callActiveRef.current && currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) {
+             clearResumeTimer();
+@@ -406,6 +417,7 @@ export function useCallSession({
+ 
+         const spoke = speechCoordinator.speak(response.answer, {
+           isExplicit: true,
++          isCallSpeech: true,
+           language: (response.language as any) || 'en',
+           onEnd: () => {
+             if (callActiveRef.current && currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) {
+@@ -443,7 +455,7 @@ export function useCallSession({
+         }
+       }
+     } catch (err: unknown) {
+-      if (!callActiveRef.current || currentCallGen !== callGenRef.current || abortCtrl.signal.aborted) {
++      if (!callActiveRef.current || currentCallGen !== callGenRef.current || currentTurnGen !== turnGenRef.current || abortCtrl.signal.aborted) {
+         return;
+       }
+ 
+@@ -464,7 +476,7 @@ export function useCallSession({
+       callStateRef.current = 'ERROR';
+       setError(msg);
+     } finally {
+-      isSubmittingTurnRef.current = false;
++      if (currentCallGen === callGenRef.current && currentTurnGen === turnGenRef.current) isSubmittingTurnRef.current = false;
+     }
+   }, [
+     baselineAssessmentId,
+@@ -487,6 +499,9 @@ export function useCallSession({
+     vesselSize,
+   ]);
+ 
++  const processAudioRef = useRef(processCapturedAudio);
++  processAudioRef.current = processCapturedAudio;
++
+   // Finalize speech turn (triggered automatically by VAD silence timeout or manual fallback)
+   const finishSpeakingTurn = useCallback(() => {
+     const currentState = callStateRef.current;
+@@ -498,12 +513,14 @@ export function useCallSession({
+     clearVadTimers();
+ 
+     const recorder = mediaRecorderRef.current;
++    const ownerCall = callGenRef.current, ownerTurn = turnGenRef.current;
+     if (recorder.state === 'recording') {
+       recorder.onstop = () => {
++        if (!callActiveRef.current || ownerCall !== callGenRef.current || ownerTurn !== turnGenRef.current) return;
+         const chunks = audioChunksRef.current;
+         const audioBlob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+         audioChunksRef.current = [];
+-        processCapturedAudio(audioBlob);
++        void processAudioRef.current(audioBlob);
+       };
+       try {
+         recorder.stop();
+@@ -515,6 +532,9 @@ export function useCallSession({
+     }
+   }, [clearVadTimers, processCapturedAudio]);
+ 
++  const finishTurnRef = useRef(finishSpeakingTurn);
++  finishTurnRef.current = finishSpeakingTurn;
++
+   // Real-time Voice Activity Detection (VAD) loop
+   const startVadAnalyser = useCallback((stream: MediaStream) => {
+     try {
+@@ -576,7 +596,7 @@ export function useCallSession({
+                 silenceTimeoutTimerRef.current = setTimeout(() => {
+                   if (callActiveRef.current && callStateRef.current === 'HEARING_YOU') {
+                     // ~3 seconds silence reached -> finalize speech turn automatically!
+-                    finishSpeakingTurn();
++                    finishTurnRef.current();
+                   }
+                 }, silenceTimeoutMs);
+               }
+@@ -602,6 +622,7 @@ export function useCallSession({
+     abortControllerRef.current?.abort();
+     abortControllerRef.current = null;
+ 
++    speechCoordinator.stop();
+     cleanupAudioPlayback();
+     cleanupMediaStream();
+ 
+@@ -662,6 +683,7 @@ export function useCallSession({
+       // Begin first listening turn
+       startListeningTurn();
+     } catch (err: unknown) {
++      if (currentCallGen !== callGenRef.current || !callActiveRef.current) return;
+       callActiveRef.current = false;
+       setCallState('ERROR');
+       callStateRef.current = 'ERROR';
+@@ -693,6 +715,7 @@ export function useCallSession({
+         mediaRecorderRef.current.stop();
+       } catch {}
+     }
++    speechCoordinator.stop();
+     cleanupAudioPlayback();
+     cleanupMediaStream();
+     speechCoordinator.setCallActive(false);
+@@ -733,11 +756,12 @@ export function useCallSession({
+ 
+   // Apply pending proposal surfaced during call
+   const applyPendingProposal = useCallback(() => {
+-    if (pendingProposal && onApplyProposal) {
++    if (pendingProposal && onApplyProposal && isBaselineApplicable && !isBaselineLoading && !isBaselineExpired &&
++        pendingProposal.trip_context.parent_assessment_id === baselineAssessmentId && pendingProposal.evidence_bundle_id === evidenceBundleId) {
+       onApplyProposal(pendingProposal);
+       setPendingProposal(null);
+     }
+-  }, [onApplyProposal, pendingProposal]);
++  }, [onApplyProposal, pendingProposal, baselineAssessmentId, evidenceBundleId, isBaselineApplicable, isBaselineLoading, isBaselineExpired]);
+ 
+   // Cleanup on unmount
+   useEffect(() => {
+@@ -747,6 +771,7 @@ export function useCallSession({
+       callActiveRef.current = false;
+       abortControllerRef.current?.abort();
+       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
++      speechCoordinator.stop();
+       cleanupAudioPlayback();
+       cleanupMediaStream();
+       speechCoordinator.setCallActive(false);
+diff --git a/frontend/src/hooks/useChat.ts b/frontend/src/hooks/useChat.ts
+index b5b6e86..f1d5d59 100644
+--- a/frontend/src/hooks/useChat.ts
++++ b/frontend/src/hooks/useChat.ts
+@@ -137,7 +137,7 @@ export function useChat() {
+         parentAssessmentId: !sectorId && isApplicable
+           ? missionContextRef.current.parent_assessment_id || missionState?.parent_assessment_id || undefined
+           : undefined,
+-        coordinates: availability.coordinates || (isApplicable ? currentAssessment?.trip_context.coordinates : undefined),
++        coordinates: sectorId ? undefined : availability.coordinates || (isApplicable ? currentAssessment?.trip_context.coordinates : undefined),
+         isLoading: Boolean(availability.isLoading),
+         isExpired: Boolean(availability.isExpired),
+         assessment: isApplicable ? currentAssessment : null,
+diff --git a/frontend/src/hooks/useVoiceRecorder.ts b/frontend/src/hooks/useVoiceRecorder.ts
+index 7dcba6f..f1b5ed4 100644
+--- a/frontend/src/hooks/useVoiceRecorder.ts
++++ b/frontend/src/hooks/useVoiceRecorder.ts
+@@ -31,6 +31,7 @@ export function useVoiceRecorder({
+   const streamRef = useRef<MediaStream | null>(null);
+   const isCancelledRef = useRef<boolean>(false);
+   const recorderGenRef = useRef<number>(0);
++  const permissionPendingRef = useRef(false);
+   const isMountedRef = useRef<boolean>(true);
+ 
+   const isSupported =
+@@ -66,6 +67,8 @@ export function useVoiceRecorder({
+   }, [cleanupStream]);
+ 
+   const startRecording = useCallback(async () => {
++    if (permissionPendingRef.current || mediaRecorderRef.current?.state === "recording") return;
++    mediaRecorderRef.current = null;
+     setError(null);
+     isCancelledRef.current = false;
+     audioChunksRef.current = [];
+@@ -79,6 +82,7 @@ export function useVoiceRecorder({
+     }
+ 
+     try {
++      permissionPendingRef.current = true;
+       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+ 
+       // If user released, cancelled, or component unmounted while waiting for permission:
+@@ -87,6 +91,7 @@ export function useVoiceRecorder({
+         return;
+       }
+ 
++      permissionPendingRef.current = false;
+       streamRef.current = stream;
+ 
+       // Determine best supported MIME type
+@@ -113,6 +118,9 @@ export function useVoiceRecorder({
+       };
+ 
+       recorder.onstop = async () => {
++        if (recorderGenRef.current !== currentGen || isCancelledRef.current || !isMountedRef.current) {
++          stream.getTracks().forEach(track => track.stop()); return;
++        }
+         cleanupStream();
+         if (isMountedRef.current) {
+           setIsRecording(false);
+@@ -176,6 +184,7 @@ export function useVoiceRecorder({
+       };
+ 
+       recorder.onerror = () => {
++        if (recorderGenRef.current !== currentGen || !isMountedRef.current) return;
+         cleanupStream();
+         if (isMountedRef.current) {
+           setIsRecording(false);
+@@ -191,6 +200,8 @@ export function useVoiceRecorder({
+         setIsRecording(true);
+       }
+     } catch (err: any) {
++      if (recorderGenRef.current !== currentGen || isCancelledRef.current || !isMountedRef.current) return;
++      permissionPendingRef.current = false;
+       cleanupStream();
+       if (isMountedRef.current) {
+         setIsRecording(false);
+@@ -209,7 +220,8 @@ export function useVoiceRecorder({
+   }, [isSupported, cleanupStream, onTranscription, onError]);
+ 
+   const stopRecording = useCallback(() => {
+-    if (!streamRef.current && !mediaRecorderRef.current) {
++    if (permissionPendingRef.current) {
++      permissionPendingRef.current = false;
+       // Permission request still pending when stopped -> cancel it
+       isCancelledRef.current = true;
+       recorderGenRef.current++;
+@@ -229,6 +241,7 @@ export function useVoiceRecorder({
+ 
+   const cancelRecording = useCallback(() => {
+     isCancelledRef.current = true;
++    permissionPendingRef.current = false;
+     recorderGenRef.current++;
+     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+       try {
+@@ -241,6 +254,8 @@ export function useVoiceRecorder({
+       cleanupStream();
+       setIsRecording(false);
+     }
++    cleanupStream();
++    setIsRecording(false);
+     setIsTranscribing(false);
+     audioChunksRef.current = [];
+   }, [cleanupStream]);
+diff --git a/frontend/src/i18n/translations.ts b/frontend/src/i18n/translations.ts
+index 75f22c0..a7d3df2 100644
+--- a/frontend/src/i18n/translations.ts
++++ b/frontend/src/i18n/translations.ts
+@@ -356,6 +356,28 @@ interface TranslationEntry {
+ }
+ 
+ export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
++  {"en": "Alert", "hi": "चेतावनी", "mr": "इशारा"},
++  {"en": "Decision changed", "hi": "निर्णय बदल गया", "mr": "निर्णय बदलला"},
++  {"en": "Material condition update", "hi": "परिस्थितियों में महत्वपूर्ण बदलाव", "mr": "परिस्थितीत महत्त्वाचा बदल"},
++  {"en": "Review the refreshed assessment before departure.", "hi": "प्रस्थान से पहले नया आकलन देखें।", "mr": "निघण्यापूर्वी अद्ययावत मूल्यांकन पाहा."},
++  {"en": "Monitoring", "hi": "निगरानी", "mr": "देखरेख"},
++  {"en": "Off", "hi": "बंद", "mr": "बंद"},
++  {"en": "Session-only / Foreground (Active)", "hi": "केवल इस सत्र में निगरानी (सक्रिय)", "mr": "फक्त या सत्रात देखरेख (सक्रिय)"},
++  {"en": "Operational / Durable (Active)", "hi": "संग्रहीत यात्रा की निगरानी (सक्रिय)", "mr": "जतन केलेल्या प्रवासाची देखरेख (सक्रिय)"},
++  {"en": "Unavailable / Degraded", "hi": "अनुपलब्ध / सीमित", "mr": "अनुपलब्ध / मर्यादित"},
++  {"en": "Session-Only Alert", "hi": "केवल इस सत्र की चेतावनी", "mr": "फक्त या सत्रातील इशारा"},
++  {"en": "DEMO · Session-Only Alert", "hi": "डेमो · केवल इस सत्र की चेतावनी", "mr": "डेमो · फक्त या सत्रातील इशारा"},
++  {"en": "Operational Warning", "hi": "परिचालन चेतावनी", "mr": "कार्यरत प्रवासाचा इशारा"},
++  {"en": "Apply Refreshed Plan", "hi": "नया आकलित प्लान अपनाएं", "mr": "अद्ययावत योजना स्वीकारा"},
++  {"en": "Acknowledge (Keep Current Plan)", "hi": "स्वीकार करें (मौजूदा प्लान रखें)", "mr": "नोंद घ्या (सध्याची योजना ठेवा)"},
++  {"en": "Replay", "hi": "फिर सुनें", "mr": "पुन्हा ऐका"},
++  {"en": "Enable", "hi": "चालू करें", "mr": "सुरू करा"},
++  {"en": "Disable", "hi": "बंद करें", "mr": "बंद करा"},
++  {"en": "Pause monitoring", "hi": "निगरानी रोकें", "mr": "देखरेख थांबवा"},
++  {"en": "Resume monitoring", "hi": "निगरानी फिर शुरू करें", "mr": "देखरेख पुन्हा सुरू करा"},
++  {"en": "Acknowledgement failed. Please retry; the warning remains active.", "hi": "स्वीकृति विफल रही। फिर कोशिश करें; चेतावनी अभी सक्रिय है।", "mr": "नोंद घेणे अयशस्वी झाले. पुन्हा प्रयत्न करा; इशारा अजून सक्रिय आहे."},
++  {"en": "This update no longer applies to the current mission.", "hi": "यह अपडेट अब मौजूदा यात्रा पर लागू नहीं है।", "mr": "हे अद्यतन सध्याच्या प्रवासाला लागू होत नाही."},
++
+   {
+     en: "Restricted Area",
+     hi: "प्रतिबंधित क्षेत्र",
+diff --git a/frontend/src/pages/FisherPage.tsx b/frontend/src/pages/FisherPage.tsx
+index 08d4c1a..00633b1 100644
+--- a/frontend/src/pages/FisherPage.tsx
++++ b/frontend/src/pages/FisherPage.tsx
+@@ -62,6 +62,8 @@ export function missionContextKey(c: MissionContext): string {
+ 
+ export interface FisherPageProps {
+   chat: ReturnType<typeof useChat>;
++  voiceProposal?: TripAssessmentResponse | null;
++  onVoiceProposalHandled?: () => void;
+   theme: "light" | "dark";
+   mobileView: "chat" | "map";
+   onStartCall: () => void;
+@@ -72,6 +74,8 @@ export interface FisherPageProps {
+ 
+ export default function FisherPage({
+   chat,
++  voiceProposal,
++  onVoiceProposalHandled,
+   theme,
+   mobileView: _mobileView,
+   onStartCall,
+@@ -281,6 +285,7 @@ export default function FisherPage({
+     registerTrip,
+     acknowledgeAlert,
+     applyRefreshedAlert,
++    actionError,
+   } = useAlerts(chat.language, {
+     applicableAssessment: assessment,
+     isApplicable: Boolean(assessment && !isExpired && !isLoading),
+@@ -322,13 +327,14 @@ export default function FisherPage({
+     } else if (geoEvaluationState === 'APPROACHING') {
+       const approachAlerts = geofenceAlerts.filter(a => !a.isInside);
+       const zoneNames = approachAlerts.map(a => a.name).join(', ') || 'Restricted Zone';
+-      const text = `${translateText('Approaching Boundary', chat.language)}: ${zoneNames}`;
++      const text = `${translateText('Approaching Restricted Area', chat.language)}: ${zoneNames}`;
+       speechCoordinator.speak(text, {
+         priority: 'normal',
+         dedupeKey: `${currentContextKey}:boundary:approaching:${zoneNames}`,
+         language: chat.language,
+       });
+-    } else if (geoEvaluationState === 'CLEAR') {
++    } else if (geoEvaluationState === 'CLEAR' || geoEvaluationState === 'UNKNOWN') {
++      speechCoordinator.cancelScope(`${currentContextKey}:boundary:`);
+       // If returning to clear from an approach or inside state, reset boundary deduplication
+       if (prevGeoStateRef.current === 'INSIDE' || prevGeoStateRef.current === 'APPROACHING') {
+         speechCoordinator.resetDeduplication(`${currentContextKey}:boundary`);
+@@ -337,6 +343,10 @@ export default function FisherPage({
+     prevGeoStateRef.current = geoEvaluationState;
+   }, [geoEvaluationState, geofenceAlerts, currentContextKey, chat.language]);
+ 
++  useEffect(() => () => {
++    speechCoordinator.cancelScope(`${currentContextKey}:boundary:`);
++  }, [currentContextKey]);
++
+   const handleToggleLocation = () => {
+     if (isTracking) stopTracking();
+     else startTracking();
+@@ -389,14 +399,7 @@ export default function FisherPage({
+       data_mode: fisherDataMode,
+     });
+ 
+-    if (fisherDataMode !== "DEMO") registerTrip({
+-      origin_harbor: chat.missionContext.origin_harbor || "Ratnagiri",
+-      craft_profile: chat.missionContext.craft_profile || "motorized_boat",
+-      vessel_size: chat.missionContext.vessel_size || "medium",
+-      departure_time: chat.missionContext.departure_time,
+-      return_time: chat.missionContext.return_time,
+-      language: chat.language,
+-    });
++
+   }, [
+     currentContextKey,
+     fisherDataMode,
+@@ -404,6 +407,22 @@ export default function FisherPage({
+     sidebarTab,
+   ]);
+ 
++  // Register the assessed plan, including its mode and canonical destination, not an unassessed edit.
++  useEffect(() => {
++    if (!baselineUsable || !assessment || fisherDataMode === 'DEMO' || !isMonitoringEnabled) return;
++    void registerTrip({
++      origin_harbor: assessment.trip_context.origin_harbor || originHarbor,
++      craft_profile: assessment.trip_context.craft_profile || 'motorized_boat',
++      vessel_size: assessment.trip_context.vessel_size || chat.missionContext.vessel_size,
++      coordinates: assessment.trip_context.coordinates,
++      destination_id: assessment.trip_context.target_pfz,
++      departure_time: assessment.trip_context.departure_time,
++      return_time: assessment.trip_context.return_time,
++      language: chat.language, data_mode: assessment.conditions.data_mode,
++      mission_state: assessment.mission_state || undefined,
++    });
++  }, [assessment?.assessment_id, baselineUsable, currentContextKey, fisherDataMode, isMonitoringEnabled, chat.language]);
++
+   // Synchronize canonical mission_state across assessment -> chat (M1.1)
+   useEffect(() => {
+     chat.setMissionAssessment(retainedAssessment, {
+@@ -596,6 +615,12 @@ export default function FisherPage({
+     setSidebarTab('decision');
+   }
+ 
++  useEffect(() => {
++    if (!voiceProposal) return;
++    if (baselineUsable && validateChatProposedAssessment(assessment, voiceProposal, isExpired).valid) applyAssessment(voiceProposal);
++    onVoiceProposalHandled?.();
++  }, [voiceProposal]);
++
+   const chatProposal = chat.activeResponse?.proposed_assessment;
+   const isChatProposalApplicable = Boolean(
+     chatProposal &&
+@@ -619,6 +644,7 @@ export default function FisherPage({
+         {sidebarTab !== 'alerts' && alerts.some(a => !a.is_acknowledged && a.status === 'ACTIVE') && (
+           <div style={{ margin: '8px 0' }}>
+             <FisherAlertPanel
++              actionError={actionError}
+               alerts={alerts}
+               language={chat.language}
+               monitoringMode={monitoringMode}
+@@ -641,7 +667,7 @@ export default function FisherPage({
+         {sidebarTab === 'decision' && <>{summary}{baselineUsable && assessment && <RouteChoices assessment={assessment} onApply={applyAssessment} />}{baselineUsable && <WhatIfSimulator assessment={assessment} onApplyAssessment={applyAssessment} currentContext={chat.missionContext} currentStatus={effectiveDecisionStatus} language={chat.language} onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)} onApplyContext={chat.setMissionContext} />}<details className="product-details evidence-details"><summary>Inspect evidence, routes and detailed reasoning</summary><FisherDecisionSurface assessment={assessment} isLoading={isLoading} error={error} isOffline={isOffline} isExpired={isExpired} missionContext={chat.missionContext} language={chat.language} collaboration={null} onOpenVoyageSettings={() => setSidebarTab('voyage')} onViewMap={() => setSidebarTab('map')} /></details></>}
+         {sidebarTab === 'chat' && <div className="product-chat"><div className="mission-context-bar"><p>Current mission (correct harbor and time before asking): <strong>{originHarbor}</strong> · {tripWindow} · {(chat.missionContext.craft_profile || '').replace(/_/g, ' ')}</p><button onClick={() => setSidebarTab('voyage')}>Correct mission</button><label>Response language<select aria-label="Response language" value={chat.language} onChange={e => chat.setLanguage(e.target.value as 'en' | 'hi' | 'mr')}><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select></label></div>{chatProposal && <div className="product-notice"><p>Proposed mission: {new Date(chatProposal.trip_context.departure_time || '').toLocaleString()} → {assessmentStatus(chatProposal)}{!isChatProposalApplicable && <span className="muted" style={{ display: 'block', fontSize: '12px', marginTop: '2px' }}>Proposal no longer applies to the active mission baseline.</span>}</p><button disabled={!isChatProposalApplicable} onClick={() => isChatProposalApplicable && applyAssessment(chatProposal)}>Use this exact proposed plan</button></div>}<div className="question-shortcuts">{['Can I go fishing tomorrow?', 'Where is the nearest PFZ?', 'What are the nearest hazards?', 'Why this decision?', 'Compare the routes.'].map(q => <button key={q} disabled={chat.isLoading} onClick={() => chat.send(q)}>{q}</button>)}</div><ChatPanel language={chat.language} messages={chat.messages} activeResponse={chat.activeResponse} isLoading={chat.isLoading} onSend={chat.send} onStartCall={onStartCall} onBack={() => setSidebarTab('home')} onReset={chat.clearChat} onEvidenceClick={onOpenEvidence} /></div>}
+         {sidebarTab === 'trips' && <section className="product-section"><p className="muted">Assessments saved on this device. Open a trip to plan from its context; conditions will be checked again.</p>{recent.length ? recent.map(a => <button className="trip-history-row" key={a.assessment_id} onClick={() => { chat.setMissionContext({ ...chat.missionContext, ...a.trip_context }); setSidebarTab('voyage'); }}><span><strong>{a.trip_context.origin_harbor}</strong><small>{new Date(a.assessed_at).toLocaleString()}</small></span><span className={`decision-label status-${assessmentStatus(a)}`}>{assessmentStatus(a)}</span></button>) : <p>No assessments yet. Plan your first trip to start a history.</p>}</section>}
+-        {sidebarTab === 'alerts' && <section className="product-section">{baselineUsable && assessment && <MissionChanges assessment={assessment} onApply={applyAssessment} />}<h3>Current mission advisories</h3><p>{assessment?.conditions.hazard?.headline || 'No assessment available yet.'}</p>{assessment?.alerts.map((a, i) => <p className="product-notice" key={i}>{(a as any).message || a.title}</p>)}<FisherAlertPanel alerts={alerts} language={chat.language} monitoringMode={monitoringMode} isMonitoringEnabled={isMonitoringEnabled} onToggleMonitoring={setIsMonitoringEnabled} onAcknowledge={acknowledgeAlert} onApplyRefreshed={applyRefreshedAlert} onReplay={text => speechCoordinator.replay(text, chat.language)} /></section>}
++        {sidebarTab === 'alerts' && <section className="product-section">{baselineUsable && assessment && <MissionChanges assessment={assessment} onApply={applyAssessment} />}<h3>Current mission advisories</h3><p>{assessment?.conditions.hazard?.headline || 'No assessment available yet.'}</p>{assessment?.alerts.map((a, i) => <p className="product-notice" key={i}>{(a as any).message || a.title}</p>)}<FisherAlertPanel actionError={actionError} alerts={alerts} language={chat.language} monitoringMode={monitoringMode} isMonitoringEnabled={isMonitoringEnabled} onToggleMonitoring={setIsMonitoringEnabled} onAcknowledge={acknowledgeAlert} onApplyRefreshed={applyRefreshedAlert} onReplay={text => speechCoordinator.replay(text, chat.language)} /></section>}
+         {sidebarTab === 'profile' && <section className="product-section profile-form"><h3>Profile on this device</h3><p className="muted">Your name is a local preference. This prototype has no account sign-in.</p><label>Your name<input value={name} onChange={e => { setName(e.target.value); try { localStorage.setItem('orca.name', e.target.value); } catch {} }} placeholder="Add your name" /></label><label>Vessel<select value={chat.missionContext.craft_profile} onChange={e => chat.setMissionContext({ ...chat.missionContext, craft_profile: e.target.value as any })}><option value="traditional_non_motorized">Traditional craft</option><option value="motorized_boat">Motorized boat</option><option value="mechanized_trawler">Mechanized trawler</option></select></label><label>Size<select value={chat.missionContext.vessel_size} onChange={e => chat.setMissionContext({ ...chat.missionContext, vessel_size: e.target.value as any })}>{['small', 'medium', 'large'].map(size => <option key={size}>{size}</option>)}</select></label><button onClick={onStartCall}><Mic size={18} /> Talk to ORCA</button><h3>Saved fishing areas</h3>{savedZones.length ? savedZones.map(id => <div className="zone-row" key={id}><span>{id}</span><button onClick={() => saveZone(id)}>Remove</button></div>) : <p className="muted">Save an area from Home to keep it here.</p>}</section>}
+         {sidebarTab === 'map' && <div className="map-context-strip"><strong>{originHarbor}</strong><span>{zones.length} fishing areas · {assessment?.route_candidates.length || 0} routes</span><button onClick={() => setSidebarTab('decision')}>View decision</button></div>}
+       </div>
+diff --git a/frontend/src/pages/task5-corrective.test.ts b/frontend/src/pages/task5-corrective.test.ts
+index a88e232..019bd7a 100644
+--- a/frontend/src/pages/task5-corrective.test.ts
++++ b/frontend/src/pages/task5-corrective.test.ts
+@@ -38,7 +38,7 @@ const baseline: any = { assessment_id: 'baseline', evidence_bundle_id: 'evidence
+ let tree: ReactTestRenderer;
+ let chat: ReturnType<typeof useChat>;
+ let store: Record<string,string>;
+-function Harness() { chat = useChat(); return createElement(FisherPage, { chat, theme: 'light', mobileView: 'map', onStartCall: vi.fn(), onOpenEvidence: vi.fn(), onBack: vi.fn(), onViewMap: vi.fn() }); }
++function Harness(props: any = {}) { chat = useChat(); return createElement(FisherPage, { chat, voiceProposal: props.voiceProposal, onVoiceProposalHandled: props.onHandled, theme: 'light', mobileView: 'map', onStartCall: vi.fn(), onOpenEvidence: vi.fn(), onBack: vi.fn(), onViewMap: vi.fn() }); }
+ function ChatProbe() { chat = useChat(); return null; }
+ async function mount(component: () => ReturnType<typeof createElement> | null = Harness) { await act(async () => { tree = create(createElement(component)); }); }
+ function navigate(label: string) { const nav = tree.root.findByProps({ 'aria-label': 'Fisher workspace' }); act(() => nav.findAllByType('button').find(b => b.findAllByType('span').some(span => span.children.includes(label)))!.props.onClick()); }
+@@ -148,6 +148,15 @@ describe('Task 5 corrective production integration', () => {
+     expect(onApply).toHaveBeenCalledWith(refreshed);
+   });
+ 
++  it('explicit voice proposal adoption uses the guarded Fisher flow without reassessment', async () => {
++    await mount(); const handled = vi.fn();
++    const voiceProposal = { ...baseline, assessment_id: 'voice-proposal', trip_context: { ...baseline.trip_context, parent_assessment_id: 'baseline', departure_time: '2026-10-04T12:00:00Z', return_time: '2026-10-05T00:00:00Z' } };
++    await act(async () => tree.update(createElement(Harness, { voiceProposal, onHandled: handled })));
++    expect(chat.missionAssessment?.assessment_id).toBe('voice-proposal');
++    expect(map().assessment.assessment_id).toBe('voice-proposal');
++    expect(fetch).toHaveBeenCalledTimes(1); expect(handled).toHaveBeenCalled();
++  });
++
+   it('rejects a chat reply after baseline replacement for identical mission parameters', async () => {
+     await mount(ChatProbe);
+     act(() => chat.setMissionAssessment(baseline));
+diff --git a/frontend/src/types/alerts.ts b/frontend/src/types/alerts.ts
+index 39dbb63..adf69ff 100644
+--- a/frontend/src/types/alerts.ts
++++ b/frontend/src/types/alerts.ts
+@@ -28,6 +28,9 @@ export interface SavedTripRequest {
+   return_time?: string;
+   language: string;
+   data_mode?: string;
++  coordinates?: [number, number];
++  destination_id?: string;
++  mission_state?: import("./mission").MissionState;
+ }
+ 
+ export interface SavedTripResponse {
+diff --git a/frontend/src/utils/speech-coordinator.ts b/frontend/src/utils/speech-coordinator.ts
+index 63adae9..eea2c15 100644
+--- a/frontend/src/utils/speech-coordinator.ts
++++ b/frontend/src/utils/speech-coordinator.ts
+@@ -6,6 +6,7 @@ export interface SpeakOptions {
+   priority?: SpeechPriority;
+   dedupeKey?: string;
+   isExplicit?: boolean;
++  isCallSpeech?: boolean;
+   language?: SupportedLanguage;
+   onStart?: () => void;
+   onEnd?: () => void;
+@@ -48,6 +49,7 @@ class SpeechCoordinator {
+   private queue: QueuedUtterance[] = [];
+   private currentUtteranceId: number | null = null;
+   private currentPriority: number = 0;
++  private currentItem: QueuedUtterance | null = null;
+   private utteranceCounter = 0;
+   private isMuted: boolean = false;
+   private isCallActive: boolean = false;
+@@ -114,7 +116,7 @@ class SpeechCoordinator {
+     this.isCallActive = active;
+     if (active) {
+       // In continuous call mode, alerts must not be spoken over mic/call audio
+-      this.cancelAutomaticSpeech();
++      this.stop();
+     }
+   }
+ 
+@@ -143,6 +145,11 @@ class SpeechCoordinator {
+     options: SpeakOptions = {},
+   ): boolean {
+     const trimmed = text?.trim();
++    if (this.isCallActive && !options.isCallSpeech) return false;
++    if (typeof window === 'undefined' || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') {
++      options.onError?.(new Error('SpeechSynthesis not supported'));
++      return false;
++    }
+     if (!trimmed) return false;
+ 
+     const isExplicit = Boolean(options.isExplicit);
+@@ -200,6 +207,7 @@ class SpeechCoordinator {
+     this.queue = [];
+     this.currentUtteranceId = null;
+     this.currentPriority = 0;
++    this.currentItem = null;
+     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+       try {
+         window.speechSynthesis.cancel();
+@@ -208,33 +216,32 @@ class SpeechCoordinator {
+     this.setPlaying(false);
+   }
+ 
+-  private cancelAutomaticSpeech(): void {
+-    // Drop queued non-explicit speech
+-    this.queue = this.queue.filter((item) => item.isExplicit);
+-    if (this.currentUtteranceId !== null && this.currentPriority < 10) {
+-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+-        try {
+-          window.speechSynthesis.cancel();
+-        } catch {}
+-      }
+-      this.currentUtteranceId = null;
+-      this.currentPriority = 0;
+-      this.setPlaying(false);
+-    }
++  public cancelScope(prefix: string): void {
++    this.queue = this.queue.filter(item => !item.dedupeKey?.startsWith(prefix));
++    if (this.currentItem?.dedupeKey?.startsWith(prefix)) this.cancelCurrent();
++    this.processQueue();
+   }
+ 
+-  private interruptCurrentAndPreempt(highPriorityItem: QueuedUtterance): void {
+-    if (this.pendingTimer) {
+-      clearTimeout(this.pendingTimer);
+-      this.pendingTimer = null;
+-    }
+-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+-      try {
+-        window.speechSynthesis.cancel();
+-      } catch {}
+-    }
++  private cancelCurrent(): void {
++    if (this.pendingTimer !== null) { clearTimeout(this.pendingTimer); this.pendingTimer = null; }
++    const cancelled = this.currentItem;
+     this.currentUtteranceId = null;
+     this.currentPriority = 0;
++    this.currentItem = null;
++    // Invalidate callbacks before cancel(), which may synchronously emit an error.
++    try { if (typeof window !== 'undefined') window.speechSynthesis?.cancel(); } catch {}
++    this.setPlaying(false);
++    cancelled?.onError?.({ error: 'canceled' });
++  }
++
++  private cancelAutomaticSpeech(): void {
++    this.queue = this.queue.filter(item => item.isExplicit);
++    if (this.currentItem && !this.currentItem.isExplicit) this.cancelCurrent();
++    this.processQueue();
++  }
++
++  private interruptCurrentAndPreempt(highPriorityItem: QueuedUtterance): void {
++    this.cancelCurrent();
+     this.queue.unshift(highPriorityItem);
+     this.processQueue();
+   }
+@@ -256,6 +263,7 @@ class SpeechCoordinator {
+     if (!item) return;
+ 
+     this.currentUtteranceId = item.id;
++    this.currentItem = item;
+     this.currentPriority = item.priority;
+ 
+     try {
+@@ -282,6 +290,7 @@ class SpeechCoordinator {
+         if (this.currentUtteranceId === item.id) {
+           this.currentUtteranceId = null;
+           this.currentPriority = 0;
++          this.currentItem = null;
+           this.setPlaying(false);
+           item.onEnd?.();
+           this.processQueue();
+@@ -292,6 +301,7 @@ class SpeechCoordinator {
+         if (this.currentUtteranceId === item.id) {
+           this.currentUtteranceId = null;
+           this.currentPriority = 0;
++          this.currentItem = null;
+           this.setPlaying(false);
+           if (e.error !== 'interrupted' && e.error !== 'canceled') {
+             item.onError?.(e);
+diff --git a/tests/api/test_task6_corrective.py b/tests/api/test_task6_corrective.py
+new file mode 100644
+index 0000000..bdeb4ba
+--- /dev/null
++++ b/tests/api/test_task6_corrective.py
+@@ -0,0 +1,114 @@
++"""Task 6 corrective behavior through the real monitoring service, with DB boundaries mocked."""
++from datetime import datetime, timedelta, timezone
++from types import SimpleNamespace
++from unittest.mock import MagicMock, patch
++import json
++import pytest
++from backend.app.contracts.alerts import SavedTripRequest
++from backend.app.contracts.chat import UserContext
++from backend.app.contracts.mission import mission_from_user_context
++from backend.app.db.models import SavedTripSubscription
++from backend.app.services.alert_service import AlertService
++
++
++def test_registration_persists_complete_canonical_context_as_json():
++    session = MagicMock()
++    def add(sub):
++        sub.public_id = 'subscription'
++        sub.created_at = datetime.now(timezone.utc)
++    session.add.side_effect = add
++    with patch('backend.app.services.alert_service.SessionLocal') as factory:
++        factory.return_value.__enter__.return_value = session
++        response = AlertService.register_trip_monitoring(SavedTripRequest(
++            origin_harbor='Ratnagiri', craft_profile='motorized_boat', vessel_size='small',
++            coordinates=(73.2, 17.1), destination_id='pfz_7', data_mode='SNAPSHOT',
++            departure_time='2026-10-04T11:30:00+05:30', return_time='2026-10-04T23:30:00+05:30', language='mr',
++        ))
++    sub = session.add.call_args.args[0]
++    assert response.monitoring_mode == 'durable'
++    assert sub.data_mode == 'SNAPSHOT'
++    persisted = sub.mission_context_json
++    assert persisted['origin']['longitude'] == 73.2
++    assert persisted['destination']['name'] == 'pfz_7'
++    assert persisted['vessel']['size_category'] == 'small'
++    assert persisted['timing']['departure'] == '2026-10-04T06:00:00+00:00'
++    json.dumps(persisted)  # JSONB cannot accept unencoded datetime/model instances.
++
++
++def test_reassessment_restores_destination_coordinates_size_and_mode_after_restart():
++    mission = mission_from_user_context(user_context=UserContext(origin_harbor='Ratnagiri', craft_profile='motorized_boat', vessel_size='large', coordinates=(73.2,17.1), target_pfz='pfz_7'), message='monitor')
++    sub = SimpleNamespace(public_id='subscription', id='sub-id', origin_harbor='Ratnagiri', craft_profile='motorized_boat', vessel_size='large', data_mode='SNAPSHOT', language='hi', departure_time=datetime(2026,10,4,6,tzinfo=timezone.utc), return_time=datetime(2026,10,4,18,tzinfo=timezone.utc), mission_context_json=mission.model_dump(mode='json'))
++    session = MagicMock()
++    def query(model):
++        q = MagicMock(); q.filter.return_value = q; q.all.return_value = [sub] if model is SavedTripSubscription else []; q.first.return_value = None
++        return q
++    session.query.side_effect = query
++    with patch('backend.app.services.alert_service.SessionLocal') as factory, patch('backend.app.services.alert_service.AssessmentService.assess_trip') as assess:
++        factory.return_value.__enter__.return_value = session
++        assess.return_value = SimpleNamespace(assessment_id='assessment', alerts=[], decision='GO', brief=None)
++        AlertService._monitored_trips_mission_state.clear()
++        AlertService.reassess_saved_trips()
++    request = assess.call_args.args[0]
++    assert request.coordinates == [73.2,17.1]
++    assert request.destination_id == 'pfz_7'
++    assert request.vessel_size == 'large'
++    assert request.data_mode == 'SNAPSHOT'
++    assert request.mission_state.mission_id == mission.mission_id
++
++
++@pytest.mark.parametrize('changes', [
++    {'valid_from': datetime.now(timezone.utc)+timedelta(hours=1)},
++    {'valid_to': datetime.now(timezone.utc)-timedelta(hours=1)},
++    {'status': 'EXPIRED'},
++])
++def test_delivery_excludes_future_expired_and_resolved_alerts(changes):
++    now = datetime.now(timezone.utc)
++    record = SimpleNamespace(id='alert', alert_type='ASSESSMENT_ALERT', severity='high', title='Warning', description='Warning', recommended_action='Review', status='ACTIVE', is_acknowledged=False, valid_from=None, valid_to=None, created_at=now)
++    for name,value in changes.items(): setattr(record,name,value)
++    session = MagicMock()
++    session.query.return_value.filter.return_value.first.return_value = SimpleNamespace(id='sub', is_active=True)
++    session.query.return_value.filter.return_value.order_by.return_value.all.return_value = [record]
++    with patch('backend.app.services.alert_service.SessionLocal') as factory:
++        factory.return_value.__enter__.return_value = session
++        alerts, mode = AlertService.get_active_alerts('subscription')
++    assert alerts == []
++    assert mode == 'durable'
++
++
++def test_recurring_resolved_warning_is_reactivated_and_requires_new_acknowledgement():
++    now = datetime.now(timezone.utc)
++    record = SimpleNamespace(status='EXPIRED', is_acknowledged=True, valid_from=now-timedelta(hours=2), valid_to=now-timedelta(hours=1), assessment_id='old')
++    AlertService._renew_alert(record,'new')
++    assert record.status == 'ACTIVE'
++    assert record.is_acknowledged is False
++    assert record.valid_to is None
++    assert record.assessment_id == 'new'
++    assert AlertService._alert_is_current(record, datetime.now(timezone.utc))
++
++
++@pytest.mark.parametrize('departure,return_time', [('invalid',None), (None,'invalid'), ('2026-10-04T18:00:00Z','2026-10-04T06:00:00Z')])
++def test_invalid_partial_trip_windows_are_rejected_before_database_fallback(departure,return_time):
++    with patch('backend.app.services.alert_service.SessionLocal') as factory:
++        with pytest.raises(ValueError):
++            AlertService.register_trip_monitoring(SavedTripRequest(origin_harbor='Ratnagiri',craft_profile='motorized_boat',departure_time=departure,return_time=return_time))
++        factory.assert_not_called()
++
++
++def test_stop_monitoring_disables_subscription_and_expires_delivered_warnings():
++    session = MagicMock()
++    sub = SimpleNamespace(id='sub', is_active=True)
++    warning = SimpleNamespace(status='ACTIVE', valid_to=None)
++    session.query.return_value.filter.return_value.first.return_value = sub
++    session.query.return_value.filter.return_value.all.return_value = [warning]
++    with patch('backend.app.services.alert_service.SessionLocal') as factory:
++        factory.return_value.__enter__.return_value = session
++        assert AlertService.stop_monitoring('subscription') is True
++    assert sub.is_active is False
++    assert warning.status == 'EXPIRED'
++    assert warning.valid_to is not None
++    session.commit.assert_called_once()
++
++
++def test_stop_monitoring_does_not_report_success_when_database_is_unavailable():
++    with patch('backend.app.services.alert_service.SessionLocal', side_effect=OSError('offline')):
++        assert AlertService.stop_monitoring('subscription') is False

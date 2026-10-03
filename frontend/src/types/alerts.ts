@@ -28,6 +28,9 @@ export interface SavedTripRequest {
   return_time?: string;
   language: string;
   data_mode?: string;
+  coordinates?: [number, number];
+  destination_id?: string;
+  mission_state?: import("./mission").MissionState;
 }
 
 export interface SavedTripResponse {
