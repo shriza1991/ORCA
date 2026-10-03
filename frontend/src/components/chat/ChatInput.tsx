@@ -25,6 +25,7 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
     error: voiceError,
     startRecording,
     stopRecording,
+    cancelRecording,
     clearError: clearVoiceError,
     isSupported,
   } = useVoiceRecorder({
@@ -63,15 +64,30 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
     if (isRecording) return;
     
     // Attempt to request pointer capture so we don't lose the up event if dragged outside
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
     
     await startRecording();
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     if (!isRecording) return;
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    try {
+      if ((e.target as HTMLElement).hasPointerCapture?.(e.pointerId)) {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+    } catch {}
     stopRecording();
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent) => {
+    try {
+      if ((e.target as HTMLElement).hasPointerCapture?.(e.pointerId)) {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      }
+    } catch {}
+    cancelRecording();
   };
 
   return (
@@ -156,7 +172,8 @@ export default function ChatInput({ language = 'en', onSend, onStartCall, disabl
               className={`chat-mic-btn ptt-btn ${isRecording ? 'is-recording' : ''} ${isTranscribing ? 'is-transcribing' : ''}`}
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
+              onLostPointerCapture={handlePointerCancel}
               onContextMenu={e => e.preventDefault()} // Prevent context menu on long press
               disabled={disabled || isTranscribing || !isSupported}
               title={

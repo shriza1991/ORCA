@@ -70,11 +70,14 @@ export interface VoiceChatParams {
   conversation_id?: string;
   origin_harbor?: string;
   craft_profile?: string;
+  vessel_size?: string;
+  coordinates?: [number, number];
   language_preference?: string;
   departure_time?: string;
   return_time?: string;
   target_pfz?: string;
   parent_assessment_id?: string;
+  signal?: AbortSignal;
 }
 
 export async function sendVoiceChat(
@@ -93,6 +96,12 @@ export async function sendVoiceChat(
   }
   if (params?.craft_profile) {
     formData.append('craft_profile', params.craft_profile);
+  }
+  if (params?.vessel_size) {
+    formData.append('vessel_size', params.vessel_size);
+  }
+  if (params?.coordinates) {
+    formData.append('coordinates', JSON.stringify(params.coordinates));
   }
   if (params?.language_preference) {
     formData.append('language_preference', params.language_preference);
@@ -117,6 +126,7 @@ export async function sendVoiceChat(
   const res = await fetch(`${API_BASE}/voice/chat`, {
     method: 'POST',
     body: formData,
+    signal: params?.signal,
   });
 
   if (!res.ok) {

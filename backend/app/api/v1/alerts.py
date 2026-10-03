@@ -22,6 +22,11 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 def register_trip(request: SavedTripRequest) -> Any:
     try:
         return AlertService.register_trip_monitoring(request)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid trip inputs: {str(exc)}"
+        )
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -37,10 +42,11 @@ def register_trip(request: SavedTripRequest) -> Any:
 )
 def get_alerts(subscription_id: str) -> Any:
     try:
-        alerts = AlertService.get_active_alerts(subscription_id)
+        alerts, monitoring_mode = AlertService.get_active_alerts(subscription_id)
         return ActiveAlertsResponse(
             subscription_id=subscription_id,
-            alerts=alerts
+            alerts=alerts,
+            monitoring_mode=monitoring_mode,
         )
     except Exception as exc:
         raise HTTPException(

@@ -166,24 +166,30 @@ export default function App() {
       />
 
       {/* Dedicated Phone-Style Call ORCA Modal */}
-      <CallModal
-        isOpen={isCallModalOpen}
-        onClose={() => setIsCallModalOpen(false)}
-        language={chat.language}
-        originHarbor={chat.missionContext.origin_harbor}
-        craftProfile={chat.missionContext.craft_profile}
-        departureTime={chat.missionContext.departure_time}
-        returnTime={chat.missionContext.return_time}
-        targetPfz={chat.missionContext.target_pfz}
-        baselineAssessmentId={portal === "fisher" ? chat.missionAssessment?.assessment_id : undefined}
-        evidenceBundleId={portal === "fisher" ? chat.missionAssessment?.evidence_bundle_id : undefined}
-        dataMode={portal === "fisher" ? chat.missionAssessment?.conditions.data_mode : undefined}
-        parentAssessmentId={
-          chat.missionContext.parent_assessment_id ||
-          chat.missionState?.parent_assessment_id ||
-          undefined
-        }
-      />
+      {(() => {
+        const activeBaseline = chat.getActiveBaseline(portal === "fisher" ? undefined : "authority");
+        return (
+          <CallModal
+            isOpen={isCallModalOpen}
+            onClose={() => setIsCallModalOpen(false)}
+            language={chat.language}
+            originHarbor={chat.missionContext.origin_harbor}
+            craftProfile={chat.missionContext.craft_profile}
+            vesselSize={chat.missionContext.vessel_size}
+            coordinates={activeBaseline.coordinates}
+            departureTime={chat.missionContext.departure_time}
+            returnTime={chat.missionContext.return_time}
+            targetPfz={chat.missionContext.target_pfz}
+            baselineAssessmentId={activeBaseline.assessmentId}
+            evidenceBundleId={activeBaseline.evidenceBundleId}
+            dataMode={activeBaseline.dataMode}
+            parentAssessmentId={activeBaseline.parentAssessmentId}
+            isBaselineApplicable={activeBaseline.isApplicable}
+            isBaselineLoading={activeBaseline.isLoading}
+            isBaselineExpired={activeBaseline.isExpired}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { transcribeAudio, ApiError } from '../api/client';
 import type { TranscribeResponse } from '../types/contracts';
 
@@ -30,6 +30,8 @@ export function useVoiceRecorder({
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const isCancelledRef = useRef<boolean>(false);
+  const recorderGenRef = useRef<number>(0);
+  const isMountedRef = useRef<boolean>(true);
 
   const isSupported =
     typeof window !== 'undefined' &&
@@ -48,10 +50,26 @@ export function useVoiceRecorder({
     }
   }, []);
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      isCancelledRef.current = true;
+      recorderGenRef.current++;
+      cleanupStream();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {}
+      }
+    };
+  }, [cleanupStream]);
+
   const startRecording = useCallback(async () => {
     setError(null);
     isCancelledRef.current = false;
     audioChunksRef.current = [];
+    const currentGen = ++recorderGenRef.current;
 
     if (!isSupported) {
       const errMsg = 'Voice recording is not supported in this browser environment.';
@@ -62,6 +80,13 @@ export function useVoiceRecorder({
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // If user released, cancelled, or component unmounted while waiting for permission:
+      if (!isMountedRef.current || isCancelledRef.current || recorderGenRef.current !== currentGen) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
       streamRef.current = stream;
 
       // Determine best supported MIME type
@@ -89,9 +114,11 @@ export function useVoiceRecorder({
 
       recorder.onstop = async () => {
         cleanupStream();
-        setIsRecording(false);
+        if (isMountedRef.current) {
+          setIsRecording(false);
+        }
 
-        if (isCancelledRef.current) {
+        if (isCancelledRef.current || recorderGenRef.current !== currentGen || !isMountedRef.current) {
           audioChunksRef.current = [];
           return;
         }
@@ -109,9 +136,15 @@ export function useVoiceRecorder({
           return;
         }
 
-        setIsTranscribing(true);
+        if (isMountedRef.current) {
+          setIsTranscribing(true);
+        }
         try {
           const result = await transcribeAudio(audioBlob);
+          // Check if cancelled during transcription
+          if (isCancelledRef.current || recorderGenRef.current !== currentGen || !isMountedRef.current) {
+            return;
+          }
           if (result && result.transcript) {
             onTranscription?.(result);
           } else {
@@ -120,6 +153,9 @@ export function useVoiceRecorder({
             onError?.(warnMsg);
           }
         } catch (err) {
+          if (isCancelledRef.current || recorderGenRef.current !== currentGen || !isMountedRef.current) {
+            return;
+          }
           let msg = 'Voice transcription failed. Please try again or type your message.';
           if (err instanceof ApiError) {
             if (typeof err.body === 'object' && err.body !== null && 'detail' in err.body) {
@@ -133,39 +169,51 @@ export function useVoiceRecorder({
           setError(msg);
           onError?.(msg);
         } finally {
-          setIsTranscribing(false);
+          if (isMountedRef.current && recorderGenRef.current === currentGen) {
+            setIsTranscribing(false);
+          }
         }
       };
 
       recorder.onerror = () => {
         cleanupStream();
-        setIsRecording(false);
-        setIsTranscribing(false);
-        const errMsg = 'An error occurred during audio recording.';
-        setError(errMsg);
-        onError?.(errMsg);
+        if (isMountedRef.current) {
+          setIsRecording(false);
+          setIsTranscribing(false);
+          const errMsg = 'An error occurred during audio recording.';
+          setError(errMsg);
+          onError?.(errMsg);
+        }
       };
 
-
-      recorder.start(250); // Slice data every 250ms
-      setIsRecording(true);
+      recorder.start(250);
+      if (isMountedRef.current) {
+        setIsRecording(true);
+      }
     } catch (err: any) {
       cleanupStream();
-      setIsRecording(false);
-      let errMsg = 'Failed to access microphone.';
-      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
-        errMsg = 'Microphone permission was denied. Please allow microphone access to use voice input.';
-      } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
-        errMsg = 'No microphone device was found.';
-      } else if (err?.message) {
-        errMsg = err.message;
+      if (isMountedRef.current) {
+        setIsRecording(false);
+        let errMsg = 'Failed to access microphone.';
+        if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+          errMsg = 'Microphone permission was denied. Please allow microphone access to use voice input.';
+        } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
+          errMsg = 'No microphone device was found.';
+        } else if (err?.message) {
+          errMsg = err.message;
+        }
+        setError(errMsg);
+        onError?.(errMsg);
       }
-      setError(errMsg);
-      onError?.(errMsg);
     }
   }, [isSupported, cleanupStream, onTranscription, onError]);
 
   const stopRecording = useCallback(() => {
+    if (!streamRef.current && !mediaRecorderRef.current) {
+      // Permission request still pending when stopped -> cancel it
+      isCancelledRef.current = true;
+      recorderGenRef.current++;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
         mediaRecorderRef.current.stop();
@@ -181,6 +229,7 @@ export function useVoiceRecorder({
 
   const cancelRecording = useCallback(() => {
     isCancelledRef.current = true;
+    recorderGenRef.current++;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
         mediaRecorderRef.current.stop();
@@ -192,6 +241,7 @@ export function useVoiceRecorder({
       cleanupStream();
       setIsRecording(false);
     }
+    setIsTranscribing(false);
     audioChunksRef.current = [];
   }, [cleanupStream]);
 

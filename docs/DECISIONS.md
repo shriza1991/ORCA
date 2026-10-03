@@ -2435,3 +2435,40 @@ Impact:
 - Request matching does not infer missing stored fields. Cached coordinates/mode/destination must satisfy the request, and timezone-equivalent timestamps share full cache identity. Legacy cache formats are validated before reuse.
 - Route adoption must select the requested supported recommended corridor. Refresh preserves the complete plan but may change evidence. Central Apply rejects obsolete captured callbacks using the currently rendered baseline.
 - React owns request/UI synchronization only. Safety decisions and geometry remain Python authority. No API schema or safety freshness policy was added.
+
+
+## D081 — Task 6 Reliable Voice Interaction, Coordinated Spoken Guidance, and Operational Alert Monitoring (2026-10-03)
+Status: ACCEPTED
+
+Decision:
+1. Baseline Availability & Voice Context Binding:
+   - Voice chat parameters (`VoiceChatParams`) and backend route `/api/v1/voice/chat` now accept `vessel_size` and `coordinates` alongside origin harbor, craft profile, departure/return times, target PFZ, and baseline assessment ID.
+   - `UserContext` and retained mission state binding mirror text chat entry point invariants, ensuring voice queries evaluate against the exact same vessel limits, spatial coordinates, and mission baseline.
+2. Race-Free Voice Recording & Call Session Generational Lifecycle:
+   - `useVoiceRecorder` utilizes `recorderGenRef` to isolate media stream allocations. Pre-resolution aborts immediately terminate audio tracks upon arrival. Track cleanup occurs deterministically on unmount and pointer release/cancellation.
+   - `useCallSession` utilizes `callGenRef` and `turnGenRef` to guarantee that late transcription or TTS payloads from canceled or prior turns are dropped.
+   - Mid-call mission changes transition the call session into an explicit `PAUSED` state rather than producing contradictory voice recommendations against stale baselines. Object URLs for synthesized audio blobs are tracked and explicitly revoked upon replacement and teardown.
+   - If backend TTS synthesis is unavailable or fails, call session falls back to localized Web Speech synthesis rather than silently dropping voice answers.
+3. Centralized Speech Coordination & Mutual Exclusivity:
+   - Built a singleton `SpeechCoordinator` (`frontend/src/utils/speech-coordinator.ts`) with a priority queue (`high` > `normal`), additive `voiceschanged` listener, and global mute state with pub/sub reactivity.
+   - While a call session is active (`isCallActive = true`), background spoken alerts and nav announcements are queued or dropped, preventing call audio overlaps.
+   - Boundary geofence alerts integrate with speech coordination: entering restricted zones (`INSIDE`) issues high-priority spoken warnings; approaching boundaries (`APPROACHING`) issues normal priority guidance; leaving zones (`CLEAR`) resets spatial deduplication. Stale GPS fixes produce visual warnings without fabricating clearance speech.
+   - All spoken announcements support explicit user replay (`replay(text, lang)`) and respect global mute.
+4. Foreground DEMO Monitoring & Operational Alert Hardening:
+   - Trip monitoring supports foreground polling in `DEMO` mode via `/api/v1/trip-assessments/{id}/refresh` with `validateRefreshedAssessment`, running non-overlapping checks without requiring a local PostgreSQL database or background broker.
+   - Saved trip subscriptions store `vessel_size`, `data_mode`, and full `mission_context_json` (Alembic migration `f1a2b3c4d5e7`).
+   - `AlertService` rejects invalid trip windows (`return_time <= departure_time`) with strict HTTP 400 errors instead of inventing +12 hour return times.
+   - Expired alerts (`valid_to < now()`) are deterministically filtered from active alerts; new alerts automatically supersede prior alerts sharing the same alert identity hash.
+   - Alert acknowledgment handles DB failures gracefully, returning failure envelopes rather than falsely certifying persistence.
+   - Refreshed plans never auto-adopt; users must explicitly click "Apply Refreshed Plan", which validates plan identity against active baseline before adoption.
+
+Reason:
+Provide fishermen with hands-free and proactive voice/spoken guidance without racing state, leaking stale baselines, overlapping spoken audio, or compromising deterministic safety invariants.
+
+Impact:
+- 33/33 frontend test files passing (383 tests passing in Vitest, 100% pass rate).
+- 113/113 backend API tests passing (`tests/api/`).
+- 118/118 backend domain tests passing (`tests/domain/`).
+- Clean TypeScript check (`npm run typecheck`) and production build (`npm run build`).
+Owner: Dev 1 (Frontend), Dev 2 (Backend Platform), Dev 3 (Voice & Agents), Dev 4 (Deterministic Safety)
+Date: 2026-10-03

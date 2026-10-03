@@ -15,6 +15,7 @@ class SavedTripRequest(BaseModel):
     departure_time: Optional[str] = Field(None, description="ISO-8601 departure time")
     return_time: Optional[str] = Field(None, description="ISO-8601 return time")
     language: str = Field("en", description="Preferred language for alerts")
+    data_mode: Optional[str] = Field("LIVE", description="Intended data mode")
     mission_state: Optional[Any] = Field(None, description="Canonical MissionState context")
 
 
@@ -23,6 +24,8 @@ class SavedTripResponse(BaseModel):
     origin_harbor: str
     craft_profile: str
     vessel_size: Optional[str] = Field("medium", description="Vessel size classification: small | medium | large")
+    data_mode: Optional[str] = Field("LIVE", description="Intended data mode")
+    monitoring_mode: str = Field("durable", description="Truthful monitoring mode: durable | session-only | unavailable")
     is_active: bool
     created_at: datetime
     mission_state: Optional[Any] = Field(None, description="Canonical MissionState context")
@@ -45,6 +48,7 @@ class ActionableAlertDto(BaseModel):
 class ActiveAlertsResponse(BaseModel):
     subscription_id: str
     alerts: List[ActionableAlertDto]
+    monitoring_mode: str = Field("durable", description="Truthful monitoring mode: durable | session-only | unavailable | degraded")
 
 
 class AcknowledgeResponse(BaseModel):

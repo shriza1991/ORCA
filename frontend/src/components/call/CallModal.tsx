@@ -17,6 +17,7 @@ import {
 import type { SupportedLanguage } from '../../i18n/translations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { useCallSession } from '../../hooks/useCallSession';
+import type { TripAssessmentResponse } from '../../types/assessment';
 
 interface CallModalProps {
   isOpen: boolean;
@@ -24,6 +25,8 @@ interface CallModalProps {
   language?: SupportedLanguage;
   originHarbor?: string;
   craftProfile?: string;
+  vesselSize?: string;
+  coordinates?: [number, number];
   departureTime?: string;
   returnTime?: string;
   targetPfz?: string;
@@ -31,6 +34,10 @@ interface CallModalProps {
   baselineAssessmentId?: string;
   evidenceBundleId?: string;
   dataMode?: string;
+  isBaselineApplicable?: boolean;
+  isBaselineLoading?: boolean;
+  isBaselineExpired?: boolean;
+  onApplyProposal?: (assessment: TripAssessmentResponse) => void;
 }
 
 function getLanguageLabel(code: string | null): { name: string; flag: string } {
@@ -49,6 +56,8 @@ export default function CallModal({
   language = 'en',
   originHarbor = 'Ratnagiri',
   craftProfile = 'motorized_boat',
+  vesselSize = 'medium',
+  coordinates,
   departureTime,
   returnTime,
   targetPfz,
@@ -56,6 +65,10 @@ export default function CallModal({
   baselineAssessmentId,
   evidenceBundleId,
   dataMode,
+  isBaselineApplicable,
+  isBaselineLoading,
+  isBaselineExpired,
+  onApplyProposal,
 }: CallModalProps) {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -68,6 +81,8 @@ export default function CallModal({
     volumeLevel,
     error,
     isMuted,
+    pendingProposal,
+    applyPendingProposal,
     startCall,
     finishSpeakingTurn,
     toggleMute,
@@ -76,6 +91,8 @@ export default function CallModal({
   } = useCallSession({
     originHarbor,
     craftProfile,
+    vesselSize,
+    coordinates,
     departureTime,
     returnTime,
     targetPfz,
@@ -83,10 +100,14 @@ export default function CallModal({
     baselineAssessmentId,
     evidenceBundleId,
     dataMode,
+    isBaselineApplicable,
+    isBaselineLoading,
+    isBaselineExpired,
     silenceTimeoutMs: 3000, // ~3 seconds silence detection
     speechThreshold: 0.032,
     minSpeechDurationMs: 300,
     onCallEnd: onClose,
+    onApplyProposal,
   });
 
   // Start call when opened
@@ -125,6 +146,12 @@ export default function CallModal({
                   <span className={`call-status-dot ${callState === 'ERROR' ? 'error' : 'active'}`} />
                   <span className="call-duration-text">{formattedDuration}</span>
                   <span className="call-harbor-tag">{originHarbor}</span>
+                  {vesselSize && <span className="call-harbor-tag">{vesselSize}</span>}
+                  {isBaselineExpired && <span className="call-harbor-tag" style={{ background: '#fef2f2', color: '#b91c1c' }}>Expired Clearance</span>}
+                  {isBaselineLoading && <span className="call-harbor-tag" style={{ background: '#fefce8', color: '#854d0e' }}>Assessing…</span>}
+                  {!baselineAssessmentId && !isBaselineLoading && !isBaselineExpired && (
+                    <span className="call-harbor-tag" style={{ background: '#f3f4f6', color: '#4b5563' }}>Advisory Mode</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -245,6 +272,12 @@ export default function CallModal({
                 {t.callStatusSpeaking}
               </span>
             )}
+            {callState === 'PAUSED' && (
+              <span className="call-state-pill paused" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>
+                <RefreshCw size={14} />
+                {error || 'Mission updated. Please tap to speak.'}
+              </span>
+            )}
             {callState === 'ERROR' && (
               <span className="call-state-pill error">
                 {error || 'Connection issue'}
@@ -288,6 +321,25 @@ export default function CallModal({
           </div>
         </section>
 
+        {/* Proposed Plan Preview (if voice What-If generated a proposal) */}
+        {pendingProposal && (
+          <div className="call-proposal-card" style={{ padding: '10px 14px', margin: '8px 16px', background: '#ecfdf5', border: '1px solid #6ee7b7', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <strong style={{ color: '#065f46', fontSize: '0.85rem' }}>Proposed Plan Preview:</strong>
+              <p style={{ margin: '2px 0 0 0', color: '#047857', fontSize: '0.8rem' }}>
+                {pendingProposal.brief?.summary || `Evaluated decision: ${pendingProposal.decision}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={applyPendingProposal}
+              style={{ padding: '6px 12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              Apply Plan
+            </button>
+          </div>
+        )}
+
         {/* Bottom Call Action Toolbar */}
         <footer className="call-toolbar">
           {/* Subtle Fallback Action: Send Now (allows skipping 3s silence if user prefers) */}
@@ -301,6 +353,20 @@ export default function CallModal({
             >
               <SendHorizontal size={14} />
               <span>{t.callTapToSendNow}</span>
+            </button>
+          )}
+
+          {/* Resume / Speak button if paused */}
+          {callState === 'PAUSED' && (
+            <button
+              type="button"
+              className="call-fallback-send-btn"
+              onClick={retryTurn}
+              aria-label="Tap to speak for new plan"
+              title="Tap to speak for new plan"
+            >
+              <Mic size={14} />
+              <span>Tap to Speak for New Plan</span>
             </button>
           )}
 

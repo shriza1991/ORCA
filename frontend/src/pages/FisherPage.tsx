@@ -17,11 +17,12 @@ import { mergeFisherLayers, formatFishermanPopup } from "../utils/fisher-map";
 import { useTripAssessment } from "../hooks/useTripAssessment";
 import { useAlerts } from "../hooks/useAlerts";
 import FisherAlertPanel from "../components/fisher/FisherAlertPanel";
-import { useSpokenGuidance } from "../hooks/useSpokenGuidance";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useGeofence } from "../hooks/useGeofence";
 import LocationWarningsOverlay from "../components/map/LocationWarningsOverlay";
 import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRound, ArrowUpRight, Bookmark, Mic } from "lucide-react";
+import { speechCoordinator } from "../utils/speech-coordinator";
+import { translateText } from "../i18n/translations";
 import { type MissionContext, type DecisionDeltaContract } from "../types/mission";
 import { assessmentRequest } from "../components/mission/AssessmentSimulator";
 
@@ -272,8 +273,22 @@ export default function FisherPage({
     return () => proposalAbortRef.current?.abort();
   }, [assessment?.assessment_id]);
 
-  const { alerts, registerTrip, acknowledgeAlert } = useAlerts(chat.language);
-  const { speak } = useSpokenGuidance({ language: chat.language });
+  const {
+    alerts,
+    monitoringMode,
+    isMonitoringEnabled,
+    setIsMonitoringEnabled,
+    registerTrip,
+    acknowledgeAlert,
+    applyRefreshedAlert,
+  } = useAlerts(chat.language, {
+    applicableAssessment: assessment,
+    isApplicable: Boolean(assessment && !isExpired && !isLoading),
+    isExpired,
+    isLoading,
+    dataMode: fisherDataMode,
+    onApplyRefreshed: applyAssessment,
+  });
 
   const {
     status: geoStatus,
@@ -291,6 +306,36 @@ export default function FisherPage({
     geoStatus,
     baseLayers,
   );
+
+  // Boundary warning speech coordination: announce INSIDE (priority: high) and APPROACHING (priority: normal)
+  const prevGeoStateRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (geoEvaluationState === 'INSIDE') {
+      const insideAlerts = geofenceAlerts.filter(a => a.isInside);
+      const zoneNames = insideAlerts.map(a => a.name).join(', ') || 'Restricted Zone';
+      const text = `${translateText('Inside Restricted Area', chat.language)}: ${zoneNames}`;
+      speechCoordinator.speak(text, {
+        priority: 'high',
+        dedupeKey: `${currentContextKey}:boundary:inside:${zoneNames}`,
+        language: chat.language,
+      });
+    } else if (geoEvaluationState === 'APPROACHING') {
+      const approachAlerts = geofenceAlerts.filter(a => !a.isInside);
+      const zoneNames = approachAlerts.map(a => a.name).join(', ') || 'Restricted Zone';
+      const text = `${translateText('Approaching Boundary', chat.language)}: ${zoneNames}`;
+      speechCoordinator.speak(text, {
+        priority: 'normal',
+        dedupeKey: `${currentContextKey}:boundary:approaching:${zoneNames}`,
+        language: chat.language,
+      });
+    } else if (geoEvaluationState === 'CLEAR') {
+      // If returning to clear from an approach or inside state, reset boundary deduplication
+      if (prevGeoStateRef.current === 'INSIDE' || prevGeoStateRef.current === 'APPROACHING') {
+        speechCoordinator.resetDeduplication(`${currentContextKey}:boundary`);
+      }
+    }
+    prevGeoStateRef.current = geoEvaluationState;
+  }, [geoEvaluationState, geofenceAlerts, currentContextKey, chat.language]);
 
   const handleToggleLocation = () => {
     if (isTracking) stopTracking();
@@ -566,11 +611,25 @@ export default function FisherPage({
   const summary = <MissionSummary assessment={assessment} loading={isLoading} error={error} onPlan={() => setSidebarTab('voyage')} onMap={() => setSidebarTab('map')} />;
 
   return <main className={`fisher-workspace workspace-${sidebarTab}`}>
-    <nav className="fisher-navigation" aria-label="Fisher workspace">{nav.map(([id, Icon, label]) => <button key={id} className={sidebarTab === id || (id === 'voyage' && sidebarTab === 'decision') ? 'active' : ''} onClick={() => setSidebarTab(id)} aria-current={sidebarTab === id ? 'page' : undefined}><Icon size={19} /><span>{label}</span></button>)}</nav>
+    <nav className="fisher-navigation" aria-label="Fisher workspace">{nav.map(([id, Icon, label]) => <button key={id} className={sidebarTab === id || (id === 'voyage' && sidebarTab === 'decision') ? 'active' : ''} onClick={() => setSidebarTab(id)} aria-current={sidebarTab === id ? 'page' : undefined}><Icon size={19} /><span>{label}</span>{id === 'alerts' && alerts.some(a => !a.is_acknowledged && a.status === 'ACTIVE') && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block', marginLeft: '4px' }} title="Active alert" />}</button>)}</nav>
     <div className="fisher-workspace-body">
       <div className="fisher-main-pane">
         <div className="workspace-heading"><div><span className="eyebrow">{originHarbor} / FISHER WORKSPACE</span><h1>{sidebarTab === 'home' ? (name ? `Welcome back, ${name}` : 'Your marine assistant') : sidebarTab === 'chat' ? 'Ask ORCA' : sidebarTab === 'voyage' ? 'Plan your trip' : sidebarTab === 'decision' ? 'Your mission' : sidebarTab === 'profile' ? 'Your profile' : sidebarTab === 'trips' ? 'Recent decisions' : sidebarTab === 'alerts' ? 'Trip alerts' : 'Your mission map'}</h1></div><span className="scenario-label">{fisherDataMode === 'DEMO' ? 'DEMO · Controlled marine scenario' : fisherDataMode}</span></div>
         {isOffline && <p className="product-notice">Saved {assessment?.assessed_at ? new Date(assessment.assessed_at).toLocaleString() : 'assessment'} · {isExpired ? 'Expired. Reconnect before making a departure decision.' : 'Offline. Reconnect to reassess.'}</p>}
+        {sidebarTab !== 'alerts' && alerts.some(a => !a.is_acknowledged && a.status === 'ACTIVE') && (
+          <div style={{ margin: '8px 0' }}>
+            <FisherAlertPanel
+              alerts={alerts}
+              language={chat.language}
+              monitoringMode={monitoringMode}
+              isMonitoringEnabled={isMonitoringEnabled}
+              onToggleMonitoring={setIsMonitoringEnabled}
+              onAcknowledge={acknowledgeAlert}
+              onApplyRefreshed={applyRefreshedAlert}
+              onReplay={text => speechCoordinator.replay(text, chat.language)}
+            />
+          </div>
+        )}
         {sidebarTab === 'home' && <>
           <div className="vessel-context"><Navigation size={20} /><span><strong>{(chat.missionContext.craft_profile || 'motorized_boat').replace(/_/g, ' ')}</strong><small>{chat.missionContext.vessel_size || 'medium'} vessel · {tripWindow}</small></span><button onClick={() => setSidebarTab('profile')}>Edit profile</button></div>
           <div className="home-actions"><button className="product-primary" onClick={() => setSidebarTab('voyage')}><Navigation size={20} /><span>Plan a trip<small>Vessel, time and fishing area</small></span><ArrowUpRight size={20} /></button><button onClick={() => setSidebarTab('chat')}><MessageSquare size={20} /><span>Ask ORCA<small>Start with a question</small></span><ArrowUpRight size={20} /></button></div>
@@ -582,7 +641,7 @@ export default function FisherPage({
         {sidebarTab === 'decision' && <>{summary}{baselineUsable && assessment && <RouteChoices assessment={assessment} onApply={applyAssessment} />}{baselineUsable && <WhatIfSimulator assessment={assessment} onApplyAssessment={applyAssessment} currentContext={chat.missionContext} currentStatus={effectiveDecisionStatus} language={chat.language} onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)} onApplyContext={chat.setMissionContext} />}<details className="product-details evidence-details"><summary>Inspect evidence, routes and detailed reasoning</summary><FisherDecisionSurface assessment={assessment} isLoading={isLoading} error={error} isOffline={isOffline} isExpired={isExpired} missionContext={chat.missionContext} language={chat.language} collaboration={null} onOpenVoyageSettings={() => setSidebarTab('voyage')} onViewMap={() => setSidebarTab('map')} /></details></>}
         {sidebarTab === 'chat' && <div className="product-chat"><div className="mission-context-bar"><p>Current mission (correct harbor and time before asking): <strong>{originHarbor}</strong> · {tripWindow} · {(chat.missionContext.craft_profile || '').replace(/_/g, ' ')}</p><button onClick={() => setSidebarTab('voyage')}>Correct mission</button><label>Response language<select aria-label="Response language" value={chat.language} onChange={e => chat.setLanguage(e.target.value as 'en' | 'hi' | 'mr')}><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select></label></div>{chatProposal && <div className="product-notice"><p>Proposed mission: {new Date(chatProposal.trip_context.departure_time || '').toLocaleString()} → {assessmentStatus(chatProposal)}{!isChatProposalApplicable && <span className="muted" style={{ display: 'block', fontSize: '12px', marginTop: '2px' }}>Proposal no longer applies to the active mission baseline.</span>}</p><button disabled={!isChatProposalApplicable} onClick={() => isChatProposalApplicable && applyAssessment(chatProposal)}>Use this exact proposed plan</button></div>}<div className="question-shortcuts">{['Can I go fishing tomorrow?', 'Where is the nearest PFZ?', 'What are the nearest hazards?', 'Why this decision?', 'Compare the routes.'].map(q => <button key={q} disabled={chat.isLoading} onClick={() => chat.send(q)}>{q}</button>)}</div><ChatPanel language={chat.language} messages={chat.messages} activeResponse={chat.activeResponse} isLoading={chat.isLoading} onSend={chat.send} onStartCall={onStartCall} onBack={() => setSidebarTab('home')} onReset={chat.clearChat} onEvidenceClick={onOpenEvidence} /></div>}
         {sidebarTab === 'trips' && <section className="product-section"><p className="muted">Assessments saved on this device. Open a trip to plan from its context; conditions will be checked again.</p>{recent.length ? recent.map(a => <button className="trip-history-row" key={a.assessment_id} onClick={() => { chat.setMissionContext({ ...chat.missionContext, ...a.trip_context }); setSidebarTab('voyage'); }}><span><strong>{a.trip_context.origin_harbor}</strong><small>{new Date(a.assessed_at).toLocaleString()}</small></span><span className={`decision-label status-${assessmentStatus(a)}`}>{assessmentStatus(a)}</span></button>) : <p>No assessments yet. Plan your first trip to start a history.</p>}</section>}
-        {sidebarTab === 'alerts' && <section className="product-section">{baselineUsable && assessment && <MissionChanges assessment={assessment} onApply={applyAssessment} />}<h3>Current mission advisories</h3><p>{assessment?.conditions.hazard?.headline || 'No assessment available yet.'}</p>{assessment?.alerts.map((a, i) => <p className="product-notice" key={i}>{(a as any).message || a.title}</p>)}<FisherAlertPanel alerts={alerts} language={chat.language} onAcknowledge={acknowledgeAlert} onReplay={text => speak(text)} /></section>}
+        {sidebarTab === 'alerts' && <section className="product-section">{baselineUsable && assessment && <MissionChanges assessment={assessment} onApply={applyAssessment} />}<h3>Current mission advisories</h3><p>{assessment?.conditions.hazard?.headline || 'No assessment available yet.'}</p>{assessment?.alerts.map((a, i) => <p className="product-notice" key={i}>{(a as any).message || a.title}</p>)}<FisherAlertPanel alerts={alerts} language={chat.language} monitoringMode={monitoringMode} isMonitoringEnabled={isMonitoringEnabled} onToggleMonitoring={setIsMonitoringEnabled} onAcknowledge={acknowledgeAlert} onApplyRefreshed={applyRefreshedAlert} onReplay={text => speechCoordinator.replay(text, chat.language)} /></section>}
         {sidebarTab === 'profile' && <section className="product-section profile-form"><h3>Profile on this device</h3><p className="muted">Your name is a local preference. This prototype has no account sign-in.</p><label>Your name<input value={name} onChange={e => { setName(e.target.value); try { localStorage.setItem('orca.name', e.target.value); } catch {} }} placeholder="Add your name" /></label><label>Vessel<select value={chat.missionContext.craft_profile} onChange={e => chat.setMissionContext({ ...chat.missionContext, craft_profile: e.target.value as any })}><option value="traditional_non_motorized">Traditional craft</option><option value="motorized_boat">Motorized boat</option><option value="mechanized_trawler">Mechanized trawler</option></select></label><label>Size<select value={chat.missionContext.vessel_size} onChange={e => chat.setMissionContext({ ...chat.missionContext, vessel_size: e.target.value as any })}>{['small', 'medium', 'large'].map(size => <option key={size}>{size}</option>)}</select></label><button onClick={onStartCall}><Mic size={18} /> Talk to ORCA</button><h3>Saved fishing areas</h3>{savedZones.length ? savedZones.map(id => <div className="zone-row" key={id}><span>{id}</span><button onClick={() => saveZone(id)}>Remove</button></div>) : <p className="muted">Save an area from Home to keep it here.</p>}</section>}
         {sidebarTab === 'map' && <div className="map-context-strip"><strong>{originHarbor}</strong><span>{zones.length} fishing areas · {assessment?.route_candidates.length || 0} routes</span><button onClick={() => setSidebarTab('decision')}>View decision</button></div>}
       </div>

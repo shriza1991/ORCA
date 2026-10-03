@@ -2294,3 +2294,35 @@ egister_trip_monitoring to correct UI timestamp gaps causing departure_time == r
   - 46/46 passed in `tests/integration/test_task1_snapshot_pipeline.py` and `tests/integration/test_task2_hazard_validity.py`.
   - Frontend production build (`npm --prefix frontend run build` -> `tsc && vite build`) passed cleanly (`✓ built in 43.04s`).
 
+## 2026-10-03 - Task 6 Reliable Voice Interaction, Coordinated Spoken Guidance, and Operational Alert Monitoring
+- Status: **COMPLETE & VERIFIED**
+- Objectives Closed:
+  1. **Reliable Voice Interaction & Generational Lifecycle**:
+     - Bound `vessel_size` and spatial `coordinates` alongside active baseline ID into `VoiceChatParams` and `/api/v1/voice/chat`, guaranteeing voice queries mirror text chat limits and mission baselines.
+     - Hardened `useVoiceRecorder` with `recorderGenRef`, immediate track termination on early abort/cancellation, and deterministic cleanup.
+     - Rewrote `useCallSession` with `callGenRef`, `turnGenRef`, `resumeTimerRef`, and `setCallActive(true/false)`. Object URLs are tracked and explicitly revoked.
+     - Mid-call mission changes transition call session to `PAUSED` with explicit UI status pill rather than generating contradictory voice answers against stale baselines.
+     - Proposal review cards render within `CallModal` with explicit `Apply Plan` button and "Tap to Speak for New Plan" button.
+     - Browser speech synthesis fallback is provided if backend TTS synthesis fails.
+  2. **Coordinated Spoken Guidance & Shared Mute**:
+     - Built singleton `SpeechCoordinator` (`frontend/src/utils/speech-coordinator.ts`) with priority queue (`high` > `normal`), additive `voiceschanged` listener, and global mute state with pub/sub reactivity.
+     - While a call session is active, background spoken guidance and boundary warnings are suppressed.
+     - Boundary warning speech coordination: entering restricted zone (`INSIDE`) triggers high-priority warning; approaching boundary (`APPROACHING`) triggers normal priority alert; leaving zone (`CLEAR`) resets spatial deduplication. Stale GPS fixes produce visual warnings without fabricating clearance speech.
+     - Fisher alert panel subscribes to global mute, provides explicit `replay(text, lang)` button, and renders `[DEMO Active Monitoring]` badge.
+  3. **Foreground DEMO Trip Monitoring & Alert Hardening**:
+     - Trip monitoring supports foreground polling in `DEMO` mode via `/api/v1/trip-assessments/{id}/refresh` with `validateRefreshedAssessment`, running non-overlapping checks without requiring a local PostgreSQL database or background broker.
+     - Saved trip subscriptions store `vessel_size`, `data_mode`, and full `mission_context_json` (Alembic migration `f1a2b3c4d5e7`).
+     - `AlertService` rejects invalid trip windows (`return_time <= departure_time`) with strict HTTP 400 errors instead of fabricating +12 hour return times.
+     - Expired alerts (`valid_to < now()`) are deterministically filtered; new alerts supersede prior alerts sharing the same alert identity hash.
+     - Refreshed plans never auto-adopt; users must explicitly click "Apply Refreshed Plan", validating plan identity against active baseline.
+- Verification:
+  - Frontend Vitest: **33/33 test files passed, 383/383 tests passed (100% pass rate)**.
+  - Frontend TypeScript & Build: `npm run typecheck` passed (0 errors); `npm run build` passed cleanly (`built in 24.16s`).
+  - Backend API Pytest: **113/113 passed** (`tests/api/`).
+  - Backend Domain Pytest: **118/118 passed** (`tests/domain/`).
+  - Task 6 Focused Suite: **5/5 passed** (`tests/api/test_task6_voice_alerts.py`).
+- Next Recommended Tasks:
+  - End-to-end user evaluation with live Sarvam AI credentials in staging environment.
+  - Review production deployment configuration for Render background task workers.
+
+

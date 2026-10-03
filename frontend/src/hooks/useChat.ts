@@ -40,6 +40,19 @@ export interface MissionAssessmentAvailability {
   dataMode?: string;
 }
 
+export interface ActiveBaselineInfo {
+  isApplicable: boolean;
+  assessmentId?: string;
+  evidenceBundleId?: string;
+  dataMode?: string;
+  coordinates?: [number, number];
+  parentAssessmentId?: string;
+  isLoading: boolean;
+  isExpired: boolean;
+  assessment: TripAssessmentResponse | null;
+  missionContext: MissionContext;
+}
+
 export function useChat() {
   const [missionAssessment, storeMissionAssessment] = useState<TripAssessmentResponse | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -92,6 +105,48 @@ export function useChat() {
   const [missionState, setMissionState] = useState<MissionState | null>(null);
   const [activeDiff, setActiveDiff] = useState<DecisionDiff | null>(null);
 
+  const getActiveBaseline = useCallback(
+    (sectorId?: string): ActiveBaselineInfo => {
+      const availability = availabilityRef.current;
+      const currentAssessment = baselineRef.current;
+      const effectiveContext = {
+        ...missionContextRef.current,
+        coordinates: availability.coordinates || (missionContextRef.current as DecisionMissionIdentityInputs).coordinates,
+        data_mode: availability.dataMode || (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
+      };
+
+      const isApplicable =
+        !sectorId &&
+        Boolean(
+          currentAssessment &&
+          isAssessmentApplicableToContext(
+            currentAssessment,
+            effectiveContext,
+            availability.isExpired,
+            availability.isLoading,
+          )
+        );
+
+      return {
+        isApplicable,
+        assessmentId: isApplicable ? currentAssessment?.assessment_id : undefined,
+        evidenceBundleId: isApplicable ? currentAssessment?.evidence_bundle_id : undefined,
+        dataMode: isApplicable
+          ? currentAssessment?.conditions.data_mode
+          : (availability.dataMode || (import.meta.env.VITE_DATA_MODE || 'DEMO')).toUpperCase(),
+        parentAssessmentId: !sectorId && isApplicable
+          ? missionContextRef.current.parent_assessment_id || missionState?.parent_assessment_id || undefined
+          : undefined,
+        coordinates: availability.coordinates || (isApplicable ? currentAssessment?.trip_context.coordinates : undefined),
+        isLoading: Boolean(availability.isLoading),
+        isExpired: Boolean(availability.isExpired),
+        assessment: isApplicable ? currentAssessment : null,
+        missionContext: missionContextRef.current,
+      };
+    },
+    [missionState],
+  );
+
   const send = useCallback(
     async (
       text: string,
@@ -110,13 +165,6 @@ export function useChat() {
       setIsLoading(true);
 
       const capturedMissionKey = getMissionIdentityKey(missionContext);
-      const availability = availabilityRef.current;
-      const currentAssessment = baselineRef.current;
-      const effectiveContext = {
-        ...missionContext,
-        coordinates: availability.coordinates || (missionContext as DecisionMissionIdentityInputs).coordinates,
-        data_mode: availability.dataMode || (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
-      };
 
       const userMsg: ChatMessage = {
         id: generateId(),
@@ -140,12 +188,10 @@ export function useChat() {
       setMessages((prev) => [...prev, userMsg, loadingMsg]);
 
       // Only attach baseline assessment if it's strictly applicable to the current active mission context
-      const isApplicable =
-        !requestContext?.sector_id &&
-        isAssessmentApplicableToContext(currentAssessment, effectiveContext, availability.isExpired, availability.isLoading);
-
-      const effectiveBaselineId = isApplicable ? currentAssessment?.assessment_id : undefined;
-      const effectiveBundleId = isApplicable ? currentAssessment?.evidence_bundle_id : undefined;
+      const baseline = getActiveBaseline(requestContext?.sector_id);
+      const isApplicable = baseline.isApplicable;
+      const effectiveBaselineId = baseline.assessmentId;
+      const effectiveBundleId = baseline.evidenceBundleId;
       const effectiveMissionState = requestContext?.sector_id
         ? undefined
         : isApplicable
@@ -156,10 +202,7 @@ export function useChat() {
         const req: ChatRequest = {
           evidence_bundle_id: effectiveBundleId,
           baseline_assessment_id: effectiveBaselineId,
-          data_mode:
-            isApplicable && currentAssessment?.conditions.data_mode
-              ? currentAssessment.conditions.data_mode
-              : (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
+          data_mode: baseline.dataMode || (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
           conversation_id: conversationId ?? undefined,
           message: text,
           user_context: {
@@ -287,5 +330,6 @@ export function useChat() {
     simulateWhatIf,
     send,
     clearChat,
+    getActiveBaseline,
   };
 }

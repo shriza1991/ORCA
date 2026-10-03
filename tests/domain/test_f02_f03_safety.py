@@ -479,9 +479,10 @@ def test_scenario_i_active_cyclone(context, now_iso, future_iso):
             valid_from=now_iso,
             valid_to=future_iso,
             source_name="IMD Cyclone Warning Division",
+            freshness_flags={"is_official": True, "verified_live": True},
         ),
     )
-    res = evaluate_deterministic_risk(context, bundle=bundle_cyclone)
+    res = evaluate_deterministic_risk(context, bundle=bundle_cyclone, data_mode="LIVE")
     assert res.status == RecommendationStatus.NO_GO
     assert res.confidence_level == ConfidenceLevel.HIGH
     assert any("cyclone" in factor.lower() for factor in res.decisive_factors)

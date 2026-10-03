@@ -939,6 +939,8 @@ async def voice_chat_endpoint(
     conversation_id: str | None = Form(None),
     origin_harbor: str | None = Form(None),
     craft_profile: str | None = Form("motorized_boat"),
+    vessel_size: str | None = Form(None),
+    coordinates: str | None = Form(None),
     language_preference: str | None = Form("auto"),
     departure_time: str | None = Form(None),
     return_time: str | None = Form(None),
@@ -1014,9 +1016,27 @@ async def voice_chat_endpoint(
         else language_preference
     )
 
+    parsed_coords = None
+    if coordinates:
+        try:
+            import json
+            if isinstance(coordinates, str):
+                c = json.loads(coordinates)
+                if isinstance(c, list) and len(c) >= 2:
+                    parsed_coords = [float(c[0]), float(c[1])]
+        except Exception:
+            try:
+                parts = [float(x.strip()) for x in coordinates.split(",") if x.strip()]
+                if len(parts) >= 2:
+                    parsed_coords = [parts[0], parts[1]]
+            except Exception:
+                pass
+
     user_context = {
         "origin_harbor": origin_harbor,
         "craft_profile": craft_profile or "motorized_boat",
+        "vessel_size": vessel_size or "medium",
+        "coordinates": parsed_coords,
         "language_preference": effective_lang,
         "departure_time": departure_time,
         "return_time": return_time,
@@ -1027,15 +1047,17 @@ async def voice_chat_endpoint(
     user_context["data_mode"] = data_mode or settings.DATA_MODE
     retained_mission = bind_retained_context(user_context, baseline_assessment_id, evidence_bundle_id, data_mode)
 
-    # Build MissionState before AgentRunService.run_agent() (M1.1)
+    # Build UserContext with all context fields
     u_ctx = UserContext(
-        origin_harbor=origin_harbor,
-        craft_profile=craft_profile or "motorized_boat",
-        language_preference=effective_lang,
-        departure_time=departure_time,
-        return_time=return_time,
-        target_pfz=target_pfz,
-        parent_assessment_id=parent_assessment_id,
+        origin_harbor=user_context.get("origin_harbor"),
+        craft_profile=user_context.get("craft_profile") or "motorized_boat",
+        vessel_size=user_context.get("vessel_size") or "medium",
+        coordinates=user_context.get("coordinates"),
+        language_preference=user_context.get("language_preference", effective_lang),
+        departure_time=user_context.get("departure_time"),
+        return_time=user_context.get("return_time"),
+        target_pfz=user_context.get("target_pfz"),
+        parent_assessment_id=user_context.get("parent_assessment_id"),
     )
     mission_state = retained_mission or mission_from_user_context(
         user_context=u_ctx,

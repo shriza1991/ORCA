@@ -10,11 +10,14 @@ export interface ActionableAlertDto {
   valid_from: string | null;
   valid_to: string | null;
   created_at: string;
+  is_session_only?: boolean;
+  refreshed_assessment?: any;
 }
 
 export interface ActiveAlertsResponse {
   subscription_id: string;
   alerts: ActionableAlertDto[];
+  monitoring_mode?: string;
 }
 
 export interface SavedTripRequest {
@@ -24,6 +27,7 @@ export interface SavedTripRequest {
   departure_time?: string;
   return_time?: string;
   language: string;
+  data_mode?: string;
 }
 
 export interface SavedTripResponse {
@@ -31,6 +35,8 @@ export interface SavedTripResponse {
   origin_harbor: string;
   craft_profile: string;
   vessel_size?: string;
+  data_mode?: string;
+  monitoring_mode?: string;
   is_active: boolean;
   created_at: string;
 }
@@ -40,3 +46,4 @@ export interface AcknowledgeResponse {
   alert_id: string;
   is_acknowledged: boolean;
 }
+

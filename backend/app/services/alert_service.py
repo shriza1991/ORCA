@@ -6,7 +6,9 @@ Manages saved trips, active actionable alerts, and background reassessment.
 import hashlib
 import logging
 from datetime import datetime, timezone
-from typing import Any, List
+from typing import Any, List, Tuple
+
+from sqlalchemy import or_
 
 from backend.app.contracts.alerts import ActionableAlertDto, SavedTripRequest, SavedTripResponse
 from backend.app.contracts.assessment import TripAssessmentRequest
@@ -29,6 +31,21 @@ class AlertService:
 
     @staticmethod
     def register_trip_monitoring(request: SavedTripRequest) -> SavedTripResponse:
+        # Validate trip window strictly - never invent 12 hours
+        departure_time_val = request.departure_time
+        return_time_val = request.return_time
+
+        if departure_time_val and return_time_val:
+            try:
+                dep_dt = datetime.fromisoformat(departure_time_val.replace("Z", "+00:00"))
+                ret_dt = datetime.fromisoformat(return_time_val.replace("Z", "+00:00"))
+                if ret_dt <= dep_dt:
+                    raise ValueError("return_time must be strictly after departure_time")
+            except ValueError:
+                raise
+            except Exception as e:
+                raise ValueError(f"Invalid departure or return time format: {e}") from e
+
         # Resolve canonical MissionState context
         if request.mission_state:
             mission_state = request.mission_state
@@ -36,6 +53,7 @@ class AlertService:
             u_ctx = UserContext(
                 origin_harbor=request.origin_harbor,
                 craft_profile=request.craft_profile,
+                vessel_size=request.vessel_size or "medium",
                 departure_time=request.departure_time,
                 return_time=request.return_time,
                 language_preference=request.language,
@@ -45,30 +63,28 @@ class AlertService:
                 message=f"Monitored trip for {request.origin_harbor}",
             )
 
-        # Fix UI bug where return_time might equal departure_time
-        departure_time_val = request.departure_time
-        return_time_val = request.return_time
-        
-        if departure_time_val and return_time_val:
-            try:
-                from datetime import datetime, timedelta
-                dep_dt = datetime.fromisoformat(departure_time_val.replace("Z", "+00:00"))
-                ret_dt = datetime.fromisoformat(return_time_val.replace("Z", "+00:00"))
-                if ret_dt <= dep_dt:
-                    ret_dt = dep_dt + timedelta(hours=12)
-                    return_time_val = ret_dt.isoformat()
-            except Exception:
-                pass
+        mission_dict = None
+        if mission_state:
+            if hasattr(mission_state, "model_dump"):
+                mission_dict = mission_state.model_dump()
+            elif isinstance(mission_state, dict):
+                mission_dict = mission_state
+
+        vessel_size_val = request.vessel_size or "medium"
+        data_mode_val = request.data_mode or "LIVE"
 
         try:
             with SessionLocal() as session:
                 sub = SavedTripSubscription(
                     origin_harbor=request.origin_harbor,
                     craft_profile=request.craft_profile,
-                    departure_time=departure_time_val,
-                    return_time=return_time_val,
+                    vessel_size=vessel_size_val,
+                    data_mode=data_mode_val,
+                    mission_context_json=mission_dict,
+                    departure_time=datetime.fromisoformat(departure_time_val.replace("Z", "+00:00")) if departure_time_val else None,
+                    return_time=datetime.fromisoformat(return_time_val.replace("Z", "+00:00")) if return_time_val else None,
                     language=request.language,
-                    is_active=True
+                    is_active=True,
                 )
                 session.add(sub)
                 session.commit()
@@ -79,6 +95,9 @@ class AlertService:
                     subscription_id=sub_id,
                     origin_harbor=sub.origin_harbor,
                     craft_profile=sub.craft_profile,
+                    vessel_size=sub.vessel_size,
+                    data_mode=sub.data_mode,
+                    monitoring_mode="durable",
                     is_active=sub.is_active,
                     created_at=sub.created_at,
                     mission_state=mission_state,
@@ -92,28 +111,34 @@ class AlertService:
                 subscription_id=sub_id,
                 origin_harbor=request.origin_harbor,
                 craft_profile=request.craft_profile,
-                is_active=True,
+                vessel_size=vessel_size_val,
+                data_mode=data_mode_val,
+                monitoring_mode="unavailable",
+                is_active=False,
                 created_at=utcnow(),
                 mission_state=mission_state,
             )
 
     @staticmethod
-    def get_active_alerts(subscription_id: str) -> List[ActionableAlertDto]:
+    def get_active_alerts(subscription_id: str) -> Tuple[List[ActionableAlertDto], str]:
         if subscription_id.startswith("fallback-"):
-            return []
-            
+            return [], "unavailable"
+
         try:
             with SessionLocal() as session:
                 sub = session.query(SavedTripSubscription).filter(SavedTripSubscription.public_id == subscription_id).first()
                 if not sub:
-                    return []
-                
+                    return [], "unavailable"
+
+                now = utcnow()
+                # Exclude expired alerts and resolve alerts that no longer apply
                 alerts = session.query(ActionableAlert).filter(
                     ActionableAlert.subscription_id == sub.id,
-                    ActionableAlert.status == "ACTIVE"
+                    ActionableAlert.status == "ACTIVE",
+                    or_(ActionableAlert.valid_to == None, ActionableAlert.valid_to > now)
                 ).order_by(ActionableAlert.created_at.desc()).all()
 
-                return [
+                dtos = [
                     ActionableAlertDto(
                         id=str(a.id),
                         alert_type=a.alert_type,
@@ -128,9 +153,10 @@ class AlertService:
                         created_at=a.created_at
                     ) for a in alerts
                 ]
+                return dtos, "durable"
         except Exception as e:
             logger.warning(f"Database unavailable for get_active_alerts: {e}")
-            return []
+            return [], "unavailable"
 
     @staticmethod
     def acknowledge_alert(alert_id: str) -> bool:
@@ -151,7 +177,6 @@ class AlertService:
     def reassess_saved_trips():
         """Worker function to reassess all active trips and generate alerts."""
         logger.info("Running saved trips reassessment...")
-        # Guard: if DB is unavailable (no PostgreSQL), skip silently instead of crashing the worker.
         try:
             session_ctx = SessionLocal()
         except Exception as e:
@@ -167,43 +192,47 @@ class AlertService:
 
             for sub in active_subs:
                 try:
-                    # Catch the return_time validation error early and deactivate the bad trip
+                    # Deactivate trip if departure/return time is invalid
                     if sub.departure_time and sub.return_time and sub.return_time <= sub.departure_time:
                         logger.warning(f"Deactivating invalid trip {sub.public_id}: return_time ({sub.return_time}) is not after departure_time ({sub.departure_time})")
                         sub.is_active = False
                         session.commit()
                         continue
-                        
+
+                    stored_ms = sub.mission_context_json or AlertService._monitored_trips_mission_state.get(str(sub.public_id))
+
                     req = TripAssessmentRequest(
                         origin_harbor=sub.origin_harbor,
                         craft_profile=sub.craft_profile,
+                        vessel_size=sub.vessel_size or "medium",
                         departure_time=sub.departure_time.isoformat() if sub.departure_time else None,
                         return_time=sub.return_time.isoformat() if sub.return_time else None,
                         language_preference=sub.language,
-                        data_mode="SNAPSHOT",
-                        mission_state=AlertService._monitored_trips_mission_state.get(str(sub.public_id)),
+                        data_mode=sub.data_mode or "LIVE",
+                        mission_state=stored_ms,
                     )
                     assessment = AssessmentService.assess_trip(req)
 
+                    seen_hashes: set[str] = set()
+
                     for alert in assessment.alerts:
-                        # The risk engine currently yields {"message": "..."} dicts for warnings
-                        # We must ensure no None values are passed to the DB to prevent NotNullViolations
                         raw_msg = alert.get("message", "") if isinstance(alert, dict) else ""
-                        
                         title = alert.get("title") if isinstance(alert, dict) else getattr(alert, "title", None)
                         severity = alert.get("severity") if isinstance(alert, dict) else getattr(alert, "severity", None)
                         description = alert.get("description") if isinstance(alert, dict) else getattr(alert, "description", None)
                         action = alert.get("action") if isinstance(alert, dict) else getattr(alert, "action", None)
                         if not action and isinstance(alert, dict):
                             action = alert.get("recommended_action")
-                        
+
                         title = title or "Insufficient Evidence"
                         severity = severity or "medium"
                         description = description or raw_msg or "Assessment returned incomplete data for this timeframe."
                         action = action or "Verify real-time data sources before departure."
-                        
-                        identity_str = f"{sub.id}_{title}_{severity}"
+
+                        # Include action and severity so changing warnings are not suppressed
+                        identity_str = f"{sub.id}_ASSESSMENT_ALERT_{title}_{severity}_{action}"
                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
+                        seen_hashes.add(identity_hash)
 
                         existing = session.query(ActionableAlert).filter(ActionableAlert.identity_hash == identity_hash).first()
                         if not existing:
@@ -222,26 +251,33 @@ class AlertService:
                             )
                             session.add(new_alert)
 
-                    # assessment.decision is a RecommendationStatus string-enum ("NO_GO", "CAUTION", etc.)
-                    # NOT an object with .status/.summary/.next_action attributes.
                     decision_value = assessment.decision.value if hasattr(assessment.decision, "value") else str(assessment.decision)
-                    if decision_value in ("NO_GO", "CAUTION"):
-                        identity_str = f"{sub.id}_DECISION_{decision_value}"
+                    if decision_value in ("NO_GO", "CAUTION", "UNKNOWN"):
+                        decision_summary = (
+                            assessment.brief.summary if assessment.brief else f"Trip decision: {decision_value}"
+                        )
+                        decision_action = (
+                            assessment.brief.recommended_action
+                            if assessment.brief
+                            else (
+                                "Consult harbor authority before departure."
+                                if decision_value != "UNKNOWN"
+                                else "Clearance unavailable. Reassessment required before departure."
+                            )
+                        )
+                        severity = "high" if decision_value == "NO_GO" else "medium"
+
+                        identity_str = f"{sub.id}_ASSESSMENT_DECISION_{decision_value}_{decision_action}"
                         identity_hash = hashlib.sha256(identity_str.encode("utf-8")).hexdigest()
+                        seen_hashes.add(identity_hash)
+
                         existing = session.query(ActionableAlert).filter(ActionableAlert.identity_hash == identity_hash).first()
                         if not existing:
-                            # Derive human-readable text from brief/alerts rather than the bare enum.
-                            decision_summary = (
-                                assessment.brief.summary if assessment.brief else f"Trip decision: {decision_value}"
-                            )
-                            decision_action = (
-                                assessment.brief.recommended_action if assessment.brief else "Consult harbor authority before departure."
-                            )
                             new_alert = ActionableAlert(
                                 subscription_id=sub.id,
                                 assessment_id=assessment.assessment_id,
                                 alert_type="ASSESSMENT_DECISION",
-                                severity="high" if decision_value == "NO_GO" else "medium",
+                                severity=severity,
                                 title=f"Trip Decision: {decision_value}",
                                 description=decision_summary,
                                 recommended_action=decision_action,
@@ -251,6 +287,17 @@ class AlertService:
                                 valid_from=utcnow(),
                             )
                             session.add(new_alert)
+
+                    # Expire previous active alerts for this trip that no longer apply in current assessment
+                    old_active_alerts = session.query(ActionableAlert).filter(
+                        ActionableAlert.subscription_id == sub.id,
+                        ActionableAlert.status == "ACTIVE"
+                    ).all()
+                    for old_a in old_active_alerts:
+                        if old_a.identity_hash not in seen_hashes:
+                            old_a.status = "EXPIRED"
+                            old_a.valid_to = utcnow()
+                            old_a.updated_at = utcnow()
 
                     session.commit()
                     logger.info(f"Successfully reassessed trip {sub.public_id}.")
