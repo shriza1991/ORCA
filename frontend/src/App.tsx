@@ -161,6 +161,8 @@ export default function App() {
         evidence={evidenceItems}
         trace={traceItems}
         language={chat.language}
+        assessmentTime={chat.activeResponse?.mission_assessment?.assessed_at || chat.missionAssessment?.assessed_at}
+        departureTime={chat.missionContext.departure_time}
       />
 
       {/* Dedicated Phone-Style Call ORCA Modal */}

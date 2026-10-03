@@ -2231,6 +2231,44 @@
   border: 1px solid color-mix(in srgb, var(--color-no-go) 30%, transparent);
 }
 
+.validity-valid {
+  background: var(--color-go-bg);
+  color: var(--color-go);
+  border: 1px solid color-mix(in srgb, var(--color-go) 30%, transparent);
+}
+
+.validity-future,
+.validity-unknown,
+.validity-calc {
+  background: var(--color-caution-bg);
+  color: var(--color-caution);
+  border: 1px solid color-mix(in srgb, var(--color-caution) 30%, transparent);
+}
+
+.validity-expired {
+  background: var(--color-no-go-bg);
+  color: var(--color-no-go);
+  border: 1px solid color-mix(in srgb, var(--color-no-go) 30%, transparent);
+}
+
+.origin-badge {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.validity-badge {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
 .evidence-metric {
   display: flex;
   justify-content: space-between;

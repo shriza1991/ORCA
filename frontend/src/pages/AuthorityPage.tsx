@@ -644,7 +644,12 @@ export default function AuthorityPage({
               {auditEvidenceList.length > 0 ? (
                 <div className="authority-evidence-grid">
                   {auditEvidenceList.map((ev, idx) => (
-                    <EvidenceCard key={idx} evidence={ev} />
+                    <EvidenceCard
+                      key={idx}
+                      evidence={ev}
+                      assessmentTime={selectedAlertAssociation?.evaluated_at || (chat.activeResponse as any)?.assessed_at || chat.activeResponse?.mission_assessment?.assessed_at || chat.missionAssessment?.assessed_at}
+                      departureTime={chat.missionContext.departure_time}
+                    />
                   ))}
                 </div>
               ) : (

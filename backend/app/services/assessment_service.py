@@ -226,7 +226,7 @@ class AssessmentService:
                     return_time=effective_return_time,
                     hourly_records=bundle.hourly_forecast,
                 )
-                
+                bundle.provenance = risk_payload.provenance
                 decision = risk_payload.status # RecommendationStatus type
                 evidence = [t.model_dump() for t in risk_payload.threshold_comparisons]
                 alerts = [{"message": w} for w in risk_payload.warnings]

@@ -8,6 +8,22 @@
 
 ## Current Release & Workstream State
 
+### 2026-10-03 - Task 3 Provenance Completion & Map Proposal Validation (D075)
+
+- **Implemented in Vite/FastAPI; Next.js untouched.** Authority recovery, PFZ INFORMATIONAL status, hazard-validity protections, verification-based safety confidence, and retained-evidence comparisons preserved.
+- **Retained Chat Provenance:** `_build_retained_evidence` in `backend/app/services/mission_conversation.py` preserves authentic source records from the retained evidence bundle (`provider_name`, `source_name`, `observed_time`, `valid_from`, `valid_to`, `retrieved_at`, `data_mode`, `quality_flags`, `coverage`, `lineage_id`). Threshold checks are split into derived evaluation records (`data_mode="CALCULATED"`) linked via `lineage_id`. No silent refetching.
+- **Dual Origin/Validity Decomposition:** `EvidenceCard.tsx` renders separate Origin and Validity badges. Replaced "Active feed" fallback with honest "Unknown source origin". Distinguished raw snapshot fixtures from calculations over snapshot inputs. Evaluated validity strictly against planned departure time / assessment time; fresh retrieval of expired data remains "Expired". Missing windows display "Validity unknown".
+- **Independent PFZ Advisory Confidence:** `_derive_pfz_confidence` in `mission_conversation.py` derives PFZ advisory confidence strictly from candidate evidence, distance, bearing, thermal/chlorophyll lineage, and validity. Never cites cyclone severity or wave operating limits as fishery confidence explanations. Preserved separate voyage baseline in `mission_assessment`.
+- **Collaboration Honesty:** In `agent_collaboration.py`, missing observations yield `provider="Unavailable"`, `last_updated=None`, and `DataQualityRating.LIMITED`. Safety agent is classified as domain evaluation (`PARTIAL`), preventing high recommendation confidence alone from establishing a verified external source.
+- **Map Proposal Handling:** In `FisherPage.tsx`, proposals implement explicit `pending | success | error` states. Displays simulation errors in proposal banner and disables Apply. Automatically invalidates pending/active proposals when core mission context changes. Apply verifies matching baseline assessment, evidence bundle, offset, and mission context key.
+- **Localization & Encoding Fixes:** Fixed UTF-8 encoding regressions in `FisherPage.tsx` (restored हिन्दी / मराठी, clean `·`, `→`, and `°`). Localized PFZ notices and disclaimers without hardcoded English prefixes.
+- **Verification:**
+  - `python -m pytest tests/integration/test_task2_hazard_validity.py tests/integration/test_integration_inconsistencies.py tests/integration/test_mission_replay.py tests/integration/test_task3_provenance_freshness.py -v`: **69 passed** in 2m 36s.
+  - `python -m pytest tests/domain/test_agent_collaboration.py -v`: **4 passed**.
+  - `npm test`: **302 passed across 24 test files** (100% passing).
+  - `npm run build`: **Clean Vite build** (Exit code 0, 3055 modules transformed).
+- **Deployment Status:** No git push or deployment executed. Ready for review.
+
 ### 2026-10-03 - Prototype browser console repair (D074)
 
 - **Root cause verified against deployed service:** Vercel-origin OPTIONS returned **400 Disallowed CORS origin**; GET health returned **200** without Allow-Origin. Health reported older commit `a660d747`, development/SNAPSHOT. The effective deployed allowlist rejects this client; its exact environment value cannot be inspected here. The many failed forecast/map/fleet/port/scenario requests share this cause.

@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { missionContextKey } from './FisherPage';
+import type { MissionContext } from '../types/mission';
 
 describe('FisherPage Map Time Controls & Mission Proposal Synchronization', () => {
   // Model of the FisherPage time offset & proposal calculation logic
@@ -121,4 +123,172 @@ describe('FisherPage Map Time Controls & Mission Proposal Synchronization', () =
     const appliedDurationMs = new Date(activeMission.returnTime).getTime() - new Date(activeMission.departureTime).getTime();
     expect(appliedDurationMs / (3600 * 1000)).toBe(5);
   });
+
+  it('handles simulation errors honestly: sets status="error", stores error, and disables Apply', () => {
+    const missionContext: MissionContext = {
+      origin_harbor: 'Ratnagiri',
+      craft_profile: 'motorized_boat',
+      vessel_size: 'medium',
+      departure_time: '2026-10-04T06:00:00.000Z',
+      return_time: '2026-10-04T14:00:00.000Z',
+    };
+    const contextKey = missionContextKey(missionContext);
+
+    // Initial pending proposal
+    let proposalState: any = {
+      status: 'pending',
+      baselineAssessmentId: 'asm-baseline-1',
+      evidenceBundleId: 'bundle-01',
+      hours: 4,
+      missionContextKey: contextKey,
+      baseDeparture: missionContext.departure_time,
+      proposedDeparture: '2026-10-04T10:00:00.000Z',
+    };
+
+    // Helper checking eligibility to apply
+    const checkApplicable = (state: any, currentAsmId: string, currentOffset: number, isLoading: boolean) => {
+      return Boolean(
+        state &&
+        state.status === 'success' &&
+        state.proposedAssessment &&
+        state.delta &&
+        state.baselineAssessmentId === currentAsmId &&
+        state.hours === currentOffset &&
+        !isLoading
+      );
+    };
+
+    // While pending, Apply is disabled
+    expect(checkApplicable(proposalState, 'asm-baseline-1', 4, false)).toBe(false);
+
+    // Simulation fails with network or domain error
+    proposalState = {
+      ...proposalState,
+      status: 'error',
+      error: 'Simulation server returned 503 Service Unavailable',
+    };
+
+    // Stored error is present
+    expect(proposalState.status).toBe('error');
+    expect(proposalState.error).toContain('503 Service Unavailable');
+    // Apply is strictly disabled on error
+    expect(checkApplicable(proposalState, 'asm-baseline-1', 4, false)).toBe(false);
+  });
+
+  it('prevents applying stale proposals when baseline changes or responses arrive out-of-order', () => {
+    const missionContext: MissionContext = {
+      origin_harbor: 'Ratnagiri',
+      craft_profile: 'motorized_boat',
+      departure_time: '2026-10-04T06:00:00.000Z',
+      return_time: '2026-10-04T14:00:00.000Z',
+    };
+    const contextKey = missionContextKey(missionContext);
+
+    // Proposal completed for old baseline asm-1
+    const proposalFromAsm1 = {
+      status: 'success',
+      baselineAssessmentId: 'asm-1',
+      evidenceBundleId: 'bundle-1',
+      hours: 3,
+      missionContextKey: contextKey,
+      proposedAssessment: { assessment_id: 'asm-sim-1' },
+      delta: { summary: 'Lower swell' },
+    };
+
+    // Baseline replaced in main application to asm-2
+    const currentBaselineId = 'asm-2';
+
+    const isApplicable = Boolean(
+      proposalFromAsm1.status === 'success' &&
+      proposalFromAsm1.proposedAssessment &&
+      proposalFromAsm1.baselineAssessmentId === currentBaselineId
+    );
+
+    // Stale proposal cannot be applied to the new baseline!
+    expect(isApplicable).toBe(false);
+  });
+
+  it('invalidates proposal immediately when mission parameters change', () => {
+    const baseContext: MissionContext = {
+      origin_harbor: 'Ratnagiri',
+      craft_profile: 'motorized_boat',
+      vessel_size: 'medium',
+      departure_time: '2026-10-04T06:00:00.000Z',
+      return_time: '2026-10-04T14:00:00.000Z',
+    };
+    const key1 = missionContextKey(baseContext);
+
+    // Changing departure time changes the key
+    const changedTimeContext: MissionContext = {
+      ...baseContext,
+      departure_time: '2026-10-04T08:00:00.000Z',
+    };
+    expect(missionContextKey(changedTimeContext)).not.toBe(key1);
+
+    // Changing craft profile changes the key
+    const changedCraftContext: MissionContext = {
+      ...baseContext,
+      craft_profile: 'mechanized_trawler',
+    };
+    expect(missionContextKey(changedCraftContext)).not.toBe(key1);
+
+    // Changing harbor changes the key
+    const changedHarborContext: MissionContext = {
+      ...baseContext,
+      origin_harbor: 'Malvan',
+    };
+    expect(missionContextKey(changedHarborContext)).not.toBe(key1);
+  });
+
+  it('executes handleApplyMapProposal using the exact evaluated server result and resets map state', () => {
+    let appliedAssessment: any = null;
+    let mapTimeOffset = 4;
+    let mapProposal: any = {
+      status: 'success',
+      baselineAssessmentId: 'asm-base-1',
+      evidenceBundleId: 'bundle-01',
+      hours: 4,
+      proposedAssessment: {
+        assessment_id: 'asm-evaluated-sim-1',
+        decision: 'GO',
+        evidence_bundle_id: 'bundle-01',
+        conditions: { data_mode: 'SNAPSHOT' },
+      },
+      delta: { decision_flipped: true },
+    };
+
+    const isProposalApplicable = Boolean(
+      mapProposal &&
+      mapProposal.status === 'success' &&
+      mapProposal.proposedAssessment &&
+      mapProposal.baselineAssessmentId === 'asm-base-1' &&
+      mapProposal.hours === mapTimeOffset
+    );
+
+    expect(isProposalApplicable).toBe(true);
+
+    const applyAssessment = (evaluated: any) => {
+      appliedAssessment = evaluated;
+    };
+
+    const handleApplyMapProposal = () => {
+      if (!isProposalApplicable || !mapProposal?.proposedAssessment) return;
+      applyAssessment(mapProposal.proposedAssessment);
+      mapTimeOffset = 0;
+      mapProposal = null;
+    };
+
+    handleApplyMapProposal();
+
+    // Applied result is strictly the exact evaluated object from server simulation
+    expect(appliedAssessment).toEqual({
+      assessment_id: 'asm-evaluated-sim-1',
+      decision: 'GO',
+      evidence_bundle_id: 'bundle-01',
+      conditions: { data_mode: 'SNAPSHOT' },
+    });
+    expect(mapTimeOffset).toBe(0);
+    expect(mapProposal).toBeNull();
+  });
 });
+

@@ -2,25 +2,45 @@ import type { EvidenceItem } from '../../types/contracts';
 import { Clock, ExternalLink, MapPin } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 
-interface EvidenceCardProps {
+export interface EvidenceCardProps {
   evidence: EvidenceItem;
+  assessmentTime?: string;
+  departureTime?: string;
 }
 
-export default function EvidenceCard({ evidence }: EvidenceCardProps) {
+export default function EvidenceCard({ evidence, assessmentTime, departureTime }: EvidenceCardProps) {
   const { t } = useTranslation();
-  const { label: freshnessLabel, badgeClass } = getEvidenceProvenanceBadge(evidence);
+  const originBadge = getSourceOriginBadge(evidence);
+  const evalTime = assessmentTime || departureTime;
+  const validityBadge = getTemporalValidityBadge(evidence, evalTime);
 
   const isCalculation =
-    Boolean(evidence.quality_flags?.some(f => f.toUpperCase().includes('CALCULATION') || f.toUpperCase().includes('EVAL'))) ||
+    evidence.data_mode === 'CALCULATED' ||
+    Boolean(evidence.quality_flags?.some(f => {
+      const u = f.toUpperCase();
+      return u.includes('CALCULATION') || u.includes('EVAL');
+    })) ||
     Boolean(evidence.lineage_id?.includes('eval'));
 
   return (
     <div className="evidence-card">
       <div className="evidence-card-header">
-        <span className="evidence-source-name">{evidence.source_name}</span>
-        <span className={`freshness-badge ${badgeClass}`}>
-          {freshnessLabel}
-        </span>
+        <div className="evidence-source-info">
+          <span className="evidence-source-name">{evidence.source_name}</span>
+          {evidence.provider_name && evidence.provider_name !== evidence.source_name && (
+            <span className="evidence-provider-label" style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginTop: '2px' }}>
+              Provider: {evidence.provider_name}
+            </span>
+          )}
+        </div>
+        <div className="evidence-badge-group" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span className={`origin-badge freshness-badge ${originBadge.badgeClass}`}>
+            {originBadge.label}
+          </span>
+          <span className={`validity-badge freshness-badge ${validityBadge.badgeClass}`}>
+            {validityBadge.label}
+          </span>
+        </div>
       </div>
 
       {evidence.metric_name && (
@@ -57,6 +77,12 @@ export default function EvidenceCard({ evidence }: EvidenceCardProps) {
             <span>{t('EvidenceCard.retrievedval', { val: formatTime(evidence.retrieved_at) })}</span>
           </div>
         )}
+        {evidence.coverage && (
+          <div className="evidence-time-row" style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            <MapPin size={11} />
+            <span>Coverage: {evidence.coverage}</span>
+          </div>
+        )}
         {evidence.lineage_id && (
           <div className="evidence-time-row" style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
             <span>Lineage: <code>{evidence.lineage_id}</code></span>
@@ -87,55 +113,74 @@ export default function EvidenceCard({ evidence }: EvidenceCardProps) {
   );
 }
 
-function getEvidenceProvenanceBadge(evidence: EvidenceItem): { label: string; badgeClass: string } {
+export function getSourceOriginBadge(evidence: EvidenceItem): { label: string; badgeClass: string } {
   const flags = (evidence.quality_flags || []).map(f => f.toLowerCase());
   const dataMode = (evidence.data_mode || '').toUpperCase();
   const sourceName = (evidence.source_name || '').toLowerCase();
   const lineage = (evidence.lineage_id || '').toLowerCase();
+
+  const isCalculation =
+    dataMode === 'CALCULATED' ||
+    Boolean(evidence.quality_flags?.some(f => {
+      const u = f.toUpperCase();
+      return u.includes('CALCULATION') || u.includes('EVAL');
+    })) ||
+    Boolean(evidence.lineage_id?.includes('eval'));
 
   // 1. Source unavailable
   if (dataMode === 'UNAVAILABLE' || flags.includes('unavailable') || sourceName.includes('unavailable')) {
     return { label: 'Source unavailable', badgeClass: 'freshness-stale' };
   }
 
-  // 2. Historical / Expired
-  if (flags.includes('expired') || flags.includes('stale') || dataMode === 'HISTORICAL') {
-    return { label: 'Historical/expired data', badgeClass: 'freshness-stale' };
+  // 2. Contract mock
+  if (flags.includes('m2_contract_mock') || lineage.includes('m2_contract_mock') || sourceName.includes('contract mock')) {
+    return { label: 'Contract mock', badgeClass: 'freshness-aging' };
   }
 
-  // 3. Calculated from snapshot inputs
-  if (
-    lineage.includes('snapshot_inputs') ||
-    lineage.includes('snapshot_fixture') ||
-    (flags.includes('geospatial_calculation') && (dataMode === 'SNAPSHOT' || flags.includes('snapshot_source'))) ||
-    (flags.includes('snapshot_source') && flags.includes('geospatial_calculation'))
-  ) {
-    return { label: 'Calculated from snapshot inputs', badgeClass: 'freshness-aging' };
-  }
-
-  // 4. Demo scenario
+  // 3. Demo scenario
   if (
     dataMode === 'DEMO' ||
-    dataMode === 'MOCK' ||
     flags.includes('deterministic_demo') ||
-    flags.includes('m2_contract_mock') ||
     flags.includes('m1_demo_data') ||
-    sourceName.includes('demo') ||
-    sourceName.includes('synthetic')
+    sourceName.includes('demo scenario') ||
+    sourceName.includes('controlled marine scenario')
   ) {
     return { label: 'Demo scenario', badgeClass: 'freshness-aging' };
   }
 
-  // 5. Coverage fallback
+  // 4. Calculations: distinguish snapshot inputs vs general calculation
+  if (isCalculation) {
+    if (
+      lineage.includes('snapshot') ||
+      flags.includes('snapshot_source') ||
+      dataMode === 'SNAPSHOT' ||
+      lineage.includes('fixture')
+    ) {
+      return { label: 'Calculated from snapshot inputs', badgeClass: 'freshness-aging' };
+    }
+    return { label: 'Calculated domain result', badgeClass: 'freshness-aging' };
+  }
+
+  // 5. Raw Snapshot fixture (must NOT be a calculation)
+  if (
+    dataMode === 'SNAPSHOT' ||
+    lineage.includes('snapshot_fixture') ||
+    flags.includes('snapshot_source') ||
+    lineage.includes('fixture')
+  ) {
+    return { label: 'Snapshot fixture', badgeClass: 'freshness-aging' };
+  }
+
+  // 6. Geographic fallback
   if (
     flags.includes('geographic_fallback') ||
     sourceName.includes('geographic_fallback') ||
     sourceName.includes('ratnagiri fallback')
   ) {
-    return { label: 'Coverage fallback', badgeClass: 'freshness-aging' };
+    return { label: 'Geographic fallback', badgeClass: 'freshness-aging' };
   }
 
-  // 6. Model fallback
+  // 7. Model fallback
   if (
     flags.includes('fallback_model') ||
     flags.includes('fallback') ||
@@ -144,38 +189,96 @@ function getEvidenceProvenanceBadge(evidence: EvidenceItem): { label: string; ba
     sourceName.includes('fallback') ||
     sourceName.includes('open-meteo')
   ) {
-    return { label: 'Model fallback', badgeClass: 'freshness-aging' };
+    return { label: 'Fallback physical model', badgeClass: 'freshness-aging' };
   }
 
-  // 7. Cached official bulletin
+  // 8. Cached provider data: official origin ONLY when established
   if (
     dataMode === 'CACHED_REAL' ||
     dataMode === 'CACHED' ||
     flags.includes('cached_source') ||
     flags.includes('cached_official') ||
-    (flags.includes('official_source') && !flags.includes('verified_live'))
+    flags.includes('cached')
   ) {
-    return { label: 'Cached official bulletin', badgeClass: 'freshness-aging' };
+    const hasOfficial = flags.includes('official_source') || flags.includes('is_official') || (evidence as any).is_official === true;
+    if (hasOfficial) {
+      return { label: 'Cached official bulletin', badgeClass: 'freshness-aging' };
+    }
+    return { label: 'Cached provider data', badgeClass: 'freshness-aging' };
   }
 
-  // 8. Live provider data (genuinely verified live official)
-  if (
-    (dataMode === 'LIVE' || flags.includes('verified_live')) &&
-    flags.includes('official_source')
-  ) {
+  // 9. Live provider data (official vs general)
+  if (flags.includes('verified_live') || flags.includes('live') || dataMode === 'LIVE') {
+    if (flags.includes('official_source') || flags.includes('is_official') || (evidence as any).is_official === true) {
+      return { label: 'Live official provider', badgeClass: 'freshness-fresh' };
+    }
     return { label: 'Live provider data', badgeClass: 'freshness-fresh' };
   }
 
-  if (flags.includes('live') || dataMode === 'LIVE') {
-    return { label: 'Live provider data', badgeClass: 'freshness-fresh' };
+  // Fallback for unknown evidence - DO NOT default to 'Active feed'!
+  return { label: 'Unknown source origin', badgeClass: 'freshness-stale' };
+}
+
+export function getTemporalValidityBadge(
+  evidence: EvidenceItem,
+  evalTimeIso?: string
+): { label: string; badgeClass: string } {
+  const flags = (evidence.quality_flags || []).map(f => f.toLowerCase());
+  const dataMode = (evidence.data_mode || '').toUpperCase();
+  const isExpiredFlag = flags.includes('expired') || flags.includes('stale') || dataMode === 'HISTORICAL';
+
+  if (dataMode === 'CALCULATED') {
+    return { label: 'Calculated result', badgeClass: 'validity-calc' };
   }
 
-  // 9. Calculation without observation timestamp
-  if (flags.includes('geospatial_calculation') || flags.includes('route_eval') || flags.includes('deterministic_eval')) {
-    return { label: 'Calculated metric', badgeClass: 'freshness-aging' };
+  // If no evaluation time supplied or malformed, we cannot confirm validity window against mission
+  if (!evalTimeIso) {
+    if (isExpiredFlag) {
+      return { label: 'Expired', badgeClass: 'validity-expired' };
+    }
+    return { label: 'Validity unknown', badgeClass: 'validity-unknown' };
   }
 
-  return { label: 'Active feed', badgeClass: 'freshness-aging' };
+  const evalTime = Date.parse(evalTimeIso);
+  if (isNaN(evalTime)) {
+    if (isExpiredFlag) {
+      return { label: 'Expired', badgeClass: 'validity-expired' };
+    }
+    return { label: 'Validity unknown', badgeClass: 'validity-unknown' };
+  }
+
+  // Check valid_to / valid_from against evalTime
+  if (evidence.valid_to) {
+    const vt = Date.parse(evidence.valid_to);
+    if (!isNaN(vt)) {
+      if (evalTime > vt || isExpiredFlag) {
+        return { label: 'Expired', badgeClass: 'validity-expired' };
+      }
+      if (evidence.valid_from) {
+        const vf = Date.parse(evidence.valid_from);
+        if (!isNaN(vf) && evalTime < vf) {
+          return { label: 'Not yet valid', badgeClass: 'validity-future' };
+        }
+      }
+      return { label: 'Valid', badgeClass: 'validity-valid' };
+    }
+  }
+
+  if (isExpiredFlag) {
+    return { label: 'Expired', badgeClass: 'validity-expired' };
+  }
+
+  return { label: 'Validity unknown', badgeClass: 'validity-unknown' };
+}
+
+export function getEvidenceProvenanceBadge(evidence: EvidenceItem, evalTimeIso?: string): { label: string; badgeClass: string } {
+  // Backward compatibility composite badge
+  const origin = getSourceOriginBadge(evidence);
+  const validity = getTemporalValidityBadge(evidence, evalTimeIso);
+  if (validity.label === 'Expired') {
+    return { label: `${origin.label} (Expired)`, badgeClass: 'freshness-stale' };
+  }
+  return origin;
 }
 
 function formatTime(iso: string): string {

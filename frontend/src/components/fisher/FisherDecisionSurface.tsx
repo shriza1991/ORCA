@@ -331,6 +331,7 @@ export default function FisherDecisionSurface({
   isLoading = false,
   error = null,
   activeDiff = null,
+  missionContext,
   language = "en",
   collaboration = null,
   onOpenVoyageSettings,
@@ -794,6 +795,8 @@ export default function FisherDecisionSurface({
         brief={assessment?.brief}
         stability={assessment?.stability}
         language={language}
+        assessmentTime={assessment?.assessed_at}
+        departureTime={assessment?.trip_context.departure_time || missionContext?.departure_time}
       />
 
       {/* 4. Agent Collaboration Accordion */}

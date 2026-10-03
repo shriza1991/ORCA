@@ -3,6 +3,7 @@ import type { TripAssessmentResponse } from '../../types/assessment';
 import type { ThresholdComparison, AgentCollaborationPayload } from '../../types/contracts';
 import { formatMetricName, getImpactBadgeStyle } from './ThresholdTable';
 import { getRiskBadgeStyle } from '../fisher/TripPlanDetails';
+import { getSourceOriginBadge, getTemporalValidityBadge } from './EvidenceCard';
 
 describe('ORCA M1.3: Explainability & Evidence View Acceptance Tests', () => {
   const mockCollaboration: AgentCollaborationPayload = {
@@ -413,5 +414,142 @@ describe('ORCA M1.3: Explainability & Evidence View Acceptance Tests', () => {
     expect(mockAssessmentResponse.agent_collaboration).toBeDefined();
     expect(mockAssessmentResponse.pfz_candidates).toBeDefined();
     expect(mockAssessmentResponse.route_candidates).toBeDefined();
+  });
+
+  it('Test 8: Honest source origin badges distinguish live, cached, snapshot fixture, calculated snapshot, and unknown', () => {
+    // 1. Live provider data
+    const liveBadge = getSourceOriginBadge({
+      evidence_id: 'ev-live-1',
+      data_mode: 'LIVE',
+      source_name: 'INCOIS Marine API',
+      lineage_id: 'live_telemetry_feed',
+      metric_name: 'significant_wave_height',
+      metric_value: 1.2,
+      quality_flags: ['verified_live'],
+    });
+    expect(liveBadge.label).toBe('Live provider data');
+
+    // 2. Cached non-official provider data
+    const cachedBadge = getSourceOriginBadge({
+      evidence_id: 'ev-cached-1',
+      data_mode: 'CACHED',
+      source_name: 'Regional Port Buoy',
+      metric_name: 'significant_wave_height',
+      metric_value: 1.2,
+      quality_flags: [],
+    });
+    expect(cachedBadge.label).toBe('Cached provider data');
+
+    // 3. Cached official bulletin
+    const officialBadge = getSourceOriginBadge({
+      evidence_id: 'ev-cached-off-1',
+      data_mode: 'CACHED',
+      source_name: 'IMD Coastal Cyclone Warning',
+      metric_name: 'cyclone_warning_active',
+      metric_value: true,
+      quality_flags: ['official_source'],
+    });
+    expect(officialBadge.label).toBe('Cached official bulletin');
+
+    // 4. Raw snapshot fixture
+    const rawSnapshotBadge = getSourceOriginBadge({
+      evidence_id: 'ev-raw-1',
+      data_mode: 'SNAPSHOT',
+      source_name: 'Ratnagiri Reference Marine Conditions',
+      lineage_id: 'snapshot_fixture',
+      metric_name: 'significant_wave_height',
+      metric_value: 1.2,
+      quality_flags: ['snapshot_source'],
+    });
+    expect(rawSnapshotBadge.label).toBe('Snapshot fixture');
+
+    // 5. Calculation over snapshot inputs
+    const calcSnapshotBadge = getSourceOriginBadge({
+      evidence_id: 'ev-calc-1',
+      data_mode: 'CALCULATED',
+      source_name: 'Deterministic Safety Threshold',
+      lineage_id: 'snapshot_fixture',
+      metric_name: 'wave_safety_margin',
+      metric_value: 0.8,
+      quality_flags: [],
+    });
+    expect(calcSnapshotBadge.label).toBe('Calculated from snapshot inputs');
+
+    // 6. Unknown source origin defaults honestly (never "Active feed")
+    const unknownBadge = getSourceOriginBadge({
+      evidence_id: 'ev-unk-1',
+      source_name: 'Undocumented source',
+      metric_name: 'unknown_metric',
+      metric_value: 0,
+      quality_flags: [],
+      data_mode: 'UNKNOWN',
+    });
+    expect(unknownBadge.label).toBe('Unknown source origin');
+    expect(unknownBadge.label).not.toBe('Active feed');
+  });
+
+  it('Test 9: Temporal validity is evaluated against departure/assessment time and distinguishes expired from valid', () => {
+    const evalTime = '2026-10-04T12:00:00.000Z';
+
+    // 1. Expired evidence (valid_to is in the past relative to departure)
+    const expiredBadge = getTemporalValidityBadge({
+      evidence_id: 'ev-exp-1',
+      source_name: 'IMD Bulletin',
+      metric_name: 'wind_speed_knots',
+      metric_value: 12,
+      quality_flags: [],
+      valid_from: '2026-10-04T00:00:00.000Z',
+      valid_to: '2026-10-04T06:00:00.000Z',
+      retrieved_at: '2026-10-04T12:00:00.000Z', // Fresh retrieval does NOT cure expiration!
+    }, evalTime);
+    expect(expiredBadge.label).toBe('Expired');
+    expect(expiredBadge.badgeClass).toContain('validity-expired');
+
+    // 2. Future evidence (valid_from is in the future)
+    const futureBadge = getTemporalValidityBadge({
+      evidence_id: 'ev-fut-1',
+      source_name: 'IMD Future Warning',
+      metric_name: 'wind_speed_knots',
+      metric_value: 15,
+      quality_flags: [],
+      valid_from: '2026-10-04T18:00:00.000Z',
+      valid_to: '2026-10-05T00:00:00.000Z',
+    }, evalTime);
+    expect(futureBadge.label).toBe('Not yet valid');
+
+    // 3. Valid evidence within active window
+    const validBadge = getTemporalValidityBadge({
+      evidence_id: 'ev-val-1',
+      source_name: 'INCOIS Marine Forecast',
+      metric_name: 'significant_wave_height',
+      metric_value: 1.4,
+      quality_flags: [],
+      valid_from: '2026-10-04T06:00:00.000Z',
+      valid_to: '2026-10-04T18:00:00.000Z',
+    }, evalTime);
+    expect(validBadge.label).toBe('Valid');
+
+    // 4. Missing validity interval
+    const unknownBadge = getTemporalValidityBadge({
+      evidence_id: 'ev-unk-2',
+      source_name: 'Static Port Data',
+      metric_name: 'port_clearance',
+      metric_value: true,
+      quality_flags: [],
+      valid_from: undefined,
+      valid_to: undefined,
+    }, evalTime);
+    expect(unknownBadge.label).toBe('Validity unknown');
+
+    // 5. Calculated domain result
+    const calcBadge = getTemporalValidityBadge({
+      evidence_id: 'ev-calc-2',
+      source_name: 'Deterministic Risk Evaluation',
+      metric_name: 'clearance_margin',
+      metric_value: 'SAFE',
+      quality_flags: [],
+      data_mode: 'CALCULATED',
+    }, evalTime);
+    expect(calcBadge.label).toBe('Calculated result');
   });
 });

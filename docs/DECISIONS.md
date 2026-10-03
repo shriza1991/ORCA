@@ -2303,3 +2303,36 @@ Status: ACCEPTED
 Date: 2026-10-03
 Decision: Maintain the known ORCA prototype origin with a dedicated FRONTEND_ORIGIN setting in addition to configurable CORS_ORIGINS. Accept CSV/JSON lists, normalize exact origins, and reject broad/path-bearing entries. Explicit empty FRONTEND_ORIGIN opts out for other deployments. Remove unnecessary GET JSON headers and disable basemap style diffing for unrelated style switches.
 Reason: Live OPTIONS returned Disallowed CORS origin while health was reachable; a stale environment override and an older deployed commit cannot be corrected by repository defaults alone. Include a browser-access deployment check and precise Render/Vercel instructions. No wildcard permissions, frontend safety changes, or Next.js changes.
+
+## D075 — Task 3 Provenance Architecture, Origin/Validity Decomposition, PFZ Advisory Confidence, and Proposal Validation
+Status: ACCEPTED
+Date: 2026-10-03
+Decision:
+1. Retained-Mission Chat Original Evidence Preservation:
+   - In `backend/app/services/mission_conversation.py`, `_build_retained_evidence()` preserves authentic source records from the retained evidence bundle (`provider_name`, `source_name`, `observed_time`, `valid_from`, `valid_to`, `retrieved_at`, `data_mode`, `quality_flags`, `coverage`, `lineage_id`).
+   - Derived threshold comparisons are represented as separate derived evaluation records (`data_mode="CALCULATED"`, `metric_value="PASS"/"CAUTION_EXCEEDED"/"BREACH"`) linked via `lineage_id` to their supporting source evidence.
+   - Retained mission chat strictly utilizes the retained evidence bundle without refetching or manufacturing sensor observations.
+2. Dual Badging: Source Origin Decomposed from Temporal Validity:
+   - In `frontend/src/components/evidence/EvidenceCard.tsx` and `frontend/src/styles/components.css`, evidence cards display two distinct badges: Origin Badge (`getSourceOriginBadge`) and Validity Badge (`getTemporalValidityBadge`).
+   - Origin distinguishes: "Live provider data", "Cached official bulletin" (requires official flag), "Cached provider data", "Snapshot fixture", "Calculated from snapshot inputs", "Demo scenario", "Model fallback", and "Unknown source origin" (never defaulting to "Active feed").
+   - Validity is evaluated strictly against parent assessment or planned departure time (`evalTimeIso`). Fresh `retrieved_at` timestamps cannot make an expired bulletin valid. Missing validity intervals display "Validity unknown". Calculations display "Calculated result".
+3. Independent PFZ Advisory Confidence & Grounding:
+   - In `backend/app/services/mission_conversation.py`, PFZ advisory confidence is derived strictly from candidate evidence (distance, bearing, thermal/chlorophyll lineage, validity, and data mode via `_derive_pfz_confidence`), independent of the voyage baseline safety status (`GO`, `CAUTION`, `NO_GO`).
+   - PFZ confidence explanations strictly omit cyclone severity, wave thresholds, or vessel operating limits, which remain preserved in `mission_assessment`.
+   - Localized PFZ advisory text and disclaimers are translated via the operational dictionary without hardcoded English prefixes.
+4. Collaboration Source Honesty:
+   - In `backend/app/domain/agent_collaboration.py`, missing telemetry sets provider to `"Unavailable"`, source to `"unavailable"`, `last_updated=None`, and quality to `LIMITED`, eliminating manufactured INCOIS/IMD claims.
+   - For safety agent, derived engine outputs are classified with `PARTIAL` quality and identified as `"Deterministic Marine Risk Engine (ORCA Core)"`, preventing high recommendation confidence alone from establishing a verified external source.
+5. Map Proposal Synchronization & Invalidation:
+   - In `frontend/src/pages/FisherPage.tsx`, map proposals implement an explicit three-state model (`pending`, `success`, `error`).
+   - Simulation errors are rendered in the proposal banner (`Simulation error: ...`) and disable the Apply control.
+   - Proposals are immediately invalidated upon any change to core mission parameters (`origin_harbor`, `craft_profile`, `vessel_size`, `departure_time`, `return_time`, `target_pfz`) via `missionContextKey`.
+   - Apply is strictly conditioned on exact matching of baseline assessment ID, evidence bundle ID, hours offset, and mission context key.
+   - Repaired UTF-8 encoding regressions across touched frontend files, restoring clean Hindi and Marathi text and navigational symbols.
+Reason:
+Complete remaining provenance requirements from commit 8766084: eliminate manufactured provider claims, decouple source origin from temporal freshness, ground PFZ confidence in fishery candidates rather than weather limits, ensure map proposals fail closed on error or stale inputs, and preserve epistemic honesty across all user surfaces.
+Impact:
+- 13/13 Task 3 provenance tests pass in `tests/integration/test_task3_provenance_freshness.py`.
+- 69/69 full integration test suite passes across Task 1, Task 2, inconsistencies, mission replay, and provenance.
+- 302/302 frontend tests pass in Vitest across 24 test files.
+- Production build passes cleanly with zero TypeScript errors.

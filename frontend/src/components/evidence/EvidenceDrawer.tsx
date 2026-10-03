@@ -17,6 +17,8 @@ export interface EvidenceDrawerProps {
   brief?: MissionBriefPayload;
   stability?: DecisionStabilityPayload | null;
   language?: SupportedLanguage;
+  assessmentTime?: string;
+  departureTime?: string;
 }
 
 export default function EvidenceDrawer({
@@ -28,6 +30,8 @@ export default function EvidenceDrawer({
   brief,
   stability,
   language = 'en',
+  assessmentTime,
+  departureTime,
 }: EvidenceDrawerProps) {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
@@ -465,7 +469,12 @@ export default function EvidenceDrawer({
                   </div>
                 ) : (
                   rawEvidenceItems.map((item, idx) => (
-                    <EvidenceCard key={idx} evidence={item} />
+                    <EvidenceCard
+                      key={idx}
+                      evidence={item}
+                      assessmentTime={assessmentTime}
+                      departureTime={departureTime}
+                    />
                   ))
                 )}
               </div>

@@ -157,6 +157,9 @@ class EvidenceItem(BaseModel):
     source_name: str = Field(
         ..., description="Official issuing authority (e.g., 'INCOIS Ocean State Forecast')"
     )
+    provider_name: Optional[str] = Field(
+        None, description="Originating provider (e.g., 'INCOIS', 'IMD', 'ORCA')"
+    )
     source_url: Optional[str] = Field(
         None, description="Direct URL to official bulletin or portal"
     )
@@ -169,8 +172,8 @@ class EvidenceItem(BaseModel):
     valid_to: Optional[str] = Field(
         None, description="End of forecast/advisory validity window (ISO-8601 UTC)"
     )
-    retrieved_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+    retrieved_at: Optional[str] = Field(
+        None,
         description="System retrieval timestamp (ISO-8601 UTC)",
     )
     geometry: Optional[Dict[str, Any]] = Field(

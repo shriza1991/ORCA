@@ -25,6 +25,33 @@ import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRou
 import { type MissionContext, type DecisionDeltaContract } from "../types/mission";
 import { assessmentRequest } from "../components/mission/AssessmentSimulator";
 
+export type MapProposalStatus = "pending" | "success" | "error";
+
+export interface MapProposalState {
+  status: MapProposalStatus;
+  baselineAssessmentId: string;
+  evidenceBundleId?: string;
+  hours: number;
+  missionContextKey: string;
+  baseDeparture: string;
+  proposedDeparture: string;
+  proposedReturn?: string;
+  proposedAssessment?: TripAssessmentResponse;
+  delta?: DecisionDeltaContract;
+  error?: string;
+}
+
+export function missionContextKey(c: MissionContext): string {
+  return JSON.stringify([
+    c.origin_harbor,
+    c.craft_profile,
+    c.vessel_size || "medium",
+    c.departure_time,
+    c.return_time,
+    c.target_pfz,
+  ]);
+}
+
 export interface FisherPageProps {
   chat: ReturnType<typeof useChat>;
   theme: "light" | "dark";
@@ -57,17 +84,33 @@ export default function FisherPage({
     import.meta.env.VITE_DATA_MODE || "DEMO"
   ).toUpperCase();
 
-  const [mapProposal, setMapProposal] = useState<{
-    proposedAssessment: TripAssessmentResponse;
-    delta?: DecisionDeltaContract;
-    hours: number;
-    proposedDeparture: string;
-    proposedReturn?: string;
-    loading?: boolean;
-    error?: string;
-  } | null>(null);
+  const {
+    data: assessment,
+    adoptAssessment: setAssessment,
+    isLoading,
+    error,
+    isOffline,
+    isExpired,
+    assessTrip,
+  } = useTripAssessment();
 
+  const [mapProposal, setMapProposal] = useState<MapProposalState | null>(null);
   const proposalAbortRef = useRef<AbortController | null>(null);
+
+  const currentContextKey = missionContextKey(chat.missionContext);
+
+  const isProposalApplicable = Boolean(
+    mapProposal &&
+    mapProposal.status === "success" &&
+    mapProposal.proposedAssessment &&
+    mapProposal.delta &&
+    assessment &&
+    mapProposal.baselineAssessmentId === assessment.assessment_id &&
+    (mapProposal.evidenceBundleId === undefined || mapProposal.evidenceBundleId === assessment.evidence_bundle_id) &&
+    mapProposal.hours === mapTimeOffset &&
+    mapProposal.missionContextKey === currentContextKey &&
+    !isLoading
+  );
 
   const handleTimeOffsetChange = (hours: number) => {
     setMapTimeOffset(hours);
@@ -80,11 +123,15 @@ export default function FisherPage({
 
     const baseDeparture = chat.missionContext.departure_time || assessment?.trip_context.departure_time;
     if (!baseDeparture || !assessment) {
+      setMapProposal(null);
       return;
     }
 
     const depParsed = Date.parse(baseDeparture);
-    if (isNaN(depParsed)) return;
+    if (isNaN(depParsed)) {
+      setMapProposal(null);
+      return;
+    }
 
     // Calculate proposed departure strictly from retained mission departure (not current clock)
     const proposedDeparture = new Date(depParsed + hours * 3600000).toISOString();
@@ -100,12 +147,18 @@ export default function FisherPage({
       }
     }
 
+    const currentBaselineId = assessment.assessment_id;
+    const currentEvidenceBundleId = assessment.evidence_bundle_id;
+
     setMapProposal({
-      proposedAssessment: assessment,
+      status: "pending",
+      baselineAssessmentId: currentBaselineId,
+      evidenceBundleId: currentEvidenceBundleId,
       hours,
+      missionContextKey: currentContextKey,
+      baseDeparture,
       proposedDeparture,
       proposedReturn,
-      loading: true,
     });
 
     const abort = new AbortController();
@@ -138,37 +191,51 @@ export default function FisherPage({
       .then(data => {
         if (!abort.signal.aborted) {
           setMapProposal({
-            proposedAssessment: data.simulated,
-            delta: data.delta,
+            status: "success",
+            baselineAssessmentId: currentBaselineId,
+            evidenceBundleId: currentEvidenceBundleId,
             hours,
+            missionContextKey: currentContextKey,
+            baseDeparture,
             proposedDeparture,
             proposedReturn,
-            loading: false,
+            proposedAssessment: data.simulated,
+            delta: data.delta,
           });
         }
       })
       .catch(err => {
         if (!abort.signal.aborted) {
-          setMapProposal(prev => prev ? { ...prev, loading: false, error: err.message } : null);
+          setMapProposal(prev => prev ? {
+            ...prev,
+            status: "error",
+            error: err.message || 'Simulation failed',
+          } : null);
         }
       });
   };
 
-  const handleApplyMapProposal = (proposed: TripAssessmentResponse) => {
-    applyAssessment(proposed);
+  const handleApplyMapProposal = () => {
+    if (!isProposalApplicable || !mapProposal?.proposedAssessment) return;
+    applyAssessment(mapProposal.proposedAssessment);
     setMapTimeOffset(0);
     setMapProposal(null);
   };
 
-  const {
-    data: assessment,
-    adoptAssessment: setAssessment,
-    isLoading,
-    error,
-    isOffline,
-    isExpired,
-    assessTrip,
-  } = useTripAssessment();
+  // Invalidate proposals immediately when relevant mission inputs change, including before replacement assessment finishes
+  useEffect(() => {
+    proposalAbortRef.current?.abort();
+    setMapProposal(null);
+    setMapTimeOffset(0);
+  }, [
+    chat.missionContext.origin_harbor,
+    chat.missionContext.craft_profile,
+    chat.missionContext.vessel_size,
+    chat.missionContext.departure_time,
+    chat.missionContext.return_time,
+    chat.missionContext.target_pfz,
+  ]);
+
   useEffect(() => {
     proposalAbortRef.current?.abort();
     setMapProposal(null);
@@ -393,22 +460,22 @@ export default function FisherPage({
     <nav className="fisher-navigation" aria-label="Fisher workspace">{nav.map(([id, Icon, label]) => <button key={id} className={sidebarTab === id || (id === 'voyage' && sidebarTab === 'decision') ? 'active' : ''} onClick={() => setSidebarTab(id)} aria-current={sidebarTab === id ? 'page' : undefined}><Icon size={19} /><span>{label}</span></button>)}</nav>
     <div className="fisher-workspace-body">
       <div className="fisher-main-pane">
-        <div className="workspace-heading"><div><span className="eyebrow">{originHarbor} / FISHER WORKSPACE</span><h1>{sidebarTab === 'home' ? (name ? `Welcome back, ${name}` : 'Your marine assistant') : sidebarTab === 'chat' ? 'Ask ORCA' : sidebarTab === 'voyage' ? 'Plan your trip' : sidebarTab === 'decision' ? 'Your mission' : sidebarTab === 'profile' ? 'Your profile' : sidebarTab === 'trips' ? 'Recent decisions' : sidebarTab === 'alerts' ? 'Trip alerts' : 'Your mission map'}</h1></div><span className="scenario-label">{fisherDataMode === 'DEMO' ? 'DEMO Â· Controlled marine scenario' : fisherDataMode}</span></div>
-        {isOffline && <p className="product-notice">Saved {assessment?.assessed_at ? new Date(assessment.assessed_at).toLocaleString() : 'assessment'} Â· {isExpired ? 'Expired. Reconnect before making a departure decision.' : 'Offline. Reconnect to reassess.'}</p>}
+        <div className="workspace-heading"><div><span className="eyebrow">{originHarbor} / FISHER WORKSPACE</span><h1>{sidebarTab === 'home' ? (name ? `Welcome back, ${name}` : 'Your marine assistant') : sidebarTab === 'chat' ? 'Ask ORCA' : sidebarTab === 'voyage' ? 'Plan your trip' : sidebarTab === 'decision' ? 'Your mission' : sidebarTab === 'profile' ? 'Your profile' : sidebarTab === 'trips' ? 'Recent decisions' : sidebarTab === 'alerts' ? 'Trip alerts' : 'Your mission map'}</h1></div><span className="scenario-label">{fisherDataMode === 'DEMO' ? 'DEMO · Controlled marine scenario' : fisherDataMode}</span></div>
+        {isOffline && <p className="product-notice">Saved {assessment?.assessed_at ? new Date(assessment.assessed_at).toLocaleString() : 'assessment'} · {isExpired ? 'Expired. Reconnect before making a departure decision.' : 'Offline. Reconnect to reassess.'}</p>}
         {sidebarTab === 'home' && <>
-          <div className="vessel-context"><Navigation size={20} /><span><strong>{(chat.missionContext.craft_profile || 'motorized_boat').replace(/_/g, ' ')}</strong><small>{chat.missionContext.vessel_size || 'medium'} vessel Â· {tripWindow}</small></span><button onClick={() => setSidebarTab('profile')}>Edit profile</button></div>
+          <div className="vessel-context"><Navigation size={20} /><span><strong>{(chat.missionContext.craft_profile || 'motorized_boat').replace(/_/g, ' ')}</strong><small>{chat.missionContext.vessel_size || 'medium'} vessel · {tripWindow}</small></span><button onClick={() => setSidebarTab('profile')}>Edit profile</button></div>
           <div className="home-actions"><button className="product-primary" onClick={() => setSidebarTab('voyage')}><Navigation size={20} /><span>Plan a trip<small>Vessel, time and fishing area</small></span><ArrowUpRight size={20} /></button><button onClick={() => setSidebarTab('chat')}><MessageSquare size={20} /><span>Ask ORCA<small>Start with a question</small></span><ArrowUpRight size={20} /></button></div>
           {summary}
-          <section className="product-section"><div className="section-heading"><h3>Fishing areas</h3><span className="muted">{zones.length} evaluated candidates</span></div>{zones.length ? zones.slice(0, 3).map(p => <div className="zone-row" key={p.candidate_id}><button onClick={() => { chat.setMissionContext({ ...chat.missionContext, target_pfz: p.candidate_id }); setSidebarTab('map'); }}><strong>{p.candidate_id}</strong><small>{Number(p.distance_nautical_miles).toFixed(1)} nm Â· bearing {Number(p.bearing_degrees).toFixed(0)}?</small></button><button aria-label={`Save ${p.candidate_id}`} aria-pressed={savedZones.includes(p.candidate_id)} onClick={() => saveZone(p.candidate_id)}><Bookmark size={18} fill={savedZones.includes(p.candidate_id) ? 'currentColor' : 'none'} /></button></div>) : <p className="muted">No valid fishing areas in this mission window. Try a different departure.</p>}<p className="muted">{savedZones.length} saved on this device</p></section>
+          <section className="product-section"><div className="section-heading"><h3>Fishing areas</h3><span className="muted">{zones.length} evaluated candidates</span></div>{zones.length ? zones.slice(0, 3).map(p => <div className="zone-row" key={p.candidate_id}><button onClick={() => { chat.setMissionContext({ ...chat.missionContext, target_pfz: p.candidate_id }); setSidebarTab('map'); }}><strong>{p.candidate_id}</strong><small>{Number(p.distance_nautical_miles).toFixed(1)} nm · bearing {Number(p.bearing_degrees).toFixed(0)}°</small></button><button aria-label={`Save ${p.candidate_id}`} aria-pressed={savedZones.includes(p.candidate_id)} onClick={() => saveZone(p.candidate_id)}><Bookmark size={18} fill={savedZones.includes(p.candidate_id) ? 'currentColor' : 'none'} /></button></div>) : <p className="muted">No valid fishing areas in this mission window. Try a different departure.</p>}<p className="muted">{savedZones.length} saved on this device</p></section>
           <section className="product-section"><div className="section-heading"><h3>Latest alerts</h3><button onClick={() => setSidebarTab('alerts')}>View all</button></div><p>{assessment?.conditions.hazard?.headline || 'Your trip advisories will appear after assessment.'}</p></section>
         </>}
         {sidebarTab === 'voyage' && <GuidedTripSetup context={chat.missionContext} language={chat.language} onContextChange={chat.setMissionContext} onComplete={handleCompletePlan} onCancel={() => setSidebarTab('home')} />}
         {sidebarTab === 'decision' && <>{summary}{assessment && !isLoading && <RouteChoices assessment={assessment} onApply={applyAssessment} />}{!isLoading && <WhatIfSimulator assessment={assessment} onApplyAssessment={applyAssessment} currentContext={chat.missionContext} currentStatus={effectiveDecisionStatus} language={chat.language} onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)} onApplyContext={chat.setMissionContext} />}<details className="product-details evidence-details"><summary>Inspect evidence, routes and detailed reasoning</summary><FisherDecisionSurface assessment={assessment} isLoading={isLoading} error={error} isOffline={isOffline} isExpired={isExpired} missionContext={chat.missionContext} language={chat.language} collaboration={null} onOpenVoyageSettings={() => setSidebarTab('voyage')} onViewMap={() => setSidebarTab('map')} /></details></>}
-        {sidebarTab === 'chat' && <div className="product-chat"><div className="mission-context-bar"><p>Current mission (correct harbor and time before asking): <strong>{originHarbor}</strong> Â· {tripWindow} Â· {(chat.missionContext.craft_profile || '').replace(/_/g, ' ')}</p><button onClick={() => setSidebarTab('voyage')}>Correct mission</button><label>Response language<select aria-label="Response language" value={chat.language} onChange={e => chat.setLanguage(e.target.value as 'en' | 'hi' | 'mr')}><option value="en">English</option><option value="hi">à¤¹à¤¿à¤¨à¥à¤¦à¥€</option><option value="mr">à¤®à¤°à¤¾à¤ à¥€</option></select></label></div>{chat.activeResponse?.proposed_assessment && <div className="product-notice"><p>Proposed mission: {new Date(chat.activeResponse.proposed_assessment.trip_context.departure_time || '').toLocaleString()} ? {assessmentStatus(chat.activeResponse.proposed_assessment)}</p><button onClick={() => applyAssessment(chat.activeResponse!.proposed_assessment!)}>Use this exact proposed plan</button></div>}<div className="question-shortcuts">{['Can I go fishing tomorrow?', 'Where is the nearest PFZ?', 'What are the nearest hazards?', 'Why this decision?', 'Compare the routes.'].map(q => <button key={q} disabled={chat.isLoading} onClick={() => chat.send(q)}>{q}</button>)}</div><ChatPanel language={chat.language} messages={chat.messages} activeResponse={chat.activeResponse} isLoading={chat.isLoading} onSend={chat.send} onStartCall={onStartCall} onBack={() => setSidebarTab('home')} onReset={chat.clearChat} onEvidenceClick={onOpenEvidence} /></div>}
+        {sidebarTab === 'chat' && <div className="product-chat"><div className="mission-context-bar"><p>Current mission (correct harbor and time before asking): <strong>{originHarbor}</strong> · {tripWindow} · {(chat.missionContext.craft_profile || '').replace(/_/g, ' ')}</p><button onClick={() => setSidebarTab('voyage')}>Correct mission</button><label>Response language<select aria-label="Response language" value={chat.language} onChange={e => chat.setLanguage(e.target.value as 'en' | 'hi' | 'mr')}><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select></label></div>{chat.activeResponse?.proposed_assessment && <div className="product-notice"><p>Proposed mission: {new Date(chat.activeResponse.proposed_assessment.trip_context.departure_time || '').toLocaleString()} → {assessmentStatus(chat.activeResponse.proposed_assessment)}</p><button onClick={() => applyAssessment(chat.activeResponse!.proposed_assessment!)}>Use this exact proposed plan</button></div>}<div className="question-shortcuts">{['Can I go fishing tomorrow?', 'Where is the nearest PFZ?', 'What are the nearest hazards?', 'Why this decision?', 'Compare the routes.'].map(q => <button key={q} disabled={chat.isLoading} onClick={() => chat.send(q)}>{q}</button>)}</div><ChatPanel language={chat.language} messages={chat.messages} activeResponse={chat.activeResponse} isLoading={chat.isLoading} onSend={chat.send} onStartCall={onStartCall} onBack={() => setSidebarTab('home')} onReset={chat.clearChat} onEvidenceClick={onOpenEvidence} /></div>}
         {sidebarTab === 'trips' && <section className="product-section"><p className="muted">Assessments saved on this device. Open a trip to plan from its context; conditions will be checked again.</p>{recent.length ? recent.map(a => <button className="trip-history-row" key={a.assessment_id} onClick={() => { chat.setMissionContext({ ...chat.missionContext, ...a.trip_context }); setSidebarTab('voyage'); }}><span><strong>{a.trip_context.origin_harbor}</strong><small>{new Date(a.assessed_at).toLocaleString()}</small></span><span className={`decision-label status-${assessmentStatus(a)}`}>{assessmentStatus(a)}</span></button>) : <p>No assessments yet. Plan your first trip to start a history.</p>}</section>}
         {sidebarTab === 'alerts' && <section className="product-section">{assessment && <MissionChanges assessment={assessment} onApply={applyAssessment} />}<h3>Current mission advisories</h3><p>{assessment?.conditions.hazard?.headline || 'No assessment available yet.'}</p>{assessment?.alerts.map((a, i) => <p className="product-notice" key={i}>{(a as any).message || a.title}</p>)}<FisherAlertPanel alerts={alerts} language={chat.language} onAcknowledge={acknowledgeAlert} onReplay={text => speak(text)} /></section>}
         {sidebarTab === 'profile' && <section className="product-section profile-form"><h3>Profile on this device</h3><p className="muted">Your name is a local preference. This prototype has no account sign-in.</p><label>Your name<input value={name} onChange={e => { setName(e.target.value); try { localStorage.setItem('orca.name', e.target.value); } catch {} }} placeholder="Add your name" /></label><label>Vessel<select value={chat.missionContext.craft_profile} onChange={e => chat.setMissionContext({ ...chat.missionContext, craft_profile: e.target.value as any })}><option value="traditional_non_motorized">Traditional craft</option><option value="motorized_boat">Motorized boat</option><option value="mechanized_trawler">Mechanized trawler</option></select></label><label>Size<select value={chat.missionContext.vessel_size} onChange={e => chat.setMissionContext({ ...chat.missionContext, vessel_size: e.target.value as any })}>{['small', 'medium', 'large'].map(size => <option key={size}>{size}</option>)}</select></label><button onClick={onStartCall}><Mic size={18} /> Talk to ORCA</button><h3>Saved fishing areas</h3>{savedZones.length ? savedZones.map(id => <div className="zone-row" key={id}><span>{id}</span><button onClick={() => saveZone(id)}>Remove</button></div>) : <p className="muted">Save an area from Home to keep it here.</p>}</section>}
-        {sidebarTab === 'map' && <div className="map-context-strip"><strong>{originHarbor}</strong><span>{zones.length} fishing areas ? {assessment?.route_candidates.length || 0} routes</span><button onClick={() => setSidebarTab('decision')}>View decision</button></div>}
+        {sidebarTab === 'map' && <div className="map-context-strip"><strong>{originHarbor}</strong><span>{zones.length} fishing areas · {assessment?.route_candidates.length || 0} routes</span><button onClick={() => setSidebarTab('decision')}>View decision</button></div>}
       </div>
       <section className="fisher-map-pane" aria-label="Marine mission map">
         <LocationWarningsOverlay status={geoStatus} alerts={geofenceAlerts} language={chat.language} />
@@ -418,21 +485,26 @@ export default function FisherPage({
               <strong>Forecast Timeline &amp; Departure Proposal (+{mapTimeOffset}h)</strong>
               <div style={{ fontSize: '13px', marginTop: '2px' }}>
                 Proposed: {new Date(mapProposal.proposedDeparture).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                <span className="muted" style={{ marginLeft: '4px' }}>
+                  (Relative to baseline {new Date(mapProposal.baseDeparture).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })})
+                </span>
                 {mapProposal.proposedReturn && (
-                  <span> Â· Duration: {((Date.parse(mapProposal.proposedReturn) - Date.parse(mapProposal.proposedDeparture)) / 3600000).toFixed(1)}h</span>
+                  <span> · Duration: {((Date.parse(mapProposal.proposedReturn) - Date.parse(mapProposal.proposedDeparture)) / 3600000).toFixed(1)}h</span>
                 )}
-                {mapProposal.loading ? (
-                  <span> Â· <em>Evaluating proposalâ€¦</em></span>
-                ) : mapProposal.delta ? (
-                  <span> Â· Result: <strong>{assessmentStatus(mapProposal.proposedAssessment)}</strong> ({mapProposal.delta.summary})</span>
+                {mapProposal.status === 'pending' ? (
+                  <span> · <em>Evaluating proposal...</em></span>
+                ) : mapProposal.status === 'error' ? (
+                  <span style={{ color: 'var(--color-danger, #e53935)' }}> · <strong>Simulation error:</strong> {mapProposal.error || 'Failed to simulate alternative departure.'}</span>
+                ) : mapProposal.delta && mapProposal.proposedAssessment ? (
+                  <span> · Result: <strong>{assessmentStatus(mapProposal.proposedAssessment)}</strong> ({mapProposal.delta.summary})</span>
                 ) : null}
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 className="product-primary"
-                disabled={mapProposal.loading || !!mapProposal.error || !mapProposal.delta || isLoading}
-                onClick={() => handleApplyMapProposal(mapProposal.proposedAssessment)}
+                disabled={!isProposalApplicable}
+                onClick={handleApplyMapProposal}
               >
                 Apply Proposal to Mission
               </button>

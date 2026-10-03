@@ -587,6 +587,26 @@ def localize_operational_text(text: str, target_lang: str) -> str:
             "hi": "सक्रिय सिम्युलेटेड चक्रवात अलर्ट",
             "mr": "सक्रिय सिम्युलेटेड चक्रीवादळ सतर्कता",
         },
+        "Potential Fishing Zone advisory for fishing opportunity identification only; voyage navigation and departure clearance must be independently assessed.": {
+            "hi": "संभावित मत्स्य पालन क्षेत्र (PFZ) सलाह केवल मछली पकड़ने के अवसर की पहचान के लिए है; यात्रा नौवहन और प्रस्थान सुरक्षा का स्वतंत्र रूप से मूल्यांकन किया जाना चाहिए।",
+            "mr": "संभाव्य मासेमारी क्षेत्र (PFZ) सल्ला केवळ मासेमारीच्या संधी शोधण्यासाठी आहे; सागरी प्रवास आणि प्रस्थान सुरक्षेचे स्वतंत्रपणे मूल्यमापन केले पाहिजे.",
+        },
+        "Informational advisory only — voyage navigation and departure safety must be independently assessed": {
+            "hi": "केवल सूचनात्मक सलाह — यात्रा नौवहन और प्रस्थान सुरक्षा का स्वतंत्र रूप से मूल्यांकन किया जाना चाहिए",
+            "mr": "केवळ माहितीपर सल्ला — सागरी प्रवास आणि प्रस्थान सुरक्षेचे स्वतंत्रपणे मूल्यमापन केले पाहिजे",
+        },
+        "Obtain voyage safety assessment and verify local harbor bulletins before departure.": {
+            "hi": "प्रस्थान करने से पहले यात्रा सुरक्षा मूल्यांकन प्राप्त करें और स्थानीय बंदरगाह बुलेटिन सत्यापित करें।",
+            "mr": "प्रस्थान करण्यापूर्वी सागरी प्रवास सुरक्षा मूल्यमापन मिळवा आणि स्थानिक बंदर बुलेटिन तपासा.",
+        },
+        "No supported fishing candidate in retained evidence.": {
+            "hi": "सुरक्षित मिशन साक्ष्य में कोई समर्थित मछली पकड़ने का क्षेत्र नहीं मिला।",
+            "mr": "सुरक्षित मिशन पुराव्यांमध्ये कोणताही समर्थित मासेमारी क्षेत्र उपलब्ध नाही.",
+        },
+        "Potential Fishing Zone advisory: No supported fishing candidate in retained evidence.": {
+            "hi": "संभावित मत्स्य पालन क्षेत्र सलाह: सुरक्षित मिशन साक्ष्य में कोई समर्थित मछली पकड़ने का क्षेत्र नहीं मिला।",
+            "mr": "संभाव्य मासेमारी क्षेत्र सल्ला: सुरक्षित मिशन पुराव्यांमध्ये कोणताही समर्थित मासेमारी क्षेत्र उपलब्ध नाही.",
+        },
     }
 
     if text in exact_map and target_lang in exact_map[text]:

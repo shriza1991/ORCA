@@ -444,3 +444,654 @@ def test_marinewatch_fallback_labeling_is_honest():
         assert not any(
             src["provider"] == "INCOIS" and "Harmonic" in src.get("dataset", "") for src in res["sources"]
         )
+
+
+def test_retained_chat_preserves_original_evidence_and_derived_thresholds(client):
+    """Verify retained chat preserves original evidence records and formats thresholds as derived evaluations."""
+    # 1. Create a trip assessment to establish baseline
+    dep_time = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    asm_resp = client.post(
+        "/api/v1/trip-assessments",
+        json={
+            "origin_harbor": "Ratnagiri",
+            "craft_profile": "motorized_boat",
+            "vessel_size": "medium",
+            "departure_time": dep_time,
+            "data_mode": "SNAPSHOT",
+        },
+    )
+    assert asm_resp.status_code == 200
+    asm_data = asm_resp.json()
+    asm_id = asm_data["assessment_id"]
+    evidence_bundle_id = asm_data.get("evidence_bundle_id")
+
+    # 2. Call retained chat
+    chat_resp = client.post(
+        "/api/v1/chat",
+        json={
+            "message": "Can I go fishing today?",
+            "baseline_assessment_id": asm_id,
+            "evidence_bundle_id": evidence_bundle_id,
+            "data_mode": "SNAPSHOT",
+            "user_context": {
+                "harbor": "Ratnagiri",
+                "craft_profile": "motorized_boat",
+            },
+        },
+    )
+    assert chat_resp.status_code == 200
+    chat_data = chat_resp.json()
+
+    # Evidence items must be present
+    evidence = chat_data.get("evidence", [])
+    assert len(evidence) > 0
+
+    # Must contain original provider evidence (e.g. INCOIS or IMD or Reference)
+    providers = [e.get("provider_name") for e in evidence if e.get("provider_name")]
+    assert len(providers) > 0, "Original provider identities must be preserved"
+
+    # Must contain derived threshold evaluation records with CALCULATED data_mode
+    calc_records = [e for e in evidence if e.get("data_mode") == "CALCULATED"]
+    assert len(calc_records) > 0, "Threshold comparisons must be represented as separate derived evaluation records"
+    for cr in calc_records:
+        assert cr.get("lineage_id") is not None, "Derived calculations must link to supporting source evidence lineage"
+        assert cr.get("observed_time") is None, "Calculations without sensor readings must not fabricate observed_time"
+
+
+def test_pfz_confidence_independent_of_voyage_baseline(client):
+    """Verify PFZ advisory confidence is derived independently from candidate evidence and does not cite voyage limits."""
+    # 1. Create a trip assessment with severe weather/hazard to produce NO_GO voyage baseline
+    dep_time = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    asm_resp = client.post(
+        "/api/v1/trip-assessments",
+        json={
+            "origin_harbor": "Ratnagiri",
+            "craft_profile": "traditional_non_motorized",
+            "vessel_size": "small",
+            "departure_time": dep_time,
+            "data_mode": "SNAPSHOT",
+        },
+    )
+    assert asm_resp.status_code == 200
+    asm_data = asm_resp.json()
+    asm_id = asm_data["assessment_id"]
+
+    # 2. Ask PFZ query in retained context
+    chat_resp = client.post(
+        "/api/v1/chat",
+        json={
+            "message": "Where is the nearest PFZ?",
+            "baseline_assessment_id": asm_id,
+            "evidence_bundle_id": asm_data.get("evidence_bundle_id"),
+            "data_mode": "SNAPSHOT",
+            "user_context": {
+                "harbor": "Ratnagiri",
+                "craft_profile": "traditional_non_motorized",
+            },
+        },
+    )
+    assert chat_resp.status_code == 200
+    chat_data = chat_resp.json()
+
+    assert chat_data.get("intent") == "PFZ"
+
+    # PFZ recommendation must remain INFORMATIONAL
+    assert chat_data.get("recommendation", {}).get("status") == "INFORMATIONAL"
+
+    # Advisory confidence must be derived for PFZ, not blindly inheriting voyage brief
+    explanation = chat_data.get("explanation", {})
+    factors = explanation.get("decisive_factors", [])
+    joined_factors = " ".join(factors).lower()
+
+    # Must not cite vessel operating limits or cyclone as PFZ candidate confidence explanation
+    assert "cyclone" not in joined_factors
+    assert "operating limits" not in joined_factors
+
+    # Answer text must include departure clearance disclaimer
+    answer = chat_data.get("answer", "")
+    assert "departure" in answer.lower() or "clearance" in answer.lower() or "सुरक्षा" in answer or "परवानगी" in answer
+
+    # mission_assessment must be preserved separately
+    assert chat_data.get("mission_assessment") is not None
+    assert chat_data["mission_assessment"]["assessment_id"] == asm_id
+
+
+def test_collaboration_missing_evidence_honesty():
+    """Verify missing collaboration evidence does not manufacture INCOIS/IMD provider claims."""
+    from backend.app.domain.agent_collaboration import AgentCollaborationEngine
+    from backend.app.contracts.chat import DataQualityRating
+
+    # Build collaboration payload with empty evidence
+    collab = AgentCollaborationEngine.derive_collaboration(
+        observations={},
+        risk_assessment=None,
+        evidence=[],
+        trace=[],
+        user_profile={"craft_profile": "motorized_boat"},
+        tool_results={},
+        intent="SAFETY",
+        language="en",
+        harbor="Ratnagiri",
+    )
+
+    marine_agent = next(a for a in collab.agents if a.agent_id == "marine_agent")
+    weather_agent = next(a for a in collab.agents if a.agent_id == "weather_agent")
+    safety_agent = next(a for a in collab.agents if a.agent_id == "safety_agent")
+
+    # Missing evidence must have LIMITED quality, NOT VERIFIED
+    assert marine_agent.data_quality == DataQualityRating.LIMITED
+    assert weather_agent.data_quality == DataQualityRating.LIMITED
+
+    # Sources must NOT claim active INCOIS/IMD feeds
+    for src in marine_agent.sources:
+        assert src.provider == "Unavailable"
+        assert src.last_updated is None
+
+    for src in weather_agent.sources:
+        assert src.provider == "Unavailable"
+        assert src.last_updated is None
+
+    # Safety agent is domain intelligence calculation, NOT verified sensor feed
+    assert safety_agent.data_quality == DataQualityRating.PARTIAL
+    assert any(s.provider in ("ORCA Safety Authority", "ORCA Domain Intelligence") for s in safety_agent.sources)
+
+
+def test_pfz_confidence_precedence_matrix():
+    """Verify PFZ confidence precedence rules across expired demo, unverified, missing validity, and verified."""
+    from backend.app.contracts.chat import ConfidenceLevel
+    from backend.app.services.mission_conversation import _derive_pfz_confidence
+    from unittest.mock import MagicMock
+
+    departure = "2026-10-04T06:00:00Z"
+
+    # Helper mock assessment builder
+    def build_mock_assessment(candidates, data_mode="LIVE", prov_mode="LIVE"):
+        asm = MagicMock()
+        asm.pfz_candidates = candidates
+        asm.conditions.data_mode = data_mode
+        asm.conditions.provenance_mode = prov_mode
+        return asm
+
+    sample_candidate = [{"candidate_id": "MH-PFZ-01", "distance_nautical_miles": 12.4, "bearing_degrees": 245.0}]
+
+    # Case 1: No supported candidates -> LOW
+    asm_no_cand = build_mock_assessment([])
+    conf = _derive_pfz_confidence(asm_no_cand, {}, departure, "en")
+    assert conf.level == ConfidenceLevel.LOW
+    assert "no supported fishing candidate" in " ".join(conf.reasons).lower()
+
+    # Case 2: Missing validity -> LOW
+    asm_cand = build_mock_assessment(sample_candidate, data_mode="LIVE")
+    bundle_missing_val = {"pfz": {"valid_to": None, "bulletin_date": None}}
+    conf = _derive_pfz_confidence(asm_cand, bundle_missing_val, departure, "en")
+    assert conf.level == ConfidenceLevel.LOW
+    assert "unknown or missing" in " ".join(conf.reasons).lower()
+
+    # Case 3: Malformed validity -> LOW
+    bundle_malformed = {"pfz": {"valid_from": "not-a-date", "valid_to": "invalid-iso"}}
+    conf = _derive_pfz_confidence(asm_cand, bundle_malformed, departure, "en")
+    assert conf.level == ConfidenceLevel.LOW
+    assert "malformed" in " ".join(conf.reasons).lower()
+
+    # Case 4: Expired demo source -> LOW (MUST NOT receive MEDIUM just because it is demo)
+    asm_demo = build_mock_assessment(sample_candidate, data_mode="DEMO", prov_mode="DEMO")
+    bundle_expired_demo = {
+        "pfz": {
+            "valid_from": "2026-10-01T00:00:00Z",
+            "valid_to": "2026-10-03T00:00:00Z",  # Expired before departure 2026-10-04T06:00:00Z
+            "data_mode": "DEMO",
+        }
+    }
+    conf = _derive_pfz_confidence(asm_demo, bundle_expired_demo, departure, "en")
+    assert conf.level == ConfidenceLevel.LOW
+    assert "expired" in " ".join(conf.reasons).lower()
+
+    # Case 5: Not-yet-valid source -> LOW
+    bundle_future = {
+        "pfz": {
+            "valid_from": "2026-10-05T00:00:00Z",  # Future relative to departure
+            "valid_to": "2026-10-06T00:00:00Z",
+            "data_mode": "LIVE",
+        }
+    }
+    conf = _derive_pfz_confidence(asm_cand, bundle_future, departure, "en")
+    assert conf.level == ConfidenceLevel.LOW
+    assert "commences after departure" in " ".join(conf.reasons).lower()
+
+    # Case 6: Valid demo/snapshot -> MEDIUM with scenario wording
+    bundle_valid_demo = {
+        "pfz": {
+            "valid_from": "2026-10-04T00:00:00Z",
+            "valid_to": "2026-10-04T18:00:00Z",
+            "data_mode": "SNAPSHOT",
+        }
+    }
+    asm_snapshot = build_mock_assessment(sample_candidate, data_mode="SNAPSHOT", prov_mode="DEMO")
+    conf = _derive_pfz_confidence(asm_snapshot, bundle_valid_demo, departure, "en")
+    assert conf.level == ConfidenceLevel.MEDIUM
+    assert any("medium" in r.lower() or "modeled" in r.lower() or "simulated" in r.lower() or "scenario" in r.lower() for r in conf.reasons)
+
+    # Case 7: Fresh unverified live -> MEDIUM (MUST NOT receive HIGH)
+    bundle_fresh_unverified = {
+        "pfz": {
+            "valid_from": "2026-10-04T00:00:00Z",
+            "valid_to": "2026-10-04T18:00:00Z",
+            "source_name": "Third-Party Ocean SST Feed",
+            "data_mode": "LIVE",
+            "quality_flags": [],
+            "freshness_flags": {"verified_live": False},
+        }
+    }
+    conf = _derive_pfz_confidence(asm_cand, bundle_fresh_unverified, departure, "en")
+    assert conf.level == ConfidenceLevel.MEDIUM, "Unverified live PFZ feed must not acquire HIGH confidence"
+    assert "unverified" in " ".join(conf.reasons).lower()
+
+    # Case 8: Valid verified official live with certified coverage -> HIGH
+    bundle_valid_verified = {
+        "pfz": {
+            "valid_from": "2026-10-04T00:00:00Z",
+            "valid_to": "2026-10-04T18:00:00Z",
+            "source_name": "INCOIS Marine PFZ Advisory",
+            "data_mode": "LIVE",
+            "quality_flags": ["official_source", "verified_live", "certified_coverage"],
+            "freshness_flags": {"is_official": True, "verified_live": True, "coverage_status": "CERTIFIED"},
+        }
+    }
+    conf = _derive_pfz_confidence(asm_cand, bundle_valid_verified, departure, "en")
+    assert conf.level == ConfidenceLevel.HIGH
+    assert "high confidence" in " ".join(conf.reasons).lower()
+
+
+def test_retained_evidence_lineage_and_voice_consistency():
+    """Verify original evidence preservation, unmanufactured lineage links, and voice/text consistency."""
+    from backend.app.services.mission_conversation import _build_retained_evidence, bind_mission_response
+    from backend.app.services.mission_evidence import get_assessment, retain_assessment, retain_bundle
+    from backend.app.contracts.assessment import TripAssessmentRequest
+    from backend.app.services.assessment_service import AssessmentService
+    from backend.app.contracts.chat import ChatResponse, Recommendation, RecommendationStatus, Confidence, ConfidenceLevel
+    from datetime import datetime, timezone, timedelta
+
+    # 1. Create a baseline assessment
+    now_utc = datetime.now(timezone.utc)
+    req = TripAssessmentRequest(
+        origin_harbor="Ratnagiri",
+        craft_profile="motorized_boat",
+        departure_time=now_utc.isoformat(),
+        return_time=(now_utc + timedelta(hours=6)).isoformat(),
+        data_mode="SNAPSHOT",
+    )
+    assessment = AssessmentService.assess_trip(req)
+    retain_assessment(assessment)
+
+    # 2. Verify _build_retained_evidence
+    evidence_items = _build_retained_evidence(assessment)
+    assert len(evidence_items) > 0
+
+    source_ids = {e.evidence_id for e in evidence_items if e.data_mode != "CALCULATED"}
+    calculated_items = [e for e in evidence_items if e.data_mode == "CALCULATED"]
+
+    # Derived items must be CALCULATED, have observed_time=None, and lineage_id must strictly point to source_ids or be None
+    assert len(calculated_items) > 0
+    for calc in calculated_items:
+        assert calc.data_mode == "CALCULATED"
+        assert calc.observed_time is None
+        assert "calculation" in " ".join(calc.quality_flags).lower() or "evaluation" in " ".join(calc.quality_flags).lower()
+        if calc.lineage_id is not None:
+            assert calc.lineage_id in source_ids, f"Lineage ID {calc.lineage_id} does not resolve to an evidence item in the bundle!"
+            assert "retained_source" not in calc.lineage_id, "Manufactured fallback ID must not be generated"
+
+    # 3. Verify text and voice response projection consistency
+    mock_chat_response = ChatResponse(
+        run_id="run-text-1",
+        conversation_id="conv-1",
+        answer="Conditions advisory",
+        intent="SAFETY",
+        recommendation=Recommendation(
+            status=RecommendationStatus.GO,
+            summary="Safe to go",
+            next_action="Sail safely",
+        ),
+        confidence=Confidence(level=ConfidenceLevel.MEDIUM, reasons=["Scenario evaluation"]),
+    )
+
+    profile = {
+        "baseline_assessment_id": assessment.assessment_id,
+        "evidence_bundle_id": assessment.evidence_bundle_id,
+        "data_mode": "SNAPSHOT",
+    }
+
+    # Bind text response
+    text_resp = bind_mission_response(mock_chat_response, profile, "is it safe?")
+    assert text_resp.evidence_bundle_id == assessment.evidence_bundle_id
+    assert len(text_resp.evidence) == len(evidence_items)
+
+    # Bind voice response with identical profile
+    mock_voice_response = ChatResponse(
+        run_id="run-voice-1",
+        conversation_id="conv-1",
+        answer="Conditions advisory voice",
+        intent="SAFETY",
+        recommendation=Recommendation(
+            status=RecommendationStatus.GO,
+            summary="Safe to go",
+            next_action="Sail safely",
+        ),
+        confidence=Confidence(level=ConfidenceLevel.MEDIUM, reasons=["Scenario evaluation"]),
+    )
+    voice_resp = bind_mission_response(mock_voice_response, profile, "is it safe?")
+    assert voice_resp.evidence_bundle_id == assessment.evidence_bundle_id
+    assert len(voice_resp.evidence) == len(text_resp.evidence)
+
+    # IDs and lineage are identical across text and voice
+    text_ev_ids = [e.evidence_id for e in text_resp.evidence]
+    voice_ev_ids = [e.evidence_id for e in voice_resp.evidence]
+    assert text_ev_ids == voice_ev_ids
+
+
+def test_partial_provenance_preserves_all_available_sources():
+    """Verify that if provenance list only contains marine, weather and hazard payloads are still preserved independently."""
+    from backend.app.contracts.chat import DataProvenance, EvidenceItem, UserContext, RecommendationStatus
+    from backend.app.contracts.observation import ObservationBundle
+    from backend.app.contracts.assessment import TripAssessmentResponse
+    from backend.app.agents.integrations.dev2 import WeatherConditionsPayload, HazardBulletinPayload
+    from backend.app.services.mission_conversation import _build_retained_evidence
+
+    prov_marine = DataProvenance(
+        provider_name="INCOIS",
+        source_name="INCOIS Ocean State Forecast",
+        valid_from="2026-10-04T00:00:00Z",
+        valid_to="2026-10-04T12:00:00Z",
+        data_mode="LIVE",
+        quality_flags=["official_source"],
+    )
+
+    weather_payload = WeatherConditionsPayload(
+        source_name="IMD Coastal AWS",
+        observed_at="2026-10-04T06:00:00Z",
+        valid_to="2026-10-04T12:00:00Z",
+        harbor="Ratnagiri",
+    )
+
+    hazard_payload = HazardBulletinPayload(
+        source_name="IMD Cyclone Warning Division",
+        severity="NORMAL",
+        valid_from="2026-10-04T00:00:00Z",
+        valid_to="2026-10-04T12:00:00Z",
+        harbor="Ratnagiri",
+    )
+
+    bundle = ObservationBundle(
+        weather=weather_payload,
+        hazard=hazard_payload,
+        provenance=[prov_marine],
+        data_mode="LIVE",
+    )
+
+    response = TripAssessmentResponse(
+        assessment_id="asm-partial-prov-01",
+        evidence_bundle_id="bundle-partial-01",
+        assessed_at="2026-10-04T06:00:00Z",
+        trip_context=UserContext(origin_harbor="Ratnagiri", craft_profile="motorized_boat"),
+        decision=RecommendationStatus.GO,
+        conditions=bundle,
+        evidence=[],
+    )
+
+    evidence_items = _build_retained_evidence(response)
+    source_names = [e.source_name for e in evidence_items]
+
+    # All three domains must be preserved independently!
+    assert any("ocean state forecast" in s.lower() for s in source_names)
+    assert any("coastal aws" in s.lower() for s in source_names)
+    assert any("cyclone warning" in s.lower() for s in source_names)
+
+
+def test_missing_provenance_does_not_manufacture_provider_names_or_retrieval_timestamps():
+    """Verify missing provider name, retrieved timestamp, and coverage are not manufactured."""
+    from backend.app.contracts.chat import UserContext, RecommendationStatus
+    from backend.app.contracts.observation import ObservationBundle
+    from backend.app.contracts.assessment import TripAssessmentResponse
+    from backend.app.agents.integrations.dev2 import MarineConditionsPayload
+    from backend.app.services.mission_conversation import _build_retained_evidence
+
+    # Marine payload with no provider_name, no retrieved_at, and no harbor/coverage specified
+    marine_payload = MarineConditionsPayload(
+        source_name="Custom Wave Gauge Telemetry",
+        observed_at="2026-10-04T06:00:00Z",
+        valid_to="2026-10-04T12:00:00Z",
+    )
+
+    bundle = ObservationBundle(
+        marine=marine_payload,
+        data_mode="LIVE",
+    )
+
+    response = TripAssessmentResponse(
+        assessment_id="asm-no-manufacture-01",
+        evidence_bundle_id="bundle-no-manufacture-01",
+        assessed_at="2026-10-04T06:00:00Z",
+        trip_context=UserContext(origin_harbor="Malvan", craft_profile="motorized_boat"),
+        decision=RecommendationStatus.GO,
+        conditions=bundle,
+        evidence=[],
+    )
+
+    evidence_items = _build_retained_evidence(response)
+    marine_ev = next(e for e in evidence_items if "gauge" in e.source_name.lower())
+
+    # Provider name must NOT be defaulted to INCOIS, IMD, or Open-Meteo
+    assert marine_ev.provider_name is None
+    # Retrieved at must NOT be defaulted to current timestamp
+    assert marine_ev.retrieved_at is None
+    # Coverage must NOT be substituted with requested harbor "Malvan"
+    assert marine_ev.coverage is None or marine_ev.coverage != "Malvan Marine Waters"
+
+
+def test_absent_hazard_evidence_does_not_create_false_negative_hazard_calculation():
+    """Verify that when hazard evaluation was absent, a calculated hazard_active=False is not created."""
+    from backend.app.contracts.chat import UserContext, RecommendationStatus
+    from backend.app.contracts.observation import ObservationBundle
+    from backend.app.contracts.assessment import TripAssessmentResponse
+    from backend.app.services.mission_conversation import _build_retained_evidence
+
+    # ObservationBundle with missing hazard (e.g. Incomplete data)
+    bundle = ObservationBundle(
+        marine=None,
+        weather=None,
+        hazard=None,
+        data_mode="UNAVAILABLE",
+    )
+
+    # Incomplete assessment where hazard evaluation is absent
+    response = TripAssessmentResponse(
+        assessment_id="asm-absent-hazard-01",
+        evidence_bundle_id="bundle-absent-hazard-01",
+        assessed_at="2026-10-04T06:00:00Z",
+        trip_context=UserContext(origin_harbor="Ratnagiri", craft_profile="motorized_boat"),
+        decision=RecommendationStatus.UNKNOWN,
+        conditions=bundle,
+        evidence=[{"issue": "Incomplete data", "details": "Critical components failed to load."}],
+    )
+
+    evidence_items = _build_retained_evidence(response)
+
+    # Must NOT contain a calculated evidence item asserting hazard_active=False or cyclone_warning_active=False
+    for ev in evidence_items:
+        if ev.data_mode == "CALCULATED":
+            assert ev.metric_name not in ("cyclone_warning_active", "hazard_active", "severe_weather_warning")
+            assert ev.metric_value is not False
+
+
+def test_derived_checks_match_stored_assessment_threshold_results():
+    """Verify calculations match stored assessment threshold results and link strictly to supporting sources."""
+    from backend.app.contracts.chat import UserContext, RecommendationStatus, ThresholdComparison
+    from backend.app.contracts.observation import ObservationBundle
+    from backend.app.contracts.assessment import TripAssessmentResponse
+    from backend.app.agents.integrations.dev2 import MarineConditionsPayload
+    from backend.app.services.mission_conversation import _build_retained_evidence
+
+    marine_payload = MarineConditionsPayload(
+        source_name="INCOIS OSF",
+        provider_name="INCOIS",
+        observed_at="2026-10-04T06:00:00Z",
+        valid_to="2026-10-04T12:00:00Z",
+    )
+
+    bundle = ObservationBundle(
+        marine=marine_payload,
+        weather=None,
+        hazard=None,
+        data_mode="SNAPSHOT",
+    )
+
+    # Stored threshold comparison for wave height
+    thresh = ThresholdComparison(
+        metric_name="significant_wave_height",
+        observed_value=1.8,
+        threshold_value=2.0,
+        operator="<=",
+        unit="meters",
+        exceeded=False,
+        impact="SAFE",
+        description="Significant wave height 1.8m within vessel limit 2.0m",
+    )
+
+    response = TripAssessmentResponse(
+        assessment_id="asm-thresh-01",
+        evidence_bundle_id="bundle-thresh-01",
+        assessed_at="2026-10-04T06:00:00Z",
+        trip_context=UserContext(origin_harbor="Ratnagiri", craft_profile="motorized_boat"),
+        decision=RecommendationStatus.GO,
+        conditions=bundle,
+        evidence=[thresh.model_dump()],
+    )
+
+    evidence_items = _build_retained_evidence(response)
+    calc_item = next(e for e in evidence_items if e.data_mode == "CALCULATED")
+
+    assert calc_item.metric_name == "significant_wave_height"
+    assert calc_item.metric_value == 1.8
+    assert calc_item.metric_unit == "meters"
+    assert calc_item.observed_time is None
+    # Links strictly to the marine source in the bundle
+    assert calc_item.lineage_id == "bundle-thresh-01:source:marine"
+
+
+def test_bundle_source_ids_are_unique_and_links_resolve_correctly():
+    """Verify all evidence IDs within a bundle are unique and lineage IDs resolve to an exact source."""
+    from backend.app.services.assessment_service import AssessmentService
+    from backend.app.contracts.assessment import TripAssessmentRequest
+    from backend.app.services.mission_conversation import _build_retained_evidence
+    from datetime import datetime, timezone, timedelta
+
+    now_utc = datetime.now(timezone.utc)
+    req = TripAssessmentRequest(
+        origin_harbor="Ratnagiri",
+        craft_profile="motorized_boat",
+        departure_time=now_utc.isoformat(),
+        return_time=(now_utc + timedelta(hours=6)).isoformat(),
+        data_mode="SNAPSHOT",
+    )
+    assessment = AssessmentService.assess_trip(req)
+    evidence_items = _build_retained_evidence(assessment)
+
+    # Unique evidence IDs
+    ev_ids = [e.evidence_id for e in evidence_items]
+    assert len(ev_ids) == len(set(ev_ids)), f"Duplicate evidence IDs found: {ev_ids}"
+
+    source_ids = {e.evidence_id for e in evidence_items if e.data_mode != "CALCULATED"}
+    for e in evidence_items:
+        if e.data_mode == "CALCULATED" and e.lineage_id is not None:
+            assert e.lineage_id in source_ids, f"Lineage ID {e.lineage_id} does not resolve to an evidence item in the bundle!"
+
+
+def test_pfz_high_requires_explicit_applicability_and_verification():
+    """Verify PFZ HIGH requires certified coverage, canonical official origin, and non-contradictory flags."""
+    from backend.app.services.mission_conversation import _derive_pfz_confidence
+    from backend.app.contracts.chat import UserContext, RecommendationStatus, ConfidenceLevel
+    from backend.app.contracts.observation import ObservationBundle
+    from backend.app.contracts.assessment import TripAssessmentResponse
+
+    departure = "2026-10-04T06:00:00Z"
+    candidate = [{
+        "candidate_id": "MH-PFZ-TEST",
+        "distance_nautical_miles": 14.5,
+        "bearing_degrees": 245,
+        "valid_from": "2026-10-04T00:00:00Z",
+        "valid_to": "2026-10-04T18:00:00Z",
+    }]
+
+    asm = TripAssessmentResponse(
+        assessment_id="asm-pfz-gate",
+        evidence_bundle_id="b-pfz-gate",
+        assessed_at="2026-10-04T05:00:00Z",
+        trip_context=UserContext(origin_harbor="Ratnagiri", craft_profile="motorized_boat"),
+        decision=RecommendationStatus.GO,
+        conditions=ObservationBundle(data_mode="LIVE", provenance_mode="LIVE"),
+        pfz_candidates=candidate,
+        evidence=[],
+    )
+
+    # 1. Unknown coverage cannot silently pass as certified -> MEDIUM
+    b_unknown_cov = {
+        "pfz": {
+            "valid_from": "2026-10-04T00:00:00Z",
+            "valid_to": "2026-10-04T18:00:00Z",
+            "source_name": "Official INCOIS PFZ Bulletin",
+            "data_mode": "LIVE",
+            "quality_flags": ["official_source", "verified_live"],
+            "freshness_flags": {"is_official": True, "verified_live": True},
+            # coverage_status is missing / unknown
+        }
+    }
+    conf = _derive_pfz_confidence(asm, b_unknown_cov, departure, "en")
+    assert conf.level == ConfidenceLevel.MEDIUM
+    assert "uncertified" in " ".join(conf.reasons).lower() or "unverified geographic coverage" in " ".join(conf.reasons).lower()
+
+    # 2. Contradictory flags (verified_live but also degraded/fallback) -> LOW
+    b_contradictory = {
+        "pfz": {
+            "valid_from": "2026-10-04T00:00:00Z",
+            "valid_to": "2026-10-04T18:00:00Z",
+            "source_name": "INCOIS PFZ Bulletin",
+            "data_mode": "LIVE",
+            "quality_flags": ["official_source", "verified_live", "degraded"],
+            "freshness_flags": {"is_official": True, "verified_live": True, "coverage_status": "CERTIFIED"},
+        }
+    }
+    conf = _derive_pfz_confidence(asm, b_contradictory, departure, "en")
+    assert conf.level == ConfidenceLevel.LOW
+    assert "contradictory" in " ".join(conf.reasons).lower()
+
+    # 3. Source-name-only claim ("INCOIS" in source_name but no canonical official provenance) -> MEDIUM
+    b_source_name_only = {
+        "pfz": {
+            "valid_from": "2026-10-04T00:00:00Z",
+            "valid_to": "2026-10-04T18:00:00Z",
+            "source_name": "INCOIS Commercial Relay Feed",
+            "data_mode": "LIVE",
+            "quality_flags": ["verified_live"],
+            "freshness_flags": {"verified_live": True, "coverage_status": "CERTIFIED"},
+            # is_official and official_source are absent!
+        }
+    }
+    conf = _derive_pfz_confidence(asm, b_source_name_only, departure, "en")
+    assert conf.level == ConfidenceLevel.MEDIUM
+    assert "canonical verified official" in " ".join(conf.reasons).lower() or "unverified" in " ".join(conf.reasons).lower()
+
+    # 4. Valid verified official bulletin with certified coverage, but missing oceanographic thermal/chlorophyll inputs -> HIGH, but describes advisory geometry accurately without manufacturing thermal front claim
+    b_verified_no_sst = {
+        "pfz": {
+            "valid_from": "2026-10-04T00:00:00Z",
+            "valid_to": "2026-10-04T18:00:00Z",
+            "source_name": "INCOIS PFZ Official Bulletin",
+            "data_mode": "LIVE",
+            "quality_flags": ["official_source", "verified_live", "certified_coverage"],
+            "freshness_flags": {"is_official": True, "verified_live": True, "coverage_status": "CERTIFIED"},
+        }
+    }
+    conf = _derive_pfz_confidence(asm, b_verified_no_sst, departure, "en")
+    assert conf.level == ConfidenceLevel.HIGH
+    reasons_text = " ".join(conf.reasons)
+    assert "direct oceanographic thermal front" not in reasons_text.lower(), "Must not claim thermal fronts when not established"
+    assert "advisory candidate coordinates and bulletin validity verified" in reasons_text.lower()

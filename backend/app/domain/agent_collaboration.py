@@ -74,16 +74,18 @@ class AgentCollaborationEngine:
         def _resolve_agent_quality(flags: List[str], data_mode: Optional[str]) -> DataQualityRating:
             flags_lower = [f.lower() for f in (flags or [])]
             mode_upper = (data_mode or "").upper()
-            if "verified_live" in flags_lower and "official_source" in flags_lower:
-                return DataQualityRating.VERIFIED
+            if any(marker in flags_lower for marker in ("unavailable", "missing")) or mode_upper == "UNAVAILABLE":
+                return DataQualityRating.LIMITED
+            if any(marker in flags_lower for marker in ("stale", "expired", "degraded")):
+                return DataQualityRating.LIMITED
+            if any(marker in flags_lower for marker in ("simulated", "deterministic_demo", "m2_contract_mock", "m1_demo_data")) or mode_upper in ("DEMO", "MOCK"):
+                return DataQualityRating.LIMITED
             if "snapshot_source" in flags_lower or mode_upper == "SNAPSHOT":
                 return DataQualityRating.SNAPSHOT_FALLBACK
             if any(marker in flags_lower for marker in ("fallback", "fallback_model", "geographic_fallback")) or mode_upper in ("FALLBACK", "HYBRID", "PHYSICAL_FALLBACK_MODEL"):
                 return DataQualityRating.PARTIAL
-            if any(marker in flags_lower for marker in ("simulated", "deterministic_demo", "m2_contract_mock", "degraded", "stale", "unavailable")) or mode_upper in ("DEMO", "MOCK", "UNAVAILABLE"):
-                return DataQualityRating.LIMITED
-            if "official_source" in flags_lower:
-                return DataQualityRating.PARTIAL
+            if "official_source" in flags_lower or "verified_live" in flags_lower or mode_upper == "LIVE":
+                return DataQualityRating.VERIFIED
             return DataQualityRating.PARTIAL
 
         marine_ev = next(
@@ -93,17 +95,23 @@ class AgentCollaborationEngine:
         if marine_ev:
             marine_source_name = marine_ev.source_name
             marine_provider = getattr(marine_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in marine_source_name.lower() else ("INCOIS" if "incois" in marine_source_name.lower() else "Marine Authority"))
-            marine_updated = marine_ev.observed_time or marine_ev.retrieved_at or observations.get("observed_at")
-            marine_vt = marine_ev.valid_to or observations.get("valid_to")
+            marine_updated = marine_ev.observed_time
+            marine_vt = marine_ev.valid_to
             marine_quality = _resolve_agent_quality(marine_ev.quality_flags, marine_ev.data_mode)
-        else:
-            marine_source_name = "INCOIS OSF (Ocean State Forecast)"
-            marine_provider = "INCOIS"
+        elif wave_m is not None:
+            marine_source_name = "Ocean State Scenario Reference"
+            marine_provider = "Scenario Telemetry"
             marine_updated = observations.get("observed_at")
             marine_vt = observations.get("valid_to")
-            marine_quality = DataQualityRating.PARTIAL
+            marine_quality = DataQualityRating.SNAPSHOT_FALLBACK
+        else:
+            marine_source_name = "Marine observation unavailable"
+            marine_provider = "Unavailable"
+            marine_updated = None
+            marine_vt = None
+            marine_quality = DataQualityRating.LIMITED
 
-        is_marine_fallback = marine_quality in (DataQualityRating.SNAPSHOT_FALLBACK, DataQualityRating.PARTIAL)
+        is_marine_fallback = marine_quality in (DataQualityRating.SNAPSHOT_FALLBACK, DataQualityRating.PARTIAL, DataQualityRating.LIMITED)
 
         marine_sources = [
             AgentEvidenceSource(
@@ -117,12 +125,21 @@ class AgentCollaborationEngine:
         ]
         if pfz_cand:
             pfz_ev = next((ev for ev in evidence if ev.metric_name in ("pfz_distance_nm", "pfz_candidates") or "PFZ" in (ev.source_name or "").upper()), None)
-            pfz_quality = _resolve_agent_quality(pfz_ev.quality_flags, pfz_ev.data_mode) if pfz_ev else DataQualityRating.PARTIAL
+            if pfz_ev:
+                pfz_source_name = pfz_ev.source_name
+                pfz_provider = getattr(pfz_ev, "provider_name", None) or ("INCOIS" if "incois" in pfz_source_name.lower() else "Oceanographic Service")
+                pfz_updated = pfz_ev.observed_time
+                pfz_quality = _resolve_agent_quality(pfz_ev.quality_flags, pfz_ev.data_mode)
+            else:
+                pfz_source_name = "PFZ candidate evaluation"
+                pfz_provider = "ORCA Domain Evaluation"
+                pfz_updated = None
+                pfz_quality = DataQualityRating.PARTIAL
             marine_sources.append(
                 AgentEvidenceSource(
-                    source_name=pfz_ev.source_name if pfz_ev else "INCOIS PFZ (Potential Fishing Zone)",
-                    provider=getattr(pfz_ev, "provider_name", None) or "INCOIS",
-                    last_updated=pfz_ev.observed_time if pfz_ev else observations.get("observed_at"),
+                    source_name=pfz_source_name,
+                    provider=pfz_provider,
+                    last_updated=pfz_updated,
                     coverage=f"Offshore {harbor} Corridor",
                     quality_rating=pfz_quality,
                 )
@@ -191,16 +208,22 @@ class AgentCollaborationEngine:
         )
         if weather_ev:
             weather_source_name = weather_ev.source_name
-            weather_provider = getattr(weather_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in weather_source_name.lower() else ("IMD" if "imd" in weather_source_name.lower() else "Meteorological Authority"))
-            weather_updated = weather_ev.observed_time or weather_ev.retrieved_at or observations.get("observed_at")
-            weather_vt = weather_ev.valid_to or observations.get("valid_to")
+            weather_provider = getattr(weather_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in weather_source_name.lower() else ("IMD" if "imd" in weather_source_name.lower() else "Meteorological Service"))
+            weather_updated = weather_ev.observed_time
+            weather_vt = weather_ev.valid_to
             weather_quality = _resolve_agent_quality(weather_ev.quality_flags, weather_ev.data_mode)
-        else:
+        elif wind_kts is not None:
             weather_source_name = "IMD Coastal Weather Bulletin"
             weather_provider = "IMD"
             weather_updated = observations.get("observed_at")
             weather_vt = observations.get("valid_to")
-            weather_quality = DataQualityRating.PARTIAL
+            weather_quality = DataQualityRating.SNAPSHOT_FALLBACK
+        else:
+            weather_source_name = "Weather observation unavailable"
+            weather_provider = "Unavailable"
+            weather_updated = None
+            weather_vt = None
+            weather_quality = DataQualityRating.LIMITED
 
         hazard_ev = next(
             (ev for ev in evidence if ev.metric_name in ("cyclone_warning_active", "severe_hazard_warning") or "CYCLONE" in (ev.source_name or "").upper() or "HAZARD" in (ev.source_name or "").upper()),
@@ -209,15 +232,20 @@ class AgentCollaborationEngine:
         if hazard_ev:
             hazard_source_name = hazard_ev.source_name
             hazard_provider = getattr(hazard_ev, "provider_name", None) or ("IMD" if "imd" in hazard_source_name.lower() else "Hazard Division")
-            hazard_updated = hazard_ev.observed_time or hazard_ev.retrieved_at
+            hazard_updated = hazard_ev.observed_time
             hazard_quality = _resolve_agent_quality(hazard_ev.quality_flags, hazard_ev.data_mode)
-        else:
+        elif hazard_headline or cyclone_active or squall_active:
             hazard_source_name = "IMD Cyclone Warning Division"
             hazard_provider = "IMD"
+            hazard_updated = observations.get("observed_at")
+            hazard_quality = DataQualityRating.SNAPSHOT_FALLBACK
+        else:
+            hazard_source_name = "Hazard bulletin unavailable"
+            hazard_provider = "Unavailable"
             hazard_updated = None
-            hazard_quality = DataQualityRating.PARTIAL
+            hazard_quality = DataQualityRating.LIMITED
 
-        is_weather_fallback = weather_quality in (DataQualityRating.SNAPSHOT_FALLBACK, DataQualityRating.PARTIAL)
+        is_weather_fallback = weather_quality in (DataQualityRating.SNAPSHOT_FALLBACK, DataQualityRating.PARTIAL, DataQualityRating.LIMITED)
 
         weather_sources = [
             AgentEvidenceSource(
@@ -300,7 +328,7 @@ class AgentCollaborationEngine:
             AgentEvidenceSource(
                 source_name="Indian Naval Hydrographic Office & MoEFCC Gazette",
                 provider="INHO / MoEFCC",
-                last_updated=now_iso,
+                last_updated=None,
                 coverage="12nm Territorial Waters · Sovereign EEZ · Protected Sanctuaries",
                 quality_rating=DataQualityRating.VERIFIED,
             )
@@ -354,7 +382,13 @@ class AgentCollaborationEngine:
         else:
             safety_findings.append(f"Evaluated against standard safety thresholds for {craft_profile}.")
 
-        safety_quality = DataQualityRating.VERIFIED if (risk_assessment and risk_assessment.confidence and risk_assessment.confidence.level == ConfidenceLevel.HIGH) else (DataQualityRating.PARTIAL if (risk_assessment and risk_assessment.confidence and risk_assessment.confidence.level == ConfidenceLevel.MEDIUM) else DataQualityRating.LIMITED)
+        if not risk_assessment:
+            safety_quality = DataQualityRating.PARTIAL
+        elif is_marine_fallback or is_weather_fallback:
+            safety_quality = DataQualityRating.SNAPSHOT_FALLBACK
+        else:
+            safety_quality = DataQualityRating.PARTIAL
+
         safety_sources = [
             AgentEvidenceSource(
                 source_name="Deterministic Marine Risk Engine (ORCA Core)",
@@ -371,8 +405,8 @@ class AgentCollaborationEngine:
             role_description=f"Applies deterministic safety limits (waves, wind, gusts, and visibility) tailored to craft class '{craft_profile}'.",
             status="COMPLETE" if deterministic_status != RecommendationStatus.UNKNOWN else "WARNING",
             recommendation=deterministic_status,
-            evidence_strength=ConfidenceLevel.HIGH,
-            data_quality=DataQualityRating.VERIFIED,
+            evidence_strength=risk_assessment.confidence.level if (risk_assessment and risk_assessment.confidence) else ConfidenceLevel.MEDIUM,
+            data_quality=safety_quality,
             sources=safety_sources,
             observations={
                 "craft_profile": craft_profile,

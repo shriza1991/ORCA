@@ -43,6 +43,14 @@ def retain_assessment(response):
             _assessments.popitem(last=False)
 
 
+def get_bundle(evidence_id):
+    if not evidence_id:
+        return None
+    with _lock:
+        record = _bundles.get(evidence_id)
+        return deepcopy(record) if record is not None else None
+
+
 def get_assessment(assessment_id):
     with _lock:
         response = _assessments.get(assessment_id)
