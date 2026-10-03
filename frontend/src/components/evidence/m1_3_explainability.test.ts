@@ -553,3 +553,13 @@ describe('ORCA M1.3: Explainability & Evidence View Acceptance Tests', () => {
     expect(calcBadge.label).toBe('Calculated result');
   });
 });
+
+it('does not certify malformed, inverted, or incomplete validity windows', () => {
+  for (const window of [
+    { valid_from: 'invalid', valid_to: '2026-10-05T00:00:00Z' },
+    { valid_from: '2026-10-06T00:00:00Z', valid_to: '2026-10-05T00:00:00Z' },
+    { valid_to: '2026-10-05T00:00:00Z' },
+  ]) {
+    expect(getTemporalValidityBadge({ source_name: 'Test bulletin', quality_flags: [], ...window }, '2026-10-04T06:00:00Z').label).toBe('Validity unknown');
+  }
+});

@@ -115,6 +115,14 @@ class PFZSourceDataPayload(BaseModel):
     valid_to: str = Field(..., description="Validity expiration (ISO-8601 UTC)")
     source_name: str = Field("INCOIS PFZ Mission", description="Official issuing authority")
     source_url: Optional[str] = Field(None, description="Direct URL to PFZ geospatial layer")
+    provider_name: Optional[str] = None
+    valid_from: Optional[str] = None
+    retrieved_at: Optional[str] = None
+    lineage_id: Optional[str] = None
+    coverage: Optional[str] = None
+    coverage_status: Optional[str] = None
+    quality_flags: List[str] = Field(default_factory=list)
+    freshness_flags: Optional[Dict[str, Any]] = None
     source_data_mode: Optional[str] = Field(None, description="Original source mode: LIVE | SNAPSHOT | DEMO | MOCK")
     data_mode: Optional[str] = Field(None, description="Data provenance mode: LIVE | SNAPSHOT | DEMO | MOCK")
 

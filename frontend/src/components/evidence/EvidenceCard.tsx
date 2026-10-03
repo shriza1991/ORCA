@@ -11,7 +11,7 @@ export interface EvidenceCardProps {
 export default function EvidenceCard({ evidence, assessmentTime, departureTime }: EvidenceCardProps) {
   const { t } = useTranslation();
   const originBadge = getSourceOriginBadge(evidence);
-  const evalTime = assessmentTime || departureTime;
+  const evalTime = departureTime || assessmentTime;
   const validityBadge = getTemporalValidityBadge(evidence, evalTime);
 
   const isCalculation =
@@ -256,10 +256,12 @@ export function getTemporalValidityBadge(
       }
       if (evidence.valid_from) {
         const vf = Date.parse(evidence.valid_from);
-        if (!isNaN(vf) && evalTime < vf) {
+        if (isNaN(vf) || vf > vt) return { label: "Validity unknown", badgeClass: "validity-unknown" };
+        if (evalTime < vf) {
           return { label: 'Not yet valid', badgeClass: 'validity-future' };
         }
       }
+      if (!evidence.valid_from) return { label: 'Validity unknown', badgeClass: 'validity-unknown' };
       return { label: 'Valid', badgeClass: 'validity-valid' };
     }
   }

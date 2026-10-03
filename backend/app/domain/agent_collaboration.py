@@ -71,7 +71,7 @@ class AgentCollaborationEngine:
         sst_c = observations.get("sea_surface_temperature_c") or observations.get("sst_celsius")
         pfz_cand = observations.get("pfz_candidates") or tool_results.get("pfz_search", {}).get("candidates", [])
         
-        def _resolve_agent_quality(flags: List[str], data_mode: Optional[str]) -> DataQualityRating:
+        def _resolve_agent_quality(flags: List[str], data_mode: Optional[str], ev: Optional[EvidenceItem] = None) -> DataQualityRating:
             flags_lower = [f.lower() for f in (flags or [])]
             mode_upper = (data_mode or "").upper()
             if any(marker in flags_lower for marker in ("unavailable", "missing")) or mode_upper == "UNAVAILABLE":
@@ -84,8 +84,21 @@ class AgentCollaborationEngine:
                 return DataQualityRating.SNAPSHOT_FALLBACK
             if any(marker in flags_lower for marker in ("fallback", "fallback_model", "geographic_fallback")) or mode_upper in ("FALLBACK", "HYBRID", "PHYSICAL_FALLBACK_MODEL"):
                 return DataQualityRating.PARTIAL
-            if "official_source" in flags_lower or "verified_live" in flags_lower or mode_upper == "LIVE":
-                return DataQualityRating.VERIFIED
+            if any(marker in flags_lower for marker in ("cached", "cached_source", "cached_official")) or mode_upper in ("CACHED", "CACHED_REAL", "SAVED"):
+                return DataQualityRating.PARTIAL
+            if ev and ev.valid_from and ev.valid_to:
+                try:
+                    def parse(value):
+                        stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                        return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
+                    target = parse(user_profile["departure_time"]) if user_profile.get("departure_time") else datetime.now(timezone.utc)
+                    start, end = parse(ev.valid_from), parse(ev.valid_to)
+                    if not start <= target <= end:
+                        return DataQualityRating.LIMITED
+                    if mode_upper == "LIVE" and "official_source" in flags_lower and "verified_live" in flags_lower:
+                        return DataQualityRating.VERIFIED
+                except (ValueError, TypeError):
+                    return DataQualityRating.LIMITED
             return DataQualityRating.PARTIAL
 
         marine_ev = next(
@@ -97,7 +110,7 @@ class AgentCollaborationEngine:
             marine_provider = getattr(marine_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in marine_source_name.lower() else ("INCOIS" if "incois" in marine_source_name.lower() else "Marine Authority"))
             marine_updated = marine_ev.observed_time
             marine_vt = marine_ev.valid_to
-            marine_quality = _resolve_agent_quality(marine_ev.quality_flags, marine_ev.data_mode)
+            marine_quality = _resolve_agent_quality(marine_ev.quality_flags, marine_ev.data_mode, marine_ev)
         elif wave_m is not None:
             marine_source_name = "Ocean State Scenario Reference"
             marine_provider = "Scenario Telemetry"
@@ -129,7 +142,7 @@ class AgentCollaborationEngine:
                 pfz_source_name = pfz_ev.source_name
                 pfz_provider = getattr(pfz_ev, "provider_name", None) or ("INCOIS" if "incois" in pfz_source_name.lower() else "Oceanographic Service")
                 pfz_updated = pfz_ev.observed_time
-                pfz_quality = _resolve_agent_quality(pfz_ev.quality_flags, pfz_ev.data_mode)
+                pfz_quality = _resolve_agent_quality(pfz_ev.quality_flags, pfz_ev.data_mode, pfz_ev)
             else:
                 pfz_source_name = "PFZ candidate evaluation"
                 pfz_provider = "ORCA Domain Evaluation"
@@ -211,7 +224,7 @@ class AgentCollaborationEngine:
             weather_provider = getattr(weather_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in weather_source_name.lower() else ("IMD" if "imd" in weather_source_name.lower() else "Meteorological Service"))
             weather_updated = weather_ev.observed_time
             weather_vt = weather_ev.valid_to
-            weather_quality = _resolve_agent_quality(weather_ev.quality_flags, weather_ev.data_mode)
+            weather_quality = _resolve_agent_quality(weather_ev.quality_flags, weather_ev.data_mode, weather_ev)
         elif wind_kts is not None:
             weather_source_name = "IMD Coastal Weather Bulletin"
             weather_provider = "IMD"
@@ -233,7 +246,7 @@ class AgentCollaborationEngine:
             hazard_source_name = hazard_ev.source_name
             hazard_provider = getattr(hazard_ev, "provider_name", None) or ("IMD" if "imd" in hazard_source_name.lower() else "Hazard Division")
             hazard_updated = hazard_ev.observed_time
-            hazard_quality = _resolve_agent_quality(hazard_ev.quality_flags, hazard_ev.data_mode)
+            hazard_quality = _resolve_agent_quality(hazard_ev.quality_flags, hazard_ev.data_mode, hazard_ev)
         elif hazard_headline or cyclone_active or squall_active:
             hazard_source_name = "IMD Cyclone Warning Division"
             hazard_provider = "IMD"

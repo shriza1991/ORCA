@@ -431,8 +431,11 @@ def test_retrieval_does_not_make_expired_source_fresh():
     assert "verified_live" not in ev.quality_flags
 
 
-def test_marinewatch_fallback_labeling_is_honest():
+def test_marinewatch_fallback_labeling_is_honest(monkeypatch):
     """Verify Marinewatch fallback point forecast sets PHYSICAL_FALLBACK_MODEL and truthful source."""
+    def unavailable(*args, **kwargs):
+        raise RuntimeError("Controlled offline provider failure")
+    monkeypatch.setattr(marine_watch_service._open_meteo, "_get", unavailable)
     res = marine_watch_service.get_point_forecast(lat=16.98, lon=73.28)
     fc = res["forecast"]
     # When Open-Meteo or INCOIS live API is unreachable or mocked, it falls back to physical model

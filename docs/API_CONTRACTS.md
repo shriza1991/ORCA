@@ -275,3 +275,7 @@ The Vite client uses the existing assessment and agent services. Fields below ar
 - DEMO health returns `database: not_required` and does not query DB/connector health. The DB alert worker is disabled in DEMO; explicit mission refresh/session monitoring remains available.
 
 Retention is bounded to 256 bundles and 256 assessments **per process**, not durable or shared across workers. Restart/eviction requires explicit reassessment. No live-source availability or protected-role authorization is established by these APIs.
+
+
+## 2026-10-03: Returned map proposal validation (D076)
+The Vite client accepts `TripSimulationResponse.simulated` only when it matches the retained baseline's mission ID, evidence bundle, origin, coordinates, vessel, destination, data mode and parent assessment, plus the requested departure/return times. Proposal browsing uses the returned assessment for preview; the active mission changes only on Apply. Evidence badges evaluate departure when supplied, otherwise assessment time. Unknown or malformed validity cannot be labelled Valid.

@@ -475,7 +475,7 @@ class AssessmentService:
                             observed_time=prov.observed_time,
                             valid_from=prov.valid_from,
                             valid_to=prov.valid_to,
-                            retrieved_at=prov.retrieved_at or now_iso,
+                            retrieved_at=prov.retrieved_at,
                             quality_flags=prov.quality_flags,
                             data_mode=prov.data_mode,
                             lineage_id=prov.lineage_id,

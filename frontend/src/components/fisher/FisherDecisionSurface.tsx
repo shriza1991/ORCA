@@ -790,7 +790,7 @@ export default function FisherDecisionSurface({
       <EvidenceDrawer
         isOpen={isEvidenceDrawerOpen}
         onClose={() => setIsEvidenceDrawerOpen(false)}
-        evidence={assessment?.evidence}
+        evidence={[...(assessment?.evidence || []), ...(assessment?.conditions.provenance || [])]}
         sourceStatus={assessment?.source_status}
         brief={assessment?.brief}
         stability={assessment?.stability}

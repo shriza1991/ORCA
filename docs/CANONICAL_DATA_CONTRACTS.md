@@ -303,3 +303,8 @@ Structured payload freshness/source fields survive serialization. Simulated sour
 Route records add backend `departure_supported`, `rejection_reasons`, `evaluation_scope`, and `spatial_basis`. Existing waypoint timelines, peak exposure, craft speed assumptions and geofence calculations remain the numerical authority. Whole-window environmental evaluation is separate from outbound transit exposure; no return-route/chart-grade clearance is implied.
 
 The evidence store is bounded and process-local. Browser history and role inspection are device-local historical records, not authenticated fleet telemetry. Durable multi-worker replay remains future work.
+
+
+## 2026-10-03: Optional PFZ provenance fields (D076)
+`PFZSourceDataPayload` retains optional `provider_name`, `valid_from`, `retrieved_at`, `lineage_id`, `coverage`, `coverage_status`, `quality_flags`, and `freshness_flags` through model validation and JSON serialization. Absent values stay absent/None; these fields do not imply official authority. Existing `features`, `bulletin_date`, `valid_to`, and source-mode fields remain canonical. PFZ confidence is independent of marine/weather confidence. A cached source cannot acquire live confidence merely by retaining a verification flag.
+`DataProvenance.retrieved_at` preserves the source's supplied retrieval timestamp. Missing retrieval metadata is not replaced with assembly, assessment, or simulation time.

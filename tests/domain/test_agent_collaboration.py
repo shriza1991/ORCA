@@ -62,7 +62,10 @@ def test_full_consensus_safe_go():
             metric_name="significant_wave_height",
             metric_value=1.2,
             metric_unit="meters",
-            quality_flags=["official_source", "fresh"],
+            quality_flags=["official_source", "verified_live", "fresh"],
+            data_mode="LIVE",
+            valid_from="2026-09-24T00:00:00Z",
+            valid_to="2026-09-25T00:00:00Z",
         )
     ]
 
@@ -71,7 +74,7 @@ def test_full_consensus_safe_go():
         risk_assessment=rec,
         evidence=evidence,
         trace=[],
-        user_profile={"craft_profile": "motorized_boat"},
+        user_profile={"craft_profile": "motorized_boat", "departure_time": "2026-09-24T06:00:00Z"},
         harbor="Ratnagiri",
     )
 

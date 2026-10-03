@@ -25,6 +25,8 @@ import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRou
 import { type MissionContext, type DecisionDeltaContract } from "../types/mission";
 import { assessmentRequest } from "../components/mission/AssessmentSimulator";
 
+import { matchesMissionProposal } from "../utils/mission-proposal";
+
 export type MapProposalStatus = "pending" | "success" | "error";
 
 export interface MapProposalState {
@@ -109,6 +111,7 @@ export default function FisherPage({
     (mapProposal.evidenceBundleId === undefined || mapProposal.evidenceBundleId === assessment.evidence_bundle_id) &&
     mapProposal.hours === mapTimeOffset &&
     mapProposal.missionContextKey === currentContextKey &&
+    matchesMissionProposal(assessment, mapProposal.proposedAssessment, mapProposal.proposedDeparture, mapProposal.proposedReturn || "") &&
     !isLoading
   );
 
@@ -121,7 +124,7 @@ export default function FisherPage({
       return;
     }
 
-    const baseDeparture = chat.missionContext.departure_time || assessment?.trip_context.departure_time;
+    const baseDeparture = assessment?.trip_context.departure_time;
     if (!baseDeparture || !assessment) {
       setMapProposal(null);
       return;
@@ -137,7 +140,7 @@ export default function FisherPage({
     const proposedDeparture = new Date(depParsed + hours * 3600000).toISOString();
 
     // Strictly preserve the original trip duration
-    const baseReturn = chat.missionContext.return_time || assessment.trip_context.return_time;
+    const baseReturn = assessment.trip_context.return_time;
     let proposedReturn: string | undefined;
     if (baseReturn) {
       const retParsed = Date.parse(baseReturn);
@@ -190,6 +193,9 @@ export default function FisherPage({
       })
       .then(data => {
         if (!abort.signal.aborted) {
+          if (!data.delta || !matchesMissionProposal(assessment, data.simulated, proposedDeparture, proposedReturn || "")) {
+            throw new Error("Comparison result does not match the requested mission. Reset and retry.");
+          }
           setMapProposal({
             status: "success",
             baselineAssessmentId: currentBaselineId,
@@ -456,6 +462,11 @@ export default function FisherPage({
   const nav = [ ['home', Home, 'Home'], ['voyage', Navigation, 'Plan'], ['chat', MessageSquare, 'Ask ORCA'], ['map', MapIcon, 'Map'], ['trips', History, 'Trips'], ['alerts', Bell, 'Alerts'], ['profile', UserRound, 'Profile'] ] as const;
   const zones = assessment?.pfz_candidates || [];
   const summary = <MissionSummary assessment={assessment} loading={isLoading} error={error} onPlan={() => setSidebarTab('voyage')} onMap={() => setSidebarTab('map')} />;
+  const mapDisplayAssessment = isProposalApplicable ? mapProposal!.proposedAssessment! : assessment;
+  const mapDisplayDecision = mapTimeOffset > 0
+    ? (isProposalApplicable ? assessmentStatus(mapProposal!.proposedAssessment!) : "UNKNOWN")
+    : canonicalMapDecision;
+
   return <main className={`fisher-workspace workspace-${sidebarTab}`}>
     <nav className="fisher-navigation" aria-label="Fisher workspace">{nav.map(([id, Icon, label]) => <button key={id} className={sidebarTab === id || (id === 'voyage' && sidebarTab === 'decision') ? 'active' : ''} onClick={() => setSidebarTab(id)} aria-current={sidebarTab === id ? 'page' : undefined}><Icon size={19} /><span>{label}</span></button>)}</nav>
     <div className="fisher-workspace-body">
@@ -514,7 +525,7 @@ export default function FisherPage({
             </div>
           </div>
         )}
-        <MapView layers={effectiveLayers} theme={theme} center={harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={assessment} canonicalConditions={assessment?.conditions} canonicalDecision={canonicalMapDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
+        <MapView layers={effectiveLayers} theme={theme} center={harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={mapDisplayAssessment} canonicalConditions={mapDisplayAssessment?.conditions} canonicalDecision={mapDisplayDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
     </div>
   </main>;
 }

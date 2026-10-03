@@ -400,7 +400,7 @@ class DeterministicRiskEngine:
                 valid_to=marine.valid_to,
                 data_mode=marine_mode,
                 lineage_id=ProviderToolAdapter._resolve_lineage(marine, marine_mode, is_mock=(data_mode == "MOCK")),
-                retrieved_at=now_utc.isoformat(),
+                retrieved_at=(marine.freshness_flags or {}).get("retrieved_at"),
                 is_stale=marine_stale or ("stale" in marine_flags or "EXPIRED" in marine_flags),
                 quality_flags=marine_flags,
             )
@@ -437,7 +437,7 @@ class DeterministicRiskEngine:
                 valid_to=weather.valid_to,
                 data_mode=weather_mode,
                 lineage_id=ProviderToolAdapter._resolve_lineage(weather, weather_mode, is_mock=(data_mode == "MOCK")),
-                retrieved_at=now_utc.isoformat(),
+                retrieved_at=(weather.freshness_flags or {}).get("retrieved_at"),
                 is_stale=weather_stale or ("stale" in weather_flags or "EXPIRED" in weather_flags),
                 quality_flags=weather_flags,
             )
@@ -482,7 +482,7 @@ class DeterministicRiskEngine:
                 valid_to=hazard.valid_to,
                 data_mode=hazard_mode,
                 lineage_id=ProviderToolAdapter._resolve_lineage(hazard, hazard_mode, is_mock=(data_mode == "MOCK")),
-                retrieved_at=now_utc.isoformat(),
+                retrieved_at=(hazard.freshness_flags or {}).get("retrieved_at"),
                 is_stale=hazard_stale or ("stale" in hazard_flags or "EXPIRED" in hazard_flags),
                 quality_flags=hazard_flags,
             )

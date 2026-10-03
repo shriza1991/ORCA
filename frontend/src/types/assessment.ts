@@ -31,6 +31,7 @@ export interface AssessmentSourceStatus {
 }
 
 export interface ObservationBundle {
+  provenance?: import("./contracts").DataProvenance[];
   timestamp?: string;
   captured_at?: string;
   data_mode?: string;

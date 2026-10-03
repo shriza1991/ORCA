@@ -2336,3 +2336,11 @@ Impact:
 - 69/69 full integration test suite passes across Task 1, Task 2, inconsistencies, mission replay, and provenance.
 - 302/302 frontend tests pass in Vitest across 24 test files.
 - Production build passes cleanly with zero TypeScript errors.
+
+
+## D076 - Preserve source metadata through real contracts and validate returned proposals
+Status: ACCEPTED
+Date: 2026-10-03
+Decision: Extend the existing PFZSourceDataPayload with optional provenance fields consumed by the confidence/presentation layer. Retrieval time is supplied source metadata, never evaluator time. Require explicit live verification and temporal applicability for collaboration Verified badges. Validate returned map proposals against the retained baseline and preview the exact returned assessment before Apply. Departure is the evidence-validity reference when available.
+Reason: babce3b contained the intended presentation logic, but its real payload discarded PFZ verification metadata; cached provenance could still be Verified, and the client did not validate the returned proposal identity.
+Impact: Existing deterministic thresholds, replay identity, source retrieval workflows and explicit Apply semantics are preserved. Vite only; no Next.js changes. Verification and limitations are recorded in PROGRESS.md.

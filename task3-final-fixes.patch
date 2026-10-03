@@ -1,0 +1,582 @@
+diff --git a/backend/app/agents/integrations/dev2.py b/backend/app/agents/integrations/dev2.py
+index 41a1ba5..6128675 100644
+--- a/backend/app/agents/integrations/dev2.py
++++ b/backend/app/agents/integrations/dev2.py
+@@ -115,6 +115,14 @@ class PFZSourceDataPayload(BaseModel):
+     valid_to: str = Field(..., description="Validity expiration (ISO-8601 UTC)")
+     source_name: str = Field("INCOIS PFZ Mission", description="Official issuing authority")
+     source_url: Optional[str] = Field(None, description="Direct URL to PFZ geospatial layer")
++    provider_name: Optional[str] = None
++    valid_from: Optional[str] = None
++    retrieved_at: Optional[str] = None
++    lineage_id: Optional[str] = None
++    coverage: Optional[str] = None
++    coverage_status: Optional[str] = None
++    quality_flags: List[str] = Field(default_factory=list)
++    freshness_flags: Optional[Dict[str, Any]] = None
+     source_data_mode: Optional[str] = Field(None, description="Original source mode: LIVE | SNAPSHOT | DEMO | MOCK")
+     data_mode: Optional[str] = Field(None, description="Data provenance mode: LIVE | SNAPSHOT | DEMO | MOCK")
+ 
+diff --git a/backend/app/domain/agent_collaboration.py b/backend/app/domain/agent_collaboration.py
+index ce8f43d..a0ea599 100644
+--- a/backend/app/domain/agent_collaboration.py
++++ b/backend/app/domain/agent_collaboration.py
+@@ -71,7 +71,7 @@ class AgentCollaborationEngine:
+         sst_c = observations.get("sea_surface_temperature_c") or observations.get("sst_celsius")
+         pfz_cand = observations.get("pfz_candidates") or tool_results.get("pfz_search", {}).get("candidates", [])
+         
+-        def _resolve_agent_quality(flags: List[str], data_mode: Optional[str]) -> DataQualityRating:
++        def _resolve_agent_quality(flags: List[str], data_mode: Optional[str], ev: Optional[EvidenceItem] = None) -> DataQualityRating:
+             flags_lower = [f.lower() for f in (flags or [])]
+             mode_upper = (data_mode or "").upper()
+             if any(marker in flags_lower for marker in ("unavailable", "missing")) or mode_upper == "UNAVAILABLE":
+@@ -84,8 +84,21 @@ class AgentCollaborationEngine:
+                 return DataQualityRating.SNAPSHOT_FALLBACK
+             if any(marker in flags_lower for marker in ("fallback", "fallback_model", "geographic_fallback")) or mode_upper in ("FALLBACK", "HYBRID", "PHYSICAL_FALLBACK_MODEL"):
+                 return DataQualityRating.PARTIAL
+-            if "official_source" in flags_lower or "verified_live" in flags_lower or mode_upper == "LIVE":
+-                return DataQualityRating.VERIFIED
++            if any(marker in flags_lower for marker in ("cached", "cached_source", "cached_official")) or mode_upper in ("CACHED", "CACHED_REAL", "SAVED"):
++                return DataQualityRating.PARTIAL
++            if ev and ev.valid_from and ev.valid_to:
++                try:
++                    def parse(value):
++                        stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
++                        return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
++                    target = parse(user_profile["departure_time"]) if user_profile.get("departure_time") else datetime.now(timezone.utc)
++                    start, end = parse(ev.valid_from), parse(ev.valid_to)
++                    if not start <= target <= end:
++                        return DataQualityRating.LIMITED
++                    if mode_upper == "LIVE" and "official_source" in flags_lower and "verified_live" in flags_lower:
++                        return DataQualityRating.VERIFIED
++                except (ValueError, TypeError):
++                    return DataQualityRating.LIMITED
+             return DataQualityRating.PARTIAL
+ 
+         marine_ev = next(
+@@ -97,7 +110,7 @@ class AgentCollaborationEngine:
+             marine_provider = getattr(marine_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in marine_source_name.lower() else ("INCOIS" if "incois" in marine_source_name.lower() else "Marine Authority"))
+             marine_updated = marine_ev.observed_time
+             marine_vt = marine_ev.valid_to
+-            marine_quality = _resolve_agent_quality(marine_ev.quality_flags, marine_ev.data_mode)
++            marine_quality = _resolve_agent_quality(marine_ev.quality_flags, marine_ev.data_mode, marine_ev)
+         elif wave_m is not None:
+             marine_source_name = "Ocean State Scenario Reference"
+             marine_provider = "Scenario Telemetry"
+@@ -129,7 +142,7 @@ class AgentCollaborationEngine:
+                 pfz_source_name = pfz_ev.source_name
+                 pfz_provider = getattr(pfz_ev, "provider_name", None) or ("INCOIS" if "incois" in pfz_source_name.lower() else "Oceanographic Service")
+                 pfz_updated = pfz_ev.observed_time
+-                pfz_quality = _resolve_agent_quality(pfz_ev.quality_flags, pfz_ev.data_mode)
++                pfz_quality = _resolve_agent_quality(pfz_ev.quality_flags, pfz_ev.data_mode, pfz_ev)
+             else:
+                 pfz_source_name = "PFZ candidate evaluation"
+                 pfz_provider = "ORCA Domain Evaluation"
+@@ -211,7 +224,7 @@ class AgentCollaborationEngine:
+             weather_provider = getattr(weather_ev, "provider_name", None) or ("Open-Meteo" if "open-meteo" in weather_source_name.lower() else ("IMD" if "imd" in weather_source_name.lower() else "Meteorological Service"))
+             weather_updated = weather_ev.observed_time
+             weather_vt = weather_ev.valid_to
+-            weather_quality = _resolve_agent_quality(weather_ev.quality_flags, weather_ev.data_mode)
++            weather_quality = _resolve_agent_quality(weather_ev.quality_flags, weather_ev.data_mode, weather_ev)
+         elif wind_kts is not None:
+             weather_source_name = "IMD Coastal Weather Bulletin"
+             weather_provider = "IMD"
+@@ -233,7 +246,7 @@ class AgentCollaborationEngine:
+             hazard_source_name = hazard_ev.source_name
+             hazard_provider = getattr(hazard_ev, "provider_name", None) or ("IMD" if "imd" in hazard_source_name.lower() else "Hazard Division")
+             hazard_updated = hazard_ev.observed_time
+-            hazard_quality = _resolve_agent_quality(hazard_ev.quality_flags, hazard_ev.data_mode)
++            hazard_quality = _resolve_agent_quality(hazard_ev.quality_flags, hazard_ev.data_mode, hazard_ev)
+         elif hazard_headline or cyclone_active or squall_active:
+             hazard_source_name = "IMD Cyclone Warning Division"
+             hazard_provider = "IMD"
+diff --git a/backend/app/domain/risk_engine.py b/backend/app/domain/risk_engine.py
+index 1e07314..4510c01 100644
+--- a/backend/app/domain/risk_engine.py
++++ b/backend/app/domain/risk_engine.py
+@@ -400,7 +400,7 @@ class DeterministicRiskEngine:
+                 valid_to=marine.valid_to,
+                 data_mode=marine_mode,
+                 lineage_id=ProviderToolAdapter._resolve_lineage(marine, marine_mode, is_mock=(data_mode == "MOCK")),
+-                retrieved_at=now_utc.isoformat(),
++                retrieved_at=(marine.freshness_flags or {}).get("retrieved_at"),
+                 is_stale=marine_stale or ("stale" in marine_flags or "EXPIRED" in marine_flags),
+                 quality_flags=marine_flags,
+             )
+@@ -437,7 +437,7 @@ class DeterministicRiskEngine:
+                 valid_to=weather.valid_to,
+                 data_mode=weather_mode,
+                 lineage_id=ProviderToolAdapter._resolve_lineage(weather, weather_mode, is_mock=(data_mode == "MOCK")),
+-                retrieved_at=now_utc.isoformat(),
++                retrieved_at=(weather.freshness_flags or {}).get("retrieved_at"),
+                 is_stale=weather_stale or ("stale" in weather_flags or "EXPIRED" in weather_flags),
+                 quality_flags=weather_flags,
+             )
+@@ -482,7 +482,7 @@ class DeterministicRiskEngine:
+                 valid_to=hazard.valid_to,
+                 data_mode=hazard_mode,
+                 lineage_id=ProviderToolAdapter._resolve_lineage(hazard, hazard_mode, is_mock=(data_mode == "MOCK")),
+-                retrieved_at=now_utc.isoformat(),
++                retrieved_at=(hazard.freshness_flags or {}).get("retrieved_at"),
+                 is_stale=hazard_stale or ("stale" in hazard_flags or "EXPIRED" in hazard_flags),
+                 quality_flags=hazard_flags,
+             )
+diff --git a/backend/app/services/assessment_service.py b/backend/app/services/assessment_service.py
+index 0fa8e7b..69e7dea 100644
+--- a/backend/app/services/assessment_service.py
++++ b/backend/app/services/assessment_service.py
+@@ -475,7 +475,7 @@ class AssessmentService:
+                             observed_time=prov.observed_time,
+                             valid_from=prov.valid_from,
+                             valid_to=prov.valid_to,
+-                            retrieved_at=prov.retrieved_at or now_iso,
++                            retrieved_at=prov.retrieved_at,
+                             quality_flags=prov.quality_flags,
+                             data_mode=prov.data_mode,
+                             lineage_id=prov.lineage_id,
+diff --git a/backend/app/services/mission_conversation.py b/backend/app/services/mission_conversation.py
+index acd9d1b..4884e02 100644
+--- a/backend/app/services/mission_conversation.py
++++ b/backend/app/services/mission_conversation.py
+@@ -66,7 +66,6 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
+     """Derive PFZ advisory confidence independently of the voyage brief."""
+     candidates = selected.pfz_candidates or []
+     c_mode = (selected.conditions.data_mode or "").upper()
+-    prov_mode = (selected.conditions.provenance_mode or "").upper()
+     from backend.app.agents.localization import localize_operational_text
+     localize = lambda t: localize_operational_text(t, language)
+ 
+@@ -166,7 +165,7 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
+     freshness_flags = pfz_data.get("freshness_flags") if (pfz_data and isinstance(pfz_data.get("freshness_flags"), dict)) else {}
+     has_contradictory_degraded = (
+         any(f in ("degraded", "fallback", "geographic_fallback", "unavailable", "stale", "synthetic_timestamps") for f in quality_flags)
+-        or any(k in str(freshness_flags).lower() for k in ("degraded", "fallback", "unavailable"))
++        or any(bool(freshness_flags.get(k)) for k in ("degraded", "fallback", "is_fallback", "unavailable"))
+         or cov_status in ("FALLBACK", "GEOGRAPHIC_FALLBACK", "UNAVAILABLE")
+     )
+     if has_contradictory_degraded:
+@@ -180,7 +179,7 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
+ 
+     # 5. Source verification & Input Origin evaluation
+     pfz_data_mode = (pfz_data.get("data_mode") or pfz_data.get("source_data_mode") or c_mode or "").upper() if pfz_data else c_mode
+-    is_demo = (c_mode in ("DEMO", "SNAPSHOT", "SYNTHETIC", "MOCK") or prov_mode == "DEMO" or pfz_data_mode in ("DEMO", "SNAPSHOT", "SYNTHETIC", "MOCK"))
++    is_demo = pfz_data_mode in ("DEMO", "SNAPSHOT", "SYNTHETIC", "MOCK", "SIMULATED")
+ 
+     if is_demo:
+         # Valid demo/snapshot candidates receive MEDIUM with scenario wording
+@@ -195,15 +194,14 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
+ 
+     # For operational/live data, check canonical provenance classification
+     # Must NOT recognize official origin solely from source-name strings
+-    is_verified_live = ("verified_live" in quality_flags or bool(freshness_flags.get("verified_live")) or bool(pfz_data and pfz_data.get("is_verified")))
++    is_verified_live = ("verified_live" in quality_flags or bool(freshness_flags.get("verified_live")))
+     is_official_source = (
+         "official_source" in quality_flags
+         or bool(freshness_flags.get("is_official"))
+         or bool(freshness_flags.get("authority_verified"))
+-        or prov_mode in ("LIVE_OFFICIAL_PROVIDER", "OFFICIAL")
+     )
+ 
+-    if not is_verified_live or not is_official_source:
++    if pfz_data_mode != "LIVE" or not is_verified_live or not is_official_source:
+         # Fresh unverified or source-name-only claim -> MEDIUM (never HIGH)
+         return Confidence(
+             level=ConfidenceLevel.MEDIUM,
+@@ -308,9 +306,12 @@ def _build_retained_evidence(selected):
+         p_name = p_dict.get("provider_name") or (p_dict.get("freshness_flags") or {}).get("provider_name") or None
+         ev_id = f"{bundle_id}:source:{domain_key}"
+         ff = p_dict.get("freshness_flags")
+-        flags = list(ff.get("quality_flags", [])) if isinstance(ff, dict) and isinstance(ff.get("quality_flags"), list) else (
+-            [cond.provenance_mode] if cond.provenance_mode else []
+-        )
++        from backend.app.agents.integrations.adapters import ProviderToolAdapter
++        from backend.app.agents.integrations.dev2 import MarineConditionsPayload, WeatherConditionsPayload, HazardBulletinPayload
++        model = {"marine": MarineConditionsPayload, "weather": WeatherConditionsPayload, "hazard": HazardBulletinPayload}[domain_key]
++        normalized = model.model_validate(p_dict)
++        source_mode, flags = ProviderToolAdapter._resolve_provenance(normalized, eval_time_iso=selected.trip_context.departure_time)
++
+         retrieved = p_dict.get("retrieved_at") or (ff.get("retrieved_at") if isinstance(ff, dict) else None)
+         obs_time = p_dict.get("observed_at") or p_dict.get("observed_time") or p_dict.get("issued_at")
+         cov = p_dict.get("coverage") or p_dict.get("harbor") or (ff.get("coverage_status") if isinstance(ff, dict) else None)
+@@ -325,8 +326,8 @@ def _build_retained_evidence(selected):
+             valid_to=p_dict.get("valid_to"),
+             retrieved_at=retrieved,
+             quality_flags=flags,
+-            data_mode=p_dict.get("data_mode") or cond.data_mode,
+-            lineage_id=p_dict.get("lineage_id") or p_dict.get("bulletin_id"),
++            data_mode=source_mode,
++            lineage_id=p_dict.get("lineage_id") or ProviderToolAdapter._resolve_lineage(normalized, source_mode),
+             coverage=cov,
+         ))
+         source_id_map[domain_key] = ev_id
+@@ -362,7 +363,7 @@ def _build_retained_evidence(selected):
+             valid_to=pfz_dict.get("valid_to"),
+             retrieved_at=pfz_dict.get("retrieved_at"),
+             quality_flags=list(pfz_dict.get("quality_flags") or []),
+-            data_mode=pfz_dict.get("data_mode") or cond.data_mode,
++            data_mode=pfz_dict.get("data_mode") or pfz_dict.get("source_data_mode") or "UNKNOWN_SOURCE",
+             lineage_id=pfz_dict.get("lineage_id"),
+             coverage=pfz_dict.get("coverage") or (pfz_dict.get("freshness_flags") or {}).get("coverage_status"),
+         ))
+@@ -468,8 +469,8 @@ def bind_mission_response(response, profile, message):
+             status=rec_status,
+             summary=localize(pfz_summary),
+             decisive_factors=[localize(x) for x in pfz_factors],
+-            non_decisive_factors=[localize(x) for x in brief.positive_factors],
+-            threshold_comparisons=selected.evidence,
++            non_decisive_factors=[],
++            threshold_comparisons=[],
+             next_action=localize(pfz_action),
+             confidence=pfz_confidence,
+         )
+diff --git a/docs/API_CONTRACTS.md b/docs/API_CONTRACTS.md
+index 041ea39..d48d2af 100644
+--- a/docs/API_CONTRACTS.md
++++ b/docs/API_CONTRACTS.md
+@@ -275,3 +275,7 @@ The Vite client uses the existing assessment and agent services. Fields below ar
+ - DEMO health returns `database: not_required` and does not query DB/connector health. The DB alert worker is disabled in DEMO; explicit mission refresh/session monitoring remains available.
+ 
+ Retention is bounded to 256 bundles and 256 assessments **per process**, not durable or shared across workers. Restart/eviction requires explicit reassessment. No live-source availability or protected-role authorization is established by these APIs.
++
++
++## 2026-10-03: Returned map proposal validation (D076)
++The Vite client accepts `TripSimulationResponse.simulated` only when it matches the retained baseline's mission ID, evidence bundle, origin, coordinates, vessel, destination, data mode and parent assessment, plus the requested departure/return times. Proposal browsing uses the returned assessment for preview; the active mission changes only on Apply. Evidence badges evaluate departure when supplied, otherwise assessment time. Unknown or malformed validity cannot be labelled Valid.
+diff --git a/docs/CANONICAL_DATA_CONTRACTS.md b/docs/CANONICAL_DATA_CONTRACTS.md
+index b4b1df3..bdba349 100644
+--- a/docs/CANONICAL_DATA_CONTRACTS.md
++++ b/docs/CANONICAL_DATA_CONTRACTS.md
+@@ -303,3 +303,8 @@ Structured payload freshness/source fields survive serialization. Simulated sour
+ Route records add backend `departure_supported`, `rejection_reasons`, `evaluation_scope`, and `spatial_basis`. Existing waypoint timelines, peak exposure, craft speed assumptions and geofence calculations remain the numerical authority. Whole-window environmental evaluation is separate from outbound transit exposure; no return-route/chart-grade clearance is implied.
+ 
+ The evidence store is bounded and process-local. Browser history and role inspection are device-local historical records, not authenticated fleet telemetry. Durable multi-worker replay remains future work.
++
++
++## 2026-10-03: Optional PFZ provenance fields (D076)
++`PFZSourceDataPayload` retains optional `provider_name`, `valid_from`, `retrieved_at`, `lineage_id`, `coverage`, `coverage_status`, `quality_flags`, and `freshness_flags` through model validation and JSON serialization. Absent values stay absent/None; these fields do not imply official authority. Existing `features`, `bulletin_date`, `valid_to`, and source-mode fields remain canonical. PFZ confidence is independent of marine/weather confidence. A cached source cannot acquire live confidence merely by retaining a verification flag.
++`DataProvenance.retrieved_at` preserves the source's supplied retrieval timestamp. Missing retrieval metadata is not replaced with assembly, assessment, or simulation time.
+diff --git a/docs/DECISIONS.md b/docs/DECISIONS.md
+index 1bce82e..d1b28df 100644
+--- a/docs/DECISIONS.md
++++ b/docs/DECISIONS.md
+@@ -2336,3 +2336,11 @@ Impact:
+ - 69/69 full integration test suite passes across Task 1, Task 2, inconsistencies, mission replay, and provenance.
+ - 302/302 frontend tests pass in Vitest across 24 test files.
+ - Production build passes cleanly with zero TypeScript errors.
++
++
++## D076 - Preserve source metadata through real contracts and validate returned proposals
++Status: ACCEPTED
++Date: 2026-10-03
++Decision: Extend the existing PFZSourceDataPayload with optional provenance fields consumed by the confidence/presentation layer. Retrieval time is supplied source metadata, never evaluator time. Require explicit live verification and temporal applicability for collaboration Verified badges. Validate returned map proposals against the retained baseline and preview the exact returned assessment before Apply. Departure is the evidence-validity reference when available.
++Reason: babce3b contained the intended presentation logic, but its real payload discarded PFZ verification metadata; cached provenance could still be Verified, and the client did not validate the returned proposal identity.
++Impact: Existing deterministic thresholds, replay identity, source retrieval workflows and explicit Apply semantics are preserved. Vite only; no Next.js changes. Verification and limitations are recorded in PROGRESS.md.
+diff --git a/docs/PROGRESS.md b/docs/PROGRESS.md
+index 8a51c72..8b047a3 100644
+--- a/docs/PROGRESS.md
++++ b/docs/PROGRESS.md
+@@ -1,3 +1,13 @@
++
++### 2026-10-03 - Minimal Task 3 follow-up on babce3b (D076)
++- Preserved the pushed retained-evidence builder, localization, proposal states, and mission continuity. Work is scoped to the Vite frontend and Python backend.
++- PFZ payload serialization now retains source identity, quality flags, coverage, validity start, retrieval and lineage metadata. PFZ confidence uses its own source mode; cached inputs cannot inherit live verification, and explicit false failure flags no longer count as degradation.
++- Retained source fallback uses the existing adapter's provenance classification. Risk provenance preserves supplied retrieval timestamps rather than replacing them with evaluation time. PFZ recommendations keep voyage thresholds separate.
++- Collaboration verification requires official and verified-live flags, LIVE mode, and a valid evaluation interval; cached data remains Partial.
++- Evidence validity evaluates departure before assessment time and rejects malformed/inverted/incomplete windows. The Fisher drawer includes the stored source provenance alongside threshold comparisons.
++- Map proposals use retained assessment times, validate returned mission/evidence/parent/vessel/time identity, and preview the returned backend assessment. Pending/error previews have UNKNOWN status; Apply remains explicit.
++- Verification: 82 focused backend tests passed (Task 2 validity, Task 3 source/remaining-gap tests, mission replay, collaboration). Vite suite: 313 passed; strict TypeScript and production build passed. No browser interaction or deployment verified. The Marinewatch fallback test now explicitly stubs provider failure and makes no external forecast request.
++- Next: apply/review this patch against babce3b, perform the demo's browser flow, and continue the remaining boundary/voice tasks. Full backend suite was not rerun.
+ # ORCA Operational Progress
+ 
+ 
+diff --git a/frontend/src/components/evidence/EvidenceCard.tsx b/frontend/src/components/evidence/EvidenceCard.tsx
+index 723e129..fe32c21 100644
+--- a/frontend/src/components/evidence/EvidenceCard.tsx
++++ b/frontend/src/components/evidence/EvidenceCard.tsx
+@@ -11,7 +11,7 @@ export interface EvidenceCardProps {
+ export default function EvidenceCard({ evidence, assessmentTime, departureTime }: EvidenceCardProps) {
+   const { t } = useTranslation();
+   const originBadge = getSourceOriginBadge(evidence);
+-  const evalTime = assessmentTime || departureTime;
++  const evalTime = departureTime || assessmentTime;
+   const validityBadge = getTemporalValidityBadge(evidence, evalTime);
+ 
+   const isCalculation =
+@@ -256,10 +256,12 @@ export function getTemporalValidityBadge(
+       }
+       if (evidence.valid_from) {
+         const vf = Date.parse(evidence.valid_from);
+-        if (!isNaN(vf) && evalTime < vf) {
++        if (isNaN(vf) || vf > vt) return { label: "Validity unknown", badgeClass: "validity-unknown" };
++        if (evalTime < vf) {
+           return { label: 'Not yet valid', badgeClass: 'validity-future' };
+         }
+       }
++      if (!evidence.valid_from) return { label: 'Validity unknown', badgeClass: 'validity-unknown' };
+       return { label: 'Valid', badgeClass: 'validity-valid' };
+     }
+   }
+diff --git a/frontend/src/components/evidence/m1_3_explainability.test.ts b/frontend/src/components/evidence/m1_3_explainability.test.ts
+index a6fe276..5d8be89 100644
+--- a/frontend/src/components/evidence/m1_3_explainability.test.ts
++++ b/frontend/src/components/evidence/m1_3_explainability.test.ts
+@@ -553,3 +553,13 @@ describe('ORCA M1.3: Explainability & Evidence View Acceptance Tests', () => {
+     expect(calcBadge.label).toBe('Calculated result');
+   });
+ });
++
++it('does not certify malformed, inverted, or incomplete validity windows', () => {
++  for (const window of [
++    { valid_from: 'invalid', valid_to: '2026-10-05T00:00:00Z' },
++    { valid_from: '2026-10-06T00:00:00Z', valid_to: '2026-10-05T00:00:00Z' },
++    { valid_to: '2026-10-05T00:00:00Z' },
++  ]) {
++    expect(getTemporalValidityBadge({ source_name: 'Test bulletin', quality_flags: [], ...window }, '2026-10-04T06:00:00Z').label).toBe('Validity unknown');
++  }
++});
+diff --git a/frontend/src/components/fisher/FisherDecisionSurface.tsx b/frontend/src/components/fisher/FisherDecisionSurface.tsx
+index 9f2b8b2..4ff54a0 100644
+--- a/frontend/src/components/fisher/FisherDecisionSurface.tsx
++++ b/frontend/src/components/fisher/FisherDecisionSurface.tsx
+@@ -790,7 +790,7 @@ export default function FisherDecisionSurface({
+       <EvidenceDrawer
+         isOpen={isEvidenceDrawerOpen}
+         onClose={() => setIsEvidenceDrawerOpen(false)}
+-        evidence={assessment?.evidence}
++        evidence={[...(assessment?.evidence || []), ...(assessment?.conditions.provenance || [])]}
+         sourceStatus={assessment?.source_status}
+         brief={assessment?.brief}
+         stability={assessment?.stability}
+diff --git a/frontend/src/pages/FisherPage.tsx b/frontend/src/pages/FisherPage.tsx
+index a6186f9..fe1323c 100644
+--- a/frontend/src/pages/FisherPage.tsx
++++ b/frontend/src/pages/FisherPage.tsx
+@@ -25,6 +25,8 @@ import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRou
+ import { type MissionContext, type DecisionDeltaContract } from "../types/mission";
+ import { assessmentRequest } from "../components/mission/AssessmentSimulator";
+ 
++import { matchesMissionProposal } from "../utils/mission-proposal";
++
+ export type MapProposalStatus = "pending" | "success" | "error";
+ 
+ export interface MapProposalState {
+@@ -109,6 +111,7 @@ export default function FisherPage({
+     (mapProposal.evidenceBundleId === undefined || mapProposal.evidenceBundleId === assessment.evidence_bundle_id) &&
+     mapProposal.hours === mapTimeOffset &&
+     mapProposal.missionContextKey === currentContextKey &&
++    matchesMissionProposal(assessment, mapProposal.proposedAssessment, mapProposal.proposedDeparture, mapProposal.proposedReturn || "") &&
+     !isLoading
+   );
+ 
+@@ -121,7 +124,7 @@ export default function FisherPage({
+       return;
+     }
+ 
+-    const baseDeparture = chat.missionContext.departure_time || assessment?.trip_context.departure_time;
++    const baseDeparture = assessment?.trip_context.departure_time;
+     if (!baseDeparture || !assessment) {
+       setMapProposal(null);
+       return;
+@@ -137,7 +140,7 @@ export default function FisherPage({
+     const proposedDeparture = new Date(depParsed + hours * 3600000).toISOString();
+ 
+     // Strictly preserve the original trip duration
+-    const baseReturn = chat.missionContext.return_time || assessment.trip_context.return_time;
++    const baseReturn = assessment.trip_context.return_time;
+     let proposedReturn: string | undefined;
+     if (baseReturn) {
+       const retParsed = Date.parse(baseReturn);
+@@ -190,6 +193,9 @@ export default function FisherPage({
+       })
+       .then(data => {
+         if (!abort.signal.aborted) {
++          if (!data.delta || !matchesMissionProposal(assessment, data.simulated, proposedDeparture, proposedReturn || "")) {
++            throw new Error("Comparison result does not match the requested mission. Reset and retry.");
++          }
+           setMapProposal({
+             status: "success",
+             baselineAssessmentId: currentBaselineId,
+@@ -456,6 +462,11 @@ export default function FisherPage({
+   const nav = [ ['home', Home, 'Home'], ['voyage', Navigation, 'Plan'], ['chat', MessageSquare, 'Ask ORCA'], ['map', MapIcon, 'Map'], ['trips', History, 'Trips'], ['alerts', Bell, 'Alerts'], ['profile', UserRound, 'Profile'] ] as const;
+   const zones = assessment?.pfz_candidates || [];
+   const summary = <MissionSummary assessment={assessment} loading={isLoading} error={error} onPlan={() => setSidebarTab('voyage')} onMap={() => setSidebarTab('map')} />;
++  const mapDisplayAssessment = isProposalApplicable ? mapProposal!.proposedAssessment! : assessment;
++  const mapDisplayDecision = mapTimeOffset > 0
++    ? (isProposalApplicable ? assessmentStatus(mapProposal!.proposedAssessment!) : "UNKNOWN")
++    : canonicalMapDecision;
++
+   return <main className={`fisher-workspace workspace-${sidebarTab}`}>
+     <nav className="fisher-navigation" aria-label="Fisher workspace">{nav.map(([id, Icon, label]) => <button key={id} className={sidebarTab === id || (id === 'voyage' && sidebarTab === 'decision') ? 'active' : ''} onClick={() => setSidebarTab(id)} aria-current={sidebarTab === id ? 'page' : undefined}><Icon size={19} /><span>{label}</span></button>)}</nav>
+     <div className="fisher-workspace-body">
+@@ -514,7 +525,7 @@ export default function FisherPage({
+             </div>
+           </div>
+         )}
+-        <MapView layers={effectiveLayers} theme={theme} center={harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={assessment} canonicalConditions={assessment?.conditions} canonicalDecision={canonicalMapDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
++        <MapView layers={effectiveLayers} theme={theme} center={harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={mapDisplayAssessment} canonicalConditions={mapDisplayAssessment?.conditions} canonicalDecision={mapDisplayDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
+     </div>
+   </main>;
+ }
+diff --git a/frontend/src/types/assessment.ts b/frontend/src/types/assessment.ts
+index 7cbca96..8729880 100644
+--- a/frontend/src/types/assessment.ts
++++ b/frontend/src/types/assessment.ts
+@@ -31,6 +31,7 @@ export interface AssessmentSourceStatus {
+ }
+ 
+ export interface ObservationBundle {
++  provenance?: import("./contracts").DataProvenance[];
+   timestamp?: string;
+   captured_at?: string;
+   data_mode?: string;
+diff --git a/frontend/src/utils/mission-proposal.test.ts b/frontend/src/utils/mission-proposal.test.ts
+new file mode 100644
+index 0000000..4a34097
+--- /dev/null
++++ b/frontend/src/utils/mission-proposal.test.ts
+@@ -0,0 +1,25 @@
++import { describe, expect, it } from 'vitest';
++import type { TripAssessmentResponse } from '../types/assessment';
++import { matchesMissionProposal } from './mission-proposal';
++
++const baseline = {
++  assessment_id: 'baseline', evidence_bundle_id: 'evidence',
++  conditions: { data_mode: 'DEMO' }, mission_state: { mission_id: 'mission' },
++  trip_context: { origin_harbor: 'Ratnagiri', coordinates: [73, 17], craft_profile: 'motorized_boat', vessel_size: 'medium' },
++} as TripAssessmentResponse;
++const proposed = {
++  ...baseline, assessment_id: 'proposal',
++  trip_context: { ...baseline.trip_context, parent_assessment_id: 'baseline', departure_time: '2026-10-04T06:00:00Z', return_time: '2026-10-04T18:00:00Z' },
++} as TripAssessmentResponse;
++const matches = (value: TripAssessmentResponse | undefined) => matchesMissionProposal(baseline, value, '2026-10-04T06:00:00Z', '2026-10-04T18:00:00Z');
++describe('returned mission proposal validation', () => {
++  it('accepts the exact server proposal', () => expect(matches(proposed)).toBe(true));
++  it.each([
++    { assessment_id: 'baseline' }, { evidence_bundle_id: 'other' },
++    { mission_state: { mission_id: 'other' } }, { conditions: { data_mode: 'LIVE' } },
++    { trip_context: { ...proposed.trip_context, parent_assessment_id: 'other' } },
++    { trip_context: { ...proposed.trip_context, craft_profile: 'mechanized_trawler' } },
++    { trip_context: { ...proposed.trip_context, return_time: '2026-10-05T18:00:00Z' } },
++  ])('rejects unrelated or changed results: %j', edit => expect(matches({ ...proposed, ...edit } as TripAssessmentResponse)).toBe(false));
++  it('rejects an empty response', () => expect(matches(undefined)).toBe(false));
++});
+diff --git a/frontend/src/utils/mission-proposal.ts b/frontend/src/utils/mission-proposal.ts
+new file mode 100644
+index 0000000..3a3ee3a
+--- /dev/null
++++ b/frontend/src/utils/mission-proposal.ts
+@@ -0,0 +1,12 @@
++import type { TripAssessmentResponse } from '../types/assessment';
++/** A stale, unrelated, or malformed response must never become the active plan. */
++export function matchesMissionProposal(baseline: TripAssessmentResponse, proposed: TripAssessmentResponse | undefined, departure: string, returnTime: string): boolean {
++  if (!proposed?.trip_context || !proposed.conditions || !baseline.evidence_bundle_id || !baseline.mission_state) return false;
++  const original = baseline.trip_context, next = proposed.trip_context;
++  return !!proposed.assessment_id && proposed.assessment_id !== baseline.assessment_id &&
++    proposed.evidence_bundle_id === baseline.evidence_bundle_id && next.parent_assessment_id === baseline.assessment_id &&
++    proposed.mission_state?.mission_id === baseline.mission_state.mission_id && proposed.conditions.data_mode === baseline.conditions.data_mode &&
++    next.origin_harbor === original.origin_harbor && JSON.stringify(next.coordinates ?? null) === JSON.stringify(original.coordinates ?? null) &&
++    next.craft_profile === original.craft_profile && next.vessel_size === original.vessel_size && next.target_pfz === original.target_pfz &&
++    Date.parse(next.departure_time || '') === Date.parse(departure) && Date.parse(next.return_time || '') === Date.parse(returnTime);
++}
+diff --git a/tests/domain/test_agent_collaboration.py b/tests/domain/test_agent_collaboration.py
+index 17554ea..dd15f84 100644
+--- a/tests/domain/test_agent_collaboration.py
++++ b/tests/domain/test_agent_collaboration.py
+@@ -62,7 +62,10 @@ def test_full_consensus_safe_go():
+             metric_name="significant_wave_height",
+             metric_value=1.2,
+             metric_unit="meters",
+-            quality_flags=["official_source", "fresh"],
++            quality_flags=["official_source", "verified_live", "fresh"],
++            data_mode="LIVE",
++            valid_from="2026-09-24T00:00:00Z",
++            valid_to="2026-09-25T00:00:00Z",
+         )
+     ]
+ 
+@@ -71,7 +74,7 @@ def test_full_consensus_safe_go():
+         risk_assessment=rec,
+         evidence=evidence,
+         trace=[],
+-        user_profile={"craft_profile": "motorized_boat"},
++        user_profile={"craft_profile": "motorized_boat", "departure_time": "2026-09-24T06:00:00Z"},
+         harbor="Ratnagiri",
+     )
+ 
+diff --git a/tests/integration/test_task3_provenance_freshness.py b/tests/integration/test_task3_provenance_freshness.py
+index 7c318a6..25bc69e 100644
+--- a/tests/integration/test_task3_provenance_freshness.py
++++ b/tests/integration/test_task3_provenance_freshness.py
+@@ -431,8 +431,11 @@ def test_retrieval_does_not_make_expired_source_fresh():
+     assert "verified_live" not in ev.quality_flags
+ 
+ 
+-def test_marinewatch_fallback_labeling_is_honest():
++def test_marinewatch_fallback_labeling_is_honest(monkeypatch):
+     """Verify Marinewatch fallback point forecast sets PHYSICAL_FALLBACK_MODEL and truthful source."""
++    def unavailable(*args, **kwargs):
++        raise RuntimeError("Controlled offline provider failure")
++    monkeypatch.setattr(marine_watch_service._open_meteo, "_get", unavailable)
+     res = marine_watch_service.get_point_forecast(lat=16.98, lon=73.28)
+     fc = res["forecast"]
+     # When Open-Meteo or INCOIS live API is unreachable or mocked, it falls back to physical model
+diff --git a/tests/integration/test_task3_remaining_gaps.py b/tests/integration/test_task3_remaining_gaps.py
+new file mode 100644
+index 0000000..406456f
+--- /dev/null
++++ b/tests/integration/test_task3_remaining_gaps.py
+@@ -0,0 +1,55 @@
++"""Regressions through real contracts for the final provenance corrections."""
++from datetime import timedelta
++from types import SimpleNamespace
++
++import pytest
++from backend.app.agents.integrations.dev2 import PFZSourceDataPayload
++from backend.app.contracts.chat import EvidenceItem
++from backend.app.domain.agent_collaboration import AgentCollaborationEngine
++from backend.app.services.mission_conversation import _derive_pfz_confidence, _build_retained_evidence
++from backend.app.services.assessment_service import AssessmentService
++from backend.app.contracts.assessment import TripAssessmentRequest
++from backend.app.domain.synthetic.generator import current_demo_reference
++
++
++@pytest.mark.parametrize('mode,expected', [('LIVE', 'HIGH'), ('CACHED_REAL', 'MEDIUM')])
++def test_pfz_metadata_survives_actual_payload_serialization(mode, expected):
++    payload = PFZSourceDataPayload(features=[], bulletin_date='2026-10-04T00:00:00Z',
++        valid_to='2026-10-04T18:00:00Z', data_mode=mode, provider_name='Test provider',
++        quality_flags=['official_source', 'verified_live'],
++        freshness_flags={'coverage_status': 'CERTIFIED', 'is_fallback': False, 'unavailable': False})
++    restored = PFZSourceDataPayload.model_validate_json(payload.model_dump_json())
++    assert restored.provider_name == 'Test provider'
++    selected = SimpleNamespace(pfz_candidates=[{'candidate_id': 'PFZ-1'}],
++        conditions=SimpleNamespace(data_mode='HYBRID', provenance_mode='LIVE'))
++    confidence = _derive_pfz_confidence(selected, {'pfz': restored.model_dump()}, '2026-10-04T06:00:00Z', 'en')
++    assert confidence.level.value == expected
++
++
++@pytest.mark.parametrize('mode,flags,expected', [
++    ('CACHED_REAL', ['official_source', 'verified_live'], 'Partial'),
++    ('LIVE', ['official_source'], 'Partial'),
++    ('LIVE', ['official_source', 'verified_live'], 'Verified'),
++    ('LIVE', ['official_source', 'verified_live', 'stale'], 'Limited'),
++])
++def test_collaboration_verification_requires_valid_uncached_verified_source(mode, flags, expected):
++    evidence = EvidenceItem(source_name='Test marine forecast', metric_name='significant_wave_height',
++        quality_flags=flags, data_mode=mode, valid_from='2026-10-04T00:00:00Z', valid_to='2026-10-04T18:00:00Z')
++    result = AgentCollaborationEngine.derive_collaboration(observations={'significant_wave_height_m': 1},
++        evidence=[evidence], risk_assessment=None, trace=[], user_profile={'departure_time': '2026-10-04T06:00:00Z'})
++    assert result.agents[0].data_quality.value == expected
++    assert result.agents[0].sources[0].last_updated is None
++
++
++def test_retained_comparison_does_not_create_retrieval_timestamps(monkeypatch):
++    from backend.app.api.v1.assessments import compare_trip
++    from backend.app.contracts.assessment import TripSimulationRequest
++    monkeypatch.setattr('backend.app.services.assessment_service.DB_AVAILABLE', False)
++    start = current_demo_reference() + timedelta(hours=2)
++    req = TripAssessmentRequest(origin_harbor='Ratnagiri', data_mode='DEMO', departure_time=start.isoformat(), return_time=(start + timedelta(hours=12)).isoformat())
++    baseline = AssessmentService.assess_trip(req)
++    compared = compare_trip(TripSimulationRequest(baseline=req, simulated=req, baseline_assessment_id=baseline.assessment_id))
++    before = _build_retained_evidence(baseline)
++    after = _build_retained_evidence(compared.simulated)
++    assert [(e.source_name, e.retrieved_at, e.observed_time) for e in before] == [(e.source_name, e.retrieved_at, e.observed_time) for e in after]
++    assert all(e.retrieved_at is None for e in after if e.data_mode == 'CALCULATED')

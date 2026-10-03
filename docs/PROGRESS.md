@@ -1,3 +1,13 @@
+
+### 2026-10-03 - Minimal Task 3 follow-up on babce3b (D076)
+- Preserved the pushed retained-evidence builder, localization, proposal states, and mission continuity. Work is scoped to the Vite frontend and Python backend.
+- PFZ payload serialization now retains source identity, quality flags, coverage, validity start, retrieval and lineage metadata. PFZ confidence uses its own source mode; cached inputs cannot inherit live verification, and explicit false failure flags no longer count as degradation.
+- Retained source fallback uses the existing adapter's provenance classification. Risk provenance preserves supplied retrieval timestamps rather than replacing them with evaluation time. PFZ recommendations keep voyage thresholds separate.
+- Collaboration verification requires official and verified-live flags, LIVE mode, and a valid evaluation interval; cached data remains Partial.
+- Evidence validity evaluates departure before assessment time and rejects malformed/inverted/incomplete windows. The Fisher drawer includes the stored source provenance alongside threshold comparisons.
+- Map proposals use retained assessment times, validate returned mission/evidence/parent/vessel/time identity, and preview the returned backend assessment. Pending/error previews have UNKNOWN status; Apply remains explicit.
+- Verification: 82 focused backend tests passed (Task 2 validity, Task 3 source/remaining-gap tests, mission replay, collaboration). Vite suite: 313 passed; strict TypeScript and production build passed. No browser interaction or deployment verified. The Marinewatch fallback test now explicitly stubs provider failure and makes no external forecast request.
+- Next: apply/review this patch against babce3b, perform the demo's browser flow, and continue the remaining boundary/voice tasks. Full backend suite was not rerun.
 # ORCA Operational Progress
 
 

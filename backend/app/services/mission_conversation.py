@@ -66,7 +66,6 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
     """Derive PFZ advisory confidence independently of the voyage brief."""
     candidates = selected.pfz_candidates or []
     c_mode = (selected.conditions.data_mode or "").upper()
-    prov_mode = (selected.conditions.provenance_mode or "").upper()
     from backend.app.agents.localization import localize_operational_text
     localize = lambda t: localize_operational_text(t, language)
 
@@ -166,7 +165,7 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
     freshness_flags = pfz_data.get("freshness_flags") if (pfz_data and isinstance(pfz_data.get("freshness_flags"), dict)) else {}
     has_contradictory_degraded = (
         any(f in ("degraded", "fallback", "geographic_fallback", "unavailable", "stale", "synthetic_timestamps") for f in quality_flags)
-        or any(k in str(freshness_flags).lower() for k in ("degraded", "fallback", "unavailable"))
+        or any(bool(freshness_flags.get(k)) for k in ("degraded", "fallback", "is_fallback", "unavailable"))
         or cov_status in ("FALLBACK", "GEOGRAPHIC_FALLBACK", "UNAVAILABLE")
     )
     if has_contradictory_degraded:
@@ -180,7 +179,7 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
 
     # 5. Source verification & Input Origin evaluation
     pfz_data_mode = (pfz_data.get("data_mode") or pfz_data.get("source_data_mode") or c_mode or "").upper() if pfz_data else c_mode
-    is_demo = (c_mode in ("DEMO", "SNAPSHOT", "SYNTHETIC", "MOCK") or prov_mode == "DEMO" or pfz_data_mode in ("DEMO", "SNAPSHOT", "SYNTHETIC", "MOCK"))
+    is_demo = pfz_data_mode in ("DEMO", "SNAPSHOT", "SYNTHETIC", "MOCK", "SIMULATED")
 
     if is_demo:
         # Valid demo/snapshot candidates receive MEDIUM with scenario wording
@@ -195,15 +194,14 @@ def _derive_pfz_confidence(selected, bundle_record, departure_time_iso, language
 
     # For operational/live data, check canonical provenance classification
     # Must NOT recognize official origin solely from source-name strings
-    is_verified_live = ("verified_live" in quality_flags or bool(freshness_flags.get("verified_live")) or bool(pfz_data and pfz_data.get("is_verified")))
+    is_verified_live = ("verified_live" in quality_flags or bool(freshness_flags.get("verified_live")))
     is_official_source = (
         "official_source" in quality_flags
         or bool(freshness_flags.get("is_official"))
         or bool(freshness_flags.get("authority_verified"))
-        or prov_mode in ("LIVE_OFFICIAL_PROVIDER", "OFFICIAL")
     )
 
-    if not is_verified_live or not is_official_source:
+    if pfz_data_mode != "LIVE" or not is_verified_live or not is_official_source:
         # Fresh unverified or source-name-only claim -> MEDIUM (never HIGH)
         return Confidence(
             level=ConfidenceLevel.MEDIUM,
@@ -308,9 +306,12 @@ def _build_retained_evidence(selected):
         p_name = p_dict.get("provider_name") or (p_dict.get("freshness_flags") or {}).get("provider_name") or None
         ev_id = f"{bundle_id}:source:{domain_key}"
         ff = p_dict.get("freshness_flags")
-        flags = list(ff.get("quality_flags", [])) if isinstance(ff, dict) and isinstance(ff.get("quality_flags"), list) else (
-            [cond.provenance_mode] if cond.provenance_mode else []
-        )
+        from backend.app.agents.integrations.adapters import ProviderToolAdapter
+        from backend.app.agents.integrations.dev2 import MarineConditionsPayload, WeatherConditionsPayload, HazardBulletinPayload
+        model = {"marine": MarineConditionsPayload, "weather": WeatherConditionsPayload, "hazard": HazardBulletinPayload}[domain_key]
+        normalized = model.model_validate(p_dict)
+        source_mode, flags = ProviderToolAdapter._resolve_provenance(normalized, eval_time_iso=selected.trip_context.departure_time)
+
         retrieved = p_dict.get("retrieved_at") or (ff.get("retrieved_at") if isinstance(ff, dict) else None)
         obs_time = p_dict.get("observed_at") or p_dict.get("observed_time") or p_dict.get("issued_at")
         cov = p_dict.get("coverage") or p_dict.get("harbor") or (ff.get("coverage_status") if isinstance(ff, dict) else None)
@@ -325,8 +326,8 @@ def _build_retained_evidence(selected):
             valid_to=p_dict.get("valid_to"),
             retrieved_at=retrieved,
             quality_flags=flags,
-            data_mode=p_dict.get("data_mode") or cond.data_mode,
-            lineage_id=p_dict.get("lineage_id") or p_dict.get("bulletin_id"),
+            data_mode=source_mode,
+            lineage_id=p_dict.get("lineage_id") or ProviderToolAdapter._resolve_lineage(normalized, source_mode),
             coverage=cov,
         ))
         source_id_map[domain_key] = ev_id
@@ -362,7 +363,7 @@ def _build_retained_evidence(selected):
             valid_to=pfz_dict.get("valid_to"),
             retrieved_at=pfz_dict.get("retrieved_at"),
             quality_flags=list(pfz_dict.get("quality_flags") or []),
-            data_mode=pfz_dict.get("data_mode") or cond.data_mode,
+            data_mode=pfz_dict.get("data_mode") or pfz_dict.get("source_data_mode") or "UNKNOWN_SOURCE",
             lineage_id=pfz_dict.get("lineage_id"),
             coverage=pfz_dict.get("coverage") or (pfz_dict.get("freshness_flags") or {}).get("coverage_status"),
         ))
@@ -468,8 +469,8 @@ def bind_mission_response(response, profile, message):
             status=rec_status,
             summary=localize(pfz_summary),
             decisive_factors=[localize(x) for x in pfz_factors],
-            non_decisive_factors=[localize(x) for x in brief.positive_factors],
-            threshold_comparisons=selected.evidence,
+            non_decisive_factors=[],
+            threshold_comparisons=[],
             next_action=localize(pfz_action),
             confidence=pfz_confidence,
         )
