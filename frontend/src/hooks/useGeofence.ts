@@ -47,148 +47,93 @@ export function useGeofence(
   const [error, setError] = useState<string | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
-  const lastRequestTimestampRef = useRef<number>(0);
   const lastEvaluatedLocationRef = useRef<{ lat: number; lon: number; time: number } | null>(null);
+  const generationRef = useRef(0);
+  const latestRef = useRef({ location, status });
+  latestRef.current = { location, status };
 
   useEffect(() => {
-    // 1. Immediately demote/clear evaluation if location is unusable or status is not accurate
-    if (!location || status !== 'accurate') {
+    let scheduled: ReturnType<typeof setTimeout> | undefined;
+    let expiry: ReturnType<typeof setTimeout> | undefined;
+    const usable = (fix: LocationData | null, state: GeolocationStatus) => Boolean(
+      fix && state === 'accurate' && Number.isFinite(fix.timestamp) &&
+      Date.now() - fix.timestamp < 30000 && Date.now() - fix.timestamp >= -5000 &&
+      Number.isFinite(fix.accuracy) && fix.accuracy >= 0 && fix.accuracy <= MAX_ACCEPTABLE_ACCURACY_M
+    );
+    const demote = (reason: string) => {
+      generationRef.current++;
       abortControllerRef.current?.abort();
-      setAlerts([]);
-      setEvaluationState('UNKNOWN');
-      setEvaluationResult(null);
-      setIsLoading(false);
+      if (scheduled !== undefined) clearTimeout(scheduled);
+      setAlerts([]); setEvaluationState('UNKNOWN'); setEvaluationResult(null);
+      setIsLoading(false); setError(reason);
       lastEvaluatedLocationRef.current = null;
+    };
+    if (!usable(location, status)) {
+      demote('Location is stale, unavailable, or insufficiently accurate.');
       return;
     }
-
-    // 2. Reject fixes with poor accuracy (> 200 meters)
-    if (location.accuracy > MAX_ACCEPTABLE_ACCURACY_M) {
-      abortControllerRef.current?.abort();
-      setAlerts([]);
-      setEvaluationState('UNKNOWN');
-      setEvaluationResult({
-        evaluation_state: 'UNKNOWN',
-        evaluated_at: new Date().toISOString(),
-        location_timestamp: location.timestamp,
-        coordinates: [location.longitude, location.latitude],
-        approach_threshold_km: 10.0,
-        warnings: [],
-        primary_warning: null,
-        coverage_scope: 'Evaluated against reference maritime restrictions. Accuracy insufficient.',
-        unknown_reason: `INSUFFICIENT_ACCURACY: GPS accuracy (+/-${Math.round(location.accuracy)}m) exceeds 200m limit.`,
-        data_mode: 'DEMO',
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    // 3. Throttling check: do not suppress initial evaluation, but throttle rapid stationary ticks
-    const now = Date.now();
+    const fix = location!;
+    // Expire even if the browser never emits another GPS event.
+    expiry = setTimeout(() => demote('Location fix expired.'), Math.max(0, fix.timestamp + 30000 - Date.now()));
     const last = lastEvaluatedLocationRef.current;
-    if (last !== null) {
-      const timeSinceLast = now - last.time;
-      const dLat = Math.abs(location.latitude - last.lat);
-      const dLon = Math.abs(location.longitude - last.lon);
-      const movedSignificantly = dLat > MIN_MOVEMENT_THRESHOLD_DEG || dLon > MIN_MOVEMENT_THRESHOLD_DEG;
-
-      if (timeSinceLast < MIN_EVALUATION_INTERVAL_MS && !movedSignificantly) {
-        return;
-      }
-    }
-
-    // Update last evaluated location reference
-    lastEvaluatedLocationRef.current = {
-      lat: location.latitude,
-      lon: location.longitude,
-      time: now,
-    };
-
-    // 4. Abort any previous in-flight request before launching new one
-    abortControllerRef.current?.abort();
-    const abort = new AbortController();
-    abortControllerRef.current = abort;
-
-    const requestTimestamp = location.timestamp || now;
-    lastRequestTimestampRef.current = requestTimestamp;
-
-    setIsLoading(true);
+    const moved = last && (Math.abs(fix.latitude - last.lat) > MIN_MOVEMENT_THRESHOLD_DEG || Math.abs(fix.longitude - last.lon) > MIN_MOVEMENT_THRESHOLD_DEG);
+    const wait = last && !moved ? Math.max(0, MIN_EVALUATION_INTERVAL_MS - (Date.now() - last.time)) : 0;
     setError(null);
+    // A verdict for another position must not survive while its replacement is pending.
+    if (!last || last.lat !== fix.latitude || last.lon !== fix.longitude) {
+      setAlerts([]); setEvaluationState('UNKNOWN'); setEvaluationResult(null);
+    }
+    setIsLoading(true);
 
-    const API = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
-
-    fetch(`${API}/geospatial/evaluate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy: location.accuracy,
-        speed: location.speed,
-        heading: location.heading,
-        timestamp: requestTimestamp,
-      }),
-      signal: abort.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(`Boundary evaluation service failed with HTTP ${res.status}`);
-        }
-        return res.json() as Promise<LocationEvaluationResponse>;
-      })
-      .then((data) => {
-        if (abort.signal.aborted) return;
-        // Ignore stale responses if a newer request was dispatched
-        if (requestTimestamp < lastRequestTimestampRef.current) return;
-
-        // Map backend authoritative warnings to frontend GeofenceAlert
-        const nextAlerts: GeofenceAlert[] = (data.warnings || []).map((w) => ({
-          layer_id: w.boundary_id,
-          name: w.boundary_name,
-          distanceKm: w.distance_km,
-          isInside: w.is_inside, // Preserves strict geometric truth (never inside just because within exit buffer)
-          type: w.boundary_type,
-          isHardRestriction: w.is_hard_restriction,
-          restrictionLevel: w.restriction_level,
-          projectedCrossing: w.projected_crossing,
-          timeToCrossHours: w.time_to_cross_hours,
-          coverageLimitation: w.coverage_limitation,
-        }));
-
-        setEvaluationState(data.evaluation_state);
-        setEvaluationResult(data);
-        setAlerts(nextAlerts);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        if (abort.signal.aborted) return;
-        // On network or server failure, fail-closed to UNKNOWN; do NOT calculate replacement frontend verdict!
-        setEvaluationState('UNKNOWN');
-        setAlerts([]);
-        setEvaluationResult(null);
-        setError(err.message || 'Boundary evaluation service unavailable');
-        setIsLoading(false);
-      });
-
-    return () => {
-      abort.abort();
-    };
-  }, [
-    location?.latitude,
-    location?.longitude,
-    location?.accuracy,
-    location?.speed,
-    location?.heading,
-    location?.timestamp,
-    status,
-  ]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+    const dispatch = () => {
+      const current = latestRef.current;
+      if (!usable(current.location, current.status)) { demote('Location fix expired.'); return; }
+      const sent = current.location!;
+      lastEvaluatedLocationRef.current = { lat: sent.latitude, lon: sent.longitude, time: Date.now() };
       abortControllerRef.current?.abort();
+      const abort = new AbortController();
+      abortControllerRef.current = abort;
+      const generation = ++generationRef.current;
+      const isCurrent = () => {
+        const latest = latestRef.current;
+        const next = latest.location;
+        return !abort.signal.aborted && generation === generationRef.current &&
+          usable(next, latest.status) && next!.latitude === sent.latitude && next!.longitude === sent.longitude &&
+          next!.accuracy === sent.accuracy && next!.heading === sent.heading && next!.speed === sent.speed;
+      };
+      const API = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
+      fetch(`${API}/geospatial/evaluate`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: abort.signal,
+        body: JSON.stringify({ latitude: sent.latitude, longitude: sent.longitude, accuracy: sent.accuracy,
+          speed: sent.speed, speed_unit: 'm/s', heading: sent.heading, timestamp: sent.timestamp }),
+      }).then(async res => {
+        if (!res.ok) throw new Error(`Boundary evaluation service failed with HTTP ${res.status}`);
+        return res.json() as Promise<LocationEvaluationResponse>;
+      }).then(data => {
+        if (!isCurrent()) return;
+        if (!['CLEAR', 'APPROACHING', 'INSIDE', 'UNKNOWN'].includes(data.evaluation_state) || !Array.isArray(data.warnings)) {
+          throw new Error('Invalid boundary evaluation response');
+        }
+        setEvaluationState(data.evaluation_state); setEvaluationResult(data);
+        setAlerts(data.warnings.map(w => ({ layer_id: w.boundary_id, name: w.boundary_name, distanceKm: w.distance_km,
+          isInside: w.is_inside, type: w.boundary_type, isHardRestriction: w.is_hard_restriction,
+          restrictionLevel: w.restriction_level, projectedCrossing: w.projected_crossing,
+          timeToCrossHours: w.time_to_cross_hours, coverageLimitation: w.coverage_limitation })));
+        setIsLoading(false);
+      }).catch(err => {
+        if (!isCurrent()) return;
+        setEvaluationState('UNKNOWN'); setAlerts([]); setEvaluationResult(null);
+        setError(err.message || 'Boundary evaluation service unavailable'); setIsLoading(false);
+      });
     };
-  }, []);
+    if (wait === 0) dispatch();
+    else scheduled = setTimeout(dispatch, wait);
+    // Keep a compatible in-flight request alive across stationary GPS ticks.
+    // The next dispatch, invalidation or unmount owns request cancellation.
+    return () => { if (scheduled !== undefined) clearTimeout(scheduled); if (expiry !== undefined) clearTimeout(expiry); };
+  }, [location?.latitude, location?.longitude, location?.accuracy, location?.speed, location?.heading, location?.timestamp, status]);
+
+  useEffect(() => () => { generationRef.current++; abortControllerRef.current?.abort(); }, []);
 
   return {
     alerts,

@@ -1,130 +1,78 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { createElement } from 'react';
+import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import { useGeofence, type UseGeofenceReturn } from './useGeofence';
 import type { LocationData, GeolocationStatus } from './useGeolocation';
 
-// Test harness verifying hook logic, state transitions, fail-closed handling, and race prevention
-describe('useGeofence Hook Logic & State Contracts', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
+let tree: ReactTestRenderer | undefined;
+let result: UseGeofenceReturn;
+const fix = (edit: Partial<LocationData> = {}): LocationData => ({ latitude: 15.4, longitude: 73.25, accuracy: 15, speed: null, heading: null, timestamp: Date.now(), ...edit });
+function Probe({ location, status = 'accurate' }: { location: LocationData | null; status?: GeolocationStatus }) {
+  result = useGeofence(location, status); return null;
+}
+const reply = (state = 'CLEAR') => ({ ok: true, json: async () => ({ evaluation_state: state, warnings: state === 'CLEAR' ? [] : [{ boundary_id: 'zone', boundary_name: 'Zone', distance_km: 2, is_inside: state === 'INSIDE', boundary_type: 'NAVAL_FIRING_RANGE' }] }) });
+async function render(location: LocationData | null, status: GeolocationStatus = 'accurate') {
+  await act(async () => { if (tree) tree.update(createElement(Probe, { location, status })); else tree = create(createElement(Probe, { location, status })); });
+}
+async function advance(ms: number) { await act(async () => { vi.advanceTimersByTime(ms); }); }
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-03T12:00:00Z')); });
+afterEach(() => { act(() => tree?.unmount()); tree = undefined; vi.unstubAllGlobals(); vi.useRealTimers(); });
+
+describe('production useGeofence lifecycle', () => {
+  it('evaluates the first fix and preserves geometric warning truth', async () => {
+    const fetch = vi.fn().mockResolvedValue(reply('APPROACHING')); vi.stubGlobal('fetch', fetch);
+    await render(fix());
+    expect(fetch).toHaveBeenCalledTimes(1); expect(result.evaluationState).toBe('APPROACHING');
+    expect(result.alerts[0].isInside).toBe(false); expect(result.isLoading).toBe(false);
   });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it.each(['stale', 'denied', 'unavailable', 'timeout', 'idle'] as GeolocationStatus[])('demotes immediately on %s', async status => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply())); const location = fix();
+    await render(location); expect(result.evaluationState).toBe('CLEAR');
+    await render(location, status); expect(result.evaluationState).toBe('UNKNOWN'); expect(result.alerts).toEqual([]); expect(result.isLoading).toBe(false);
   });
-
-  it('immediately demotes to UNKNOWN and clears alerts when location becomes stale or denied', () => {
-    // When location fix is lost or denied
-    const status: GeolocationStatus = 'stale';
-    const location: LocationData = {
-      latitude: 15.40,
-      longitude: 73.25,
-      accuracy: 15.0,
-      speed: 5.0,
-      heading: 180.0,
-      timestamp: Date.now() - 120000, // 2 minutes ago
-    };
-
-    // Contract: status !== 'accurate' must demote immediately
-    const checkStatus = status as GeolocationStatus;
-    const shouldRunBackend = location !== null && checkStatus === 'accurate';
-    expect(shouldRunBackend).toBe(false);
-
-    // Initial / demoted state
-    const alerts: any[] = [];
-    const evaluationState = 'UNKNOWN';
-    expect(alerts).toEqual([]);
-    expect(evaluationState).toBe('UNKNOWN');
+  it('expires a result without another GPS event', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply())); await render(fix());
+    await advance(29999); expect(result.evaluationState).toBe('CLEAR');
+    await advance(1); expect(result.evaluationState).toBe('UNKNOWN'); expect(result.alerts).toEqual([]);
   });
-
-  it('rejects inaccurate GPS fixes (>200m) without making backend clearance claim', () => {
-    const location: LocationData = {
-      latitude: 15.40,
-      longitude: 73.25,
-      accuracy: 250.0, // Exceeds 200m tolerance
-      speed: null,
-      heading: null,
-      timestamp: Date.now(),
-    };
-
-    const isAccuracyAcceptable = location.accuracy <= 200.0;
-    expect(isAccuracyAcceptable).toBe(false);
+  it.each([{ timestamp: Date.parse('2026-10-03T11:00:00Z') }, { accuracy: 250 }, { accuracy: NaN }, { timestamp: Date.parse('2026-10-04T12:00:00Z') }])('rejects unusable fix %j', async edit => {
+    const fetch = vi.fn(); vi.stubGlobal('fetch', fetch); await render(fix(edit));
+    expect(fetch).not.toHaveBeenCalled(); expect(result.evaluationState).toBe('UNKNOWN');
   });
-
-  it('fails closed to UNKNOWN on backend error without calculating replacement frontend verdict', async () => {
-    // Mock fetch returning HTTP 500
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-    });
-    global.fetch = mockFetch;
-
-    let evaluationState = 'CLEAR';
-    let alerts = [{ layer_id: 'old', name: 'old', distanceKm: 1, isInside: true, type: 'restriction' }];
-
-    try {
-      const res = await fetch('/api/v1/geospatial/evaluate', { method: 'POST' });
-      if (!res.ok) {
-        throw new Error(`Failed with HTTP ${res.status}`);
-      }
-    } catch {
-      // Must fail-closed to UNKNOWN; never compute fallback with Turf
-      evaluationState = 'UNKNOWN';
-      alerts = [];
-    }
-
-    expect(evaluationState).toBe('UNKNOWN');
-    expect(alerts).toEqual([]);
+  it('keeps a stationary in-flight request alive and schedules the latest trailing fix', async () => {
+    let resolve!: (value: ReturnType<typeof reply>) => void;
+    const fetch = vi.fn().mockImplementationOnce(() => new Promise(r => { resolve = r; })).mockResolvedValue(reply('APPROACHING'));
+    vi.stubGlobal('fetch', fetch); await render(fix()); const signal = fetch.mock.calls[0][1].signal;
+    await advance(100); const latest = fix(); await render(latest);
+    expect(signal.aborted).toBe(false); expect(fetch).toHaveBeenCalledTimes(1);
+    await act(async () => resolve(reply())); expect(result.evaluationState).toBe('CLEAR');
+    await advance(2400); expect(fetch).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetch.mock.calls[1][1].body).timestamp).toBe(latest.timestamp);
+    expect(result.evaluationState).toBe('APPROACHING'); expect(result.isLoading).toBe(false);
   });
-
-  it('race condition prevention: ignores superseded older request responses', async () => {
-    let latestRequestTimestamp = 0;
-    let effectiveResult: any = null;
-
-    // Request 1 dispatched at t=1000
-    const req1Timestamp = 1000;
-    latestRequestTimestamp = req1Timestamp;
-
-    // Request 2 dispatched at t=2000
-    const req2Timestamp = 2000;
-    latestRequestTimestamp = req2Timestamp;
-
-    // Response 2 arrives first
-    const data2 = { evaluation_state: 'APPROACHING', warnings: [{ boundary_id: 'POLY-02' }] };
-    if (req2Timestamp >= latestRequestTimestamp) {
-      effectiveResult = data2;
-    }
-
-    // Response 1 arrives late (delayed response for older position)
-    const data1 = { evaluation_state: 'CLEAR', warnings: [] };
-    if (req1Timestamp >= latestRequestTimestamp) {
-      effectiveResult = data1; // Should NOT execute
-    }
-
-    // Effective result must remain Response 2
-    expect(effectiveResult).toEqual(data2);
-    expect(effectiveResult.evaluation_state).toBe('APPROACHING');
+  it('evaluates small movement on the trailing timer even without another GPS update', async () => {
+    const fetch = vi.fn().mockResolvedValue(reply()); vi.stubGlobal('fetch', fetch); await render(fix());
+    await advance(100); await render(fix({ latitude: 15.40001 }));
+    expect(result.evaluationState).toBe('UNKNOWN'); await advance(2400);
+    expect(fetch).toHaveBeenCalledTimes(2); expect(result.isLoading).toBe(false);
   });
-
-  it('preserves strict geometric truth: outside vessel within approach distance has isInside=false', () => {
-    const backendWarning = {
-      boundary_id: 'REST-01',
-      boundary_name: 'Naval Firing Range Foxtrot',
-      boundary_type: 'NAVAL_FIRING_RANGE',
-      distance_km: 3.3,
-      is_inside: false, // Geometrically outside
-      is_hard_restriction: true,
-      restriction_level: 'NO_GO',
-    };
-
-    const alert = {
-      layer_id: backendWarning.boundary_id,
-      name: backendWarning.boundary_name,
-      distanceKm: backendWarning.distance_km,
-      isInside: backendWarning.is_inside,
-      type: backendWarning.boundary_type,
-    };
-
-    // Must be geometrically outside, not distorted by exit hysteresis
-    expect(alert.isInside).toBe(false);
-    expect(alert.distanceKm).toBe(3.3);
+  it('ignores a superseded response even when the mock transport ignores abort', async () => {
+    let old!: (value: ReturnType<typeof reply>) => void;
+    const fetch = vi.fn().mockImplementationOnce(() => new Promise(r => { old = r; })).mockResolvedValue(reply('INSIDE'));
+    vi.stubGlobal('fetch', fetch); await render(fix()); await render(fix({ latitude: 15.5 }));
+    expect(result.evaluationState).toBe('INSIDE'); await act(async () => old(reply()));
+    expect(result.evaluationState).toBe('INSIDE');
+  });
+  it('late replies cannot restore a result after expiry', async () => {
+    let resolve!: (value: ReturnType<typeof reply>) => void;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise(r => { resolve = r; })));
+    await render(fix()); await advance(30000); await act(async () => resolve(reply()));
+    expect(result.evaluationState).toBe('UNKNOWN'); expect(result.isLoading).toBe(false);
+  });
+  it('fails closed on HTTP failure and unmount cancels outstanding work', async () => {
+    const fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 }); vi.stubGlobal('fetch', fetch);
+    await render(fix()); expect(result.evaluationState).toBe('UNKNOWN'); expect(result.isLoading).toBe(false);
+    const signal = fetch.mock.calls[0][1].signal; act(() => tree!.unmount()); tree = undefined;
+    expect(signal.aborted).toBe(true); await advance(30000); expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

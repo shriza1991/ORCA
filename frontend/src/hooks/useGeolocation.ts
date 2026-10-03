@@ -11,7 +11,7 @@ export interface LocationData {
   timestamp: number;
 }
 
-export function useGeolocation(staleThresholdMs = 60000) {
+export function useGeolocation(staleThresholdMs = 30000) {
   const [status, setStatus] = useState<GeolocationStatus>('idle');
   const [location, setLocation] = useState<LocationData | null>(null);
   const [isTracking, setIsTracking] = useState(false);
@@ -75,7 +75,7 @@ export function useGeolocation(staleThresholdMs = 60000) {
 
     const interval = setInterval(() => {
       const now = Date.now();
-      if (now - location.timestamp > staleThresholdMs) {
+      if (now - location.timestamp >= staleThresholdMs) {
         setStatus('stale');
       } else {
         setStatus('accurate');

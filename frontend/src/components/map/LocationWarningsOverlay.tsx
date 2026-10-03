@@ -63,8 +63,7 @@ export default function LocationWarningsOverlay({
 
   const showEvaluationUnavailable =
     status === 'accurate' &&
-    effectiveState === 'UNKNOWN' &&
-    displayedAlerts.length === 0;
+    effectiveState === 'UNKNOWN';
 
   return (
     <div
