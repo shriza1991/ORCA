@@ -12,6 +12,7 @@ import type { TripAssessmentResponse } from '../types/assessment';
 import {
   getMissionIdentityKey,
   isAssessmentApplicableToContext,
+  type DecisionMissionIdentityInputs,
 } from '../utils/mission-proposal';
 
 export interface ChatMessage {
@@ -32,8 +33,15 @@ function generateId(): string {
   return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export interface MissionAssessmentAvailability {
+  isLoading?: boolean;
+  isExpired?: boolean;
+  coordinates?: [number, number];
+  dataMode?: string;
+}
+
 export function useChat() {
-  const [missionAssessment, setMissionAssessment] = useState<TripAssessmentResponse | null>(null);
+  const [missionAssessment, storeMissionAssessment] = useState<TripAssessmentResponse | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -41,7 +49,21 @@ export function useChat() {
   const [language, setLanguage] = useState<'en' | 'hi' | 'mr' | 'ta' | 'te'>('en');
 
   const chatGenerationRef = useRef<number>(0);
-  const inFlightCountRef = useRef<number>(0);
+  const inFlightRef = useRef(new Set<number>());
+  const clearGenerationRef = useRef(0);
+  const baselineRef = useRef<TripAssessmentResponse | null>(null);
+  const availabilityRef = useRef<MissionAssessmentAvailability>({});
+  const baselineGenerationRef = useRef(0);
+  const setMissionAssessment = useCallback((assessment: TripAssessmentResponse | null, availability: MissionAssessmentAvailability = {}) => {
+    const previous = baselineRef.current;
+    if (previous !== assessment || JSON.stringify(availabilityRef.current) !== JSON.stringify(availability)) {
+      baselineGenerationRef.current++;
+      setActiveResponse(null);
+    }
+    baselineRef.current = assessment;
+    availabilityRef.current = availability;
+    storeMissionAssessment(assessment);
+  }, []);
 
   useEffect(() => {
     import('../i18n/i18n').then((module) => {
@@ -58,8 +80,10 @@ export function useChat() {
   });
 
   const missionContextRef = useRef<MissionContext>(missionContext);
+  missionContextRef.current = missionContext;
+  const contextIdentity = getMissionIdentityKey(missionContext);
+  useEffect(() => { setActiveResponse(null); }, [contextIdentity]);
   useEffect(() => {
-    missionContextRef.current = missionContext;
     try {
       localStorage.setItem('orca.mission', JSON.stringify(missionContext));
     } catch {}
@@ -80,10 +104,19 @@ export function useChat() {
       }
 
       const requestGen = ++chatGenerationRef.current;
-      inFlightCountRef.current++;
+      const clearGeneration = clearGenerationRef.current;
+      const baselineGeneration = baselineGenerationRef.current;
+      inFlightRef.current.add(requestGen);
       setIsLoading(true);
 
       const capturedMissionKey = getMissionIdentityKey(missionContext);
+      const availability = availabilityRef.current;
+      const currentAssessment = baselineRef.current;
+      const effectiveContext = {
+        ...missionContext,
+        coordinates: availability.coordinates || (missionContext as DecisionMissionIdentityInputs).coordinates,
+        data_mode: availability.dataMode || (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
+      };
 
       const userMsg: ChatMessage = {
         id: generateId(),
@@ -109,10 +142,10 @@ export function useChat() {
       // Only attach baseline assessment if it's strictly applicable to the current active mission context
       const isApplicable =
         !requestContext?.sector_id &&
-        isAssessmentApplicableToContext(missionAssessment, missionContext);
+        isAssessmentApplicableToContext(currentAssessment, effectiveContext, availability.isExpired, availability.isLoading);
 
-      const effectiveBaselineId = isApplicable ? missionAssessment?.assessment_id : undefined;
-      const effectiveBundleId = isApplicable ? missionAssessment?.evidence_bundle_id : undefined;
+      const effectiveBaselineId = isApplicable ? currentAssessment?.assessment_id : undefined;
+      const effectiveBundleId = isApplicable ? currentAssessment?.evidence_bundle_id : undefined;
       const effectiveMissionState = requestContext?.sector_id
         ? undefined
         : isApplicable
@@ -124,8 +157,8 @@ export function useChat() {
           evidence_bundle_id: effectiveBundleId,
           baseline_assessment_id: effectiveBaselineId,
           data_mode:
-            isApplicable && missionAssessment?.conditions.data_mode
-              ? missionAssessment.conditions.data_mode
+            isApplicable && currentAssessment?.conditions.data_mode
+              ? currentAssessment.conditions.data_mode
               : (import.meta.env.VITE_DATA_MODE || 'DEMO').toUpperCase(),
           conversation_id: conversationId ?? undefined,
           message: text,
@@ -140,7 +173,7 @@ export function useChat() {
         const response = await sendMessage(req);
 
         // Discard result if chat was cleared in the meantime
-        if (requestGen < chatGenerationRef.current) {
+        if (clearGeneration !== clearGenerationRef.current) {
           return;
         }
 
@@ -152,7 +185,8 @@ export function useChat() {
         const isCurrentMission = capturedMissionKey === getMissionIdentityKey(missionContextRef.current);
 
         // Authority sector requests remain isolated from Fisher mission state
-        if (!isSectorChat && isCurrentMission) {
+        if (!isSectorChat && isCurrentMission &&
+            baselineGeneration === baselineGenerationRef.current && requestGen === chatGenerationRef.current) {
           if (response.mission_state) {
             setMissionState(response.mission_state);
           }
@@ -173,7 +207,7 @@ export function useChat() {
           prev.map((m) => (m.id === loadingMsg.id ? assistantMsg : m)),
         );
       } catch (err) {
-        if (requestGen < chatGenerationRef.current) {
+        if (clearGeneration !== clearGenerationRef.current) {
           return;
         }
 
@@ -198,10 +232,8 @@ export function useChat() {
           ),
         );
       } finally {
-        inFlightCountRef.current = Math.max(0, inFlightCountRef.current - 1);
-        if (inFlightCountRef.current === 0) {
-          setIsLoading(false);
-        }
+        inFlightRef.current.delete(requestGen);
+        setIsLoading(inFlightRef.current.size > 0);
       }
     },
     [conversationId, language, missionContext, missionState, missionAssessment],
@@ -223,13 +255,19 @@ export function useChat() {
 
   const clearChat = useCallback(() => {
     // Invalidate outstanding replies so they cannot repopulate active state
+    clearGenerationRef.current++;
     chatGenerationRef.current++;
-    inFlightCountRef.current = 0;
+    inFlightRef.current.clear();
     setIsLoading(false);
     setMessages([]);
     setConversationId(null);
     setActiveResponse(null);
     setActiveDiff(null);
+  }, []);
+
+  useEffect(() => () => {
+    clearGenerationRef.current++;
+    inFlightRef.current.clear();
   }, []);
 
   return {

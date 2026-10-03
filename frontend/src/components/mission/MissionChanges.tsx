@@ -24,6 +24,7 @@ export default function MissionChanges({
   useEffect(() => {
     current.current = assessment.assessment_id;
     controller.current?.abort();
+    controller.current = null;
     setUpdate(null);
     setNotice('');
     setBusy(false);
@@ -52,6 +53,10 @@ export default function MissionChanges({
         return;
       }
 
+      const validation = validateRefreshedAssessment(assessment, data.simulated);
+      if (!validation.valid || data.baseline?.assessment_id !== id) {
+        throw new Error(validation.reason || 'Refresh returned a different baseline.');
+      }
       const d: DecisionDeltaContract = data.delta;
       const material =
         d.decision_changed ||
@@ -92,6 +97,8 @@ export default function MissionChanges({
       setNotice('Active mission has changed. Refreshed assessment is obsolete.');
       return;
     }
+    const validation = validateRefreshedAssessment(assessment, update.simulated);
+    if (!validation.valid) { setNotice(validation.reason || 'Refresh is no longer applicable.'); return; }
     onApply(update.simulated);
     setUpdate(null);
   }

@@ -2426,3 +2426,12 @@ Impact:
 - 50/50 backend pytest suite passes across assessments, Task 3 provenance, and mission replay.
 - 28/28 Task 4 geofencing tests pass.
 - Clean TypeScript check and production build (`vite build`) with zero errors.
+
+
+## D080 - Task 5 active baseline applicability and request ownership (2026-10-03)
+- Context identity and assessment identity are separate. Same-plan assessment replacement invalidates earlier chat replies/proposals, even when mission parameters are unchanged.
+- Sidebar navigation and response language are presentation changes and do not request new evidence. Planner completion explicitly reassesses; proposal Apply adopts the reviewed record directly.
+- Pending or expired baselines cannot be used by chat or proposal adoption. Retained records remain historical; current views use only an applicable plan.
+- Request matching does not infer missing stored fields. Cached coordinates/mode/destination must satisfy the request, and timezone-equivalent timestamps share full cache identity. Legacy cache formats are validated before reuse.
+- Route adoption must select the requested supported recommended corridor. Refresh preserves the complete plan but may change evidence. Central Apply rejects obsolete captured callbacks using the currently rendered baseline.
+- React owns request/UI synchronization only. Safety decisions and geometry remain Python authority. No API schema or safety freshness policy was added.

@@ -53,6 +53,8 @@ function missionStateMatchesRequest(
   if (!state) return false;
   return (
     (!request.origin_harbor || state.origin?.name === request.origin_harbor) &&
+    (!request.coordinates ||
+      (state.origin?.longitude === request.coordinates[0] && state.origin?.latitude === request.coordinates[1])) &&
     (!request.craft_profile || state.vessel?.type === request.craft_profile) &&
     (!request.vessel_size ||
       (state.vessel?.size_category || state.vessel?.vessel_size) ===
@@ -187,7 +189,7 @@ export function useTripAssessment() {
           if (cached) {
             setMissionState(cached.data.mission_state || null);
             const ageMs = Date.now() - cached.timestamp;
-            if (ageMs > CACHE_EXPIRY_MS) {
+            if (ageMs >= CACHE_EXPIRY_MS) {
               setIsExpired(true);
               setData(makeExpiredAssessment(cached.data));
             } else {

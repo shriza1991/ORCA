@@ -16,6 +16,8 @@ export default function RouteChoices({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const abortRef = useRef<AbortController | null>(null);
+  const currentAssessmentRef = useRef(assessment);
+  currentAssessmentRef.current = assessment;
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -50,7 +52,7 @@ export default function RouteChoices({
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Could not select this corridor.');
 
-      if (abort.signal.aborted || assessment.assessment_id !== baselineId) {
+      if (abort.signal.aborted || currentAssessmentRef.current !== assessment || currentAssessmentRef.current.assessment_id !== baselineId) {
         return;
       }
 

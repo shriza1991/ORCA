@@ -1,3 +1,13 @@
+### 2026-10-03 - Task 5 corrective pass on d2eb3f2 (D080)
+- Removed assessment requests caused only by sidebar navigation. Planner edits assess on exit; explicit planning still requests a reassessment. Exact proposal adoption preserves its assessment/evidence identity without a second assessment request.
+- Dashboard and map hide the previous assessment while a different plan is pending. Chat receives explicit loading/expiry/origin-coordinate/data-mode availability and does not attach an obsolete baseline.
+- Chat replies are tied to captured baseline generation as well as mission context. Superseded baseline replies remain historical; they cannot replace active response/state. Clear-chat and concurrent requests use independent generations and request sets.
+- Shared mission matching rejects missing requested fields, changed coordinates and data modes. Full offline keys normalize timezones; old full/mid/harbor keys remain readable only after full request validation. Invalid cache timestamps are rejected; exact six-hour expiry fails closed.
+- Central Apply checks current baseline via a live ref, including stale captured callbacks. Route selection requires the requested supported corridor to be recommended; route/refresh checks retain all plan inputs and mission linkage. Simulation/refresh validate returned baseline metadata and revalidate on Apply. Refresh cancellation releases the previous controller.
+- Added 14 production helper and mounted FisherPage/chat/route/refresh regressions, including coherent map preview geometry/telemetry, exact adoption, navigation, pending edits, offline expiry, changed baselines and concurrent clear-chat requests.
+- Verification: 369 frontend tests passed across 30 files; TypeScript and Vite production build passed. 69 focused backend tests passed covering restored Task 4 corrections, mission contracts, assessment API, mission state/replay and Task 3 remaining gaps. Patch application is checked against a clean d2eb3f2 worktree.
+- Scope: Vite frontend and documentation only; Python safety evaluation, Task 4 geometry/GPS, Next.js and deployment unchanged. Full backend suite and interactive deployed browser flow were not run. Next: apply patch, run the demo flow in the deployed browser, then continue Task 6.
+
 ### 2026-10-03 - Task 4 corrective pass on 1cd8757 (D078)
 - Corrected relevant malformed/inverted restriction validity: UNKNOWN instead of CLEAR; confirmed INSIDE warnings retain precedence. Updated the previous incorrect CLEAR assertion.
 - Deduplicated canonical reference/fixture zone aliases while retaining reference validity and warning IDs.

@@ -1,3 +1,4 @@
+import { assessmentMatchesInputs, getMissionIdentityKey } from './mission-proposal';
 import type { TripAssessmentResponse } from '../types/assessment';
 
 const CACHE_KEY_PREFIX = 'orca_trip_assessment_';
@@ -43,12 +44,12 @@ export function getOfflineCacheKey(
   if (!returnTime && !vesselSize && !destinationId && !coordinates && !dataMode) {
     return `${CACHE_KEY_PREFIX}${originHarbor}_${craftProfile}_${departureTime || 'default'}`;
   }
-  const ret = returnTime || 'default';
-  const size = vesselSize || 'medium';
-  const target = destinationId || 'none';
-  const coords = coordinates ? `${coordinates[0].toFixed(4)},${coordinates[1].toFixed(4)}` : 'none';
-  const mode = (dataMode || 'DEMO').toUpperCase();
-  return `${CACHE_KEY_PREFIX}${originHarbor}_${craftProfile}_${departureTime || 'default'}_${ret}_${size}_${target}_${coords}_${mode}`;
+  return `${CACHE_KEY_PREFIX}v2_${getMissionIdentityKey({
+    origin_harbor: originHarbor, craft_profile: craftProfile,
+    departure_time: departureTime === 'default' ? undefined : departureTime,
+    return_time: returnTime, vessel_size: vesselSize, destination_id: destinationId,
+    coordinates, data_mode: dataMode,
+  })}`;
 }
 
 export function storedAssessmentMatchesRequest(
@@ -64,21 +65,13 @@ export function storedAssessmentMatchesRequest(
     dataMode?: string;
   },
 ): boolean {
-  if (!stored || !stored.trip_context) return false;
-  const ctx = stored.trip_context;
-  if (expected.originHarbor && ctx.origin_harbor && ctx.origin_harbor !== expected.originHarbor) return false;
-  if (expected.craftProfile && ctx.craft_profile && ctx.craft_profile !== expected.craftProfile) return false;
-  const storedSize = stored.mission_state?.vessel?.size_category || ctx.vessel_size;
-  if (expected.vesselSize && storedSize && storedSize !== expected.vesselSize) return false;
-  if (expected.departureTime && expected.departureTime !== 'default' && ctx.departure_time) {
-    if (Date.parse(ctx.departure_time) !== Date.parse(expected.departureTime)) return false;
-  }
-  if (expected.returnTime && ctx.return_time) {
-    if (Date.parse(ctx.return_time) !== Date.parse(expected.returnTime)) return false;
-  }
-  if (expected.destinationId && ctx.target_pfz && ctx.target_pfz !== expected.destinationId) return false;
-  if (expected.dataMode && stored.conditions?.data_mode && stored.conditions.data_mode.toUpperCase() !== expected.dataMode.toUpperCase()) return false;
-  return true;
+  return assessmentMatchesInputs(stored, {
+    origin_harbor: expected.originHarbor, craft_profile: expected.craftProfile,
+    departure_time: expected.departureTime === 'default' ? undefined : expected.departureTime,
+    return_time: expected.returnTime, vessel_size: expected.vesselSize,
+    destination_id: expected.destinationId, coordinates: expected.coordinates,
+    data_mode: expected.dataMode,
+  });
 }
 
 /**
@@ -164,6 +157,8 @@ export async function loadOfflineAssessment(
   );
   const midKey = `${CACHE_KEY_PREFIX}${originHarbor}_${craftProfile}_${departureTime || 'default'}`;
   const legacyKey = `${CACHE_KEY_PREFIX}${originHarbor}`;
+  const previousSpecificKey = `${CACHE_KEY_PREFIX}${originHarbor}_${craftProfile}_${departureTime || 'default'}_${returnTime || 'default'}_${vesselSize || 'medium'}_${destinationId || 'none'}_${coordinates ? `${coordinates[0].toFixed(4)},${coordinates[1].toFixed(4)}` : 'none'}_${(dataMode || 'DEMO').toUpperCase()}`;
+  const candidateKeys = [...new Set([specificKey, previousSpecificKey, midKey, legacyKey])];
 
   const expectedCriteria = {
     originHarbor,
@@ -177,7 +172,7 @@ export async function loadOfflineAssessment(
   };
 
   const checkRecord = (record: CachedAssessment | null): CachedAssessment | null => {
-    if (!record || !record.data) return null;
+    if (!record?.data || !Number.isFinite(record.timestamp) || record.timestamp > Date.now()) return null;
     if (storedAssessmentMatchesRequest(record.data, expectedCriteria)) {
       return record;
     }
@@ -190,24 +185,17 @@ export async function loadOfflineAssessment(
       const tx = db.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
 
-      const tryKey = (key: string, nextKey?: string, fallbackLegacy?: boolean) => {
-        const req = store.get(key);
+      const tryKey = (index: number) => {
+        if (index >= candidateKeys.length) { resolve(null); return; }
+        const req = store.get(candidateKeys[index]);
         req.onsuccess = () => {
-          const res = checkRecord(req.result);
-          if (res) {
-            resolve(res);
-          } else if (nextKey && nextKey !== key) {
-            tryKey(nextKey, fallbackLegacy ? legacyKey : undefined, false);
-          } else if (fallbackLegacy && key !== legacyKey) {
-            tryKey(legacyKey, undefined, false);
-          } else {
-            resolve(null);
-          }
+          const verified = checkRecord(req.result);
+          if (verified) resolve(verified);
+          else tryKey(index + 1);
         };
         req.onerror = () => reject(req.error);
       };
-
-      tryKey(specificKey, midKey, true);
+      tryKey(0);
     });
     if (record) return record;
   } catch {
@@ -216,8 +204,7 @@ export async function loadOfflineAssessment(
 
   try {
     if (typeof localStorage !== 'undefined') {
-      const candidates = [specificKey, midKey, legacyKey];
-      for (const k of candidates) {
+      for (const k of candidateKeys) {
         const raw = localStorage.getItem(k);
         if (raw) {
           const parsed = JSON.parse(raw) as CachedAssessment;

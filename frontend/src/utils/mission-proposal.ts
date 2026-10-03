@@ -39,31 +39,51 @@ export function getMissionIdentityKey(inputs: DecisionMissionIdentityInputs): st
 /**
  * Checks whether an assessment applies to the current active mission context.
  */
+/** Compare requested inputs without treating absent stored evidence as a match. */
+export function assessmentMatchesInputs(
+  assessment: TripAssessmentResponse | null | undefined,
+  expected: DecisionMissionIdentityInputs,
+): boolean {
+  if (!assessment?.trip_context) return false;
+  const actual = assessment.trip_context;
+  const size = assessment.mission_state?.vessel?.size_category || actual.vessel_size;
+  for (const [wanted, stored] of [
+    [expected.origin_harbor, actual.origin_harbor],
+    [expected.craft_profile, actual.craft_profile],
+    [expected.vessel_size, size],
+  ]) {
+    if (wanted && wanted !== stored) return false;
+  }
+  for (const [wanted, stored] of [
+    [expected.departure_time, actual.departure_time],
+    [expected.return_time, actual.return_time],
+  ]) {
+    if (wanted && (!stored || !Number.isFinite(Date.parse(wanted)) || Date.parse(wanted) !== Date.parse(stored))) return false;
+  }
+  if ((expected.target_pfz || expected.destination_id || '') !== (actual.target_pfz || '')) return false;
+  if (expected.coordinates && (!actual.coordinates ||
+    expected.coordinates.some((value, i) => !Number.isFinite(value) || value.toFixed(4) !== actual.coordinates![i]?.toFixed(4)))) return false;
+  if (expected.data_mode && expected.data_mode.toUpperCase() !== assessment.conditions?.data_mode?.toUpperCase()) return false;
+  return true;
+}
+
 export function isAssessmentApplicableToContext(
   assessment: TripAssessmentResponse | null | undefined,
-  context: MissionContext,
-  isExpired?: boolean,
-  isLoading?: boolean,
+  context: MissionContext & DecisionMissionIdentityInputs,
+  isExpired = false,
+  isLoading = false,
 ): boolean {
-  if (!assessment || isExpired || isLoading) return false;
-  const tc = assessment.trip_context;
-  if (!tc) return false;
+  return !isExpired && !isLoading && assessmentMatchesInputs(assessment, context);
+}
 
-  if (context.origin_harbor && tc.origin_harbor && context.origin_harbor !== tc.origin_harbor) return false;
-  if (context.craft_profile && tc.craft_profile && context.craft_profile !== tc.craft_profile) return false;
-
-  const storedSize = assessment.mission_state?.vessel?.size_category || tc.vessel_size;
-  if (context.vessel_size && storedSize && context.vessel_size !== storedSize) return false;
-
-  if (context.departure_time && tc.departure_time) {
-    if (Date.parse(context.departure_time) !== Date.parse(tc.departure_time)) return false;
-  }
-  if (context.return_time && tc.return_time) {
-    if (Date.parse(context.return_time) !== Date.parse(tc.return_time)) return false;
-  }
-  if (context.target_pfz && tc.target_pfz && context.target_pfz !== tc.target_pfz) return false;
-
-  return true;
+/** Complete plan comparison for operations that must preserve every mission input. */
+function sameAssessmentPlan(a: TripAssessmentResponse, b: TripAssessmentResponse): boolean {
+  const identity = (record: TripAssessmentResponse) => getMissionIdentityKey({
+    ...record.trip_context,
+    vessel_size: record.mission_state?.vessel?.size_category || record.trip_context.vessel_size,
+    data_mode: record.conditions?.data_mode,
+  });
+  return identity(a) === identity(b);
 }
 
 /** A stale, unrelated, or malformed response must never become the active plan (delay-only map proposal). */
@@ -146,13 +166,15 @@ export function validateSimulationProposal(
     return { valid: false, reason: `Vessel size does not match requested ${expectedSize}.` };
   }
 
-  if (edits.departure) {
-    if (Date.parse(proposed.trip_context?.departure_time || '') !== Date.parse(edits.departure)) {
+  const expectedDeparture = edits.departure || baseline.trip_context?.departure_time;
+  const expectedReturn = edits.returnTime || baseline.trip_context?.return_time;
+  if (expectedDeparture) {
+    if (Date.parse(proposed.trip_context?.departure_time || '') !== Date.parse(expectedDeparture)) {
       return { valid: false, reason: 'Departure time does not match requested proposal.' };
     }
   }
-  if (edits.returnTime) {
-    if (Date.parse(proposed.trip_context?.return_time || '') !== Date.parse(edits.returnTime)) {
+  if (expectedReturn) {
+    if (Date.parse(proposed.trip_context?.return_time || '') !== Date.parse(expectedReturn)) {
       return { valid: false, reason: 'Return time does not match requested proposal.' };
     }
   }
@@ -189,8 +211,12 @@ export function validateRouteChoiceProposal(
   ) {
     return { valid: false, reason: 'Route selection changed core mission parameters unexpectedly.' };
   }
+  if (!sameAssessmentPlan(baseline, proposed) ||
+      (baseline.mission_state && proposed.mission_state?.mission_id !== baseline.mission_state.mission_id)) {
+    return { valid: false, reason: 'Route selection changed mission identity or plan inputs.' };
+  }
   const hasRoute = (proposed.route_candidates || []).some(
-    r => (r.route_id === expectedRouteId || (r as any).id === expectedRouteId),
+    r => r.route_id === expectedRouteId && r.is_recommended && r.departure_supported,
   );
   if (!hasRoute) {
     return { valid: false, reason: `Requested route ${expectedRouteId} is not in returned candidates.` };
@@ -225,6 +251,9 @@ export function validateRefreshedAssessment(
   ) {
     return { valid: false, reason: 'Refreshed assessment does not match the active mission parameters.' };
   }
+  if (!sameAssessmentPlan(baseline, refreshed)) {
+    return { valid: false, reason: 'Refreshed assessment changed mission coordinates, vessel, destination, or data mode.' };
+  }
   return { valid: true };
 }
 
@@ -249,6 +278,11 @@ export function validateChatProposedAssessment(
   }
   if (proposed.trip_context?.origin_harbor !== baseline.trip_context?.origin_harbor) {
     return { valid: false, reason: 'Proposal does not match the current mission origin.' };
+  }
+  if (proposed.conditions?.data_mode !== baseline.conditions?.data_mode ||
+      JSON.stringify(proposed.trip_context?.coordinates ?? null) !== JSON.stringify(baseline.trip_context?.coordinates ?? null) ||
+      (baseline.mission_state && proposed.mission_state?.mission_id !== baseline.mission_state.mission_id)) {
+    return { valid: false, reason: 'Proposal changed evidence context or lost mission linkage.' };
   }
   return { valid: true };
 }

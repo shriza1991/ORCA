@@ -40,6 +40,8 @@ export default function AssessmentSimulator({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const controller = useRef<AbortController | null>(null);
+  const currentAssessmentRef = useRef(assessment);
+  currentAssessmentRef.current = assessment;
 
   // Reset craft and size controls when the baseline assessment changes
   useEffect(() => {
@@ -105,7 +107,8 @@ export default function AssessmentSimulator({
       }
       const data = await response.json();
 
-      if (!abort.signal.aborted && assessment.assessment_id === capturedBaselineId) {
+      if (!abort.signal.aborted && currentAssessmentRef.current === assessment && currentAssessmentRef.current.assessment_id === capturedBaselineId) {
+        if (data.baseline?.assessment_id !== capturedBaselineId) throw new Error('Simulation returned a different baseline.');
         const validation = validateSimulationProposal(assessment, data.simulated, {
           craftProfile: craft,
           vesselSize: size,
@@ -134,6 +137,12 @@ export default function AssessmentSimulator({
       setError('Active mission baseline changed. Cannot apply this proposal.');
       return;
     }
+    const validation = validateSimulationProposal(assessment, result.simulated, {
+      craftProfile: craft, vesselSize: size, departure: proposed,
+      returnTime: assessment.trip_context.return_time
+        ? new Date(Date.parse(assessment.trip_context.return_time) + delay * 3600000).toISOString() : undefined,
+    });
+    if (!validation.valid) { setError(validation.reason || 'Proposal no longer matches the requested edits.'); return; }
     onApply(result.simulated);
   }
 
