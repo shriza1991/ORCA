@@ -18,6 +18,38 @@
 
 ## Current Release & Workstream State
 
+### 2026-10-03 - Task 4: Authoritative Python Geofencing, Approach Warning State Taxonomy & UI (D077)
+
+- **Implemented in Vite/FastAPI; Next.js untouched.** Preserved all Task 3 provenance fixes, authority recovery, proposal validations, and mission workflows.
+- **Python Spatial Authority & Metric Calculations:**
+  - Added `evaluate_location` to `DeterministicGeospatialEngine` in `backend/app/domain/geo_restrictions.py`.
+  - Replaced degree-based approximations with exact local metric projection via `shapely.ops.transform` (`cos(lat_rad)` scale).
+  - Validates finite coordinates and legal boundaries (lat: [-90, 90], lon: [-180, 180]). Boundary-touching points are deterministically classified as `is_inside: True` with `distance_km: 0.0`.
+  - Explicitly handles `Polygon` and `MultiPolygon` geometries and interior holes.
+  - Published authoritative `approach_threshold_km = 10.0` in evaluation responses.
+- **State Taxonomy & Epistemic Honesty:**
+  - Distinguishes `INSIDE`, `APPROACHING`, `CLEAR`, and `UNKNOWN`.
+  - Filters temporal validity (`valid_from`, `valid_to`) at the supplied evaluation timestamp. Static gazetted restrictions remain active without expiry.
+  - Preserves truthful `DEMO`, `SNAPSHOT`, or `LIVE` data modes, lineage, and coverage notes. `CLEAR` is explicitly scoped to evaluated dataset coverage, never claiming certified legal navigation clearance.
+- **FastAPI Endpoint:**
+  - Added `POST /api/v1/geospatial/evaluate` and alias `/api/v1/geofence/evaluate` in `backend/app/api/v1/routes.py`.
+  - Accepts `LocationEvaluationRequest` with optional speed, heading, accuracy, and timestamps. Accuracies >200m immediately resolve to `UNKNOWN`.
+- **Vite Hook Refactoring:**
+  - Refactored `useGeofence.ts` to consume the backend evaluation endpoint. Removed duplicate frontend Turf calculations and the legacy 5 km client threshold.
+  - Implemented `AbortController` cancellation, request throttling (2.5s interval / 20m movement) without suppressing the initial evaluation, and sequence timestamp tracking to prevent out-of-order responses from overwriting fresh location states.
+  - Fail-closed behavior: stale (>30s), denied, timed-out, or coarse (>200m) GPS fixes immediately demote state to `UNKNOWN` and clear active alerts.
+- **Warning Overlay & UI:**
+  - In `LocationWarningsOverlay.tsx`, eliminated the legacy bug `alerts.filter(a => a.isInside)` that hid approaching warnings.
+  - Renders amber `APPROACHING` warnings (boundary name, unrounded distance, actionable guidance, projected TTC when available), red `INSIDE` warnings (boundary name, classification, navigate away guidance), and amber/neutral `UNKNOWN` notices.
+  - Added full translations in English, Hindi, and Marathi in `frontend/src/i18n/translations.ts`.
+- **Verification:**
+  - `tests/domain/test_task4_geofence_boundary_warnings.py`: **15/15 passed**.
+  - `tests/api/test_task4_geospatial_evaluate_api.py`: **7/7 passed**.
+  - Combined backend suite (`test_task2_hazard_validity.py`, `test_integration_inconsistencies.py`, `test_mission_replay.py`, `test_task3_provenance_freshness.py`, `test_agent_collaboration.py`, `test_task4_geofence_boundary_warnings.py`, `test_task4_geospatial_evaluate_api.py`): **103 passed**.
+  - Frontend Vitest suite: **327 passed across 27 test files** (including 9 in `location-warnings.test.ts` and 5 in `useGeofence.test.ts`).
+  - Strict TypeScript check and production build (`tsc && vite build`): **Clean exit code 0**.
+- **Deployment Status:** No git push or deployment executed. Ready for review.
+
 ### 2026-10-03 - Task 3 Provenance Completion & Map Proposal Validation (D075)
 
 - **Implemented in Vite/FastAPI; Next.js untouched.** Authority recovery, PFZ INFORMATIONAL status, hazard-validity protections, verification-based safety confidence, and retained-evidence comparisons preserved.

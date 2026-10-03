@@ -2344,3 +2344,36 @@ Date: 2026-10-03
 Decision: Extend the existing PFZSourceDataPayload with optional provenance fields consumed by the confidence/presentation layer. Retrieval time is supplied source metadata, never evaluator time. Require explicit live verification and temporal applicability for collaboration Verified badges. Validate returned map proposals against the retained baseline and preview the exact returned assessment before Apply. Departure is the evidence-validity reference when available.
 Reason: babce3b contained the intended presentation logic, but its real payload discarded PFZ verification metadata; cached provenance could still be Verified, and the client did not validate the returned proposal identity.
 Impact: Existing deterministic thresholds, replay identity, source retrieval workflows and explicit Apply semantics are preserved. Vite only; no Next.js changes. Verification and limitations are recorded in PROGRESS.md.
+
+## D077 — Task 4: Authoritative Python Geofencing, Boundary Proximity State Taxonomy, and Vite UI Grounding
+Status: ACCEPTED
+Date: 2026-10-03
+Decision:
+1. Python as Deterministic Spatial Authority:
+   - Exposed `POST /api/v1/geospatial/evaluate` (with alias `/api/v1/geofence/evaluate`) driven by `DeterministicGeospatialEngine.evaluate_location()`.
+   - Eliminated duplicate client-side Turf.js safety calculations and retired the competing 5 km client threshold in favor of the authoritative 10.0 km threshold (`approach_threshold_km = 10.0`).
+   - Replaced approximate degrees-to-kilometers calculation (`dist_deg * 111.139`) with exact equirectangular local metric projection via `shapely.ops.transform` (`cos(lat_rad)` latitude convergence scaling).
+   - Validated finite coordinates and legal ranges (lat: [-90, 90], lon: [-180, 180]). Boundary-touching points are deterministically classified as `is_inside: True` with `distance_km: 0.0`.
+   - Polygons with holes and MultiPolygons are evaluated rigorously against exterior rings and interior boundary holes.
+2. Four-State Taxonomy & Deterministic Ordering:
+   - `INSIDE`: Any confirmed geometric containment or boundary touch within an active restriction.
+   - `APPROACHING`: Outside all active restrictions, but within `approach_threshold_km` (10.0 km). Proximity-based unless explicit heading and speed support projected trajectory crossing.
+   - `CLEAR`: Successful evaluation against active boundaries with none inside or approaching. Explicitly scoped to evaluated dataset coverage; never claims certified legal navigation clearance.
+   - `UNKNOWN`: Missing/invalid coordinates, coarse GPS accuracy (>200m), stale location (>30s), denied/timed-out GPS, network error, or missing/failed boundary dataset.
+   - Warnings ordered deterministically: hard restrictions and inside warnings first, then approaching boundaries ordered ascending by distance.
+3. Epistemic Validity & Honesty:
+   - Evaluates temporal validity (`valid_from`, `valid_to`) at the supplied evaluation timestamp. Expired or future restrictions are excluded from active alerts. Static gazetted zones without expiry remain active.
+   - Preserves truthful `DEMO`, `SNAPSHOT`, or `LIVE` data modes, lineage, and coverage notes without manufacturing official claims.
+4. Fail-Closed GPS Hook & Visible Warning Display:
+   - Refactored `useGeofence.ts` to consume backend evaluation with `AbortController` cancellation, monotonic timestamp sequencing to prevent out-of-order response overwrites, and request throttling (2.5s interval / 20m movement) without suppressing the initial fix.
+   - Stale/denied/timeout GPS immediately demotes state to `UNKNOWN` and clears active alerts.
+   - In `LocationWarningsOverlay.tsx`, eliminated the legacy bug `alerts.filter(a => a.isInside)` that hid approaching warnings. Renders amber `APPROACHING` warnings (name, distance, action, projected TTC when available), red `INSIDE` warnings (name, classification, navigate away action), and amber/neutral `UNKNOWN` notices.
+   - Added English, Hindi, and Marathi translations for all boundary warnings and unknown states.
+Reason:
+Deliver reliable early boundary warnings to mariners before crossing restricted maritime zones, replacing duplicate and inconsistent frontend calculations with authoritative Python evaluation, deterministic ordering, and fail-closed GPS handling.
+Impact:
+- 15/15 domain unit tests pass in `tests/domain/test_task4_geofence_boundary_warnings.py`.
+- 7/7 API route tests pass in `tests/api/test_task4_geospatial_evaluate_api.py`.
+- 103/103 total backend tests pass across Task 4, Task 3 provenance, Task 2 hazard validity, and mission replay.
+- 327/327 frontend tests pass in Vitest across 27 test files (including 9 in `location-warnings.test.ts` and 5 in `useGeofence.test.ts`).
+- Production build passes cleanly with zero TypeScript errors.

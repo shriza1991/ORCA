@@ -226,3 +226,44 @@ export interface VoiceChatResponse extends ChatResponse {
   audio_format?: string;
 }
 
+export type LocationEvaluationState = 'CLEAR' | 'APPROACHING' | 'INSIDE' | 'UNKNOWN';
+
+export interface BoundaryWarningItem {
+  boundary_id: string;
+  boundary_name: string;
+  boundary_type: string;
+  distance_km: number;
+  is_inside: boolean;
+  is_hard_restriction: boolean;
+  restriction_level: string;
+  time_to_cross_hours?: number | null;
+  projected_crossing: boolean;
+  source_mode: string;
+  coverage_limitation?: string | null;
+}
+
+export interface LocationEvaluationResponse {
+  evaluation_state: LocationEvaluationState;
+  evaluated_at: string;
+  location_timestamp?: number | null;
+  coordinates?: [number, number] | null;
+  approach_threshold_km: number;
+  warnings: BoundaryWarningItem[];
+  primary_warning?: BoundaryWarningItem | null;
+  coverage_scope: string;
+  unknown_reason?: string | null;
+  data_mode: string;
+}
+
+export interface LocationEvaluationRequestPayload {
+  latitude?: number | null;
+  longitude?: number | null;
+  coordinates?: [number, number] | null;
+  accuracy?: number | null;
+  speed?: number | null;
+  speed_unit?: string;
+  heading?: number | null;
+  timestamp?: number | null;
+  evaluation_time?: string | null;
+  lookahead_hours?: number;
+}

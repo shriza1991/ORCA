@@ -357,6 +357,61 @@ interface TranslationEntry {
 
 export const CANONICAL_TRANSLATION_MAP: TranslationEntry[] = [
   {
+    en: "Restricted Area",
+    hi: "प्रतिबंधित क्षेत्र",
+    mr: "प्रतिबंधित क्षेत्र",
+  },
+  {
+    en: "Inside Restricted Area",
+    hi: "प्रतिबंधित क्षेत्र के अंदर",
+    mr: "प्रतिबंधित क्षेत्राच्या आत",
+  },
+  {
+    en: "Near Restricted Area",
+    hi: "प्रतिबंधित क्षेत्र के समीप",
+    mr: "प्रतिबंधित क्षेत्राजवळ",
+  },
+  {
+    en: "Approaching Restricted Area",
+    hi: "प्रतिबंधित क्षेत्र के समीप",
+    mr: "प्रतिबंधित क्षेत्राजवळ",
+  },
+  {
+    en: "Boundary evaluation unavailable. Your location cannot currently be checked.",
+    hi: "सीमा मूल्यांकन अनुपलब्ध। आपकी वर्तमान स्थिति की जांच नहीं की जा सकती।",
+    mr: "सीमा मूल्यमापन अनुपलब्ध. तुमची सध्याची स्थिती तपासता येत नाही.",
+  },
+  {
+    en: "GPS Signal Lost",
+    hi: "जीपीएस सिग्नल टूट गया",
+    mr: "जीपीएस सिग्नल तुटला",
+  },
+  {
+    en: "Location Denied",
+    hi: "स्थान अनुमति अस्वीकृत",
+    mr: "स्थान परवानगी नाकारली",
+  },
+  {
+    en: "GPS Unavailable",
+    hi: "जीपीएस अनुपलब्ध",
+    mr: "जीपीएस अनुपलब्ध",
+  },
+  {
+    en: "Showing last known location.",
+    hi: "अंतिम ज्ञात स्थान प्रदर्शित।",
+    mr: "शेवटचे ज्ञात स्थान दाखवत आहे.",
+  },
+  {
+    en: "Cannot track your position.",
+    hi: "आपकी स्थिति ट्रैक नहीं की जा सकती।",
+    mr: "तुमची स्थिती ट्रॅक करता येत नाही.",
+  },
+  {
+    en: "Navigate with caution and stay clear of restricted waters.",
+    hi: "सावधानी से चलें और प्रतिबंधित जलक्षेत्र से दूर रहें।",
+    mr: "सावधगिरीने प्रवास करा आणि प्रतिबंधित सागरी भागापासून दूर राहा.",
+  },
+  {
     en: "Significant Wave Height",
     hi: "महत्वपूर्ण लहर ऊंचाई",
     mr: "महत्त्वाची लाट उंची",
@@ -2956,6 +3011,30 @@ const DYNAMIC_PATTERNS: PatternMatcher[] = [
         ? `सक्रिय आईएमडी स्क्वॉल चेतावनी: ${alert}`
         : `सक्रिय आयएमडी वादळी इशारा: ${alert}`;
     },
+  },
+  // Inside restricted area: [name]. Check the applicable restriction and navigate away when safe.
+  {
+    pattern: /inside\s+restricted\s+area:?\s*(.*?)\.\s*check\s+the\s+applicable\s+restriction\s+and\s+navigate\s+away\s+when\s+safe\.?/i,
+    translate: (m, lang) =>
+      lang === 'hi'
+        ? `प्रतिबंधित क्षेत्र के अंदर: ${m[1]}। लागू प्रतिबंध की जांच करें और सुरक्षित होने पर दूर जाएं।`
+        : `प्रतिबंधित क्षेत्राच्या आत: ${m[1]}. लागू निर्बंध तपासा आणि सुरक्षित असल्यास दूर जा.`,
+  },
+  // Near restricted area: [name] — [distance] km from boundary.
+  {
+    pattern: /near\s+restricted\s+area:?\s*(.*?)\s*[—–-]\s*([\d.]+)\s*km\s+from\s+boundary\.?/i,
+    translate: (m, lang) =>
+      lang === 'hi'
+        ? `प्रतिबंधित क्षेत्र के समीप: ${m[1]} — सीमा से ${m[2]} किमी।`
+        : `प्रतिबंधित क्षेत्राजवळ: ${m[1]} — सीमेपासून ${m[2]} किमी.`,
+  },
+  // Course intercepts boundary in [TTC]h.
+  {
+    pattern: /course\s+intercepts\s+boundary\s+in\s*([\d.]+)\s*h\.?/i,
+    translate: (m, lang) =>
+      lang === 'hi'
+        ? `जहाज का मार्ग ${m[1]} घंटे में सीमा को पार करेगा।`
+        : `बोटीचा मार्ग ${m[1]} तासांत सीमा ओलांडेल.`,
   },
 ];
 

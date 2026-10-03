@@ -259,11 +259,15 @@ export default function FisherPage({
     startTracking,
     stopTracking,
   } = useGeolocation();
-  const { alerts: geofenceAlerts } = useGeofence(
+  const {
+    alerts: geofenceAlerts,
+    evaluationState: geoEvaluationState,
+    evaluationResult: geoEvaluationResult,
+  } = useGeofence(
     location,
     geoStatus,
     baseLayers,
-  ); // We can use effectiveLayers, but baseLayers have the hazards/restrictions
+  );
 
   const handleToggleLocation = () => {
     if (isTracking) stopTracking();
@@ -489,7 +493,13 @@ export default function FisherPage({
         {sidebarTab === 'map' && <div className="map-context-strip"><strong>{originHarbor}</strong><span>{zones.length} fishing areas · {assessment?.route_candidates.length || 0} routes</span><button onClick={() => setSidebarTab('decision')}>View decision</button></div>}
       </div>
       <section className="fisher-map-pane" aria-label="Marine mission map">
-        <LocationWarningsOverlay status={geoStatus} alerts={geofenceAlerts} language={chat.language} />
+        <LocationWarningsOverlay
+          status={geoStatus}
+          alerts={geofenceAlerts}
+          evaluationState={geoEvaluationState}
+          unknownReason={geoEvaluationResult?.unknown_reason}
+          language={chat.language}
+        />
         {mapTimeOffset > 0 && mapProposal && (
           <div className="product-notice map-proposal-strip" style={{ margin: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
             <div>

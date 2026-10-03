@@ -308,3 +308,39 @@ The evidence store is bounded and process-local. Browser history and role inspec
 ## 2026-10-03: Optional PFZ provenance fields (D076)
 `PFZSourceDataPayload` retains optional `provider_name`, `valid_from`, `retrieved_at`, `lineage_id`, `coverage`, `coverage_status`, `quality_flags`, and `freshness_flags` through model validation and JSON serialization. Absent values stay absent/None; these fields do not imply official authority. Existing `features`, `bulletin_date`, `valid_to`, and source-mode fields remain canonical. PFZ confidence is independent of marine/weather confidence. A cached source cannot acquire live confidence merely by retaining a verification flag.
 `DataProvenance.retrieved_at` preserves the source's supplied retrieval timestamp. Missing retrieval metadata is not replaced with assembly, assessment, or simulation time.
+
+## 2026-10-03: Geofencing and Boundary Warning Data Models (D077)
+
+Authoritative spatial models for live position boundary evaluation in `backend/app/domain/geo_restrictions.py` and `frontend/src/types/contracts.ts`:
+
+```python
+class BoundaryWarning(BaseModel):
+    boundary_id: str
+    boundary_name: str
+    restriction_type: str
+    distance_km: float                       # Metric distance from polygon boundary (0.0 if inside)
+    is_inside: bool                          # Geometric containment or boundary touch
+    is_hard_restriction: bool                # Prohibited zone (e.g., military, international border)
+    projected_crossing: bool = False         # Heading/speed vector crossing
+    time_to_crossing_min: Optional[float] = None
+    source: str
+    data_mode: str = "DEMO"
+    coverage_limitations: Optional[str] = None
+    action_guidance: Optional[str] = None
+
+class LocationEvaluationResult(BaseModel):
+    state: str                               # "CLEAR" | "APPROACHING" | "INSIDE" | "UNKNOWN"
+    evaluated_at: str                        # ISO-8601 UTC
+    location_timestamp: Optional[str] = None
+    coordinates: Optional[List[float]] = None # [longitude, latitude]
+    approach_threshold_km: float = 10.0
+    warnings: List[BoundaryWarning] = Field(default_factory=list)
+    active_restrictions_count: int = 0
+    coverage_scope: str
+    unknown_reason: Optional[str] = None
+    data_mode: str = "DEMO"
+```
+
+- Coordinate order is strictly `[longitude, latitude]`.
+- Distance is computed via local metric projection; unrounded internally, formatted for display.
+- Non-zero distance with `is_inside: false` represents distance to nearest polygon boundary. Boundary-touching points are deterministically `is_inside: true`, `distance_km: 0.0`.

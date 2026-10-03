@@ -19,7 +19,11 @@ from backend.app.domain.marine_dataset import (
     get_marine_record,
     get_weather_record,
 )
-from backend.app.domain.geo_restrictions import DeterministicGeospatialEngine
+from backend.app.domain.geo_restrictions import (
+    BoundaryWarning,
+    DeterministicGeospatialEngine,
+    LocationEvaluationResult,
+)
 from backend.app.domain.pfz import (
     DeterministicPFZRankingEngine,
     haversine_distance_nm,
@@ -42,6 +46,8 @@ __all__ = [
     "evaluate_deterministic_risk",
     "DeterministicPFZRankingEngine",
     "DeterministicGeospatialEngine",
+    "BoundaryWarning",
+    "LocationEvaluationResult",
     "haversine_distance_nm",
     "initial_compass_bearing_deg",
 ]

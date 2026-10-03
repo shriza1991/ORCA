@@ -20,10 +20,11 @@ import math
 import os
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, List, Optional, Tuple
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from backend.app.contracts.chat import (
     ChatRequest,
@@ -756,6 +757,106 @@ async def get_base_layers():
             }
         ],
     }
+
+class LocationEvaluationRequest(BaseModel):
+    """Mariner live location fix payload submitted for authoritative boundary safety evaluation."""
+
+    latitude: Optional[float] = Field(None, description="WGS84 latitude (-90 to 90)")
+    longitude: Optional[float] = Field(None, description="WGS84 longitude (-180 to 180)")
+    coordinates: Optional[list[float]] = Field(None, description="[longitude, latitude] pair")
+    accuracy: Optional[float] = Field(None, description="Reported GPS fix accuracy in meters")
+    speed: Optional[float] = Field(None, description="Vessel instantaneous speed")
+    speed_unit: Optional[str] = Field("m/s", description="'m/s' or 'knots'")
+    heading: Optional[float] = Field(None, description="Vessel heading in degrees from true north (0-360)")
+    timestamp: Optional[float] = Field(None, description="Location fix epoch timestamp in milliseconds")
+    evaluation_time: Optional[str] = Field(None, description="Optional ISO-8601 UTC timestamp for evaluation")
+    lookahead_hours: float = Field(2.0, ge=0.1, le=12.0, description="Forward trajectory projection lookahead in hours")
+
+
+@router.post(
+    "/geospatial/evaluate",
+    status_code=status.HTTP_200_OK,
+    tags=["Geospatial & Boundaries"],
+    summary="Evaluate mariner live coordinates against authoritative restricted boundaries",
+    description=(
+        "Performs deterministic geodesic boundary proximity and containment evaluation using "
+        "the Python DeterministicGeospatialEngine. Categorizes state into CLEAR, APPROACHING, "
+        "INSIDE, or UNKNOWN. Evaluates temporal validity windows and optional projected crossing."
+    ),
+)
+@router.post(
+    "/geofence/evaluate",
+    status_code=status.HTTP_200_OK,
+    tags=["Geospatial & Boundaries"],
+    summary="Evaluate mariner live coordinates against authoritative restricted boundaries (alias)",
+)
+def evaluate_geospatial_location(request: LocationEvaluationRequest) -> Any:
+    """Evaluates live vessel coordinates against official maritime restrictions and geofence polygons."""
+    from backend.app.domain.geo_restrictions import (
+        DeterministicGeospatialEngine,
+        LocationEvaluationResult,
+        parse_validity_datetime,
+    )
+
+    lon: Optional[float] = None
+    lat: Optional[float] = None
+
+    if request.coordinates and len(request.coordinates) >= 2:
+        lon, lat = request.coordinates[0], request.coordinates[1]
+    elif request.longitude is not None and request.latitude is not None:
+        lon, lat = request.longitude, request.latitude
+
+    now_utc = datetime.now(UTC)
+    eval_dt = now_utc
+    if request.evaluation_time:
+        try:
+            parsed = parse_validity_datetime(request.evaluation_time)
+            if parsed:
+                eval_dt = parsed
+        except Exception:
+            return LocationEvaluationResult(
+                evaluation_state="UNKNOWN",
+                evaluated_at=now_utc.isoformat(),
+                location_timestamp=request.timestamp,
+                coordinates=[lon, lat] if lon is not None and lat is not None else None,
+                approach_threshold_km=DeterministicGeospatialEngine.APPROACH_THRESHOLD_KM,
+                warnings=[],
+                primary_warning=None,
+                unknown_reason="MALFORMED_EVALUATION_TIME: Could not parse evaluation_time ISO string.",
+            )
+
+    # Validate accuracy if provided: if > 200 meters, treat fix as insufficiently accurate
+    if request.accuracy is not None and request.accuracy > 200.0:
+        return LocationEvaluationResult(
+            evaluation_state="UNKNOWN",
+            evaluated_at=eval_dt.isoformat(),
+            location_timestamp=request.timestamp,
+            coordinates=[lon, lat] if lon is not None and lat is not None else None,
+            approach_threshold_km=DeterministicGeospatialEngine.APPROACH_THRESHOLD_KM,
+            warnings=[],
+            primary_warning=None,
+            unknown_reason=f"INSUFFICIENT_ACCURACY: GPS fix accuracy (+/-{round(request.accuracy, 1)}m) exceeds 200m safety tolerance.",
+        )
+
+    # Convert speed to knots if provided in m/s
+    speed_knots: Optional[float] = None
+    if request.speed is not None and math.isfinite(request.speed):
+        if (request.speed_unit or "m/s").lower() in ("m/s", "mps", "meter/sec"):
+            speed_knots = request.speed * 1.943844
+        else:
+            speed_knots = request.speed
+
+    engine = DeterministicGeospatialEngine()
+    coords_pair = [lon, lat] if (lon is not None and lat is not None) else None
+
+    return engine.evaluate_location(
+        coordinates=coords_pair,
+        heading_degrees=request.heading,
+        speed_knots=speed_knots,
+        evaluation_time=eval_dt,
+        lookahead_hours=request.lookahead_hours,
+        location_timestamp=request.timestamp,
+    )
 
 
 @router.post(
