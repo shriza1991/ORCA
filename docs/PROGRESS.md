@@ -1,3 +1,23 @@
+### 2026-10-04 - High-ROI UX Voice FAB, Mission Wizard Auto-Advance, Community Field Intelligence Network (OFIN), and Neon Serverless Postgres Migration (D084)
+- **High-ROI Voice Action on Fisher Home**: Added prominent hero "Talk to ORCA" voice action button directly on the Fisher Home tab, linking to the existing `useVoiceRecorder` hook and Sarvam/OpenAI STT engine. Features live recording pulse, real-time transcription status, error handling, and automatic dispatch into chat with tab transition.
+- **GuidedTripSetup Conversational Auto-Advance**: Converted multi-step mission setup wizard into a conversational flow. Clicking an option (Harbor, Craft Profile, Vessel Size, Departure Presets, Return Duration, PFZ Selection) automatically advances to the next question without requiring redundant manual "Next" clicks, while preserving explicit Next/Back navigation for custom datetime inputs and review.
+- **ORCA Field Intelligence Network (OFIN) Backend**:
+  - Implemented `FieldObservation` and `ObservationCorroboration` models in `backend/app/db/field_intelligence_models.py` with privacy-by-design (~5km grid cell snapping, stripped PII).
+  - Enforced strict safety invariants C-1 through C-5 (C-1: Official constraints are never overridden; C-2: Epistemic notice that missing reports != safe conditions; C-3: All records stamped with `[FIELD SIGNAL]`; C-4: Categorical trust dimensions `UNVERIFIED`/`PHONE_VERIFIED`/`ESTABLISHED` with zero decimal percentages; C-5: Corroboration tracked but community signals never override hard stops).
+  - Created FastAPI router in `backend/app/api/v1/community.py` with feed querying, observation submission, independent corroboration, and deterministic snapshot demo fallbacks; registered in main router.
+  - Comprehensive unit/integration tests in `tests/api/test_community.py` (all tests passing).
+- **Community Field Intelligence Frontend UI**:
+  - Built `CommunityObservationsPanel.tsx` integrated directly into Fisher Home and mobile views.
+  - Offers real-time/snapshot observation feeds, quick report modal (Rough Sea, Calm Sea, High Wind, Fog, Fish Shoal, Debris), categorical trust tags, freshness counters, and 1-click corroboration (`+1 Confirm`).
+  - Added API client functions in `frontend/src/api/client.ts` and types in `frontend/src/types/contracts.ts`.
+- **Neon Serverless PostgreSQL Migration**:
+  - Connected to Neon Singapore region (`delicate-flower-63443367` in `aws-ap-southeast-1`), enabled `postgis` and `uuid-ossp` extensions.
+  - Authored and applied Alembic migration `g1a2b3c4d5e8_field_observations.py`.
+  - Migrated schema across all 15 public tables (`trip_assessments`, `field_observations`, `actionable_alerts`, `connector_snapshots`, etc.).
+  - Verified `uploads` branchable storage bucket on Neon branch `br-summer-credit-b3t260s4`.
+  - Updated application `.env` to target Neon Serverless PostgreSQL.
+- **Verification**: 401/401 frontend tests passing in Vitest (`34 passed`); 14/14 backend tests passing in Pytest against Neon; strict TypeScript compilation and production build cleanly verified. Dual-client architecture preserved; Next.js untouched.
+
 ### 2026-10-04 - Non-Overlapping Mission Brief, Drag-Guarded Ocean Telemetry, Collapsible HUDs, and Compact Telemetry Bar (D083)
 - Repositioned `.mission-map-brief` (`top: 64px; left: 16px;`) below coastal bookmarks/windflow toolbar line, eliminating overlay overlap on both Vite and Next.js clients.
 - Made Mission Brief container interactive and collapsible via heading click or chevron toggle with keyboard accessibility (`role="button"`, `tabIndex={0}`, Enter/Space).

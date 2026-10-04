@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import MapView from "../components/map/MapView";
 import GuidedTripSetup from "../components/fisher/GuidedTripSetup";
 import FisherDecisionSurface from "../components/fisher/FisherDecisionSurface";
@@ -11,7 +11,7 @@ import MissionSummary, { assessmentStatus } from "../components/fisher/MissionSu
 import type { TripAssessmentResponse } from "../types/assessment";
 import ChatPanel from "../components/chat/ChatPanel";
 import type { useChat } from "../hooks/useChat";
-import type { MapLayer } from "../types/contracts";
+import type { MapLayer, TranscribeResponse } from "../types/contracts";
 import { getHarborCoordinates, fetchAndFormatBaseLayers } from "../utils/geo";
 import { mergeFisherLayers, formatFishermanPopup } from "../utils/fisher-map";
 import { useTripAssessment } from "../hooks/useTripAssessment";
@@ -20,7 +20,9 @@ import FisherAlertPanel from "../components/fisher/FisherAlertPanel";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useGeofence } from "../hooks/useGeofence";
 import LocationWarningsOverlay from "../components/map/LocationWarningsOverlay";
-import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRound, ArrowUpRight, Bookmark, Mic } from "lucide-react";
+import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
+import { Home, MessageSquare, Navigation, Map as MapIcon, History, Bell, UserRound, ArrowUpRight, Bookmark, Mic, Radio, X } from "lucide-react";
+import CommunityObservationsPanel from "../components/fisher/CommunityObservationsPanel";
 import { speechCoordinator } from "../utils/speech-coordinator";
 import { translateText } from "../i18n/translations";
 import { type MissionContext, type DecisionDeltaContract } from "../types/mission";
@@ -95,6 +97,20 @@ export default function FisherPage({
   const fisherDataMode = (
     import.meta.env.VITE_DATA_MODE || "DEMO"
   ).toUpperCase();
+
+  // Home-screen voice: tap mic → record → transcribe → send to chat
+  const [homeVoiceError, setHomeVoiceError] = useState<string | null>(null);
+  const handleVoiceTranscription = useCallback((result: TranscribeResponse) => {
+    if (result.transcript) {
+      chat.send(result.transcript);
+      setSidebarTab('chat');
+      setHomeVoiceError(null);
+    }
+  }, [chat]);
+  const homeVoice = useVoiceRecorder({
+    onTranscription: handleVoiceTranscription,
+    onError: (msg) => setHomeVoiceError(msg),
+  });
 
   const {
     data: retainedAssessment,
@@ -658,10 +674,80 @@ export default function FisherPage({
         )}
         {sidebarTab === 'home' && <>
           <div className="vessel-context"><Navigation size={20} /><span><strong>{(chat.missionContext.craft_profile || 'motorized_boat').replace(/_/g, ' ')}</strong><small>{chat.missionContext.vessel_size || 'medium'} vessel · {tripWindow}</small></span><button onClick={() => setSidebarTab('profile')}>Edit profile</button></div>
+
+          {/* Primary voice action — visible on home */}
+          <div style={{ margin: '16px 0 8px 0' }}>
+            <button
+              id="orca-talk-fab"
+              aria-label={homeVoice.isRecording ? 'Stop recording' : homeVoice.isTranscribing ? 'Transcribing...' : 'Talk to ORCA'}
+              onClick={() => {
+                if (homeVoice.isRecording) {
+                  homeVoice.stopRecording();
+                } else if (!homeVoice.isTranscribing) {
+                  setHomeVoiceError(null);
+                  homeVoice.startRecording();
+                }
+              }}
+              disabled={homeVoice.isTranscribing || !homeVoice.isSupported}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '14px',
+                width: '100%', padding: '18px 24px',
+                borderRadius: '16px',
+                background: homeVoice.isRecording
+                  ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
+                  : homeVoice.isTranscribing
+                  ? 'linear-gradient(135deg, #7c3aed, #6d28d9)'
+                  : 'linear-gradient(135deg, #0284c7, #0369a1)',
+                color: 'white', border: 'none', cursor: 'pointer',
+                fontSize: '1.15rem', fontWeight: 700,
+                boxShadow: homeVoice.isRecording
+                  ? '0 0 0 4px rgba(220,38,38,0.25), 0 4px 16px rgba(0,0,0,0.2)'
+                  : '0 4px 16px rgba(2,132,199,0.35)',
+                transition: 'all 0.2s ease',
+                position: 'relative', overflow: 'hidden',
+              }}
+            >
+              {homeVoice.isRecording ? (
+                <><Radio size={28} style={{ flexShrink: 0, animation: 'pulse 1s ease-in-out infinite' }} />
+                <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                  <strong>Listening...</strong>
+                  <small style={{ fontWeight: 400, opacity: 0.85, fontSize: '0.875rem' }}>Tap to stop</small>
+                </span></>
+              ) : homeVoice.isTranscribing ? (
+                <><Mic size={28} style={{ flexShrink: 0, opacity: 0.7 }} />
+                <span>Processing speech...</span></>
+              ) : (
+                <><Mic size={28} style={{ flexShrink: 0 }} />
+                <span style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                  <strong>Talk to ORCA</strong>
+                  <small style={{ fontWeight: 400, opacity: 0.85, fontSize: '0.875rem' }}>"Can I go fishing tomorrow?" · "Is the sea safe?"</small>
+                </span></>
+              )}
+            </button>
+            {homeVoiceError && (
+              <div style={{ marginTop: '8px', padding: '10px 14px', borderRadius: '10px',
+                background: '#fef2f2', color: '#b91c1c', fontSize: '0.9rem',
+                display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <X size={16} />{homeVoiceError}
+              </div>
+            )}
+            {!homeVoice.isSupported && (
+              <p style={{ margin: '6px 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>Voice not supported — use the Ask ORCA tab to type.</p>
+            )}
+          </div>
+
           <div className="home-actions"><button className="product-primary" onClick={() => setSidebarTab('voyage')}><Navigation size={20} /><span>Plan a trip<small>Vessel, time and fishing area</small></span><ArrowUpRight size={20} /></button><button onClick={() => setSidebarTab('chat')}><MessageSquare size={20} /><span>Ask ORCA<small>Start with a question</small></span><ArrowUpRight size={20} /></button></div>
           {summary}
           <section className="product-section"><div className="section-heading"><h3>Fishing areas</h3><span className="muted">{zones.length} evaluated candidates</span></div>{zones.length ? zones.slice(0, 3).map(p => <div className="zone-row" key={p.candidate_id}><button onClick={() => { chat.setMissionContext({ ...chat.missionContext, target_pfz: p.candidate_id }); setSidebarTab('map'); }}><strong>{p.candidate_id}</strong><small>{Number(p.distance_nautical_miles).toFixed(1)} nm · bearing {Number(p.bearing_degrees).toFixed(0)}°</small></button><button aria-label={`Save ${p.candidate_id}`} aria-pressed={savedZones.includes(p.candidate_id)} onClick={() => saveZone(p.candidate_id)}><Bookmark size={18} fill={savedZones.includes(p.candidate_id) ? 'currentColor' : 'none'} /></button></div>) : <p className="muted">No valid fishing areas in this mission window. Try a different departure.</p>}<p className="muted">{savedZones.length} saved on this device</p></section>
           <section className="product-section"><div className="section-heading"><h3>Latest alerts</h3><button onClick={() => setSidebarTab('alerts')}>View all</button></div><p>{assessment?.conditions.hazard?.headline || 'Your trip advisories will appear after assessment.'}</p></section>
+          <section className="product-section" style={{ marginTop: '16px' }}>
+            <CommunityObservationsPanel
+              harbor={originHarbor}
+              onSelectLocation={(_coords) => {
+                setSidebarTab('map');
+              }}
+            />
+          </section>
         </>}
         {sidebarTab === 'voyage' && <GuidedTripSetup context={chat.missionContext} language={chat.language} onContextChange={chat.setMissionContext} onComplete={handleCompletePlan} onCancel={() => setSidebarTab('home')} />}
         {sidebarTab === 'decision' && <>{summary}{baselineUsable && assessment && <RouteChoices assessment={assessment} onApply={applyAssessment} />}{baselineUsable && <WhatIfSimulator assessment={assessment} onApplyAssessment={applyAssessment} currentContext={chat.missionContext} currentStatus={effectiveDecisionStatus} language={chat.language} onSimulate={(params, query) => chat.simulateWhatIf(params, query, assessment?.assessment_id)} onApplyContext={chat.setMissionContext} />}<details className="product-details evidence-details"><summary>Inspect evidence, routes and detailed reasoning</summary><FisherDecisionSurface assessment={assessment} isLoading={isLoading} error={error} isOffline={isOffline} isExpired={isExpired} missionContext={chat.missionContext} language={chat.language} collaboration={null} onOpenVoyageSettings={() => setSidebarTab('voyage')} onViewMap={() => setSidebarTab('map')} /></details></>}

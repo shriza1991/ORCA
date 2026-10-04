@@ -267,3 +267,46 @@ export interface LocationEvaluationRequestPayload {
   evaluation_time?: string | null;
   lookahead_hours?: number;
 }
+
+export interface FieldObservation {
+  public_id: string;
+  observation_type: string;
+  severity?: string | null;
+  description?: string | null;
+  observed_at: string;
+  valid_until?: string | null;
+  approx_latitude: number;
+  approx_longitude: number;
+  approx_radius_km: number;
+  harbor_reference?: string | null;
+  verification_status: string;
+  corroboration_count: number;
+  contributor_trust: string;
+  official_agreement?: boolean | null;
+  source_type: string;
+  data_mode: string;
+  lineage_label: string;
+  safety_disclaimer: string;
+  evidence_count: number;
+  is_demo: boolean;
+}
+
+export interface FieldFeedResponse {
+  observations: FieldObservation[];
+  total_count: number;
+  epistemic_notice: string;
+  feed_generated_at: string;
+}
+
+export interface SubmitObservationPayload {
+  observation_type: string;
+  severity?: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  harbor_reference?: string;
+  origin_harbor?: string;
+  craft_profile?: string;
+  media_keys?: string[];
+  is_demo?: boolean;
+}

@@ -317,6 +317,8 @@ export default function GuidedTripSetup({
                 key={h}
                 onClick={() => {
                   setLocalContext((prev) => ({ ...prev, origin_harbor: h }));
+                  // Auto-advance after brief visual feedback
+                  setTimeout(() => setStep((s) => s + 1), 120);
                 }}
                 style={{
                   padding: "20px",
@@ -337,22 +339,6 @@ export default function GuidedTripSetup({
                 ⚓ {translateText(h, language)}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!localContext.origin_harbor}
-              style={{
-                padding: "18px",
-                fontSize: "1.2rem",
-                borderRadius: "12px",
-                background: localContext.origin_harbor ? "#0284c7" : "#94a3b8",
-                color: "white",
-                border: "none",
-                fontWeight: 700,
-              }}
-            >
-              {translateText("Next: Boat", language)}
-            </button>
           </div>
         );
 
@@ -370,6 +356,7 @@ export default function GuidedTripSetup({
                     ...prev,
                     craft_profile: c.value,
                   }));
+                  setTimeout(() => setStep((s) => s + 1), 120);
                 }}
                 style={{
                   padding: "22px",
@@ -395,22 +382,6 @@ export default function GuidedTripSetup({
                 ⛵ {translateText(c.label, language)}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!localContext.craft_profile}
-              style={{
-                padding: "18px",
-                fontSize: "1.2rem",
-                borderRadius: "12px",
-                background: localContext.craft_profile ? "#0284c7" : "#94a3b8",
-                color: "white",
-                border: "none",
-                fontWeight: 700,
-              }}
-            >
-              {translateText("Next: Vessel Size", language)}
-            </button>
           </div>
         );
 
@@ -436,6 +407,7 @@ export default function GuidedTripSetup({
                     if (typeof window !== "undefined") {
                       localStorage.setItem("orca_mission_vessel_size", opt.value);
                     }
+                    setTimeout(() => setStep((s) => s + 1), 120);
                   }}
                   style={{
                     padding: "22px",
@@ -468,22 +440,6 @@ export default function GuidedTripSetup({
                 </button>
               );
             })}
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!localContext.vessel_size}
-              style={{
-                padding: "18px",
-                fontSize: "1.2rem",
-                borderRadius: "12px",
-                background: localContext.vessel_size ? "#0284c7" : "#94a3b8",
-                color: "white",
-                border: "none",
-                fontWeight: 700,
-              }}
-            >
-              {translateText("Next: Departure", language)}
-            </button>
           </div>
         );
 
@@ -539,6 +495,8 @@ export default function GuidedTripSetup({
                       departure_time: newDep,
                       return_time: newRet,
                     }));
+                    // Auto-advance after departure preset selection
+                    setTimeout(() => setStep((s) => s + 1), 180);
                   }}
                   style={{
                     padding: "16px",
@@ -684,6 +642,8 @@ export default function GuidedTripSetup({
                       ...prev,
                       return_time: newRet,
                     }));
+                    // Auto-advance after duration selection
+                    setTimeout(() => setStep((s) => s + 1), 180);
                   }}
                   style={{
                     padding: "16px",
@@ -831,6 +791,8 @@ export default function GuidedTripSetup({
                     ...prev,
                     target_pfz: opt.value,
                   }));
+                  // Auto-advance after PFZ selection
+                  setTimeout(() => setStep((s) => s + 1), 120);
                 }}
                 style={{
                   padding: "20px",
@@ -864,23 +826,6 @@ export default function GuidedTripSetup({
                 </div>
               </button>
             ))}
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={localContext.target_pfz === "custom"}
-              style={{
-                padding: "18px",
-                fontSize: "1.2rem",
-                borderRadius: "12px",
-                background:
-                  localContext.target_pfz !== "custom" ? "#0284c7" : "#94a3b8",
-                color: "white",
-                border: "none",
-                fontWeight: 700,
-              }}
-            >
-              {translateText("Next: Review", language)}
-            </button>
           </div>
         );
 

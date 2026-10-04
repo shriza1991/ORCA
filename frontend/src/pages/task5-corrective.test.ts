@@ -41,7 +41,7 @@ let store: Record<string,string>;
 function Harness(props: any = {}) { chat = useChat(); return createElement(FisherPage, { chat, voiceProposal: props.voiceProposal, onVoiceProposalHandled: props.onHandled, theme: 'light', mobileView: 'map', onStartCall: vi.fn(), onOpenEvidence: vi.fn(), onBack: vi.fn(), onViewMap: vi.fn() }); }
 function ChatProbe() { chat = useChat(); return null; }
 async function mount(component: () => ReturnType<typeof createElement> | null = Harness) { await act(async () => { tree = create(createElement(component)); }); }
-function navigate(label: string) { const nav = tree.root.findByProps({ 'aria-label': 'Fisher workspace' }); act(() => nav.findAllByType('button').find(b => b.findAllByType('span').some(span => span.children.includes(label)))!.props.onClick()); }
+function navigate(label: string) { const nav = tree.root.findByProps({ 'aria-label': 'Fisher workspace' }); act(() => nav.findAllByType('button').find((b: any) => b.findAllByType('span').some((span: any) => span.children.includes(label)))!.props.onClick()); }
 function map() { return tree.root.findByType('map-snapshot' as any).props; }
 function deferred() { let resolve!: (v: any) => void; const promise = new Promise<any>(r => { resolve = r; }); return { promise, resolve }; }
 beforeEach(() => {
@@ -84,7 +84,7 @@ describe('Task 5 corrective production integration', () => {
     expect(map().assessment.assessment_id).toBe('proposal');
     expect(map().canonicalConditions.marker).toBe('proposed');
     expect(map().layers.find((l: any) => l.layer_id === 'route_route_1').geojson.features[0].geometry.coordinates).toEqual([[70,15],[71,16]]);
-    const apply = tree.root.findAllByType('button').find(b => String(b.props.children).includes('Apply'))!;
+    const apply = tree.root.findAllByType('button').find((b: any) => String(b.props.children).includes('Apply'))!;
     expect(apply).toBeDefined();
     await act(async () => { apply.props.onClick(); });
     expect(chat.missionAssessment?.assessment_id).toBe('proposal');
@@ -131,7 +131,7 @@ describe('Task 5 corrective production integration', () => {
     await act(async () => { tree = create(createElement(RouteChoices, { assessment: baseline, onApply })); });
     act(() => tree.root.findAllByType('button')[0].props.onClick());
     let request!: Promise<void>;
-    act(() => { request = tree.root.findAllByType('button').find(b => String(b.props.children).includes('Use evaluated corridor'))!.props.onClick(); });
+    act(() => { request = tree.root.findAllByType('button').find((b: any) => String(b.props.children).includes('Use evaluated corridor'))!.props.onClick(); });
     act(() => tree.update(createElement(RouteChoices, { assessment: { ...baseline, assessment_id: 'new' }, onApply })));
     await act(async () => { pending.resolve({ ok: true, json: async () => ({ ...baseline, assessment_id: 'route-proposal', trip_context: { ...baseline.trip_context, parent_assessment_id: 'baseline' } }) }); await request; });
     expect(onApply).not.toHaveBeenCalled();
@@ -142,9 +142,9 @@ describe('Task 5 corrective production integration', () => {
     const refreshed = { ...baseline, assessment_id: 'refresh', evidence_bundle_id: 'new-evidence', trip_context: { ...baseline.trip_context, parent_assessment_id: 'baseline' } };
     vi.mocked(fetch).mockResolvedValueOnce({ ok: true, json: async () => ({ baseline, simulated: refreshed, delta: { decision_changed: true, changed_factors: [], added_factors: [], removed_factors: [] } }) } as any);
     await act(async () => { tree = create(createElement(MissionChanges, { assessment: baseline, onApply })); });
-    await act(async () => { tree.root.findAllByType('button').find(b => b.props.children === 'Check for changes')!.props.onClick(); });
+    await act(async () => { tree.root.findAllByType('button').find((b: any) => b.props.children === 'Check for changes')!.props.onClick(); });
     expect(onApply).not.toHaveBeenCalled();
-    act(() => tree.root.findAllByType('button').find(b => b.props.children === 'Review and use refreshed assessment')!.props.onClick());
+    act(() => tree.root.findAllByType('button').find((b: any) => b.props.children === 'Review and use refreshed assessment')!.props.onClick());
     expect(onApply).toHaveBeenCalledWith(refreshed);
   });
 

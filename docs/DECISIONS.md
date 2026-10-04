@@ -2525,3 +2525,46 @@ Verification:
 - Full Vitest suite: 330/330 passing across all operational test suites.
 Owner: Dev 1 (Frontend), Dev 4 (Deterministic Safety & GIS)
 Date: 2026-10-04
+
+## D084 — High-ROI Fisher UX, Voice Action, Field Intelligence Network (OFIN), and Neon Migration
+
+Status: ACCEPTED
+Date: 2026-10-04
+
+Decision:
+1. Fisher Home Voice FAB:
+   - Added primary hero "Talk to ORCA" voice action button directly to the Fisher Home tab.
+   - Tied directly to existing `useVoiceRecorder` hook and Sarvam/OpenAI STT engine.
+   - Recording, listening, transcribing, and error states rendered inline; transcribed queries automatically populate and dispatch into the chat flow with smooth tab transition.
+2. Conversational Wizard Auto-Advance:
+   - In `GuidedTripSetup.tsx`, selecting single-choice options (Harbor, Boat Type, Vessel Size, Departure Presets, Return Duration, PFZ candidate) immediately advances the wizard step without requiring redundant clicks on "Next".
+   - Maintained explicit "Next / Back" controls for precision datetime inputs and final review.
+3. ORCA Field Intelligence Network (OFIN) Architecture & Invariants:
+   - Added `FieldObservation` and `ObservationCorroboration` models in `backend/app/db/field_intelligence_models.py`.
+   - Privacy-by-design: Public feeds return snapped ~5km grid cell centers; raw GPS coordinates and user identity are stripped before public exposure.
+   - Enforced canonical safety invariants C-1 through C-5:
+     * C-1: Community signals never override official hard constraints or advisory thresholds.
+     * C-2: Epistemic notice: absence of reports in an area does NOT imply safe conditions.
+     * C-3: All crowdsourced observations explicitly labeled `[FIELD SIGNAL]`.
+     * C-4: Trust is reported categorically (`UNVERIFIED`, `PHONE_VERIFIED`, `ESTABLISHED`), never as decimal confidence percentages.
+     * C-5: Independent corroboration is tracked, but signals only modulate advisory confidence (MEDIUM↔HIGH), never overriding hard stops.
+   - FastAPI endpoints registered under `/api/v1/community`.
+4. Frontend Community Integration:
+   - Built `CommunityObservationsPanel.tsx` integrated on Fisher Home, providing real-time/snapshot observation feeds, quick report modal (Rough Sea, Calm Sea, High Wind, Fog, Fish Shoal, Debris), categorical trust tags, freshness counters, and 1-click corroboration (`+1 Confirm`).
+   - Initialized with deterministic snapshot observations to preserve hermetic offline-first operation and eliminate redundant background network fetches on mount.
+5. Neon Serverless PostgreSQL Migration:
+   - Connected to Neon Singapore region (`delicate-flower-63443367` in `aws-ap-southeast-1`), enabled `postgis` and `uuid-ossp` extensions.
+   - Authored and applied Alembic migration `g1a2b3c4d5e8_field_observations.py`.
+   - Migrated schema across all 15 public tables (`trip_assessments`, `field_observations`, `actionable_alerts`, `connector_snapshots`, etc.).
+   - Verified `uploads` branchable storage bucket on Neon branch `br-summer-credit-b3t260s4`.
+   - Updated application `.env` to target Neon Serverless PostgreSQL.
+
+Reason: Dramatically reduce friction for mariners in the field with 1-tap voice access and intuitive setup auto-advance, unlock crowdsourced real-time maritime intelligence under rigorous safety invariants, and establish reliable, high-performance serverless cloud persistence via Neon.
+
+Verification:
+- Frontend Vitest suite: 401/401 tests passing across 34 test files.
+- Backend Pytest suite: 14/14 tests passing against the active Neon database.
+- Strict TypeScript compilation and production Vite build succeeded with 0 errors.
+- Dual-client architecture preserved; Next.js untouched.
+
+Owner: Full Stack / Core Team

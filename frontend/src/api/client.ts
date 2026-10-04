@@ -6,6 +6,9 @@ import type {
   RecommendationStatus,
   TranscribeResponse,
   VoiceChatResponse,
+  FieldObservation,
+  FieldFeedResponse,
+  SubmitObservationPayload,
 } from '../types/contracts';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '');
@@ -441,5 +444,52 @@ export async function getDemoRouteAlternatives(
   if (params?.vessel_id) query.set('vessel_id', params.vessel_id);
   const qs = query.toString() ? `?${query.toString()}` : '';
   return request<RouteAlternativesResponse>(`/demo/routes/alternatives${qs}`, { signal });
+}
+
+export async function getFieldObservations(
+  params?: {
+    harbor?: string;
+    observation_type?: string;
+    hours?: number;
+    limit?: number;
+    include_demo?: boolean;
+  },
+  signal?: AbortSignal,
+): Promise<FieldFeedResponse> {
+  const query = new URLSearchParams();
+  if (params?.harbor) query.set('harbor', params.harbor);
+  if (params?.observation_type) query.set('observation_type', params.observation_type);
+  if (params?.hours) query.set('hours', params.hours.toString());
+  if (params?.limit) query.set('limit', params.limit.toString());
+  if (params?.include_demo !== undefined) query.set('include_demo', params.include_demo.toString());
+  const qs = query.toString() ? `?${query.toString()}` : '';
+  return request<FieldFeedResponse>(`/community/observations${qs}`, { signal });
+}
+
+export async function submitFieldObservation(
+  payload: SubmitObservationPayload,
+  signal?: AbortSignal,
+): Promise<FieldObservation> {
+  return request<FieldObservation>('/community/observations', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    signal,
+  });
+}
+
+export async function corroborateFieldObservation(
+  publicId: string,
+  payload: { latitude: number; longitude: number; agrees?: boolean; is_demo?: boolean },
+  signal?: AbortSignal,
+): Promise<FieldObservation> {
+  return request<FieldObservation>(`/community/observations/${publicId}/corroborate`, {
+    method: 'POST',
+    body: JSON.stringify({ agrees: true, ...payload }),
+    signal,
+  });
+}
+
+export async function getDemoFieldObservations(signal?: AbortSignal): Promise<FieldFeedResponse> {
+  return request<FieldFeedResponse>('/community/observations/demo', { signal });
 }
 
