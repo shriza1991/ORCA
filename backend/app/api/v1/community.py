@@ -323,6 +323,9 @@ def submit_observation(
         }
 
     # Anonymous contributor hash from IP (not stored here — would come from request)
+    if req.media_keys:
+        from backend.app.services.field_media import validate_media_keys
+        validate_media_keys(req.media_keys, reporter)
     obs = FieldObservation(
         observation_type=req.observation_type,
         severity=req.severity,

@@ -22,17 +22,31 @@ services:
       - key: DEBUG
         value: "false"
       - key: DATA_MODE
-        value: HYBRID
+        value: DEMO
       - key: LLM_PROVIDER
         value: auto
       - key: BACKEND_HOST
         value: 0.0.0.0
       - key: BACKEND_PORT
         value: "8000"
+      # Paste .env.render.local in the existing Render service environment.
+      # Neon pooled URL for runtime; direct URL for Alembic migrations.
       - key: DATABASE_URL
-        fromDatabase:
-          name: orca-postgres
-          property: connectionString
+        sync: false
+      - key: ALEMBIC_DATABASE_URL
+        sync: false
+      - key: COMMUNITY_HASH_SECRET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_ENDPOINT_URL_S3
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
+      - key: NEON_UPLOADS_BUCKET
+        value: uploads
       - key: FRONTEND_ORIGIN
         value: https://orca-qxx1.vercel.app
       - key: CORS_ORIGINS
@@ -46,13 +60,4 @@ services:
       - key: IMD_API_KEY
         sync: false
 
-databases:
-  # ---------------------------------------------------------------------------
-  # Managed PostgreSQL Database for ORCA persistence and audit trails
-  # ---------------------------------------------------------------------------
-  - name: orca-postgres
-    plan: starter
-    region: oregon
-    databaseName: orca_db
-    user: orca_user
-    postgresMajorVersion: 16
+# Legacy Render database remains untouched outside this blueprint during cutover.
