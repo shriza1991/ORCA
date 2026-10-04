@@ -80,6 +80,7 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                 limit = (
                     self.max_voice_upload_size
                     if "/voice/" in request.url.path
+                    else 6 * 1024 * 1024 if request.url.path == "/api/v1/community/media"
                     else self.max_upload_size
                 )
                 if int(content_length) > limit:
@@ -126,7 +127,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         route_type = None
         limit = 0
 
-        if path.startswith("/api/v1/chat"):
+        if path.startswith("/api/v1/community") and request.method == "POST":
+            route_type = "community"
+            limit = 30
+        elif path.startswith("/api/v1/chat"):
             route_type = "chat"
             limit = self.chat_limit
         elif path.startswith("/api/v1/voice"):

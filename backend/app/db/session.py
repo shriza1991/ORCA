@@ -13,8 +13,9 @@ from backend.app.core.config import settings
 engine = create_engine(
     settings.SYNC_DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_MAX_OVERFLOW,
+    pool_recycle=settings.DB_POOL_RECYCLE_SECONDS,
     connect_args={"connect_timeout": 1},
 )
 

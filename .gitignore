@@ -101,3 +101,5 @@ brag-output/
 
 # sample data for pfz from incois
 data-sample/
+.neon
+.env.neon-storage

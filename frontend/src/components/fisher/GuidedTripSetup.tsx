@@ -318,7 +318,7 @@ export default function GuidedTripSetup({
                 onClick={() => {
                   setLocalContext((prev) => ({ ...prev, origin_harbor: h }));
                   // Auto-advance after brief visual feedback
-                  setTimeout(() => setStep((s) => s + 1), 120);
+                  setStep(step + 1);
                 }}
                 style={{
                   padding: "20px",
@@ -356,7 +356,7 @@ export default function GuidedTripSetup({
                     ...prev,
                     craft_profile: c.value,
                   }));
-                  setTimeout(() => setStep((s) => s + 1), 120);
+                  setStep(step + 1);
                 }}
                 style={{
                   padding: "22px",
@@ -407,7 +407,7 @@ export default function GuidedTripSetup({
                     if (typeof window !== "undefined") {
                       localStorage.setItem("orca_mission_vessel_size", opt.value);
                     }
-                    setTimeout(() => setStep((s) => s + 1), 120);
+                    setStep(step + 1);
                   }}
                   style={{
                     padding: "22px",
@@ -496,7 +496,7 @@ export default function GuidedTripSetup({
                       return_time: newRet,
                     }));
                     // Auto-advance after departure preset selection
-                    setTimeout(() => setStep((s) => s + 1), 180);
+                    setStep(step + 1);
                   }}
                   style={{
                     padding: "16px",
@@ -643,7 +643,7 @@ export default function GuidedTripSetup({
                       return_time: newRet,
                     }));
                     // Auto-advance after duration selection
-                    setTimeout(() => setStep((s) => s + 1), 180);
+                    setStep(step + 1);
                   }}
                   style={{
                     padding: "16px",
@@ -792,7 +792,7 @@ export default function GuidedTripSetup({
                     target_pfz: opt.value,
                   }));
                   // Auto-advance after PFZ selection
-                  setTimeout(() => setStep((s) => s + 1), 120);
+                  setStep(step + 1);
                 }}
                 style={{
                   padding: "20px",

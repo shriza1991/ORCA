@@ -35,6 +35,7 @@ class ObservationBundle(BaseModel):
     hazard: Optional[HazardBulletinPayload] = Field(
         None, description="Severe weather, cyclone, or squall warnings (IMD/INCOIS)"
     )
+    field_signals: List[Dict[str, Any]] = Field(default_factory=list, description="Non-authoritative community context, frozen with this bundle")
     captured_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),
         description="Timestamp when the snapshot bundle was assembled (ISO-8601 UTC)",

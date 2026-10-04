@@ -100,10 +100,13 @@ export default function FisherPage({
 
   // Home-screen voice: tap mic → record → transcribe → send to chat
   const [homeVoiceError, setHomeVoiceError] = useState<string | null>(null);
+  const [voiceDraft, setVoiceDraft] = useState<{text: string; language?: "en" | "hi" | "mr"} | null>(null);
+  const [fieldSignals, setFieldSignals] = useState<import("../types/contracts").FieldObservation[]>([]);
+  const [fieldCenter, setFieldCenter] = useState<[number, number] | null>(null);
   const handleVoiceTranscription = useCallback((result: TranscribeResponse) => {
     if (result.transcript) {
-      chat.send(result.transcript);
-      setSidebarTab('chat');
+      const locale = result.normalized_language;
+      setVoiceDraft({ text: result.transcript, language: ["en", "hi", "mr"].includes(locale) ? locale as "en" | "hi" | "mr" : undefined });
       setHomeVoiceError(null);
     }
   }, [chat]);
@@ -531,13 +534,16 @@ export default function FisherPage({
       baselineRoutes: sidebarTab === "voyage" ? [] : routeLayers,
       baselinePFZ: sidebarTab === "voyage" ? [] : pfzLayers,
       baselineHazards: [],
-      chatLayers: chatLayers,
+      chatLayers: [...chatLayers, { layer_id: "community-field-signals", name: "[FIELD SIGNAL] Approximate community reports", layer_type: "geojson", visible: true,
+        style: { color: "#a855f7", layer_category: "community" },
+        geojson: { type: "FeatureCollection", features: fieldSignals.map(report => ({ type: "Feature", geometry: { type: "Point", coordinates: [report.approx_longitude, report.approx_latitude] }, properties: { ...report, title: "[FIELD SIGNAL] " + report.observation_type, source: "COMMUNITY", warning: "Not official safety clearance" } })) } }],
     });
   }, [
     baseLayers,
     harborCoords,
     originHarbor,
     mapLayersTarget,
+    fieldSignals,
     sidebarTab,
     mapDisplayDecision,
   ]);
@@ -738,12 +744,17 @@ export default function FisherPage({
 
           <div className="home-actions"><button className="product-primary" onClick={() => setSidebarTab('voyage')}><Navigation size={20} /><span>Plan a trip<small>Vessel, time and fishing area</small></span><ArrowUpRight size={20} /></button><button onClick={() => setSidebarTab('chat')}><MessageSquare size={20} /><span>Ask ORCA<small>Start with a question</small></span><ArrowUpRight size={20} /></button></div>
           {summary}
+          {voiceDraft && <section className="product-section"><label>Recognized question (correct harbor/time before sending)<textarea value={voiceDraft.text} onChange={e => setVoiceDraft({ ...voiceDraft, text: e.target.value })} /></label><button disabled={!voiceDraft.text.trim() || chat.isLoading} onClick={() => { chat.send(voiceDraft.text, voiceDraft.language); setVoiceDraft(null); setSidebarTab('chat'); }}>Ask ORCA</button><button onClick={() => setVoiceDraft(null)}>Cancel</button></section>}
+          {!homeVoice.isSupported && <p className="muted">Microphone recording is unavailable. Use Ask ORCA to type your question.</p>}
           <section className="product-section"><div className="section-heading"><h3>Fishing areas</h3><span className="muted">{zones.length} evaluated candidates</span></div>{zones.length ? zones.slice(0, 3).map(p => <div className="zone-row" key={p.candidate_id}><button onClick={() => { chat.setMissionContext({ ...chat.missionContext, target_pfz: p.candidate_id }); setSidebarTab('map'); }}><strong>{p.candidate_id}</strong><small>{Number(p.distance_nautical_miles).toFixed(1)} nm · bearing {Number(p.bearing_degrees).toFixed(0)}°</small></button><button aria-label={`Save ${p.candidate_id}`} aria-pressed={savedZones.includes(p.candidate_id)} onClick={() => saveZone(p.candidate_id)}><Bookmark size={18} fill={savedZones.includes(p.candidate_id) ? 'currentColor' : 'none'} /></button></div>) : <p className="muted">No valid fishing areas in this mission window. Try a different departure.</p>}<p className="muted">{savedZones.length} saved on this device</p></section>
           <section className="product-section"><div className="section-heading"><h3>Latest alerts</h3><button onClick={() => setSidebarTab('alerts')}>View all</button></div><p>{assessment?.conditions.hazard?.headline || 'Your trip advisories will appear after assessment.'}</p></section>
           <section className="product-section" style={{ marginTop: '16px' }}>
             <CommunityObservationsPanel
               harbor={originHarbor}
-              onSelectLocation={(_coords) => {
+              dataMode={fisherDataMode}
+              userCoordinates={geoStatus === 'active' && location ? [location.longitude, location.latitude] : harborCoords}
+              onSignals={setFieldSignals}
+              onSelectLocation={(coords) => { setFieldCenter(coords);
                 setSidebarTab('map');
               }}
             />
@@ -800,7 +811,7 @@ export default function FisherPage({
             </div>
           </div>
         )}
-        <MapView layers={effectiveLayers} theme={theme} center={harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={mapDisplayAssessment} canonicalConditions={mapDisplayAssessment?.conditions} canonicalDecision={mapDisplayDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
+        <MapView layers={effectiveLayers} theme={theme} center={fieldCenter || harborCoords} zoom={9.5} resetViewTrigger={lastPlanTime || undefined} language={chat.language} customPopupRenderer={formatFishermanPopup} layerAvailability={layerAvailability} hideAdvancedControls={false} liveLocation={location} liveLocationStatus={geoStatus} isTrackingLocation={isTracking} onToggleLocation={handleToggleLocation} craftProfile={chat.missionContext.craft_profile} timeOffsetHours={mapTimeOffset} onTimeOffsetChange={handleTimeOffsetChange} assessment={mapDisplayAssessment} canonicalConditions={mapDisplayAssessment?.conditions} canonicalDecision={mapDisplayDecision} /><div className="map-caption">Select a route, fishing area or restriction to inspect its details.</div></section>
     </div>
   </main>;
 }

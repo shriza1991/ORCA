@@ -18,21 +18,25 @@ Safety Invariants strictly enforced:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import logging
 import math
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Header, UploadFile, File
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.db.session import get_db
+from backend.app.core.config import settings
+from backend.app.domain.synthetic.generator import current_demo_reference
 from backend.app.db.field_intelligence_models import (
     ConditionSeverityEnum,
     ContributorTrustEnum,
     FieldObservation,
+    FieldConfirmation,
     LocationPrecisionEnum,
     ObservationTypeEnum,
     VerificationStatusEnum,
@@ -91,6 +95,7 @@ class ObservationPublicResponse(BaseModel):
         "Community field signals may inform or increase/decrease confidence. "
         "They do NOT override official safety restrictions, warnings, or hard constraints."
     )
+    persistence: str = "DATABASE"
     evidence_count: int = 0
     is_demo: bool = False
 
@@ -103,6 +108,7 @@ class FieldFeedResponse(BaseModel):
         "Missing community reports in an area do NOT imply safe conditions. "
         "ORCA uses official sources as the primary safety authority."
     )
+    source_status: str = "AVAILABLE"
     feed_generated_at: str
 
 
@@ -125,10 +131,10 @@ def _approx_coords(lat: float, lon: float, radius_km: float = _APPROX_RADIUS_KM)
     """Snap exact coordinates to ~5km grid cell center (privacy protection)."""
     # Degree-per-km approximation for snapping
     deg_lat = radius_km / 111.0
-    deg_lon = radius_km / (111.0 * math.cos(math.radians(lat)))
+    deg_lon = radius_km / (111.0 * max(abs(math.cos(math.radians(lat))), 0.01))
     approx_lat = round(lat / deg_lat) * deg_lat
     approx_lon = round(lon / deg_lon) * deg_lon
-    return round(approx_lat, 4), round(approx_lon, 4)
+    return round(max(-90, min(90, approx_lat)), 4), round(max(-180, min(180, approx_lon)), 4)
 
 
 def _validity_window(obs_type: ObservationTypeEnum) -> timedelta:
@@ -171,6 +177,7 @@ def _to_public_response(obs: FieldObservation) -> ObservationPublicResponse:
         official_agreement=obs.official_agreement,
         evidence_count=ev_count,
         is_demo=obs.is_demo,
+        data_mode="DEMO" if obs.is_demo else "FIELD_SIGNAL",
     )
 
 
@@ -244,7 +251,7 @@ DEMO_OBSERVATIONS: List[dict] = [
 
 def _demo_observation(d: dict) -> ObservationPublicResponse:
     """Convert demo dict to public response."""
-    now = datetime.now(UTC)
+    now = current_demo_reference()
     return ObservationPublicResponse(
         public_id=d["public_id"],
         observation_type=d["observation_type"],
@@ -259,8 +266,10 @@ def _demo_observation(d: dict) -> ObservationPublicResponse:
         verification_status=d["verification_status"],
         corroboration_count=d["corroboration_count"],
         contributor_trust=d["contributor_trust"],
-        official_agreement=d.get("official_agreement"),
-        evidence_count=d.get("evidence_count", 0),
+        official_agreement=None,
+        evidence_count=0,
+        persistence="DEMO_FIXTURE",
+        data_mode="DEMO",
         is_demo=d.get("is_demo", True),
     )
 
@@ -268,6 +277,17 @@ def _demo_observation(d: dict) -> ObservationPublicResponse:
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+def reporter_identity(x_field_reporter: str = Header(...)) -> str:
+    try:
+        normalized = str(uuid.UUID(x_field_reporter))
+    except ValueError:
+        raise HTTPException(422, "A valid anonymous device identifier is required.")
+    secret = settings.COMMUNITY_HASH_SECRET
+    if not secret and settings.APP_ENV in {"production", "staging"}:
+        raise HTTPException(503, "Field reporting is not configured.")
+    return hmac.new((secret or "local-demo-only").encode(), normalized.encode(), hashlib.sha256).hexdigest()
+
 
 @router.get("/observations/demo", response_model=FieldFeedResponse)
 def get_demo_observations():
@@ -284,6 +304,7 @@ def get_demo_observations():
 def submit_observation(
     req: ObservationSubmitRequest,
     db: Session = Depends(get_db),
+    reporter: str = Depends(reporter_identity),
 ):
     """Submit a community field observation.
 
@@ -311,8 +332,9 @@ def submit_observation(
         approx_latitude=approx_lat,
         approx_longitude=approx_lon,
         approx_radius_km=_APPROX_RADIUS_KM,
-        exact_latitude=req.latitude,
-        exact_longitude=req.longitude,
+        exact_latitude=None,
+        exact_longitude=None,
+        contributor_hash=reporter,
         location_precision=LocationPrecisionEnum.APPROXIMATE,
         harbor_reference=req.harbor_reference,
         mission_context_json=mission_ctx,
@@ -329,10 +351,8 @@ def submit_observation(
         db.refresh(obs)
     except Exception as exc:
         db.rollback()
-        logger.warning("Field observation DB write failed (offline?): %s", exc)
-        # Return a non-persisted response in demo/offline mode
-        obs.approx_radius_km = _APPROX_RADIUS_KM
-        obs.observation_type = req.observation_type
+        logger.warning("Field observation persistence failed: %s", type(exc).__name__)
+        raise HTTPException(503, "Observation was not saved. Please retry when connected.")
 
     return _to_public_response(obs)
 
@@ -344,6 +364,7 @@ def get_observations(
     limit: int = Query(50, ge=1, le=200),
     hours: int = Query(24, ge=1, le=168, description="Lookback window in hours"),
     db: Session = Depends(get_db),
+    include_demo: bool = False,
 ):
     """Get recent field signal feed.
 
@@ -356,7 +377,10 @@ def get_observations(
         q = db.query(FieldObservation).filter(
             FieldObservation.observed_at >= since,
             FieldObservation.verification_status != VerificationStatusEnum.EXPIRED,
+            FieldObservation.valid_until > datetime.now(UTC),
         )
+        if not include_demo:
+            q = q.filter(FieldObservation.is_demo.is_(False))
         if harbor:
             q = q.filter(FieldObservation.harbor_reference == harbor)
         if observation_type:
@@ -366,11 +390,14 @@ def get_observations(
         records = q.order_by(FieldObservation.observed_at.desc()).limit(limit).all()
         observations = [_to_public_response(r) for r in records]
     except Exception as exc:
-        logger.warning("Field observation DB read failed (offline?): %s", exc)
-        # Fallback to demo in offline mode
-        observations = [_demo_observation(d) for d in DEMO_OBSERVATIONS
-                        if not harbor or d.get("harbor_reference") == harbor]
-        total = len(observations)
+        logger.warning("Field observation read unavailable: %s", type(exc).__name__)
+        raise HTTPException(503, "Field reports are unavailable; missing reports do not establish safety.")
+    if include_demo:
+        seeds = [_demo_observation(d) for d in DEMO_OBSERVATIONS
+                 if (not harbor or d.get("harbor_reference") == harbor)
+                 and (not observation_type or d["observation_type"] == observation_type)]
+        observations = (observations + seeds)[:limit]
+        total += len(seeds)
 
     return FieldFeedResponse(
         observations=observations,
@@ -404,6 +431,7 @@ def corroborate_observation(
     public_id: str,
     req: CorroborateRequest,
     db: Session = Depends(get_db),
+    reporter: str = Depends(reporter_identity),
 ):
     """Corroborate an existing observation from a second independent observer.
 
@@ -411,20 +439,45 @@ def corroborate_observation(
     official safety decisions even when corroborated.
     """
     try:
-        obs = db.query(FieldObservation).filter(
-            FieldObservation.public_id == public_id
-        ).first()
+        obs = db.query(FieldObservation).filter(FieldObservation.public_id == public_id).with_for_update().first()
         if not obs:
-            raise HTTPException(status_code=404, detail=f"Observation {public_id} not found.")
-
-        obs.corroboration_count += 1
-        if obs.corroboration_count >= 1:
-            obs.verification_status = VerificationStatusEnum.CORROBORATED
+            raise HTTPException(404, "Observation not found; demo seeds are read-only.")
+        if obs.contributor_hash == reporter:
+            raise HTTPException(409, "You cannot confirm your own report.")
+        if obs.valid_until and obs.valid_until <= datetime.now(UTC):
+            raise HTTPException(409, "This report has expired.")
+        distance = math.hypot((req.latitude - obs.approx_latitude) * 111,
+                              (req.longitude - obs.approx_longitude) * 111 * math.cos(math.radians(req.latitude)))
+        if distance > 20:
+            raise HTTPException(422, "Confirmation location must be within 20 km of the report.")
+        existing = db.query(FieldConfirmation).filter_by(observation_id=obs.id, reporter_hash=reporter).first()
+        if existing:
+            raise HTTPException(409, "This device has already responded to this report.")
+        db.add(FieldConfirmation(observation_id=obs.id, reporter_hash=reporter, agrees=req.agrees))
+        if req.agrees:
+            obs.corroboration_count += 1
+            if obs.corroboration_count >= 3:
+                obs.verification_status = VerificationStatusEnum.CORROBORATED
         db.commit()
         db.refresh(obs)
         return _to_public_response(obs)
     except HTTPException:
+        db.rollback()
         raise
     except Exception as exc:
-        logger.warning("Corroboration DB write failed: %s", exc)
-        raise HTTPException(status_code=503, detail="Database temporarily unavailable.")
+        db.rollback()
+        logger.warning("Confirmation persistence unavailable: %s", type(exc).__name__)
+        raise HTTPException(503, "Confirmation was not saved. Please retry.")
+
+
+@router.post("/media", status_code=201)
+async def upload_evidence(file: UploadFile = File(...), reporter: str = Depends(reporter_identity)):
+    from backend.app.services.field_media import save_image, MAX_UPLOAD
+    content = await file.read(MAX_UPLOAD + 1)
+    return save_image(content, reporter)
+
+
+@router.get("/media")
+def read_evidence(key: str, reporter: str = Depends(reporter_identity)):
+    from backend.app.services.field_media import download_url
+    return download_url(key, reporter)

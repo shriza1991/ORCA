@@ -181,6 +181,10 @@ class AssessmentService:
             hourly_forecast=list(hourly_by_time.values()),
         )
         
+        from backend.app.services.field_context import capture_field_signals
+        bundle.field_signals = (data_service.bundle.field_signals if request.evidence_bundle_id
+                                else capture_field_signals(effective_origin_harbor, request.data_mode))
+        bundle.source_metadata["field_signal_policy"] = "Context only; no official restriction or confidence promotion"
         bundle.source_metadata["provenance_mode"] = bundle.provenance_mode
         evidence_bundle_id = request.evidence_bundle_id or retain_bundle(ctx, request.data_mode, bundle, pfz_raw)
         if not request.evidence_bundle_id:

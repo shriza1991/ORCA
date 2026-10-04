@@ -407,6 +407,14 @@ def _build_retained_evidence(selected):
             coverage=f"{craft} limits" if craft else None,
         ))
 
+    from backend.app.services.field_context import applicable_field_signals
+    for signal in applicable_field_signals(selected.conditions.field_signals, selected.trip_context.departure_time):
+        source_items.append(EvidenceItem(evidence_id=f"{bundle_id}:field:{signal['public_id']}",
+            source_name="[FIELD SIGNAL] " + signal["observation_type"], provider_name="Anonymous community report",
+            data_mode="DEMO" if signal.get("is_demo") else "FIELD_SIGNAL",
+            quality_flags=["COMMUNITY", "NON_AUTHORITATIVE", signal["verification_status"]],
+            observed_time=signal["observed_at"], valid_from=signal["observed_at"], valid_to=signal["valid_until"],
+            coverage=signal.get("harbor_reference"), lineage_id=signal["public_id"]))
     return source_items + derived_items
 
 
@@ -519,6 +527,8 @@ def bind_mission_response(response, profile, message):
         response.answer = " ".join([localize(brief.summary), *[localize(x) for x in factors[:2]], localize(brief.recommended_action)])
     # Proposal does not update the active mission until explicitly applied.
     response.mission_state = baseline.mission_state.model_dump(mode="json") if baseline.mission_state else None
+    if any("NON_AUTHORITATIVE" in e.quality_flags for e in response.evidence):
+        response.answer += " \n[FIELD SIGNAL] Nearby community context is available in evidence; it cannot override the mission decision or official warnings."
     response.agent_collaboration = None  # No derived agent execution claims.
     response.trace.append(AgentTraceItem(step=len(response.trace) + 1, node="retained_mission_evaluation", agent="domain", tool_name="trip_assessment",
         action=f"Projected {selected.assessment_id} from evidence {selected.evidence_bundle_id}; active mission unchanged until Apply.", status="completed"))

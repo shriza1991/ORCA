@@ -21,7 +21,7 @@ from backend.app.core.config import settings
 config = context.config
 
 # Overwrite sqlalchemy.url with our settings config (escaping % for configparser interpolation)
-config.set_main_option("sqlalchemy.url", settings.SYNC_DATABASE_URL.replace("%", "%%"))
+config.set_main_option("sqlalchemy.url", os.getenv("ALEMBIC_DATABASE_URL", settings.SYNC_DATABASE_URL).replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
