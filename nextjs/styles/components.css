@@ -1522,8 +1522,8 @@
 .mission-map-brief {
   position: absolute;
   z-index: 5;
-  top: 14px;
-  left: 14px;
+  top: 64px;
+  left: 16px;
   width: min(280px, calc(100% - 120px));
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
@@ -1558,6 +1558,8 @@
   color: var(--color-accent);
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+  user-select: none;
 }
 
 .map-brief-heading-left {

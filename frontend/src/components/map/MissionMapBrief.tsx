@@ -204,7 +204,20 @@ export default function MissionMapBrief({
 
   return (
     <aside className={`mission-map-brief ${isCollapsed ? 'collapsed' : ''}`} aria-label="Mission map summary and corridor selection">
-      <div className="map-brief-heading">
+      <div
+        className="map-brief-heading"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={!isCollapsed}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsCollapsed(!isCollapsed);
+          }
+        }}
+        title={isCollapsed ? translateText('Expand mission brief', language) : translateText('Collapse mission brief', language)}
+      >
         <div className="map-brief-heading-left">
           <MapPinned size={15} />
           <span>{translateText('Mission map & corridors', language)}</span>
@@ -214,7 +227,10 @@ export default function MissionMapBrief({
             <button
               type="button"
               className="map-brief-reset-btn"
-              onClick={onResetView}
+              onClick={(e) => {
+                e.stopPropagation();
+                onResetView();
+              }}
               title={translateText('Fit / Reset Map View', language)}
               aria-label={translateText('Fit / Reset Map View', language)}
               style={{
@@ -235,7 +251,10 @@ export default function MissionMapBrief({
           <button
             type="button"
             className="map-brief-toggle-btn"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCollapsed(!isCollapsed);
+            }}
             title={isCollapsed ? 'Expand mission brief' : 'Collapse mission brief'}
             aria-label={isCollapsed ? 'Expand mission brief' : 'Collapse mission brief'}
           >

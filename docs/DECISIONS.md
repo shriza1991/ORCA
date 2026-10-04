@@ -2481,3 +2481,37 @@ Decision: Route explicit voice proposal adoption through the existing Fisher val
 Reason: The initial Task 6 implementation contained disconnected voice proposal adoption, stale callback races, incomplete monitoring context, and misleading alert lifecycle behavior. Preserve existing assessment and deterministic safety logic while closing these integration gaps.
 
 Verification: 401 frontend tests passed; 284 tests passed and 4 skipped across backend API/domain and selected mission/voice suites. TypeScript and Vite production build passed. Alembic has one head, f1a2b3c4d5e7, and the Task 6 upgrade SQL generated successfully. Live database upgrade and real microphone/provider playback were not exercised.
+
+## D083 — Non-Overlapping Mission Brief Positioning, Drag-Guarded Ocean Telemetry, and Collapsible HUDs (2026-10-04)
+Status: ACCEPTED
+
+Decision:
+1. Non-Overlapping UI Alignment:
+   - Repositioned `.mission-map-brief` from `top: 14px; left: 14px;` to `top: 64px; left: 16px;` in both `frontend/src/styles/components.css` and `nextjs/styles/components.css`.
+   - Clears the top-left coastal bookmarks and windflow controls bar (`top: 16px; left: 16px;`), preventing visual collisions and obstruction of mission summary chips.
+2. Collapsible Mission Brief:
+   - Made `.map-brief-heading` an interactive, accessible toggle (`role="button"`, `tabIndex={0}`, Enter/Space key listeners, `cursor: pointer`).
+   - Clicking anywhere on the brief header toggles collapse/expand state, with `e.stopPropagation()` on reset and chevron buttons to prevent event leakage.
+3. Drag-Guarded Ocean Depth & Tide Telemetry Trigger:
+   - In `MapView.tsx` (both Vite and Next.js clients), added drag and pointer-movement tracking (`mousedown`, `touchstart`, `dragstart`, `drag`, `dragend`).
+   - `map.on("click")` now strictly ignores:
+     - Active map movement gestures (`map.isMoving() || map.isEasing() || isDragging`).
+     - Pointer movements greater than 4px between mousedown and mouseup, distinguishing true clicks from drag/pan actions.
+     - Interactive layer clicks (vessels, routes, hazards) via `(e.originalEvent)._handledByLayer = true`.
+     - Clicks inside UI overlay panels, popups, or HUD controls (`.maplibre-popup`, `.map-point-inspector`, `.mission-map-brief`, `.map-coastal-bookmarks`, `.map-ruler-hud`).
+   - Only stationary, intentional clicks on open water trigger bathymetric & tidal telemetry queries.
+4. Collapsible Telemetry Inspector HUD:
+   - Added `isInspectorCollapsed` state to `MapView.tsx` in both clients.
+   - Header bar supports click-to-toggle with ChevronDown / ChevronUp indicators.
+   - When collapsed, renders a compact, unobtrusive coordinate and depth preview bar (`📍 lat, lon · depth · tide`) while keeping the map canvas unobstructed.
+5. Dual-Client Parity:
+   - Maintained 1:1 behavioral and stylistic parity across Vite (`frontend/`) and Next.js (`nextjs/`).
+
+Reason: Prevent UI clutter and accidental telemetry requests during map navigation, and give mariners full control over on-screen overlays without sacrificing spatial data access.
+
+Verification:
+- Next.js typecheck (`npm --prefix nextjs run typecheck`) passed with 0 errors.
+- Frontend map tests (`npm --prefix frontend test -- src/components/map/ --run`) passed 36/36 tests.
+- Full Vitest suite: 330/330 passing across all operational test suites.
+Owner: Dev 1 (Frontend), Dev 4 (Deterministic Safety & GIS)
+Date: 2026-10-04

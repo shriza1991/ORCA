@@ -26,6 +26,8 @@ import {
   ShieldAlert,
   ShieldX,
   HelpCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { translateText, type SupportedLanguage } from "../../i18n/translations";
 import {
@@ -165,6 +167,7 @@ export default function MapView({
     data: UnifiedSpatialQueryResponse | null;
     loading: boolean;
   } | null>(null);
+  const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
 
   // Canonical Decision Snapshot: seed telemetry card from assessment conditions when at t=0.
@@ -800,8 +803,39 @@ export default function MapView({
       }
     });
 
+    let isDragging = false;
+    let dragStartPos: { x: number; y: number } | null = null;
+
+    map.on("mousedown", (e) => {
+      dragStartPos = { x: e.point.x, y: e.point.y };
+      isDragging = false;
+    });
+
+    map.on("touchstart", (e) => {
+      if (e.points && e.points.length > 0) {
+        dragStartPos = { x: e.points[0].x, y: e.points[0].y };
+      }
+      isDragging = false;
+    });
+
+    map.on("dragstart", () => {
+      isDragging = true;
+    });
+
+    map.on("drag", () => {
+      isDragging = true;
+    });
+
+    map.on("dragend", () => {
+      isDragging = true;
+      setTimeout(() => {
+        isDragging = false;
+        dragStartPos = null;
+      }, 150);
+    });
+
     map.on("click", async (e) => {
-      // If nautical ruler is active, capture waypoint instead of opening spatial inspection popup
+      // 1. Guard: If nautical ruler is active, capture waypoint instead of opening spatial inspection popup
       if (isRulerActiveRef.current) {
         const pt: [number, number] = [
           parseFloat(e.lngLat.lng.toFixed(5)),
@@ -810,6 +844,37 @@ export default function MapView({
         setRulerPoints((prev) => [...prev, pt]);
         return;
       }
+
+      // 2. Guard: Never trigger on dragging, panning, or map movement gestures
+      if (isDragging || map.isMoving() || map.isEasing()) {
+        return;
+      }
+      if (dragStartPos) {
+        const dx = Math.abs(e.point.x - dragStartPos.x);
+        const dy = Math.abs(e.point.y - dragStartPos.y);
+        // More than 4px pointer movement indicates a drag or pan, not an intentional stationary click
+        if (dx > 4 || dy > 4) {
+          return;
+        }
+      }
+
+      // 3. Guard: If an interactive layer handled this click, don't trigger point inspection
+      if ((e.originalEvent as any)?._handledByLayer) {
+        return;
+      }
+
+      // 4. Guard: If clicking inside UI overlays, controls, or popups, don't trigger point inspection
+      const target = e.originalEvent?.target as HTMLElement | null;
+      if (
+        target &&
+        target.closest &&
+        target.closest(
+          ".maplibre-popup, .mapboxgl-popup, .map-point-inspector, .mission-map-brief, .map-coastal-bookmarks, .map-ruler-hud, .fisher-simple-map-controls, .maplibregl-ctrl, .coastal-bookmarks-dropdown"
+        )
+      ) {
+        return;
+      }
+
       const lat = parseFloat(e.lngLat.lat.toFixed(4));
       const lon = parseFloat(e.lngLat.lng.toFixed(4));
       setInspectedPoint({ lat, lon, data: null, loading: true });
@@ -1344,6 +1409,9 @@ export default function MapView({
 
           map.on("click", interactiveLayerId, (e) => {
             if (isRulerActiveRef.current) return;
+            if (e.originalEvent) {
+              (e.originalEvent as any)._handledByLayer = true;
+            }
             if (!e.features?.length) return;
             const feature = e.features[0];
             const props = feature.properties || {};
@@ -2352,7 +2420,8 @@ export default function MapView({
             bottom: "72px",
             right: "16px",
             zIndex: 15,
-            width: "290px",
+            width: isInspectorCollapsed ? "auto" : "290px",
+            minWidth: isInspectorCollapsed ? "220px" : "290px",
             background:
               theme === "dark"
                 ? "rgba(15, 23, 42, 0.95)"
@@ -2360,9 +2429,10 @@ export default function MapView({
             backdropFilter: "blur(10px)",
             border: "1px solid var(--border, #334155)",
             borderRadius: "10px",
-            padding: "12px",
+            padding: isInspectorCollapsed ? "8px 12px" : "12px",
             boxShadow: "0 6px 20px rgba(0, 0, 0, 0.22)",
             fontSize: "12px",
+            transition: "all 0.2s ease",
           }}
         >
           <div
@@ -2370,10 +2440,14 @@ export default function MapView({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: "8px",
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-              paddingBottom: "6px",
+              marginBottom: isInspectorCollapsed ? "0" : "8px",
+              borderBottom: isInspectorCollapsed ? "none" : "1px solid rgba(255,255,255,0.08)",
+              paddingBottom: isInspectorCollapsed ? "0" : "6px",
+              cursor: "pointer",
+              userSelect: "none",
             }}
+            onClick={() => setIsInspectorCollapsed(!isInspectorCollapsed)}
+            title={isInspectorCollapsed ? "Expand telemetry" : "Collapse telemetry"}
           >
             <span
               style={{
@@ -2387,33 +2461,87 @@ export default function MapView({
               <Waves size={15} />
               Ocean Depth & Tide Telemetry
             </span>
-            <button
-              type="button"
-              onClick={() => setInspectedPoint(null)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--muted-foreground, #94a3b8)",
-                padding: "2px",
-              }}
-              aria-label="Close telemetry HUD"
-            >
-              <X size={14} />
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsInspectorCollapsed(!isInspectorCollapsed);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--muted-foreground, #94a3b8)",
+                  padding: "2px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                aria-label={isInspectorCollapsed ? "Expand telemetry HUD" : "Collapse telemetry HUD"}
+                title={isInspectorCollapsed ? "Expand" : "Collapse"}
+              >
+                {isInspectorCollapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setInspectedPoint(null);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--muted-foreground, #94a3b8)",
+                  padding: "2px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                aria-label="Close telemetry HUD"
+                title="Close"
+              >
+                <X size={14} />
+              </button>
+            </div>
           </div>
 
-          <div
-            style={{
-              color: "var(--muted-foreground, #94a3b8)",
-              fontFamily: "monospace",
-              fontSize: "11px",
-              marginBottom: "8px",
-            }}
-          >
-            📍 {inspectedPoint.lat.toFixed(4)}°N,{" "}
-            {inspectedPoint.lon.toFixed(4)}°E
-          </div>
+          {isInspectorCollapsed ? (
+            <div
+              style={{
+                fontSize: "11px",
+                color: "var(--muted-foreground, #94a3b8)",
+                fontFamily: "monospace",
+                marginTop: "4px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>📍 {inspectedPoint.lat.toFixed(3)}°N, {inspectedPoint.lon.toFixed(3)}°E</span>
+              {inspectedPoint.data?.bathymetry_and_shelf?.bathymetry_depth_m !== undefined && (
+                <span style={{ color: "#38bdf8", fontWeight: 600 }}>
+                  · {inspectedPoint.data.bathymetry_and_shelf.bathymetry_depth_m}m
+                </span>
+              )}
+              {inspectedPoint.data?.astronomical_tide?.current_height_m !== undefined && (
+                <span style={{ color: "#10b981", fontWeight: 600 }}>
+                  · {inspectedPoint.data.astronomical_tide.current_height_m}m tide
+                </span>
+              )}
+            </div>
+          ) : (
+            <>
+              <div
+                style={{
+                  color: "var(--muted-foreground, #94a3b8)",
+                  fontFamily: "monospace",
+                  fontSize: "11px",
+                  marginBottom: "8px",
+                }}
+              >
+                📍 {inspectedPoint.lat.toFixed(4)}°N,{" "}
+                {inspectedPoint.lon.toFixed(4)}°E
+              </div>
 
           {inspectedPoint.loading ? (
             <div
@@ -2537,6 +2665,8 @@ export default function MapView({
               )}
             </div>
           ) : null}
+            </>
+          )}
         </div>
       )}
 
