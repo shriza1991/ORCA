@@ -4404,13 +4404,22 @@
 /* Fisher map telemetry HUD */
 .map-forecast-telemetry {
   font-size: 11px !important;
-  padding: 3px 10px !important;
-  gap: 8px !important;
+  padding: 3px 8px !important;
+  gap: 6px !important;
   border-radius: 12px !important;
+  max-width: calc(100% - 24px) !important;
+  box-sizing: border-box !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
 }
 
 .map-forecast-telemetry span {
   line-height: 1.25;
+}
+
+.map-forecast-telemetry > span {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .route-comparison-table-wrapper table {

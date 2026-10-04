@@ -2204,7 +2204,11 @@ export default function MapView({
           zIndex: 10,
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          maxWidth: "calc(100% - 24px)",
+          boxSizing: "border-box",
+          gap: "6px",
           background:
             theme === "dark"
               ? "rgba(15, 23, 42, 0.94)"
@@ -2212,10 +2216,9 @@ export default function MapView({
           backdropFilter: "blur(10px)",
           border: "1px solid var(--border, #334155)",
           borderRadius: "12px",
-          padding: "3px 10px",
+          padding: "3px 8px",
           boxShadow: "0 4px 16px rgba(0, 0, 0, 0.18)",
           fontSize: "11px",
-          whiteSpace: "nowrap",
           color: "var(--foreground, #0f172a)",
         }}
       >
@@ -2243,6 +2246,8 @@ export default function MapView({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "3px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
                 background:
                   mapForecast.status === "GO"
                     ? "#dcfce7"
@@ -2291,10 +2296,12 @@ export default function MapView({
             </span>
             <span
               style={{
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "2px",
                 fontWeight: 600,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               🌊 {mapForecast.wave_height_m}m{" "}
@@ -2310,10 +2317,12 @@ export default function MapView({
             </span>
             <span
               style={{
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "2px",
                 fontWeight: 600,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               💨 {mapForecast.wind_speed_kn} {translateText("knots", language)}{" "}
@@ -2329,10 +2338,12 @@ export default function MapView({
             </span>
             <span
               style={{
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "2px",
                 fontWeight: 600,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               🌊 {mapForecast.tide_height_m}m{" "}
@@ -2348,10 +2359,12 @@ export default function MapView({
             </span>
             <span
               style={{
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "2px",
                 fontWeight: 600,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               🌡️ {mapForecast.sst_c}°C{" "}
@@ -2384,6 +2397,9 @@ export default function MapView({
           zIndex: 10,
           display: "flex",
           alignItems: "center",
+          maxWidth: "calc(100% - 24px)",
+          boxSizing: "border-box",
+          overflowX: "auto",
           gap: "4px",
           background:
             theme === "dark"
