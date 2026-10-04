@@ -4401,13 +4401,16 @@
   }
 }
 
-/* Fisher recording readability */
+/* Fisher map telemetry HUD */
 .map-forecast-telemetry {
-  font-size: 14px !important;
+  font-size: 11px !important;
+  padding: 3px 10px !important;
+  gap: 8px !important;
+  border-radius: 12px !important;
 }
 
 .map-forecast-telemetry span {
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .route-comparison-table-wrapper table {

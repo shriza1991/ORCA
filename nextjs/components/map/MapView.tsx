@@ -2196,15 +2196,15 @@ export default function MapView({
           zIndex: 10,
           display: "flex",
           alignItems: "center",
-          gap: "10px",
+          gap: "8px",
           background:
             theme === "dark"
               ? "rgba(15, 23, 42, 0.94)"
               : "rgba(255, 255, 255, 0.96)",
           backdropFilter: "blur(10px)",
           border: "1px solid var(--border, #334155)",
-          borderRadius: "16px",
-          padding: "5px 14px",
+          borderRadius: "12px",
+          padding: "3px 10px",
           boxShadow: "0 4px 16px rgba(0, 0, 0, 0.18)",
           fontSize: "11px",
           whiteSpace: "nowrap",
@@ -2217,20 +2217,24 @@ export default function MapView({
               color: "var(--muted-foreground, #94a3b8)",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
+              fontSize: "10.5px",
             }}
           >
-            <RefreshCw size={12} className="spin" /> Updating forecast (+
+            <RefreshCw size={11} className="spin" /> Updating forecast (+
             {selectedTimeStep}h)…
           </span>
         ) : mapForecast ? (
           <>
             <span
               style={{
-                padding: "2px 7px",
+                padding: "1px 6px",
                 borderRadius: "9999px",
                 fontWeight: 700,
                 fontSize: "10px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "3px",
                 background:
                   mapForecast.status === "GO"
                     ? "#dcfce7"
@@ -2246,13 +2250,13 @@ export default function MapView({
               }}
             >
               {mapForecast.status === "GO" ? (
-                <ShieldCheck size={13} aria-label="Safe" />
+                <ShieldCheck size={12} aria-label="Safe" />
               ) : mapForecast.status === "CAUTION" ? (
-                <ShieldAlert size={13} aria-label="Caution" />
+                <ShieldAlert size={12} aria-label="Caution" />
               ) : mapForecast.status === "NO_GO" ? (
-                <ShieldX size={13} aria-label="Do not go" />
+                <ShieldX size={12} aria-label="Do not go" />
               ) : (
-                <HelpCircle size={13} aria-label="Unknown" />
+                <HelpCircle size={12} aria-label="Unknown" />
               )}
               {translateText(
                 mapForecast.status === "GO"
@@ -2269,7 +2273,7 @@ export default function MapView({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "3px",
+                gap: "2px",
                 fontWeight: 600,
               }}
             >
@@ -2278,6 +2282,7 @@ export default function MapView({
                 style={{
                   color: "var(--muted-foreground, #94a3b8)",
                   fontWeight: 400,
+                  fontSize: "10.5px",
                 }}
               >
                 {translateText("Wave", language)}
@@ -2287,7 +2292,7 @@ export default function MapView({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "3px",
+                gap: "2px",
                 fontWeight: 600,
               }}
             >
@@ -2296,6 +2301,7 @@ export default function MapView({
                 style={{
                   color: "var(--muted-foreground, #94a3b8)",
                   fontWeight: 400,
+                  fontSize: "10.5px",
                 }}
               >
                 ({mapForecast.wind_direction_deg}°)
@@ -2305,7 +2311,7 @@ export default function MapView({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "3px",
+                gap: "2px",
                 fontWeight: 600,
               }}
             >
@@ -2314,6 +2320,7 @@ export default function MapView({
                 style={{
                   color: "var(--muted-foreground, #94a3b8)",
                   fontWeight: 400,
+                  fontSize: "10.5px",
                 }}
               >
                 ({translateText(mapForecast.tide_phase, language)})
@@ -2323,7 +2330,7 @@ export default function MapView({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "3px",
+                gap: "2px",
                 fontWeight: 600,
               }}
             >
@@ -2332,6 +2339,7 @@ export default function MapView({
                 style={{
                   color: "var(--muted-foreground, #94a3b8)",
                   fontWeight: 400,
+                  fontSize: "10.5px",
                 }}
               >
                 {translateText("Sea temperature", language)}

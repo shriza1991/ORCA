@@ -2504,10 +2504,12 @@ Decision:
    - Added `isInspectorCollapsed` state to `MapView.tsx` in both clients.
    - Header bar supports click-to-toggle with ChevronDown / ChevronUp indicators.
    - When collapsed, renders a compact, unobtrusive coordinate and depth preview bar (`📍 lat, lon · depth · tide`) while keeping the map canvas unobstructed.
-5. Dual-Client Parity:
+5. Compact Active Forecast Telemetry Bar:
+   - Streamlined `.map-forecast-telemetry` anchored above the map time scrubber. Replaced the 14px CSS override with a compact 11px font size, 3px 10px padding, tighter 8px container gap, 12px border radius, 10.5px secondary unit labels, and size-12 status icons.
+6. Dual-Client Parity:
    - Maintained 1:1 behavioral and stylistic parity across Vite (`frontend/`) and Next.js (`nextjs/`).
 
-Reason: Prevent UI clutter and accidental telemetry requests during map navigation, and give mariners full control over on-screen overlays without sacrificing spatial data access.
+Reason: Prevent UI clutter, eliminate oversized forecast telemetry bars blocking map viewports, and give mariners full control over on-screen overlays without sacrificing spatial data access.
 
 Verification:
 - Next.js typecheck (`npm --prefix nextjs run typecheck`) passed with 0 errors.

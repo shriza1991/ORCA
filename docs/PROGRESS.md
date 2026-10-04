@@ -1,10 +1,11 @@
-### 2026-10-04 - Non-Overlapping Mission Brief, Drag-Guarded Ocean Telemetry, and Collapsible HUDs (D083)
+### 2026-10-04 - Non-Overlapping Mission Brief, Drag-Guarded Ocean Telemetry, Collapsible HUDs, and Compact Telemetry Bar (D083)
 - Repositioned `.mission-map-brief` (`top: 64px; left: 16px;`) below coastal bookmarks/windflow toolbar line, eliminating overlay overlap on both Vite and Next.js clients.
 - Made Mission Brief container interactive and collapsible via heading click or chevron toggle with keyboard accessibility (`role="button"`, `tabIndex={0}`, Enter/Space).
 - Added drag/pan detection to MapView: dragging or panning the map (pointer movement > 4px or `map.isMoving()`) no longer accidentally queries or opens the Ocean Depth & Tide Telemetry HUD; only intentional stationary clicks trigger inspection.
 - Guarded interactive map layer clicks (`vessels`, `routes`, `hazards`) and overlay control clicks from triggering telemetry inspection.
 - Made Ocean Depth & Tide Telemetry HUD collapsible with chevron toggle and compact coordinate/depth preview bar.
-- Verification: 36/36 map tests passing (`npm --prefix frontend test -- src/components/map/ --run`); 330/330 passing across all operational Vitest suites; Next.js typecheck (`npm --prefix nextjs run typecheck`) passed with 0 errors. Full dual-client parity maintained.
+- Streamlined active forecast telemetry bar (`.map-forecast-telemetry`): replaced bulky 14px override with compact 11px font size, 3px 10px padding, tighter 8px/2px spacing, 12px border radius, and size-12 badge icons across both Vite and Next.js clients.
+- Verification: 36/36 map tests passing (`npm --prefix frontend test -- src/components/map/ --run`); Next.js typecheck (`npm --prefix nextjs run typecheck`) passed with 0 errors. Full dual-client parity maintained.
 
 ### 2026-10-03 - Task 5 corrective pass on d2eb3f2 (D080)
 - Removed assessment requests caused only by sidebar navigation. Planner edits assess on exit; explicit planning still requests a reassessment. Exact proposal adoption preserves its assessment/evidence identity without a second assessment request.
