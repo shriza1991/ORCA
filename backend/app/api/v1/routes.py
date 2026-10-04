@@ -217,7 +217,7 @@ async def health_check():
     connectors = []
 
     try:
-        if settings.DATA_MODE.upper() == "DEMO":
+        if settings.DATA_MODE.upper() == "DEMO" and settings.APP_ENV not in {"production", "staging"}:
             db_status = "not_required"
         else:
             with SessionLocal() as session:
@@ -225,7 +225,7 @@ async def health_check():
                 db_status = "connected"
 
                 # Check connector health
-                if settings.DATA_MODE != "SNAPSHOT":
+                if settings.DATA_MODE.upper() not in {"SNAPSHOT", "DEMO", "SYNTHETIC"}:
                     connectors = session.query(ConnectorStatus).all()
                     if any(not c.is_online for c in connectors):
                         global_status = "degraded"

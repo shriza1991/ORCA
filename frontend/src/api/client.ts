@@ -446,6 +446,19 @@ export async function getDemoRouteAlternatives(
   return request<RouteAlternativesResponse>(`/demo/routes/alternatives${qs}`, { signal });
 }
 
+function fieldReporterHeaders(): Record<string, string> {
+  let id = localStorage.getItem('orca.field.reporter');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('orca.field.reporter', id); }
+  return { 'X-Field-Reporter': id };
+}
+
+export async function uploadFieldImage(file: File): Promise<{key: string}> {
+  const data = new FormData(); data.append('file', file);
+  const res = await fetch(`${API_BASE}/community/media`, { method: 'POST', headers: fieldReporterHeaders(), body: data });
+  if (!res.ok) throw new Error('Photo was not saved. Use a JPEG/PNG/WebP under 5 MB or submit without it.');
+  return res.json();
+}
+
 export async function getFieldObservations(
   params?: {
     harbor?: string;
@@ -471,7 +484,7 @@ export async function submitFieldObservation(
   signal?: AbortSignal,
 ): Promise<FieldObservation> {
   return request<FieldObservation>('/community/observations', {
-    method: 'POST',
+    method: 'POST', headers: fieldReporterHeaders(),
     body: JSON.stringify(payload),
     signal,
   });
@@ -483,7 +496,7 @@ export async function corroborateFieldObservation(
   signal?: AbortSignal,
 ): Promise<FieldObservation> {
   return request<FieldObservation>(`/community/observations/${publicId}/corroborate`, {
-    method: 'POST',
+    method: 'POST', headers: fieldReporterHeaders(),
     body: JSON.stringify({ agrees: true, ...payload }),
     signal,
   });

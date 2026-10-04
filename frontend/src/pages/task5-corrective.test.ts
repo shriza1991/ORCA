@@ -10,7 +10,7 @@ import * as client from '../api/client';
 import { assessmentMatchesInputs, validateRouteChoiceProposal, validateRefreshedAssessment } from '../utils/mission-proposal';
 import { storedAssessmentMatchesRequest, getOfflineCacheKey } from '../utils/offline-cache';
 
-vi.mock('../api/client', async () => ({ ...await vi.importActual<any>('../api/client'), sendMessage: vi.fn() }));
+vi.mock('../api/client', async () => ({ ...await vi.importActual<any>('../api/client'), sendMessage: vi.fn(), getFieldObservations: vi.fn() }));
 vi.mock('../i18n/i18n', () => ({ default: { changeLanguage: vi.fn() } }));
 vi.mock('../utils/geo', async () => ({ ...await vi.importActual<any>('../utils/geo'), fetchAndFormatBaseLayers: vi.fn().mockResolvedValue([]) }));
 vi.mock('../hooks/useAlerts', () => ({ useAlerts: () => ({ alerts: [], registerTrip: vi.fn(), acknowledgeAlert: vi.fn() }) }));
@@ -48,6 +48,7 @@ beforeEach(() => {
   vi.clearAllMocks(); store = { 'orca.mission': JSON.stringify(context) };
   vi.stubGlobal('localStorage', { getItem: (k: string) => store[k] || null, setItem: (k: string,v: string) => { store[k] = v; }, removeItem: (k: string) => { delete store[k]; } });
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => baseline }));
+  vi.mocked(client.getFieldObservations).mockResolvedValue({ observations: [], total_count: 0, epistemic_notice: "Missing reports do not imply safety.", feed_generated_at: "2026-10-04T06:00:00Z" });
   vi.mocked(client.sendMessage).mockResolvedValue({ answer: 'Reply' } as any);
 });
 afterEach(() => { act(() => tree?.unmount()); vi.useRealTimers(); vi.unstubAllGlobals(); });

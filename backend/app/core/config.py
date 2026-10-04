@@ -88,13 +88,23 @@ class Settings(BaseSettings):
                 self.SYNC_DATABASE_URL = self.DATABASE_URL
         return self
 
+    DB_POOL_SIZE: int = 5
+    DB_MAX_OVERFLOW: int = 5
+    DB_POOL_RECYCLE_SECONDS: int = 300
+    COMMUNITY_HASH_SECRET: str = ""
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_ENDPOINT_URL_S3: str = ""
+    AWS_REGION: str = "us-east-1"
+    NEON_UPLOADS_BUCKET: str = "uploads"
+
     # Data Strategy
     DATA_MODE: str = "SNAPSHOT"  # LIVE | HYBRID | SNAPSHOT (offline-first local demo default)
 
     @property
     def validated_data_mode(self) -> str:
         mode = self.DATA_MODE.upper()
-        if mode not in ("LIVE", "HYBRID", "SNAPSHOT"):
+        if mode not in ("LIVE", "HYBRID", "SNAPSHOT", "DEMO", "SYNTHETIC"):
             raise ValueError(f"Invalid DATA_MODE: {mode}. Must be LIVE, HYBRID, or SNAPSHOT.")
         return mode
 

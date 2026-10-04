@@ -288,6 +288,7 @@ export interface FieldObservation {
   lineage_label: string;
   safety_disclaimer: string;
   evidence_count: number;
+  persistence?: string;
   is_demo: boolean;
 }
 

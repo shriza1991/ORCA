@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Users,
   AlertTriangle,
@@ -16,14 +16,19 @@ import {
 } from 'lucide-react';
 import {
   getFieldObservations,
+  uploadFieldImage,
   submitFieldObservation,
   corroborateFieldObservation,
 } from '../../api/client';
+import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import type { FieldObservation, SubmitObservationPayload } from '../../types/contracts';
 
 interface CommunityObservationsPanelProps {
   harbor?: string;
   userCoordinates?: [number, number] | null;
+  onSignals?: (signals: FieldObservation[]) => void;
+  dataMode?: string;
+  craftProfile?: string;
   onSelectLocation?: (coords: [number, number]) => void;
 }
 
@@ -36,59 +41,12 @@ const OBSERVATION_TYPES = [
   { id: 'DEBRIS', label: 'Floating Debris / Hazard', icon: AlertTriangle, defaultSeverity: 'SEVERE' },
 ];
 
-const SNAPSHOT_OBSERVATIONS: FieldObservation[] = [
-  {
-    public_id: 'OBS-DEMO-01',
-    observation_type: 'ROUGH_SEA',
-    severity: 'MODERATE',
-    description: '2m swell and moderate choppy conditions near northern corridor.',
-    observed_at: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    valid_until: new Date(Date.now() + 3 * 3600 * 1000).toISOString(),
-    approx_latitude: 17.02,
-    approx_longitude: 73.26,
-    approx_radius_km: 5.0,
-    harbor_reference: 'Ratnagiri',
-    verification_status: 'CORROBORATED',
-    corroboration_count: 3,
-    contributor_trust: 'ESTABLISHED',
-    official_agreement: true,
-    source_type: 'COMMUNITY',
-    data_mode: 'FIELD_SIGNAL',
-    lineage_label: '[FIELD SIGNAL]',
-    safety_disclaimer: 'Community field signals inform confidence but do NOT override official constraints.',
-    evidence_count: 0,
-    is_demo: true,
-  },
-  {
-    public_id: 'OBS-DEMO-02',
-    observation_type: 'FISH_ACTIVITY',
-    severity: 'MILD',
-    description: 'Surface feeding observed around 12nm southwest of Ratnagiri lighthouse.',
-    observed_at: new Date(Date.now() - 75 * 60 * 1000).toISOString(),
-    valid_until: new Date(Date.now() + 4 * 3600 * 1000).toISOString(),
-    approx_latitude: 16.92,
-    approx_longitude: 73.18,
-    approx_radius_km: 5.0,
-    harbor_reference: 'Ratnagiri',
-    verification_status: 'UNVERIFIED',
-    corroboration_count: 0,
-    contributor_trust: 'PHONE_VERIFIED',
-    official_agreement: null,
-    source_type: 'COMMUNITY',
-    data_mode: 'FIELD_SIGNAL',
-    lineage_label: '[FIELD SIGNAL]',
-    safety_disclaimer: 'Community field signals inform confidence but do NOT override official constraints.',
-    evidence_count: 0,
-    is_demo: true,
-  },
-];
-
 export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProps> = ({
   harbor = 'Ratnagiri',
   userCoordinates,
-  onSelectLocation,
+  onSelectLocation, onSignals, dataMode = "DEMO", craftProfile,
 }) => {
-  const [observations, setObservations] = useState<FieldObservation[]>(SNAPSHOT_OBSERVATIONS);
+  const [observations, setObservations] = useState<FieldObservation[]>([]);
   const [epistemicNotice, setEpistemicNotice] = useState<string>(
     'Missing community reports in an area do NOT imply safe conditions. ORCA uses official sources as the primary safety authority.',
   );
@@ -98,33 +56,49 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
   const [selectedType, setSelectedType] = useState<string>('ROUGH_SEA');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('MODERATE');
   const [description, setDescription] = useState<string>('');
+  const notesVoice = useVoiceRecorder({ onTranscription: result => setDescription(result.transcript), onError: msg => setActionError(msg) });
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const generation = useRef(0);
+  const onSignalsRef = useRef(onSignals); onSignalsRef.current = onSignals;
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
   const [corroboratingId, setCorroboratingId] = useState<string | null>(null);
 
   const fetchObservations = async (isRefresh = false) => {
+    const gen = ++generation.current;
+    setActionError(null);
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
-      const res = await getFieldObservations({ harbor, include_demo: true });
-      if (res && res.observations) {
+      const res = await getFieldObservations({ harbor, include_demo: ["DEMO", "SNAPSHOT", "SYNTHETIC"].includes(dataMode.toUpperCase()) });
+      if (gen === generation.current && res && res.observations) {
+        onSignalsRef.current?.(res.observations);
         setObservations(res.observations);
         setEpistemicNotice(res.epistemic_notice);
       }
     } catch {
-      // Retain snapshot
+      if (gen === generation.current) setActionError("Field reports unavailable. Missing reports do not establish safety.");
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (gen === generation.current) { setLoading(false); setRefreshing(false); }
     }
   };
 
+  useEffect(() => {
+    setObservations([]); onSignalsRef.current?.([]);
+    setLocationConfirmed(false); setPhoto(null);
+    fetchObservations();
+    return () => { generation.current++; };
+  }, [harbor, dataMode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
+    if (!userCoordinates || !locationConfirmed) { setActionError("Confirm a real observation location before posting."); return; }
+    setSubmitting(true); setActionError(null);
     try {
-      const lat = userCoordinates ? userCoordinates[1] : 16.99;
-      const lon = userCoordinates ? userCoordinates[0] : 73.30;
+      const [lon, lat] = userCoordinates;
+      const uploaded = photo ? await uploadFieldImage(photo) : null;
       const payload: SubmitObservationPayload = {
         observation_type: selectedType,
         severity: selectedSeverity,
@@ -132,28 +106,33 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
         latitude: lat,
         longitude: lon,
         harbor_reference: harbor,
+        origin_harbor: harbor,
+        craft_profile: craftProfile,
+        is_demo: dataMode.toUpperCase() === "DEMO",
+        media_keys: uploaded ? [uploaded.key] : undefined,
       };
       await submitFieldObservation(payload);
       setShowSubmitModal(false);
-      setDescription('');
+      setDescription(''); setPhoto(null);
       await fetchObservations(true);
     } catch (err) {
-      console.error('Failed to submit observation', err);
+      setActionError(err instanceof Error ? err.message : 'Observation was not saved. Retry later.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleCorroborate = async (obs: FieldObservation) => {
-    setCorroboratingId(obs.public_id);
+    if (!userCoordinates || !locationConfirmed) { setActionError("Confirm your current observation location in the report form before confirming a report."); setShowSubmitModal(true); return; }
+    setActionError(null); setCorroboratingId(obs.public_id);
     try {
       await corroborateFieldObservation(obs.public_id, {
-        latitude: obs.approx_latitude,
-        longitude: obs.approx_longitude,
+        latitude: userCoordinates[1],
+        longitude: userCoordinates[0],
       });
       await fetchObservations(true);
     } catch (err) {
-      console.error('Failed to corroborate', err);
+      setActionError(err instanceof Error ? err.message : 'Confirmation was not saved.');
     } finally {
       setCorroboratingId(null);
     }
@@ -184,6 +163,8 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
 
   return (
     <div className="space-y-4 text-slate-800 dark:text-slate-100">
+      {actionError && <p role="alert" className="product-notice">{actionError}</p>}
+      <p className="muted">Anonymous field reports are contextual evidence. They do not authorize departure or change official limits. Demo records are read-only; refresh your mission to inspect newly available context.</p>
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 p-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-3">
@@ -271,6 +252,8 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
                   </div>
                 </div>
 
+                {obs.is_demo && <small className="muted">DEMO DATA ? {obs.persistence === "DEMO_FIXTURE" ? "Read-only fixture" : "Saved demonstration report"}</small>}
+                {obs.valid_until && Date.parse(obs.valid_until) < Date.now() && <small className="muted">Expired context ? not current evidence</small>}
                 {obs.description && (
                   <p className="text-xs text-slate-600 dark:text-slate-300">
                     "{obs.description}"
@@ -286,7 +269,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
                     {isCorroborated && (
                       <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                         <CheckCircle2 className="w-3 h-3" />
-                        Corroborated ({obs.corroboration_count})
+                        Device reports ({obs.corroboration_count})
                       </span>
                     )}
 
@@ -304,12 +287,12 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
 
                   <button
                     type="button"
-                    disabled={corroboratingId === obs.public_id}
+                    disabled={corroboratingId === obs.public_id || obs.persistence === "DEMO_FIXTURE"}
                     onClick={() => handleCorroborate(obs)}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-cyan-50 dark:hover:bg-cyan-950 text-slate-700 dark:text-slate-200 text-xs font-medium transition"
                   >
                     <ShieldCheck className="w-3.5 h-3.5 text-cyan-600" />
-                    <span>+1 Confirm ({obs.corroboration_count})</span>
+                    <span>Report agreement ({obs.corroboration_count})</span>
                   </button>
                 </div>
               </div>
@@ -337,6 +320,8 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              <label className="block"><input type="checkbox" checked={locationConfirmed} onChange={e => setLocationConfirmed(e.target.checked)} disabled={!userCoordinates} /> I observed this at {userCoordinates ? `${userCoordinates[1].toFixed(3)}, ${userCoordinates[0].toFixed(3)}` : 'location unavailable'}. The public location will be approximate.</label>
+              <label className="block">Optional private photo (JPEG/PNG/WebP, up to 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { const f=e.target.files?.[0]; if (f && f.size > 5 * 1024 * 1024) { setActionError('Photo must be under 5 MB.'); return; } setPhoto(f || null); }} /></label>
               <div>
                 <label className="block font-medium mb-1 text-slate-700 dark:text-slate-300">
                   Condition / Observation Type
@@ -393,6 +378,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
                 <label className="block font-medium mb-1 text-slate-700 dark:text-slate-300">
                   Field Notes / Description (Optional)
                 </label>
+                <button type="button" disabled={!notesVoice.isSupported || notesVoice.isTranscribing} onClick={() => notesVoice.isRecording ? notesVoice.stopRecording() : notesVoice.startRecording()}>{notesVoice.isRecording ? 'Stop dictating notes' : notesVoice.isTranscribing ? 'Recognizing notes?' : 'Dictate field notes'}</button>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -403,7 +389,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-[11px] text-slate-500">
-                Privacy Protection: Your exact coordinates are blurred to a ~5km grid cell. No personal identifying information is published.
+                Privacy Protection: Only approximate coordinates are stored. Photo GPS metadata is removed. Your coordinates are blurred to a ~5km grid cell. Device identity and exact GPS are not published. Do not include personal details in notes.
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
@@ -416,7 +402,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || !userCoordinates || !locationConfirmed}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition"
                 >
                   <Send className="w-3.5 h-3.5" />

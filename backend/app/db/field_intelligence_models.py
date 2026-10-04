@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 import enum
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from backend.app.db.session import Base
@@ -151,4 +151,15 @@ class ObservationCorroboration(Base):
     corroborating_observation_id = Column(UUID(as_uuid=True),
                                           ForeignKey("field_observations.id", ondelete="CASCADE"),
                                           nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+
+class FieldConfirmation(Base):
+    """Anonymous device confirmations are not authenticated official verification."""
+    __tablename__ = "field_confirmations"
+    __table_args__ = (UniqueConstraint("observation_id", "reporter_hash", name="uq_field_confirmation_reporter"),)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    observation_id = Column(UUID(as_uuid=True), ForeignKey("field_observations.id", ondelete="CASCADE"), nullable=False)
+    reporter_hash = Column(String, nullable=False)
+    agrees = Column(Boolean, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
