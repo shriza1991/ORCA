@@ -2551,6 +2551,8 @@ Decision:
    - FastAPI endpoints registered under `/api/v1/community`.
 4. Frontend Community Integration:
    - Built `CommunityObservationsPanel.tsx` integrated on Fisher Home, providing real-time/snapshot observation feeds, quick report modal (Rough Sea, Calm Sea, High Wind, Fog, Fish Shoal, Debris), categorical trust tags, freshness counters, and 1-click corroboration (`+1 Confirm`).
+   - Replaced unsupported Tailwind utility classes with dedicated semantic CSS classes (`.community-panel`, `.community-disclaimer`, `.community-header`, `.community-card`, `.community-tag-type`, `.community-tag-sev`, `.community-trust-tag`, `.community-btn-loc`, `.community-btn-agree`, `.community-modal-*`) in `components.css`.
+   - Fixed feed layout jank: separated observation type and severity badges with proper margins and colors, replaced corrupted encoding characters (`?`) with clean bullets (`·`), styled metadata/action footer with aligned trust badges, corroboration indicators, compact location buttons, and right-aligned report agreement action.
    - Initialized with deterministic snapshot observations to preserve hermetic offline-first operation and eliminate redundant background network fetches on mount.
 5. Neon Serverless PostgreSQL Migration:
    - Connected to Neon Singapore region (`delicate-flower-63443367` in `aws-ap-southeast-1`), enabled `postgis` and `uuid-ossp` extensions.

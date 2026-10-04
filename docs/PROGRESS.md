@@ -9,6 +9,8 @@
 - **Community Field Intelligence Frontend UI**:
   - Built `CommunityObservationsPanel.tsx` integrated directly into Fisher Home and mobile views.
   - Offers real-time/snapshot observation feeds, quick report modal (Rough Sea, Calm Sea, High Wind, Fog, Fish Shoal, Debris), categorical trust tags, freshness counters, and 1-click corroboration (`+1 Confirm`).
+  - Added dedicated semantic CSS classes (`.community-panel`, `.community-disclaimer`, `.community-header`, `.community-card`, `.community-tag-type`, `.community-tag-sev`, `.community-trust-tag`, `.community-btn-loc`, `.community-btn-agree`, `.community-modal-*`) across `frontend/src/styles/components.css` and `nextjs/styles/components.css` replacing unsupported Tailwind utility classes that failed to render in Vite.
+  - Fixed feed card layout jank: separated observation type and severity badges with proper margins and colors, replaced corrupted encoding characters (`?`) with clean bullets (`·`), styled metadata/action footer with aligned trust badges, corroboration indicators, compact location buttons, and right-aligned report agreement action.
   - Added API client functions in `frontend/src/api/client.ts` and types in `frontend/src/types/contracts.ts`.
 - **Neon Serverless PostgreSQL Migration**:
   - Connected to Neon Singapore region (`delicate-flower-63443367` in `aws-ap-southeast-1`), enabled `postgis` and `uuid-ossp` extensions.
