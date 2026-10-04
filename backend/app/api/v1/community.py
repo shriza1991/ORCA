@@ -444,7 +444,7 @@ def corroborate_observation(
             raise HTTPException(404, "Observation not found; demo seeds are read-only.")
         if obs.contributor_hash == reporter:
             raise HTTPException(409, "You cannot confirm your own report.")
-        if obs.valid_until and obs.valid_until <= datetime.now(UTC):
+        if obs.valid_until and obs.valid_until.replace(tzinfo=obs.valid_until.tzinfo or UTC) <= datetime.now(UTC):
             raise HTTPException(409, "This report has expired.")
         distance = math.hypot((req.latitude - obs.approx_latitude) * 111,
                               (req.longitude - obs.approx_longitude) * 111 * math.cos(math.radians(req.latitude)))

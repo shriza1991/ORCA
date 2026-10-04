@@ -752,7 +752,8 @@ export default function FisherPage({
             <CommunityObservationsPanel
               harbor={originHarbor}
               dataMode={fisherDataMode}
-              userCoordinates={geoStatus === 'active' && location ? [location.longitude, location.latitude] : harborCoords}
+              craftProfile={chat.missionContext.craft_profile}
+              userCoordinates={geoStatus === 'accurate' && location ? [location.longitude, location.latitude] : harborCoords}
               onSignals={setFieldSignals}
               onSelectLocation={(coords) => { setFieldCenter(coords);
                 setSidebarTab('map');

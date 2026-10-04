@@ -5,14 +5,14 @@ from backend.app.db.session import SessionLocal
 
 def capture_field_signals(harbor, mode):
     from backend.app.api.v1.community import get_observations, get_demo_observations
-    if mode.upper() in {"DEMO", "SNAPSHOT", "SYNTHETIC"}:
-        seeds = get_demo_observations().observations
-        return [s.model_dump(mode="json") for s in seeds if s.harbor_reference == harbor][:10]
+    demo = mode.upper() in {"DEMO", "SNAPSHOT", "SYNTHETIC"}
     try:
         with SessionLocal() as db:
             return [s.model_dump(mode="json") for s in get_observations(harbor=harbor,observation_type=None,
-                limit=10,hours=24,db=db,include_demo=False).observations]
+                limit=10,hours=24,db=db,include_demo=demo).observations]
     except Exception:
+        if demo:
+            return [s.model_dump(mode="json") for s in get_demo_observations().observations if s.harbor_reference==harbor][:10]
         # Empty context is never positive evidence of safety.
         return []
 

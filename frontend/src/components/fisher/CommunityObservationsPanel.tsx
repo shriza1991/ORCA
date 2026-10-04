@@ -20,6 +20,7 @@ import {
   submitFieldObservation,
   corroborateFieldObservation,
 } from '../../api/client';
+import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import type { FieldObservation, SubmitObservationPayload } from '../../types/contracts';
 
 interface CommunityObservationsPanelProps {
@@ -27,6 +28,7 @@ interface CommunityObservationsPanelProps {
   userCoordinates?: [number, number] | null;
   onSignals?: (signals: FieldObservation[]) => void;
   dataMode?: string;
+  craftProfile?: string;
   onSelectLocation?: (coords: [number, number]) => void;
 }
 
@@ -42,7 +44,7 @@ const OBSERVATION_TYPES = [
 export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProps> = ({
   harbor = 'Ratnagiri',
   userCoordinates,
-  onSelectLocation, onSignals, dataMode = "DEMO",
+  onSelectLocation, onSignals, dataMode = "DEMO", craftProfile,
 }) => {
   const [observations, setObservations] = useState<FieldObservation[]>([]);
   const [epistemicNotice, setEpistemicNotice] = useState<string>(
@@ -54,6 +56,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
   const [selectedType, setSelectedType] = useState<string>('ROUGH_SEA');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('MODERATE');
   const [description, setDescription] = useState<string>('');
+  const notesVoice = useVoiceRecorder({ onTranscription: result => setDescription(result.transcript), onError: msg => setActionError(msg) });
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -104,6 +107,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
         longitude: lon,
         harbor_reference: harbor,
         origin_harbor: harbor,
+        craft_profile: craftProfile,
         is_demo: dataMode.toUpperCase() === "DEMO",
         media_keys: uploaded ? [uploaded.key] : undefined,
       };
@@ -248,6 +252,8 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
                   </div>
                 </div>
 
+                {obs.is_demo && <small className="muted">DEMO DATA ? {obs.persistence === "DEMO_FIXTURE" ? "Read-only fixture" : "Saved demonstration report"}</small>}
+                {obs.valid_until && Date.parse(obs.valid_until) < Date.now() && <small className="muted">Expired context ? not current evidence</small>}
                 {obs.description && (
                   <p className="text-xs text-slate-600 dark:text-slate-300">
                     "{obs.description}"
@@ -372,6 +378,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
                 <label className="block font-medium mb-1 text-slate-700 dark:text-slate-300">
                   Field Notes / Description (Optional)
                 </label>
+                <button type="button" disabled={!notesVoice.isSupported || notesVoice.isTranscribing} onClick={() => notesVoice.isRecording ? notesVoice.stopRecording() : notesVoice.startRecording()}>{notesVoice.isRecording ? 'Stop dictating notes' : notesVoice.isTranscribing ? 'Recognizing notes?' : 'Dictate field notes'}</button>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -382,7 +389,7 @@ export const CommunityObservationsPanel: React.FC<CommunityObservationsPanelProp
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 text-[11px] text-slate-500">
-                Privacy Protection: Only approximate coordinates are stored. Photo GPS metadata is removed. Your coordinates are blurred to a ~5km grid cell. No personal identifying information is published.
+                Privacy Protection: Only approximate coordinates are stored. Photo GPS metadata is removed. Your coordinates are blurred to a ~5km grid cell. Device identity and exact GPS are not published. Do not include personal details in notes.
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
