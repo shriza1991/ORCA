@@ -2511,7 +2511,10 @@ Decision:
 6. Map Layers Button Repositioning:
    - Repositioned `.map-layer-toggle` from `top: 10px; right: 50px;` to `top: 115px; right: 10px;` in both client stylesheets.
    - Clears the top navigation row completely, stacking directly below MapLibre zoom controls on the right margin and eliminating occlusion/overlap from the Measure (`Measure (nm)`) tool button.
-7. Dual-Client Parity:
+7. Forecast Selection Bar & Telemetry HUD Elevation:
+   - Elevated `.map-time-scrubber` from `bottom: 24px` to `bottom: 62px` and `.map-forecast-telemetry` from `bottom: 66px` to `bottom: 104px`.
+   - Lifts both floating controls cleanly above `.map-caption` ("Select a route, fishing area or restriction to inspect its details" at `bottom: 14px; left: 12px; right: 12px;`), preventing bottom-pane collisions and ensuring clear readability across all viewports.
+8. Dual-Client Parity:
    - Maintained 1:1 behavioral and stylistic parity across Vite (`frontend/`) and Next.js (`nextjs/`).
 
 Reason: Prevent UI clutter, eliminate oversized forecast telemetry bars blocking map viewports, and give mariners full control over on-screen overlays without sacrificing spatial data access.

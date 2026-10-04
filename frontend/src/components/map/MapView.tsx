@@ -2198,7 +2198,7 @@ export default function MapView({
         className="map-forecast-telemetry"
         style={{
           position: "absolute",
-          bottom: "66px",
+          bottom: "104px",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
@@ -2391,7 +2391,7 @@ export default function MapView({
         className="map-time-scrubber"
         style={{
           position: "absolute",
-          bottom: "24px",
+          bottom: "62px",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 10,
