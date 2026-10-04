@@ -1760,11 +1760,11 @@
   line-height: 1.6;
 }
 
-/* Map Layer Toggle Button (Positioned at TOP-RIGHT, next to MapLibre zoom controls) */
+/* Map Layer Toggle Button (Positioned at TOP-RIGHT, stacked below MapLibre zoom controls) */
 .map-layer-toggle {
   position: absolute;
-  top: 10px;
-  right: 50px;
+  top: 115px;
+  right: 10px;
   display: flex;
   align-items: center;
   gap: var(--space-xs);

@@ -6,6 +6,7 @@
 - Made Ocean Depth & Tide Telemetry HUD collapsible with chevron toggle and compact coordinate/depth preview bar.
 - Streamlined active forecast telemetry bar (`.map-forecast-telemetry`): replaced bulky 14px override with compact 11px font size, 3px 8px padding, tighter 6px/2px spacing, 12px border radius, and size-12 badge icons across both Vite and Next.js clients. Added `max-width: calc(100% - 24px)`, `box-sizing: border-box`, `flex-wrap: wrap`, and `justify-content: center` to ensure the bar strictly fits any map div container size without overflowing or horizontal clipping.
 - Added `max-width: calc(100% - 24px)` and `overflow-x: auto` to `.map-time-scrubber` so both bottom floating controls conform to container bounds.
+- Repositioned map layers toggle button (`.map-layer-toggle`) from `top: 10px; right: 50px;` to `top: 115px; right: 10px;`, stacking it neatly below the MapLibre zoom controls on the right margin and completely eliminating collision/occlusion behind the Measure (`Measure (nm)`) button.
 - Verification: 36/36 map tests passing (`npm --prefix frontend test -- src/components/map/ --run`); Next.js typecheck (`npm --prefix nextjs run typecheck`) passed with 0 errors. Full dual-client parity maintained.
 
 ### 2026-10-03 - Task 5 corrective pass on d2eb3f2 (D080)

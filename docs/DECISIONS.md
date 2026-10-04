@@ -2508,7 +2508,10 @@ Decision:
    - Streamlined `.map-forecast-telemetry` anchored above the map time scrubber. Replaced the 14px CSS override with a compact 11px font size, 3px 8px padding, tighter 6px container gap, 12px border radius, 10.5px secondary unit labels, and size-12 status icons.
    - Constrained to map container bounds with `max-width: calc(100% - 24px)`, `box-sizing: border-box`, `flex-wrap: wrap`, and `justify-content: center` so chips wrap cleanly on narrow screens/panes without overflowing the map div.
    - Constrained `.map-time-scrubber` with `max-width: calc(100% - 24px)` and `overflow-x: auto` to prevent bottom control overflow.
-6. Dual-Client Parity:
+6. Map Layers Button Repositioning:
+   - Repositioned `.map-layer-toggle` from `top: 10px; right: 50px;` to `top: 115px; right: 10px;` in both client stylesheets.
+   - Clears the top navigation row completely, stacking directly below MapLibre zoom controls on the right margin and eliminating occlusion/overlap from the Measure (`Measure (nm)`) tool button.
+7. Dual-Client Parity:
    - Maintained 1:1 behavioral and stylistic parity across Vite (`frontend/`) and Next.js (`nextjs/`).
 
 Reason: Prevent UI clutter, eliminate oversized forecast telemetry bars blocking map viewports, and give mariners full control over on-screen overlays without sacrificing spatial data access.
